@@ -162,3 +162,8 @@ cython_debug/
 
 dRC_Replication/
 .Rproj.user
+.idea/misc.xml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/modules.xml
+.idea/transition_abm.iml
+.idea/vcs.xml
