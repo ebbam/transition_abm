@@ -1,0 +1,4 @@
+#     # Maria's params
+#     del_u = 0.016 + 0.00000001 # adding zeros since useful for defining names
+#     del_v = 0.012 + 0.00000001
+#     gamma = 10*del_u
