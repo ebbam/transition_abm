@@ -1,0 +1,39 @@
+                   2010-20 National employment matrix
+  
+
+                            File description
+
+
+Format - Tab delimited ASCII 
+
+File name - matrix.txt   Number of records - 115,473
+
+matrix.txt contains the employment records (in thousands) for the base 
+year (2010) and projected year (2020) industry-occupation matrices sorted 
+by industry, then occupation. Industry-occupation employment cells that are
+confidential, have poor statistical quality, or have fewer than 50 jobs have
+been suppressed. The staffing patterns (percent of industry for each occupation
+that has employment in that industry) for the 2010 and 2020 matrices are
+included in this file.  Also included in each record is the percent of
+occupation for each industry that has employment in that occupation as well
+the numeric and percent change for 2010-20.
+
+Each data record in matrix.txt consists of the following variables, left
+to right: 
+
+Occupation Type: 1-Summary, 0-Line Item
+Industry Type: 1-Summary, 0-Line Item
+Occupation Code: 6-digit SOC based code
+Industry Code: Variable length NAICS based code
+2010 Employment: Base-year employment
+2010 percent of industry employment for each occupation
+2010 percent of occupational employment for each industry
+2020 Employment: Projected year employment
+2020 percent of industry employment for each occupation
+2020 percent of occupational employment for each industry
+Numeric change, 2010-20
+Percent change, 2010-20
+
+Please note that the data for detailed occupations and industries does not
+sum to the totals for the summaries because the totals include data for 
+occupations and industries not displayed separately.
