@@ -1,0 +1,40 @@
+                    National 2008-18 employment matrix
+  
+
+                            File description
+
+
+Format - Semicolon delimited ASCII 
+
+File name - PBMT.TXT   Number of records - 111,484
+
+PBMT.TXT contains the employment records for the base year (2008) and
+projected year (2018) industry-occupation matrices sorted by industry. 
+Industry-occupation employment cells that are confidential, have poor statistical 
+quality, or have fewer than 50 jobs have been suppressed. The staffing patterns 
+(percent of industry for each occupation that has employment in that industry)
+for the 2008 and 2018 matrices are included in this file.  Also included
+in each record is the percent of occupation for each industry that has 
+employment in that occupation as well the numeric and percent change for 2008-18.
+
+Each data record in PBMT.TXT consists of the following variables, left to right: 
+
+Occupation Type: 1-Summary, 0-Line Item
+Industry Type: 1-Summary, 0-Line Item
+Occupation Code: 6-digit SOC based code
+Industry Code: Variable length NAICS based code
+2008 Employment: Base-year employment
+2008 percent of industry employment for each occupation
+2008 percent of occupational employment for each industry
+2018 Employment: Projected year employment
+2018 percent of industry employment for each occupation
+2018 percent of occupational employment for each industry
+Numeric change, 2008-18
+Percent change, 2008-18
+
+It is important to note that cells that are confidential, have poor statistical 
+quality, or have fewer than 50 jobs have are not displayed.  
+
+Please note that the data for detailed occupations and industries does not
+sum to the totals for the summaries because the totals include data for occupations
+and industries not displayed separately.
