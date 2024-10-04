@@ -12,14 +12,15 @@ path = "~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/"
 
 # Testing import works
 def test_fun():
-    print('hello - import works!')
+    print('hello - new import works!')
     
     
     
 ## Defining functions
 # Ranking utility/decision-making function
 def util(w_current, w_offered, skill_sim):
-    return 1/(1+(math.exp(-((w_offered - w_current)/10000))))
+    return w_offered - w_current
+    #return 1/(1+(math.exp(-((w_offered - w_current)/10000))))
 
 # Simple quadratic for now in which a worker increases search effort for a period of 6 time steps (ie. months) 
 # unemployed after which a worker begins to become discouraged. 
@@ -104,7 +105,7 @@ class occupation:
         for w in occ.list_of_unemployed:
             w.time_unemployed += 1
             # Chosen 12 months - can be modified
-            w.longterm_unemp = True if w.time_unemployed >= 12 else False
+            w.longterm_unemp = True if w.time_unemployed >= 7 else False
             # Possible for loop to replace
         for e in occ.list_of_employed:
             e.hired = False
@@ -145,7 +146,7 @@ def bus_cycle_demand(d_0, time, amp, period):
 
 
 ### Function and condition to initialise network
-def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wages, gend_share):
+def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wages, gend_share, fem_ra, male_ra):
     """ Makes a list of occupations with initial conditions
        Args:
            n_occ: number of occupations initialised (464)
@@ -187,11 +188,11 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
             if np.random.rand() <= g_share:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
-                                                     wages[i,0], False, True, abs(int(np.random.normal(7,2)))))
+                                                     wages[i,0], False, True, abs(int(np.random.normal(fem_ra,0.1)))))
             else:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
-                                                     wages[i,0], False, False, abs(int(np.random.normal(3,2)))))
+                                                     wages[i,0], False, False, abs(int(np.random.normal(male_ra,0.1)))))
                 
                 
                 
@@ -201,7 +202,7 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
     
     
     
-    ####################
+####################
 # Model Run ########
 ####################
 def run_single(mod_data, 
@@ -233,13 +234,14 @@ def run_single(mod_data,
     """
     # Records variables of interest for plotting
     # Initialise deepcopy occupational mobility network
-    record = np.concatenate((np.zeros((464, 1)), 
-                                 mod_data['employment'].to_numpy(), 
-                                 mod_data['unemployment'].to_numpy(), 
-                                 mod_data['employment'].to_numpy() + mod_data['unemployment'].to_numpy(),
-                                 mod_data['vacancies'].to_numpy(), 
-                                 np.zeros((464, 1)),
-                                 mod_data['demand_target'].to_numpy()), axis = 1)
+    record = [np.sum(np.concatenate((np.zeros((464, 1)), 
+                                    mod_data['employment'].to_numpy(), 
+                                    mod_data['unemployment'].to_numpy(), 
+                                    mod_data['employment'].to_numpy() + mod_data['unemployment'].to_numpy(),
+                                    mod_data['vacancies'].to_numpy(), 
+                                    np.zeros((464, 1)),
+                                    mod_data['demand_target'].to_numpy()), axis = 1), 
+                                    axis = 0)]
     
     #print(parameter['vacs'])
     vacs_temp = deepcopy(vacs)
@@ -310,33 +312,31 @@ def run_single(mod_data,
             n_ltue += sum(wrkr.longterm_unemp for wrkr in occ.list_of_unemployed)
             t_demand += occ.target_demand
 
-            ### UPDATE INDICATOR RECORD
-            record = np.append(record, 
+        ### UPDATE INDICATOR RECORD
+        record = np.append(record, 
                                np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand]]), 
                                axis = 0)
 
     print("Done after ", t + 1, " time steps.")
-    clean_record = pd.DataFrame(record)
-    clean_record.columns =['Time Step', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Target_Demand']
-    clean_record = clean_record[clean_record["Time Step"] > delay].groupby(['Time Step']).sum().reset_index()
-    clean_record['UER'] = clean_record['Unemployment']/clean_record['Workers']
-    clean_record['VACRATE'] = clean_record['Vacancies']/clean_record['Target_Demand']
-    data = clean_record[['Time Step', 'UER', 'VACRATE']]
-    #print(data)
-    #uer = uer[(uer['Time Step'] >= 10)]
+
+    # clean_record = pd.DataFrame(record[delay:])
+    # clean_record.columns =['Time Step', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Target_Demand']
+    # clean_record['UER'] = clean_record['Unemployment']/clean_record['Workers']
+    # clean_record['VACRATE'] = clean_record['Vacancies']/clean_record['Target_Demand']
+    #data = clean_record[['Time Step', 'UER', 'VACRATE']]
+    data = {'UER': record[delay:,2]/record[delay:,3], 
+            'VACRATE': record[delay:,4]/record[delay:,6]}
 
     #ltuer = (clean_record['LT Unemployed Persons']/clean_record['Workers']).mean(axis = 0)
     #vac_rate = (clean_record['Vacancies']/clean_record['Target_Demand']).mean(axis = 0)
-    return {"data": data}
-            #'ltuer': ltuer,
-            #'vac_rate': vac_rate}
+    return data
 
 
 
 #########################################
 # Model Run with Simulation Spec ########
 #########################################
-def run_sim(mod_data, net_temp, vacs, behav_spec, time_steps, runs, d_u, d_v, gamma, bus_cycle_len):
+def run_sim(mod_data, net_temp, vacs, behav_spec, time_steps, runs, d_u, d_v, gamma, bus_cycle_len, bus_amp):
     """ Runs the model through designated time_steps "runs" times
     Argsuments:
        behav_spec: whether or not to run the behavioural model
@@ -422,8 +422,17 @@ def run_sim(mod_data, net_temp, vacs, behav_spec, time_steps, runs, d_u, d_v, ga
                 # Remove protected "hired" attribute of employed workers
                 occ.update_workers()
                 emp = len(occ.list_of_employed)
-                occ.current_demand = bus_cycle_demand(len([v_open for v_open in vacs if v_open.occupation_id == occ.occupation_id]) + emp, t, 0.02, bus_cycle_len)
+                occ.current_demand = bus_cycle_demand(len([v_open for v_open in vacs if v_open.occupation_id == occ.occupation_id]) + emp, t, bus_amp, bus_cycle_len)
                 vac_prob = d_v + ((1 - d_v) * (gamma * max(0, occ.target_demand - occ.current_demand))) / (emp + 1)
+                if vac_prob > 1:
+                    vac_prob = 0.9
+                    print("vac_prob above 1 - reset")
+                elif vac_prob < 0:
+                    vac_prob = 0.1
+                    print("vac_prob below 0 - reset")
+                if vac_prob > 1 or vac_prob < 0:
+                    print(vac_prob)
+                    print(emp)
                 for v in range(int(np.random.binomial(emp, vac_prob))):
                     vacs.append(vac(occ.occupation_id, [], occ.wage, False))
                     
@@ -432,10 +441,10 @@ def run_sim(mod_data, net_temp, vacs, behav_spec, time_steps, runs, d_u, d_v, ga
                 n_ltue += sum(wrkr.longterm_unemp for wrkr in occ.list_of_unemployed)
                 t_demand += occ.target_demand
             
-                ### UPDATE INDICATOR RECORD
-                record = np.append(record, 
-                                   np.array([[run, t+1, empl, unemp, empl + unemp, len(vacs), n_ltue, t_demand]]), 
-                                   axis = 0)
+            ### UPDATE INDICATOR RECORD
+            record = np.append(record, 
+                                np.array([[run, t+1, empl, unemp, empl + unemp, len(vacs), n_ltue, t_demand]]), 
+                                axis = 0)
 
         print("Done after ", t + 1, " time steps.")
         if run == 0:
@@ -447,7 +456,6 @@ def run_sim(mod_data, net_temp, vacs, behav_spec, time_steps, runs, d_u, d_v, ga
         print(record_all.shape)
         
     print("Done after ", run + 1, " runs.")
-    # Cannot seem to return modified variable....same net_temp as went in goes out
     return record_all, net, net_list
 
 
