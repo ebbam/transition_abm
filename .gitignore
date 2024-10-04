@@ -174,3 +174,5 @@ data/.cps_00003.dat.icloud
 .Rhistory
 data/cps_00003.dat
 code/sample_multiscale_agent_based_parameter_inference.ipynb
+output/usa/sim_100_behav_false.csv
+output/usa/sim_100_behav_true.csv
