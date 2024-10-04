@@ -167,3 +167,6 @@ cython_debug/
 .idea/transition_abm.iml
 .idea/vcs.xml
 data/.cps_00003.dat.icloud
+/calibration/data
+/calibration/dRC_Replication
+/dRC_Replication/results
