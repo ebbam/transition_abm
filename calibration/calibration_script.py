@@ -186,57 +186,192 @@ plt.savefig(path + 'output/uer_vac_descriptive.jpg', dpi = 300)
 
 print("Macro variables loaded and abbreviated.")
 
-def pyabc_run_single(paramater):     
+####################
+# Model Run ########
+####################
+def run_single(mod_data = mod_data, 
+               net_temp = net_temp, 
+               vacs = vacs, 
+               behav_spec = behav_spec, 
+               time_steps = 200, 
+               d_u = del_u, 
+               d_v = del_v,
+               gamma = gamma,
+               bus_cycle_len = 160,
+               delay = 80):
+    #net_temp, vacs = initialise(len(mod_data['A']), mod_data['employment'].to_numpy(), mod_data['unemployment'].to_numpy(), mod_data['vacancies'].to_numpy(), mod_data['demand_target'].to_numpy(), mod_data['A'], mod_data['wages'].to_numpy(), mod_data['gend_share'].to_numpy())
+    #behav_spec = False
+    #time_steps = 30
+    #gamma = 0.1
+    #d_v = 0.009
+    
+    """ Runs the model once
+    Argsuments:
+       behav_spec: whether or not to run the behavioural model
+       data: data required of initialise function  
+       time_steps: Number of time steps for single model run
+       d_u: parameter input to separation probability
+       d_v: parameter input to vacancy opening probability
+
+    Returns:
+       dataframe of model run results
+    """
+    # Records variables of interest for plotting
+    # Initialise deepcopy occupational mobility network
+    record = [np.sum(np.concatenate((np.zeros((464, 1)), 
+                                    mod_data['employment'].to_numpy(), 
+                                    mod_data['unemployment'].to_numpy(), 
+                                    mod_data['employment'].to_numpy() + mod_data['unemployment'].to_numpy(),
+                                    mod_data['vacancies'].to_numpy(), 
+                                    np.zeros((464, 1)),
+                                    mod_data['demand_target'].to_numpy()), axis = 1), 
+                                    axis = 0)]
+    
+    #print(parameter['vacs'])
+    vacs_temp = deepcopy(vacs)
+    net = deepcopy(net_temp)
+    for t in range(time_steps):
+        # Ensure number of workers in economy has not changed
+        #tic = time.process_time()
+        for occ in net:
+            ### APPLICATIONS
+            # Questions to verify:
+            # - CANNOT be fired and apply in same time step ie. time_unemployed > 0
+            # - CAN be rejected and apply in the same time step - no protected attribute
+            # isolate list of vacancies in economy that are relevant to the occupation
+            # - avoids selecting in each search_and_apply application
+            r_vacs = [vac for vac in vacs_temp if occ.list_of_neigh_bool[vac.occupation_id]]                
+            for u in occ.list_of_unemployed:
+                u.search_and_apply(net, r_vacs, behav_spec)
+
+            ### SEPARATIONS
+            occ.separate_workers(d_u, gamma)
+
+        ### HIRING
+        # Ordering of hiring randomised to ensure list order does not matter in filling vacancies...
+        # Possibly still introduces some bias...this seems to be where the "multiple offer" challenge Maria mentioned comes from
+        # ....might be better to do this using an unordered set?
+        for v_open in sorted(vacs_temp,key=lambda _: random.random()):
+            # Removes any applicants that have already been hired in another vacancy
+            v_open.applicants[:] = [app for app in v_open.applicants if not(app.hired)]
+            if len(v_open.applicants) > 0:
+                v_open.hire(net)
+                v_open.filled = True
+                #vacs.remove(v_open)
+                assert(len(v_open.applicants) == 0)
+            else:
+                pass
+
+        vacs_temp = [v for v in vacs_temp if not(v.filled)] 
+
+        # Reset counters for record in time t
+        empl = 0 
+        unemp = 0
+        n_ltue = 0
+        t_demand = 0
+
+        ### OPEN VACANCIES
+        # Update vacancies after all shifts have taken place
+        # Could consider making this a function of the class itself?
+        for occ in net:
+            # Update time_unemployed and long-term unemployed status of unemployed workers
+            # Remove protected "hired" attribute of employed workers
+            occ.update_workers()
+            emp = len(occ.list_of_employed)
+            occ.current_demand = bus_cycle_demand(len([v_open for v_open in vacs_temp if v_open.occupation_id == occ.occupation_id]) + emp, t, 0.02, bus_cycle_len)
+            vac_prob = d_v + ((1 - d_v) * (gamma * max(0, occ.target_demand - occ.current_demand))) / (emp + 1)
+            # Included as a warning - particularly relevant in parameter inference when sampling from prior
+            if vac_prob > 1:
+                vac_prob = 0.9
+                print("vac_prob above 1 - reset")
+            elif vac_prob < 0:
+                vac_prob = 0.1
+                print("vac_prob below 0 - reset")
+                
+            for v in range(int(np.random.binomial(emp, vac_prob))):
+                vacs_temp.append(vac(occ.occupation_id, [], occ.wage, False))
+
+            empl += len(occ.list_of_employed) 
+            unemp += len(occ.list_of_unemployed)
+            n_ltue += sum(wrkr.longterm_unemp for wrkr in occ.list_of_unemployed)
+            t_demand += occ.target_demand
+
+        ### UPDATE INDICATOR RECORD
+        record = np.append(record, 
+                               np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand]]), 
+                               axis = 0)
+
+    print("Done after ", t + 1, " time steps.")
+
+    # clean_record = pd.DataFrame(record[delay:])
+    # clean_record.columns =['Time Step', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Target_Demand']
+    # clean_record['UER'] = clean_record['Unemployment']/clean_record['Workers']
+    # clean_record['VACRATE'] = clean_record['Vacancies']/clean_record['Target_Demand']
+    #data = clean_record[['Time Step', 'UER', 'VACRATE']]
+    data = {'UER': record[delay:,2]/record[delay:,3], 
+            'VACRATE': record[delay:,4]/record[delay:,6]}
+
+    #ltuer = (clean_record['LT Unemployed Persons']/clean_record['Workers']).mean(axis = 0)
+    #vac_rate = (clean_record['Vacancies']/clean_record['Target_Demand']).mean(axis = 0)
+    return data
+
+def pyabc_run_single(parameter):     
     res = run_single(**parameter)
     return res 
-
-parameter = {'mod_data': mod_data,
-          'net_temp': net_temp,
-          'vacs': vacs, 
-          'behav_spec': behav_spec,
-          'time_steps': 220,
-          'd_u': del_u,
-          'd_v': del_v,
-          'gamma': gamma,
-          'bus_cycle_len': 160,
-          'delay': 120}
 
 # Proposed priors for d_u and d_v taken from the separations and 
 # job openings rates modelled in the first few plots of this notebook
 # These priors can of course be more carefully selected calculating directly from those rates....next steps
-prior = pyabc.Distribution(d_u = pyabc.RV("uniform", 0.001, 0.1),
-                          d_v = pyabc.RV("uniform", 0.001, 0.1),
+prior = pyabc.Distribution(d_u = pyabc.RV("uniform", 0.001, 0.05),
+                          d_v = pyabc.RV("uniform", 0.001, 0.05),
                           gamma = pyabc.RV("uniform", 0.05, 0.2))
 
 # distance function jointly minimises distance between simulated 
 # mean of UER and vacancy rates to real-world UER and vacancy rates
 # def distance_mean(x, y):
-#     diff_uer = (x["UER"].mean(axis = 0)) - ((y["data"]["UER"]).mean(axis=0))
-#     diff_vac = (x["VACRATE"].mean(axis = 0)) - ((y["data"]["VACRATE"]).mean(axis=0))
-#     dist_mean = np.sqrt(diff_uer**2 + diff_vac**2)
+#     #diff_uer = (x["UER"].mean(axis = 0)) - ((y["UER"]).mean(axis=0))
+#     diff_vac = (x["VACRATE"].mean(axis = 0)) - ((y["VACRATE"]).mean(axis=0))
+#     #dist_mean = np.sqrt(diff_uer**2 + diff_vac**2)
+#     dist_mean = np.sqrt(diff_vac**2)
 #     return dist_mean
 
 def distance(x, y):
-    diff_uer = np.sum((x["UER"][0:100] - y["UER"])**2)
-    diff_vac = np.sum((x["VACRATE"][0:100] - y["VACRATE"])**2)
+    diff_uer = np.sum((x["UER"][0:120] - y["UER"])**2)
+    diff_vac = np.sum((x["VACRATE"][0:120] - y["VACRATE"])**2)
     dist = np.sqrt(diff_uer + diff_vac)
     return dist
 
-calib_sampler = pyabc.sampler.MulticoreEvalParallelSampler(n_procs = 50)
-abc = pyabc.ABCSMC(pyabc_run_single, prior, distance, population_size = 500, sampler = calib_sampler)
+# def distance_uer(x, y):
+#     diff_uer = np.sum((x["UER"][0:120] - y["UER"])**2)
+#     #diff_vac = np.sum((x["VACRATE"][0:120] - y["VACRATE"])**2)
+#     # dist = np.sqrt(diff_uer + diff_vac)
+#     dist = np.sqrt(diff_uer)
+#     return dist
+
+# def distance_vac(x, y):
+#     #diff_uer = np.sum((x["UER"][0:120] - y["UER"])**2)
+#     diff_vac = np.sum((x["VACRATE"][0:120] - y["VACRATE"])**2)
+#     # dist = np.sqrt(diff_uer + diff_vac)
+#     dist = np.sqrt(diff_vac)
+#     return dist
+
+
+calib_sampler = pyabc.sampler.MulticoreEvalParallelSampler(n_procs = 100)
+abc = pyabc.ABCSMC(pyabc_run_single, prior, distance, population_size = 200, sampler = calib_sampler)
 
 db_path = os.path.join(tempfile.gettempdir(), "test.db")
 
 # The following creates the "reference" values from the observed data - I pull the non-recession or expansion period from 2010-2019.
-observation = macro_observations.loc[(macro_observations['DATE'] >= '2010-01-01') & (macro_observations['DATE'] <= "2019-12-01")].reset_index()
-buffer = int((len(observation) - parameter['time_steps'])/2)
-obs_abbrev = (observation[buffer + (int(parameter['delay']/2)):(buffer + parameter['time_steps']) - int((parameter['delay']/2))]).reset_index()
-data = {'UER': np.array(obs_abbrev['UER']),
-        'VACRATE': np.array(obs_abbrev['VACRATE'])}
+observation = macro_observations.loc[(macro_observations['DATE'] >= '2006-12-01') & (macro_observations['DATE'] <= "2016-11-01")].reset_index()
+#buffer = int((len(observation) - parameter['time_steps'])/2)
+#obs_abbrev = (observation[buffer + (int(parameter['delay']/2)):(buffer + parameter['time_steps']) - int((parameter['delay']/2))]).reset_index()
+#
+data = {'UER': np.array(observation['UER']),
+        'VACRATE': np.array(observation['VACRATE'])}
 
 abc.new("sqlite:///" + db_path, data)
 
-history = abc.run(minimum_epsilon=0.2, max_nr_populations=10)
+history = abc.run(minimum_epsilon=0.2, max_nr_populations=4)
 
 print("Pyabc run finished.")
 
@@ -245,23 +380,28 @@ print("Pyabc run finished.")
 gt = {"d_u": jolts['SEPSRATE'].mean(axis = 0), "d_v": jolts['QUITSRATE'].mean(axis = 0), "gamma": 0.2}
 
 df, w = history.get_distribution()
-# scipy.describe(df['d_u'])
+gt = {"d_u": df['d_u'].mean(axis = 0), "d_v": np.sum(df['d_v']*w), "gamma": np.sum(df['gamma']*w)}
 
 plot_kde_matrix(
     df,
     w,
-    limits={"d_u": (0.001, 0.08), "d_v": (0.001, 0.08), "gamma": (0.04, 0.7)},
+    limits={"d_u": (0.001, 0.3), "d_v": (0.001, 0.3), "gamma": (0.04, 0.7)},
     refval=gt,
     refval_color='k',
 )
-
+# Not sure if the value to be extracted is the weighted mean of the outcome or simply the mean?
 sns.kdeplot(x = "d_u", y = "d_v", data = df, weights = w, cmap = "viridis", fill = True)
-#plt.axvline(x = sum(df['d_u']*w))
-#plt.axhline(y = sum(df['d_v']*w))
+plt.axvline(x = df['d_u'].mean(axis = 0))
+plt.axvline(x = np.sum(df['d_u']*w), color = 'red')
+plt.axhline(y = df['d_v'].mean(axis = 0))
+plt.axhline(y = np.sum(df['d_v']*w), color = 'red')
 plt.savefig(path + 'output/kde_plot.jpg', dpi = 300)
 
 sns.jointplot(x = "d_u", y = "d_v", kind = "kde", data = df, weights = w, cmap = "viridis_r")
-
+plt.axvline(x = df['d_u'].mean(axis = 0))
+plt.axvline(x = np.sum(df['d_u']*w), color = 'red')
+plt.axhline(y = df['d_v'].mean(axis = 0))
+plt.axhline(y = np.sum(df['d_v']*w), color = 'red')
 plt.title("KDE Plot")
 plt.savefig(path + 'output/joint_plot.jpg', dpi = 300)
 
@@ -331,21 +471,21 @@ plt.savefig(path + 'output/prior_post_selected_distributions_plot.jpg', dpi = 30
 # 
 # Below I pull the weighted mean of the posterior. Not sure if this is the correct way to pull the triangulated parameter estimate...? Indeed, the model run with these parameters does not look good and both look lower than represented in the heat/contour maps above. The model results with these parameters look bad both with respect to replicating a Beveridge curve as well as we did earlier with hand-selected estimates (and you'll see by the warnings that the delta_u is likely too high....again, I think that this is becuause of poor choice of arguments to the SMCABC algorithm above. In other words, not quite there...to be improved...but getting closer :) 
 
-d_u_hat = sum(df['d_u']*w)
+d_u_hat = np.sum(df['d_u']*w)
 print("d_u_hat: ", d_u_hat)
 
-d_v_hat = sum(df['d_v']*w)
+d_v_hat = np.sum(df['d_v']*w)
 print("d_v_hat: ", d_v_hat)
 
-gamma_hat = sum(df['gamma']*w)
-print("gam_hat: ", gamma_hat)
+gamma_hat = np.sum(df['gamma']*w)
+print("gamma_hat: ", gamma_hat)
 
 
 parameters = {'mod_data': mod_data, 
              'net_temp': net_temp,
               'vacs': vacs, 
               'behav_spec': False,
-              'time_steps': 220,
+              'time_steps': 400,
               'runs': 2,
               'd_u': d_u_hat,
               'd_v': d_v_hat,
@@ -366,11 +506,11 @@ sim_record_t.columns =['Sim', 'Time Step', 'Employment', 'Unemployment', 'Worker
 sim_record_f = pd.DataFrame(np.transpose(np.hstack(sim_record_f_all)))
 sim_record_f.columns =['Sim', 'Time Step', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Target_Demand']
 
-record1_t = sim_record_t[(sim_record_t['Sim'] == 0)].groupby(['Sim', 'Time Step']).sum().reset_index()
-record1_f = sim_record_f[(sim_record_f['Sim'] == 0)].groupby(['Sim', 'Time Step']).sum().reset_index()
+record1_t = sim_record_t[(sim_record_t['Sim'] == 0)].groupby(['Sim', 'Time Step']).sum().reset_index() #  
+record1_f = sim_record_f[(sim_record_f['Sim'] == 0)].groupby(['Sim', 'Time Step']).sum().reset_index() #  & (sim_record_t['Time Step'] >= 80)
 
-end_t = record1_t[(record1_t['Time Step'] == 220)]
-end_f = record1_f[(record1_f['Time Step'] == 220)]
+end_t = record1_t[(record1_t['Time Step'] == 280)]
+end_f = record1_f[(record1_f['Time Step'] == 280)]
 
 ue_vac_f = record1_f.loc[:,['Workers', 'Unemployment', 'Vacancies', 'Target_Demand']]
 ue_vac_f['UE Rate'] = ue_vac_f['Unemployment'] / ue_vac_f['Workers']
@@ -384,8 +524,8 @@ ue_vac_t = ue_vac_t[46:]
 
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 6))
-ue_vac_f = ue_vac_f[100:300]
-ue_vac_t = ue_vac_t[100:300]
+#ue_vac_f = ue_vac_f[40:]
+#ue_vac_t = ue_vac_t[40:]
 
 ax1.plot(ue_vac_f['UE Rate'], ue_vac_f['Vac Rate'])
 ax1.scatter(ue_vac_f['UE Rate'], ue_vac_f['Vac Rate'], c=ue_vac_f.index, s=100, lw=0)
@@ -404,6 +544,37 @@ fig.suptitle("USA Model Beveridge Curve", fontweight = 'bold')
 fig.tight_layout()
 
 plt.savefig(path + 'output/run_w_calib_params.jpg', dpi = 300)
+
+
+# Incorporating one set of simulated data
+ue_vac_f['PROV DATE'] = pd.date_range(start = "2005-12-01", periods = len(ue_vac_f), freq = "ME")
+ue_vac_f['FD_SIMUER'] = pd.Series(ue_vac_f['UE Rate']).diff()
+ue_vac_f['FD_SIMVACRATE'] = pd.Series(ue_vac_f['Vac Rate']).diff()
+
+ue_vac_t['PROV DATE'] = pd.date_range(start = "2005-12-01", periods = len(ue_vac_f), freq = "ME")
+ue_vac_t['FD_SIMUER'] = pd.Series(ue_vac_t['UE Rate']).diff()
+ue_vac_t['FD_SIMVACRATE'] = pd.Series(ue_vac_t['Vac Rate']).diff()
+
+
+# Non-recession period
+fig, ax = plt.subplots()
+macro_observations.plot.line(ax = ax, figsize = (8,5), x= 'DATE', y = 'UER', color = "blue", linestyle = "dotted")
+macro_observations.plot.line(ax = ax, figsize = (8,5), x= 'DATE', y = 'VACRATE', color = "red", linestyle = "dotted")
+recessions.plot.area(ax = ax, figsize = (8,5), x= 'DATE', color = "grey", alpha = 0.2)
+ue_vac_f.plot.line(ax = ax, x = 'PROV DATE', y = 'UE Rate', color = "blue", label = "UER (Sim. Non-behav.)")
+ue_vac_f.plot.line(ax = ax, x = 'PROV DATE', y = 'Vac Rate', color = "red", label = "VACRATE (Sim. Non-behav)")
+ue_vac_t.plot.line(ax = ax, x = 'PROV DATE', y = 'UE Rate', color = "skyblue", label = "UER (Sim. Behav.)")
+ue_vac_t.plot.line(ax = ax, x = 'PROV DATE', y = 'Vac Rate', color = "lightcoral", label = "VACRATE (Sim. Behav.)")
+plt.xlim('2005-12-01', "2020-01-01")
+plt.ylim(0, 0.2)
+
+# Add title and axis labels
+plt.title('Monthly US Unemployment Rate (Seasonally Adjusted)')
+plt.xlabel('Time')
+plt.ylabel('Monthly UER')
+plt.xticks(rotation=45)
+
+plt.savefig(path + 'output/run_w_calib_params_real_rates.jpg', dpi = 300)
 
 # ## Save results for import into model run
 
