@@ -12,9 +12,7 @@ path = "~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/"
 
 # Testing import works
 def test_fun():
-    print('hello - new import works!')
-    
-    
+    print('Function import successful')
     
 ## Defining functions
 # Ranking utility/decision-making function
@@ -202,136 +200,127 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
     
     
     
-# ####################
-# # Model Run ########
-# ####################
-# def run_single(mod_data, 
-#                net_temp, 
-#                vacs, 
-#                behav_spec, 
-#                time_steps, 
-#                d_u, 
-#                d_v,
-#                gamma,
-#                bus_cycle_len,
-#                delay):
-#     #net_temp, vacs = initialise(len(mod_data['A']), mod_data['employment'].to_numpy(), mod_data['unemployment'].to_numpy(), mod_data['vacancies'].to_numpy(), mod_data['demand_target'].to_numpy(), mod_data['A'], mod_data['wages'].to_numpy(), mod_data['gend_share'].to_numpy())
-#     #behav_spec = False
-#     #time_steps = 30
-#     #gamma = 0.1
-#     #d_v = 0.009
+####################
+# Model Run ########
+####################
+def run_single_local(mod_data, 
+               net_temp, 
+               vacs, 
+               behav_spec, 
+               time_steps, 
+               d_u, 
+               d_v,
+               gamma,
+               bus_cycle_len,
+               delay, 
+               bus_amp):
+    #net_temp, vacs = initialise(len(mod_data['A']), mod_data['employment'].to_numpy(), mod_data['unemployment'].to_numpy(), mod_data['vacancies'].to_numpy(), mod_data['demand_target'].to_numpy(), mod_data['A'], mod_data['wages'].to_numpy(), mod_data['gend_share'].to_numpy())
+    #behav_spec = False
+    #time_steps = 30
+    #gamma = 0.1
+    #d_v = 0.009
     
-#     """ Runs the model once
-#     Argsuments:
-#        behav_spec: whether or not to run the behavioural model
-#        data: data required of initialise function  
-#        time_steps: Number of time steps for single model run
-#        d_u: parameter input to separation probability
-#        d_v: parameter input to vacancy opening probability
+    """ Runs the model once
+    Argsuments:
+       behav_spec: whether or not to run the behavioural model
+       data: data required of initialise function  
+       time_steps: Number of time steps for single model run
+       d_u: parameter input to separation probability
+       d_v: parameter input to vacancy opening probability
 
-#     Returns:
-#        dataframe of model run results
-#     """
-#     # Records variables of interest for plotting
-#     # Initialise deepcopy occupational mobility network
-#     record = [np.sum(np.concatenate((np.zeros((464, 1)), 
-#                                     mod_data['employment'].to_numpy(), 
-#                                     mod_data['unemployment'].to_numpy(), 
-#                                     mod_data['employment'].to_numpy() + mod_data['unemployment'].to_numpy(),
-#                                     mod_data['vacancies'].to_numpy(), 
-#                                     np.zeros((464, 1)),
-#                                     mod_data['demand_target'].to_numpy()), axis = 1), 
-#                                     axis = 0)]
+    Returns:
+       dataframe of model run results
+    """
+    # Records variables of interest for plotting
+    # Initialise deepcopy occupational mobility network
+    record = [np.sum(np.concatenate((np.zeros((464, 1)), 
+                                    mod_data['employment'].to_numpy(), 
+                                    mod_data['unemployment'].to_numpy(), 
+                                    mod_data['employment'].to_numpy() + mod_data['unemployment'].to_numpy(),
+                                    mod_data['vacancies'].to_numpy(), 
+                                    np.zeros((464, 1)),
+                                    mod_data['demand_target'].to_numpy()), axis = 1), 
+                                    axis = 0)]
     
-#     #print(parameter['vacs'])
-#     vacs_temp = deepcopy(vacs)
-#     net = deepcopy(net_temp)
-#     for t in range(time_steps):
-#         # Ensure number of workers in economy has not changed
-#         #tic = time.process_time()
-#         for occ in net:
-#             ### APPLICATIONS
-#             # Questions to verify:
-#             # - CANNOT be fired and apply in same time step ie. time_unemployed > 0
-#             # - CAN be rejected and apply in the same time step - no protected attribute
-#             # isolate list of vacancies in economy that are relevant to the occupation
-#             # - avoids selecting in each search_and_apply application
-#             r_vacs = [vac for vac in vacs_temp if occ.list_of_neigh_bool[vac.occupation_id]]                
-#             for u in occ.list_of_unemployed:
-#                 u.search_and_apply(net, r_vacs, behav_spec)
+    #print(parameter['vacs'])
+    vacs_temp = deepcopy(vacs)
+    net = deepcopy(net_temp)
+    for t in range(time_steps):
+        # Ensure number of workers in economy has not changed
+        #tic = time.process_time()
+        for occ in net:
+            ### APPLICATIONS
+            # Questions to verify:
+            # - CANNOT be fired and apply in same time step ie. time_unemployed > 0
+            # - CAN be rejected and apply in the same time step - no protected attribute
+            # isolate list of vacancies in economy that are relevant to the occupation
+            # - avoids selecting in each search_and_apply application
+            r_vacs = [vac for vac in vacs_temp if occ.list_of_neigh_bool[vac.occupation_id]]                
+            for u in occ.list_of_unemployed:
+                u.search_and_apply(net, r_vacs, behav_spec)
 
-#             ### SEPARATIONS
-#             occ.separate_workers(d_u, gamma)
+            ### SEPARATIONS
+            occ.separate_workers(d_u, gamma)
 
-#         ### HIRING
-#         # Ordering of hiring randomised to ensure list order does not matter in filling vacancies...
-#         # Possibly still introduces some bias...this seems to be where the "multiple offer" challenge Maria mentioned comes from
-#         # ....might be better to do this using an unordered set?
-#         for v_open in sorted(vacs_temp,key=lambda _: random.random()):
-#             # Removes any applicants that have already been hired in another vacancy
-#             v_open.applicants[:] = [app for app in v_open.applicants if not(app.hired)]
-#             if len(v_open.applicants) > 0:
-#                 v_open.hire(net)
-#                 v_open.filled = True
-#                 #vacs.remove(v_open)
-#                 assert(len(v_open.applicants) == 0)
-#             else:
-#                 pass
+        ### HIRING
+        # Ordering of hiring randomised to ensure list order does not matter in filling vacancies...
+        # Possibly still introduces some bias...this seems to be where the "multiple offer" challenge Maria mentioned comes from
+        # ....might be better to do this using an unordered set?
+        for v_open in sorted(vacs_temp,key=lambda _: random.random()):
+            # Removes any applicants that have already been hired in another vacancy
+            v_open.applicants[:] = [app for app in v_open.applicants if not(app.hired)]
+            if len(v_open.applicants) > 0:
+                v_open.hire(net)
+                v_open.filled = True
+                #vacs.remove(v_open)
+                assert(len(v_open.applicants) == 0)
+            else:
+                pass
 
-#         vacs_temp = [v for v in vacs_temp if not(v.filled)] 
+        vacs_temp = [v for v in vacs_temp if not(v.filled)] 
 
-#         # Reset counters for record in time t
-#         empl = 0 
-#         unemp = 0
-#         n_ltue = 0
-#         t_demand = 0
+        # Reset counters for record in time t
+        empl = 0 
+        unemp = 0
+        n_ltue = 0
+        t_demand = 0
 
-#         ### OPEN VACANCIES
-#         # Update vacancies after all shifts have taken place
-#         # Could consider making this a function of the class itself?
-#         for occ in net:
-#             # Update time_unemployed and long-term unemployed status of unemployed workers
-#             # Remove protected "hired" attribute of employed workers
-#             occ.update_workers()
-#             emp = len(occ.list_of_employed)
-#             occ.current_demand = bus_cycle_demand(len([v_open for v_open in vacs_temp if v_open.occupation_id == occ.occupation_id]) + emp, t, 0.02, bus_cycle_len)
-#             vac_prob = d_v + ((1 - d_v) * (gamma * max(0, occ.target_demand - occ.current_demand))) / (emp + 1)
-#             # Included as a warning - particularly relevant in parameter inference when sampling from prior
-#             if vac_prob > 1:
-#                 vac_prob = 0.9
-#                 print("vac_prob above 1 - reset")
-#             elif vac_prob < 0:
-#                 vac_prob = 0.1
-#                 print("vac_prob below 0 - reset")
-                
-#             for v in range(int(np.random.binomial(emp, vac_prob))):
-#                 vacs_temp.append(vac(occ.occupation_id, [], occ.wage, False))
+        ### OPEN VACANCIES
+        # Update vacancies after all shifts have taken place
+        # Could consider making this a function of the class itself?
+        for occ in net:
+            # Update time_unemployed and long-term unemployed status of unemployed workers
+            # Remove protected "hired" attribute of employed workers
+            occ.update_workers()
+            emp = len(occ.list_of_employed)
+            occ.current_demand = bus_cycle_demand(len([v_open for v_open in vacs_temp if v_open.occupation_id == occ.occupation_id]) + emp, t, bus_amp, bus_cycle_len)
+            vac_prob = d_v + ((1 - d_v) * (gamma * max(0, occ.target_demand - occ.current_demand))) / (emp + 1)
+            vacs_create = emp*int(vac_prob) + int(np.random.binomial(emp, vac_prob%1))
+            for v in range(vacs_create):
+                vacs_temp.append(vac(occ.occupation_id, [], occ.wage, False))
 
-#             empl += len(occ.list_of_employed) 
-#             unemp += len(occ.list_of_unemployed)
-#             n_ltue += sum(wrkr.longterm_unemp for wrkr in occ.list_of_unemployed)
-#             t_demand += occ.target_demand
+            empl += len(occ.list_of_employed) 
+            unemp += len(occ.list_of_unemployed)
+            n_ltue += sum(wrkr.longterm_unemp for wrkr in occ.list_of_unemployed)
+            t_demand += occ.target_demand
 
-#         ### UPDATE INDICATOR RECORD
-#         record = np.append(record, 
-#                                np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand]]), 
-#                                axis = 0)
-
-#     print("Done after ", t + 1, " time steps.")
-
-#     # clean_record = pd.DataFrame(record[delay:])
-#     # clean_record.columns =['Time Step', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Target_Demand']
-#     # clean_record['UER'] = clean_record['Unemployment']/clean_record['Workers']
-#     # clean_record['VACRATE'] = clean_record['Vacancies']/clean_record['Target_Demand']
-#     #data = clean_record[['Time Step', 'UER', 'VACRATE']]
-#     data = {'UER': record[delay:,2]/record[delay:,3], 
-#             'VACRATE': record[delay:,4]/record[delay:,6]}
-
-#     #ltuer = (clean_record['LT Unemployed Persons']/clean_record['Workers']).mean(axis = 0)
-#     #vac_rate = (clean_record['Vacancies']/clean_record['Target_Demand']).mean(axis = 0)
-#     return data
+        ### UPDATE INDICATOR RECORD
+        record = np.append(record, 
+                               np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand]]), 
+                               axis = 0)
 
 
+    # clean_record = pd.DataFrame(record[delay:])
+    # clean_record.columns =['Time Step', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Target_Demand']
+    # clean_record['UER'] = clean_record['Unemployment']/clean_record['Workers']
+    # clean_record['VACRATE'] = clean_record['Vacancies']/clean_record['Target_Demand']
+    #data = clean_record[['Time Step', 'UER', 'VACRATE']]
+    data = {'UER': record[delay:,2]/record[delay:,3], 
+            'VACRATE': record[delay:,4]/record[delay:,6]}
+
+    #ltuer = (clean_record['LT Unemployed Persons']/clean_record['Workers']).mean(axis = 0)
+    #vac_rate = (clean_record['Vacancies']/clean_record['Target_Demand']).mean(axis = 0)
+    return data
 
 #########################################
 # Model Run with Simulation Spec ########
@@ -360,7 +349,6 @@ def run_sim(mod_data, net_temp, vacs, behav_spec, time_steps, runs, d_u, d_v, ga
                                  np.zeros((464, 1)),
                                  mod_data['demand_target'].to_numpy()), axis = 1)
     for run in range(runs):
-        print("Run: ", run)
         # Initialise deepcopy occupational mobility network
         record = deepcopy(record_single)
         net = deepcopy(net_temp)
@@ -424,16 +412,8 @@ def run_sim(mod_data, net_temp, vacs, behav_spec, time_steps, runs, d_u, d_v, ga
                 emp = len(occ.list_of_employed)
                 occ.current_demand = bus_cycle_demand(len([v_open for v_open in vacs if v_open.occupation_id == occ.occupation_id]) + emp, t, bus_amp, bus_cycle_len)
                 vac_prob = d_v + ((1 - d_v) * (gamma * max(0, occ.target_demand - occ.current_demand))) / (emp + 1)
-                if vac_prob > 1:
-                    vac_prob = 0.9
-                    print("vac_prob above 1 - reset")
-                elif vac_prob < 0:
-                    vac_prob = 0.1
-                    print("vac_prob below 0 - reset")
-                if vac_prob > 1 or vac_prob < 0:
-                    print(vac_prob)
-                    print(emp)
-                for v in range(int(np.random.binomial(emp, vac_prob))):
+                vacs_create = emp*int(vac_prob) + int(np.random.binomial(emp, vac_prob%1))
+                for v in range(vacs_create):
                     vacs.append(vac(occ.occupation_id, [], occ.wage, False))
                     
                 empl += len(occ.list_of_employed) 
@@ -445,17 +425,13 @@ def run_sim(mod_data, net_temp, vacs, behav_spec, time_steps, runs, d_u, d_v, ga
             record = np.append(record, 
                                 np.array([[run, t+1, empl, unemp, empl + unemp, len(vacs), n_ltue, t_demand]]), 
                                 axis = 0)
-
-        print("Done after ", t + 1, " time steps.")
         if run == 0:
             record_all = record
             net_list = [net]
         else:
             record_all = np.dstack((record_all, record))
             net_list.append(net)
-        print(record_all.shape)
         
-    print("Done after ", run + 1, " runs.")
     return record_all, net, net_list
 
 
