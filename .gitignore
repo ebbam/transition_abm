@@ -178,3 +178,4 @@ output/usa/sim_100_behav_false.csv
 output/usa/sim_100_behav_true.csv
 data/macro_vars/CPS_LTUER/cps_00005.dat
 data/macro_vars/CPS_LTUER/cps_00005.dat.gz
+.Rhistory
