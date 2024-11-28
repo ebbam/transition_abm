@@ -146,18 +146,17 @@ grid.arrange(p1, p2, p3, layout_matrix = rbind(
 
 ## Current Population Survey - 2018 & 2022 Supplement - Raw Data
 
-It turns out that the 2018 supplement was also run in 2022, giving us two sets of years to compare (including pre- and post-Covid). The below looks at the [raw data](https://www.census.gov/data/datasets/time-series/demo/cps/cps-supp_cps-repwgt/cps-unemployment.2022.html#list-tab-1269561637) that underlies the plotting in the previous section, plus the additional data from 2022. Below find a preliminary scatter plot of applications sent versus unemployment duration. Each individual is asked how many applications they sent in the last two months (two-month periods are indicated by the grey gridlines, for reference). This feels like a promising dataset to me - I think with more careful use of this data this we could approach some more "rigorous" behavioral parameters than simply drawing from the above summary values as calculated by the BLS.
+It turns out that the 2018 supplement was also run in 2022, giving us two sets of years to compare (including pre- and post-Covid). The below looks at the [raw data](https://www.census.gov/data/datasets/time-series/demo/cps/cps-supp_cps-repwgt/cps-unemployment.2022.html#list-tab-1269561637) that underlies the plotting in the previous section, plus the additional data from 2022. Below find a preliminary scatter plot of applications sent versus unemployment duration. Each individual is asked how many applications they sent in the last two months (two-month periods are indicated by the grey gridlines, for reference). This feels like a promising dataset to me - I think with more careful use of this data this we could approach some more "rigorous" behavioral parameters than simply drawing from the above summary values as calculated by the BLS. This does NOT include data in on the job search. SCE does.
 
 
 
 ```{r, echo=FALSE}
-
 source(here('data/behav_params/CPS_BLS_Supplement_18_22/cps_bls_supp_cleaning.R'))
 
-bea_2022 %>% 
-  select(HRHHID, PEA1, PRUNEDUR) %>% 
+bea_temp <- bea_2022 %>% 
+  select(HRHHID, PEA1, PRUNEDUR, HEFAMINC) %>% 
   mutate(year = 2022) %>% 
-  rbind(., select(mutate(bea_2018, year = 2018), HRHHID, PEA1, PRUNEDUR, year)) %>% 
+  rbind(., select(mutate(bea_2018, year = 2018), HRHHID, PEA1, PRUNEDUR, HEFAMINC, year)) %>% 
   mutate(year = as.factor(year)) %>% 
   filter(PEA1 >= 0 & PRUNEDUR > 0) %>% 
   mutate(PEA1 = factor(PEA1, levels = c(0,1,2,3,4), 
@@ -165,18 +164,59 @@ bea_2022 %>%
                                   "1 to 10",
                                   "11 to 20",
                                   "21 to 80",
-                                  "81 or more"))) %>% 
-  ggplot(aes(x= PRUNEDUR, y = PEA1)) + 
-  geom_jitter(aes(colour = year)) +
+                                  "81 or more")),
+         PRUNEDUR_brackets = case_when(PRUNEDUR < 5 ~ "<5 weeks",
+                                       PRUNEDUR >= 5 & PRUNEDUR <= 14 ~ "05-14 weeks",
+                                       PRUNEDUR > 14 & PRUNEDUR <= 26 ~ "15-26 weeks", 
+                                       PRUNEDUR > 26 ~ "27 weeks+")) %>% 
+  group_by(year, PRUNEDUR_brackets) %>% 
+  mutate(mean_inc = mean(HEFAMINC)) %>% 
+  ungroup
+
+bea_temp %>% 
+  ggplot() + 
+  geom_jitter(aes(x= PRUNEDUR, y = PEA1, colour = year)) +
   labs(x = "Unemployment Duration (Weeks)", y = "Number of applications sent in the last two months",
        title = "Applications sent vs. Time Spent Unemployed: 2022 & 2018",
        subtitle = "Grey gridlines align with 2-month/8-week intervals. N = 2,896 (2018) & 1,677 (2022)") +
-   theme(panel.grid.minor = element_line(colour="grey", size=0.5, linetype = "dashed"),
+   theme(panel.grid.minor = element_line(colour="grey", linetype = "dashed"),
          panel.grid.major = element_blank()) +
  scale_x_continuous(minor_breaks = seq(0, 120, 8)) +
   scale_color_manual(values = c("darkblue", "steelblue"))
 
+bea_temp %>% 
+  ggplot() +
+  geom_density(aes(x = HEFAMINC, fill = PRUNEDUR_brackets), alpha = 0.5) +
+  labs(x = "Income Bracket", y = "Count",
+       title = "Histogram of Income by Unemployment Duration")
 
+bea_temp %>% 
+  ggplot() +
+  geom_violin(aes(x = PRUNEDUR_brackets, y = HEFAMINC, fill = PRUNEDUR_brackets), alpha = 0.5) +
+  labs(x = "Unemployment Duration", y = "Income Bracket",
+       title = "Distribution of Family Income by Unemployment Duration")
+
+
+income_brackets <- 
+  c("1 LESS THAN $5,000",
+"2 5,000 TO 7,499",
+"3 7,500 TO 9,999",
+"4 10,000 TO 12,499",
+"5 12,500 TO 14,999",
+"6 15,000 TO 19,999",
+"7 20,000 TO 24,999",
+"8 25,000 TO 29,999",
+"9 30,000 TO 34,999",
+"10 35,000 TO 39,999",
+"11 40,000 TO 49,999",
+"12 50,000 TO 59,999",
+"13 60,000 TO 74,999",
+"14 75,000 TO 99,999",
+"15 100,000 TO 149,999",
+"16 150,000 OR MORE")
+
+
+income_brackets %>% kable()
 ```
 
 ## Survey on Consumer Expectations - Job Search Supplement
@@ -184,6 +224,7 @@ bea_2022 %>%
 The Federal Reserve Bank of New York compiles the nationally representative Survey on Consumer Expectations annually in October. Since 2013, they have run a Job Search Supplement which includes questions on the time spent searching for work, and unemployment duration. The job search supplement has plenty more questions that we can look at incorporating, listed [here](https://www.newyorkfed.org/medialibrary/Interactives/sce/sce/downloads/data/SCE-Labor-Market-Survey-Data-Codebook.pdf?sc_lang=en). For now, I plot the relationship between time spent searching and time out of work. The table below also indicates the number of people unemployed in the dataset and the number of people unemployed and searching. 
 
 ```{r, echo=FALSE, results = 'asis'}
+
 source(here('data/behav_params/SCE Job Search Survey/sce_job_search_cleaning.R'))
 
 # Extract question types
@@ -270,6 +311,22 @@ sce_job_search_free %>%
 
 ```
 
+
+### On the job search
+
+```{r, echo=FALSE}
+
+sce_job_search_emp %>% 
+  ggplot() +
+  geom_density(aes(x = l7_days_spent_searching, fill = as.factor(l1a_text)), alpha = 0.5) +
+  labs(x = "Days spent searching", y = "Count",
+       title = "Histogram of Days Spent Searching by Unemployment Status")
+
+
+```
+
+
+
 ## American Time Use Survey
 
 The American Time Use Survey gives no indication of time spent in unemployment. It shows how much time is spent searching but does not link to time spent in unemployment. Therefore, I prioritised the datasets above. [Krueger & Mueller 2010](https://www.sciencedirect.com/science/article/abs/pii/S0047272709001625) impute duration spent unemployed from teh ATUS in the following way which could be worth considering.
@@ -285,4 +342,17 @@ and the ATUS interviews. We do not show the weekly LOWESS plot for 13 weeks or
 less, but simply report the average time allocated to search, as the imputed unemployment
 duration are quite noisy for those who become unemployed after their last CPS
 interview."
+
+## Occupational Restructuring
+
+```{r}
+
+#read.xls(here("data/macro_vars/OEWS/")
+
+
+```
+
+
+
+
 
