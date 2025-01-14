@@ -23,7 +23,10 @@ library(gridExtra)
 library(kableExtra)
 library(knitr)
 library(pdftools)
+library(haven)
+library(lubridate)
 library(vctrs)
+library(gets)
 
 ```
 
@@ -322,9 +325,119 @@ sce_job_search_emp %>%
   labs(x = "Days spent searching", y = "Count",
        title = "Histogram of Days Spent Searching by Unemployment Status")
 
+```
+
+# Determinants of job-finding:
+- Dynamic selection (heterogeneity of job seekers - fitness & skills match for the current labour market)
+- Duration dependence (job-finding probability decreases over time spent unemployed)
+- Search effort (individuals can exert greater search effort to counteract duration dependence - generally exhibits a countercyclical behaviour - job search effort increases as the economy recedes)
+
+
+## Mueller et al. Job Seekers' Perceptions and Employment Prospects: Heterogeneity, Duration Dependence and Bias
+
+[Mueller et al: Job Seekers' Perceptions and Employment Prospects](https://www.aeaweb.org/articles?id=10.1257/aer.20190808)
+
+```{r, echo = FALSE}
+
+
+
+
 
 ```
 
+
+## Kroft et al. Long-Term Unemployment and the Great Recession: The Role of Composition, Duration Dependence, and Nonparticipation
+[Kroft et al. Long-Term Unemployment and the Great Recession](https://www.jstor.org/stable/26588430)
+
+```{r, echo = FALSE}
+
+```
+
+
+## Mukoyama et al. Job Search and the Business Cycle
+
+[Mukoyama: Job Search Over the Business Cycle](https://www.aeaweb.org/articles?id=10.1257/mac.20160202)
+
+```{r, echo = FALSE}
+
+s_theta_df <- read.delim(here("data/behav_params/Mukoyama_Replication/programs/Figures/s_theta.m"), sep = ",") %>% 
+  tibble() %>%
+  rename(s_theta = 1) %>% 
+  mutate(s_theta = as.numeric(s_theta)) %>% 
+  filter(!is.na(s_theta))
+
+ggplot() +
+  geom_line(data = s_theta_df, aes(x = as.numeric(row.names(s_theta_df)), y = s_theta))
+
+#cps <- read_dta(here("data/behav_params/Mukoyama_Replication/final_data/full_CPS_data.dta"))
+
+cps_minutes <- read.csv(here("data/behav_params/Mukoyama_Replication/int_data/CPS/FigureA4_data.csv")) %>% 
+  tibble() %>% 
+  mutate(date = ym(paste(year, month, sep = "-"))) 
+
+cps_minutes %>% 
+  ggplot()+
+  geom_line(aes(x = date, y = time_create_method), color = "blue") +
+  geom_line(aes(x = date, y = time_create), color = "red") +
+  labs(x = "Date", y = "Average minutes searching per day (intensive margin)", title = "Search Effort: Intensive Margin")
+  theme_minimal()
+
+library(mFilter)
+library(zoo)
+
+realgdp <- read.csv(here('data/macro_vars/collated_macro_observations.csv')) %>% select(DATE, REALGDP) %>% 
+  tibble() %>% 
+  filter(!is.na(REALGDP)) %>% 
+  mutate(date = ymd(DATE)) %>% 
+  left_join(cps_minutes,., by = "date") %>% 
+  mutate(REALGDPint = na.approx(REALGDP, na.rm = FALSE)) %>% 
+  fill(REALGDPint, .direction = "down") %>% 
+  mutate(logrealgdp = log(REALGDPint),
+         gdp_growth = logrealgdp - dplyr::lag(logrealgdp, 1))
+
+
+hpf <- hpfilter(realgdp$logrealgdp, freq = 1500)
+realgdp$logrealgdpcycle = hpf[['cycle']]
+#realgdp$logrealgdptrend = hpf[['trend']]
+
+realgdp_gets <- realgdp %>% 
+  mutate(l1_gdp_growth = lag(gdp_growth, 1),
+         l2_gdp_growth = lag(gdp_growth, 2),
+         l3_gdp_growth = lag(gdp_growth, 3),
+         l4_gdp_growth = lag(gdp_growth, 4),
+         l5_gdp_growth = lag(gdp_growth, 5),
+         l6_gdp_growth = lag(gdp_growth, 6),
+         l7_gdp_growth = lag(gdp_growth, 7),
+         l8_gdp_growth = lag(gdp_growth, 8),
+         l9_gdp_growth = lag(gdp_growth, 9),
+         l10_gdp_growth = lag(gdp_growth, 10),
+         l11_gdp_growth = lag(gdp_growth, 11),
+         l12_gdp_growth = lag(gdp_growth, 12),
+         l13_gdp_growth = lag(gdp_growth, 13))
+
+```
+
+
+```{r, echo = FALSE}
+
+realgdp %>% 
+  ggplot() +
+  geom_line(aes(x = date, y = time_create_method)) +
+  geom_line(aes(x = date, y = (logrealgdpcycle*1000)+30), color = "blue") +
+  scale_y_continuous(sec.axis = sec_axis(~ (./1000)))
+
+mean_mod <- arx(realgdp_gets$time_create_method, 
+              # Question: includes 12 AR terms to account for experience in a year
+              #ar = 1:12, 
+              mxreg = as.matrix(select(realgdp_gets, contains("gdp_growth"))))
+
+gets_mod <- getsm(mean_mod, ar.LjungB = NULL)
+
+# Statistical significance disappears when incorporating additional lags 
+lm(time_create_method~gdp_growth + l1_gdp_growth + l2_gdp_growth + l3_gdp_growth + l4_gdp_growth, realgdp_gets) %>% 
+  summary
+  
+```
 
 
 ## American Time Use Survey
@@ -351,6 +464,7 @@ interview."
 
 
 ```
+
 
 
 
