@@ -1,3 +1,9 @@
+## Mueller et al. Job Seekers' Perceptions and Employment Prospects: Heterogeneity, Duration Dependence and Bias
+# [Mueller et al: Job Seekers' Perceptions and Employment Prospects](https://www.aeaweb.org/articles?id=10.1257/aer.20190808)
+# The following reproduces the empirical analysis of Mueller et al. precisely
+# mueller_repl_analysis_extended_samples.R reproduces with additional samples
+
+
 # Clear the environment
 rm(list = ls())
 
