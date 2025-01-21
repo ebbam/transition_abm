@@ -10,8 +10,7 @@ library(httr)
 raw_CPS <- here("data/behav_params/Mukoyama_Replication/mukoyama_all/raw_data/CPS")
 
 ## Download files for additional years
-#x <- 201501
-x <- 201803
+x <- 201501
 options(timeout=360)
 while (x <= 202411) {
   print(x)
