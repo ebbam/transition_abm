@@ -180,7 +180,11 @@ data/macro_vars/CPS_LTUER/cps_00005.dat
 data/macro_vars/CPS_LTUER/cps_00005.dat.gz
 .Rhistory
 /data/behav_params/Mueller_Replication/120501-V1
-/data/behav_params/Mukoyama_Replication/mukoyama_all
+/data/behav_params/Mukoyama_Replication/mukoyama_all/Figures
+/data/behav_params/Mukoyama_Replication/mukoyama_all/final_data
+/data/behav_params/Mukoyama_Replication/mukoyama_all/int_data
+/data/behav_params/Mukoyama_Replication/mukoyama_all/raw_data
+/data/behav_params/Mukoyama_Replication/mukoyama_all/Tables
 /data/behav_params/Kroft_Replication/13299data
 data/behav_params/Mueller_Replication/120501-V1.zip
 /data/behav_params/behav_params_overview_cache
