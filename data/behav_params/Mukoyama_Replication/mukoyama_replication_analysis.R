@@ -281,6 +281,7 @@ fig3b <- ggplot() +
   labs(x = "Date", y = "Intensive Margin")
 fig3b <- add_recession(fig3b)
 
+
 print(fig3a + fig3b + plot_annotation(
   "Figure 3. The Time Series of the Extensive Margin (U/(U + N )) ( panel A)\n and the Intensive Margin ( panel B), \nMeasured by the Average Minutes of Search per Day for Unemployed Workers",
 caption = "Notes: Panel A plots the monthly ratio of the number of unemployed (U) to the total number of unemployed (U + N ) in the CPS from 1994–2014. \nPanel B plots the average minutes of search per day, constructed as described in the text. Each observation is weighted by its CPS sample weight.",
