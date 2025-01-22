@@ -59,32 +59,35 @@ print(p)
 ################################################################################
 
 if(first){
+  add_years <- tibble()
+  for(i in 2015:2024){
+    data <- readRDS(here(paste0(base, "final_data/R_final/cps_data_no_time_", as.character(i), ".rds"))) %>% 
+      group_by(year, month, searchers) %>%
+      mutate(num_search = if_else(searchers == 1, sum(newwgt, na.rm = TRUE), NA_real_)) %>%
+      ungroup() %>%
+      group_by(year, month, nonsearchers) %>%
+      mutate(num_nonsearch = if_else(nonsearchers == 1, sum(newwgt, na.rm = TRUE), NA_real_)) %>%
+      ungroup() %>%
+      group_by(year, month, unemp) %>%
+      mutate(num_unemp = if_else(unemp == 1, sum(newwgt, na.rm = TRUE), NA_real_)) %>%
+      ungroup() %>%
+      group_by(year, month, emp) %>%
+      mutate(num_emp = if_else(emp == 1, sum(newwgt, na.rm = TRUE), NA_real_)) %>%
+      ungroup() %>%
+      group_by(year, month, nonpart) %>%
+      mutate(num_nonpart = if_else(nonpart == 1, sum(newwgt, na.rm = TRUE), NA_real_)) %>%
+      ungroup() %>% 
+      select(year, month, num_search, num_nonsearch, num_unemp, num_nonpart, num_emp) # Eventually also numsearch, newwgt,time_create, newwgt
+    
+    add_years <- rbind(add_years, data)
+  }
   # Load the CPS data
   #ORIGINAL:data_fig3 <- readRDS(paste0(base, "final_data/R_final/full_CPS_data.RDS"))
-  #data_fig3 <- cps_data
   
-
   data_fig3 <- readRDS(here(base, "final_data/R_final/temp_full_CPS_data_before_new_years.rds"))
-  add_years <- cps_data
-  missing_names <- setdiff(names(data_fig3), names(add_years))
-  data_fig3_full <- add_years %>% 
-    mutate("PRDTIND1" = NA,
-           "PRDTOCC1" = NA,  
-           "ernhr"      = NA,
-           "ernwk"      = NA,
-           "serial"     = NA,
-           "recnum"     = NA,
-           "occdt"      = NA,
-           "ind"        = NA,
-           "whenlj"     = NA,
-           "dwwant"     = NA,
-           "occ_pre02" = NA,
-           "soc"  = NA) %>% 
-    select(all_of(names(data_fig3))) %>% 
-    rbind(data_fig3, .)
   
   # Calculate weighted sums for different groups
-  data_fig3 <- data_fig3_full %>%
+  data_fig3 <- data_fig3 %>%
     group_by(year, month, searchers) %>%
     mutate(num_search = if_else(searchers == 1, sum(newwgt, na.rm = TRUE), NA_real_)) %>%
     ungroup() %>%
@@ -99,14 +102,15 @@ if(first){
     ungroup() %>%
     group_by(year, month, nonpart) %>%
     mutate(num_nonpart = if_else(nonpart == 1, sum(newwgt, na.rm = TRUE), NA_real_)) %>%
-    ungroup()
+    ungroup() %>% 
+    select(year, month, num_search, num_nonsearch, num_unemp, num_nonpart, num_emp) %>% 
+    rbind(add_years)
   
   # Collapse the data by year and month
   collapsed_data_3a <- data_fig3 %>%
     group_by(year, month) %>%
     summarise(across(c(num_search, num_nonsearch, num_unemp, num_nonpart, num_emp), ~mean(., na.rm = TRUE))) %>%
-    ungroup() %>% 
-    select(year, month, num_search, num_nonsearch, num_unemp, num_nonpart, num_emp)
+    ungroup() 
   
   # Seasonal adjustment using regression
   # Function to seasonally adjust a variable
@@ -132,7 +136,7 @@ if(first){
     collapsed_data_3a_adj <- seasonal_adjust(collapsed_data_3a_adj, var)
   }
   
-  write.csv(collapsed_data_3a_adj, here(paste0(base, "final_data/R_final/Figure3a_data.csv")))
+  write.csv(collapsed_data_3a_adj, here(paste0(base, "final_data/R_final/Figure3a_data_extended.csv")))
 
 }
 
@@ -183,10 +187,10 @@ if(first){
 # Load data (update file paths as needed)
 fig2a_data <- read.csv(paste0(base, "int_data/ATUS/Fig2a_data.csv")) 
 fig2b_data <- read.csv(paste0(base, "int_data/ATUS/Fig2b_data.csv")) 
-figure3a_data <-read_csv(paste0(base, "final_data/R_final/Figure3a_data.csv"))[-1] #read_csv(paste0(base, "int_data/CPS/Figure3a_data.csv")) # collapsed_data_3a_adj <- read.csv(here(paste0(base, "final_data/R_final/Figure3a_data.csv")))
-figure3b_data <- read_csv(paste0(base, "final_data/R_final/Figure3b_data.csv"))[-1] #read.csv(paste0(base, "int_data/CPS/Figure3b_data.csv")) # read.csv(data_unemp_adj, here(paste0(base, "final_data/R_final/Figure3b_data.csv")))
+figure3a_data <-read.csv(paste0(base, "final_data/R_final/Figure3a_data.csv"))[-1] #read_csv(paste0(base, "int_data/CPS/Figure3a_data.csv")) # collapsed_data_3a_adj <- read.csv(here(paste0(base, "final_data/R_final/Figure3a_data.csv")))
+figure3b_data <- read.csv(paste0(base, "final_data/R_final/Figure3b_data.csv"))[-1] #read.csv(paste0(base, "int_data/CPS/Figure3b_data.csv")) # read.csv(data_unemp_adj, here(paste0(base, "final_data/R_final/Figure3b_data.csv")))
 
-fig3a_new <- collapsed_data_3a_adj
+fig3a_new <- read.csv(paste0(base, "final_data/R_final/Figure3a_data_extended.csv"))[-1] 
 
 # Data preprocessing
 year <- fig2a_data[[1]]
