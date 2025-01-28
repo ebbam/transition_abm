@@ -10,14 +10,20 @@ library(here)
 base <- here("data/behav_params/Mukoyama_Replication/mukoyama_all/raw_data/")
 
 # Load datasets
-atus_resp <- read_dta(paste0(base, "ATUS/atusresp_0314.dta"))
-atus_sum <- read_dta(paste0(base, "ATUS/atussum_0314.dta"))
-atus_rost <- read_dta(paste0(base, "ATUS/atusrost_0314.dta"))
-atus_cps <- read_dta(paste0(base, "ATUS/atuscps_0314.dta"))
-intvw_travel <- read_dta(paste0(base, "ATUS/intvwtravel_0314.dta"))
+# atus_resp <- read_dta(paste0(base, "ATUS/atusresp_0314.dta"))
+# atus_sum <- read_dta(paste0(base, "ATUS/atussum_0314.dta"))
+# atus_rost <- read_dta(paste0(base, "ATUS/atusrost_0314.dta"))
+# atus_cps <- read_dta(paste0(base, "ATUS/atuscps_0314.dta"))
+# intvw_travel <- read_dta(paste0(base, "ATUS/intvwtravel_0314.dta"))
 
-# ref_file <- read_dta(paste0(base, "ATUS/merged_ATUS_2014.dta")) %>% 
-#   data.frame() 
+atus_resp <- readRDS(paste0(base, "ATUS/atusresp_0323.rds"))
+atus_sum <- readRDS(paste0(base, "ATUS/atussum_0323.rds"))
+atus_rost <- readRDS(paste0(base, "ATUS/atusrost_0323.rds"))
+atus_cps <- readRDS(paste0(base, "ATUS/atuscps_0323.rds"))
+intvw_travel <- readRDS(paste0(base, "ATUS/intvwtravel_0323.rds"))
+
+ref_file <- read_dta(paste0(base, "ATUS/merged_ATUS_2014.dta")) %>%
+  data.frame()
 
 # Merge datasets
 data <- atus_resp %>%
@@ -59,9 +65,16 @@ data <- data %>%
 
 # Time spent on job search
 data <- data %>%
+  rowwise() %>% 
   mutate(
-    timesearch_travel = if_else(tuyear != 2003, t050481 + t050405 + t050404 + t050403 + t050499 + intvwtravel, NA_real_),
-    timesearch = t050481 + t050405 + t050404 + t050403 + t050499,
+    #timesearch_travel = if_else(tuyear != 2003, t050481 + t050405 + t050404 + t050403 + t050499 + intvwtravel, NA_real_),
+    #timesearch = t050481 + t050405 + t050404 + t050403 + t050499,
+    #timesearch_old = timesearch
+    
+    timesearch_travel = if_else(tuyear != 2003, sum(t050401, t050402, t050405, t050404, t050403, t050499, intvwtravel, na.rm = TRUE), NA_real_),
+    timesearch = sum(t050401, t050402, t050405, t050404, t050403, t050499, na.rm = TRUE)) %>% 
+  ungroup %>% 
+  mutate(
     timesearch_old = timesearch
   )
 
@@ -173,8 +186,8 @@ data <- data %>%
   mutate(
     weekend = if_else(tudiaryday %in% c(1, 7), 1, 0)
   ) %>% 
-  rename(day = tudiaryday,
-         missing = t500106)
+  rename(day = tudiaryday)
+        # missing = t500106)
 
 # # Select relevant columns
 data <- data %>%
@@ -183,8 +196,10 @@ data <- data %>%
     nonsearchers, black, attached, quarter, race, sex, age, wgt, mlr, numsearch,
     timesearch, timesearch_travel, undur, gereg, state, empldir, pubemkag,
     PriEmpAg, FrendRel, SchEmpCt, Resumes, Unionpro, Plcdads, Otheractve,
-    lkatads, Jbtrnprg, otherpas, untype, pelklwo, t050481, t050405, t050404,
-    t050403, t050499, day, missing
+    lkatads, Jbtrnprg, otherpas, untype, pelklwo, 
+    #t050481, t050405, t050404, t050403, t050499, 
+    t050401, t050402, t050405, t050404, t050403, t050499, #intvwtravel,
+    day #, missing
   )
 
 # Clean labor force variables
@@ -217,23 +232,35 @@ data <- data %>%
   ) %>%
   filter(age >= 25 & age <= 70, !is.na(age))
 
+data_short <- data %>% 
+  filter(year <= 2014) %>% 
+  select(-contains('t0504'))
+
+ref_file_short <- ref_file %>% 
+  select(-contains('t0504'), -missing)
 # Same number of observations
-nrow(data) == nrow(ref_file)
+nrow(data_short) == nrow(ref_file)
 
 # All variable names are the same
-if(length(setdiff(names(data), names(ref_file))) == 0 & length(setdiff(names(ref_file), names(data))) == 0){
-  data <- data[, colnames(ref_file)]
+if(length(setdiff(names(data_short), names(ref_file_short))) == 0 & length(setdiff(names(ref_file_short), names(data_short))) == 0){
+  data_short <- data_short[, colnames(ref_file_short)]
 }
 # Columns are identical in names - ie all columns exist
-identical(names(ref_file), names(data))
+all.equal(names(ref_file_short), names(data_short))
 
-data %>% 
-  arrange(tucaseid, year, month, day) %>% identical(data)
+data_short %>% 
+  arrange(tucaseid, year, month, day) %>% identical(data_short)
 
-ref_file <- ref_file %>% 
+ref_file_short <- ref_file_short %>% 
   arrange(tucaseid, year, month, day) %>% 
   tibble
 
-ref_file %>% all.equal(data, check.attributes = FALSE, tolerance = 5e-7)
+zap_labels(ref_file_short) %>% all.equal(zap_labels(data_short), check.attributes = FALSE, tolerance = 5e-7)
 
+
+
+#saveRDS(data, paste0(base, "ATUS/merged_ATUS_2023.rds"))
+
+# This has worked when importing the atussum, resp, etc. files with suffix in 0314.dta
 #write_dta(data, "merged_ATUS_2014.dta")
+
