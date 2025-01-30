@@ -29,13 +29,11 @@ process_cps <- function(x) {
     file_path <- file.path(raw_CPS, paste0("R_int/cpsb", x, ".dta"))
     if (!file.exists(file_path)) return(NULL)
     data <- read_dta(file_path)
-    print(data)
   }else{
     # Load data
     file_path <- file.path(raw_CPS, paste0("bas", x, ".dta"))
     if (!file.exists(file_path)) return(NULL)
     data <- read_dta(file_path)
-    print(data)
   }
   
   # Add year and month
@@ -46,7 +44,6 @@ process_cps <- function(x) {
       month = as.integer(substr(YYYYMM, 5, 6))
     ) %>%
     select(-YYYYMM)
-  
 
   data <- data %>% rename_with(~ rename_vars[.x], any_of(names(rename_vars)))
   data <- data %>% mutate(wgt = wgt * 10000)
@@ -55,13 +52,26 @@ process_cps <- function(x) {
   for (t in 1:6) {
     lkdk <- paste0("PULKDK", t)
     lkps <- paste0("PULKPS", t)
+    
+    if(x > 201412){
+      lkdk <- tolower(lkdk)
+      lkps <- tolower(lkps)
+    }
     if (lkdk %in% names(data)) data <- rename(data, !!paste0("lkdk", t) := !!sym(lkdk))
     if (lkps %in% names(data)) data <- rename(data, !!paste0("lkps", t) := !!sym(lkps))
   }
   
-  if ("PELK1" %in% names(data)) data <- rename(data, lkm1 = PELKM1)
+  pelkm1 <- "PELKM1"
+  if(x > 201412){
+    pelkm1 <- tolower(pelkm1)
+  }
+  if (tolower(pelkm1) %in% names(data)){data <- rename(data, lkm1 = get(pelkm1))}
+  
   for (t in 2:6) {
     lkm <- paste0("PULKM", t)
+    if(x > 201412){
+      lkm <- tolower(lkm)
+    }
     if (lkm %in% names(data)) data <- rename(data, !!paste0("lkm", t) := !!sym(lkm))
   }
   
@@ -109,13 +119,16 @@ process_cps <- function(x) {
       )
     )
   
+  data %>% select(all_of(names(srch_methods))) %>% 
+    summarise(across(everything(), ~sum(.))) %>% print(.)
+  
   if(x >= 201412){
     # Compress and save intermediate data
-    save_path <- file.path(int_CPS, paste0("intermediate_", x, ".rds"))
+    save_path <- file.path(int_CPS, paste0("intermediate_", x, "correct.rds"))
     saveRDS(data, save_path)
     return(NULL)
   }else{    # Compress and save intermediate data
-    save_path <- file.path(int_CPS, paste0("intermediate_", x, ".rds"))
+    save_path <- file.path(int_CPS, paste0("intermediate_", x, "correct.rds"))
     saveRDS(data, save_path)
     return(NULL)}
 }
