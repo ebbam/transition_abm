@@ -5,7 +5,7 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
-# Overview
+# Overview {.tabset}
 
 The following document summarises current progress on identifying a data source to inform the job search behaviour in the ABM. The following looks into the three determinants of job-finding that we have thus far identified as being relevant (plausibly independent and potentially most relevant):
 
@@ -13,7 +13,7 @@ The following document summarises current progress on identifying a data source 
 - *Duration dependence* (job-finding probability decreases over time spent unemployed indendent of job-seeker characteristics)
 - *Search effort* (individuals can exert greater search effort to counteract duration dependence - generally exhibits a countercyclical behaviour - job search effort increases as the economy recedes)
 
-**Current idea:** If we *dynamic selection* simply as worker heterogeneity, *duration dependence* as an endogenous process of skill deterioration or signal to employers (up to a certain point), and *search effort* as responsive to labour market conditions, we will have quasi-independent elements in the job-finding probability of workers in the model!
+**Current idea:** If we view *dynamic selection* simply as worker heterogeneity, *duration dependence* as an endogenous process of skill deterioration or signal to employers (up to a certain point), and *search effort* as responsive to labour market conditions, we will have quasi-independent elements in the job-finding probability of workers in the model!
 
 **Goals: **
 
@@ -25,17 +25,17 @@ The following document summarises current progress on identifying a data source 
 
 I first focus on replicating and extending the empirical analysis that speaks to the three determinants above (dynamic selection, duration dependence, search effort)
 
-1. (Replicated with additional data from 2019-2024) **[Mueller et al. 2021: Job Seekers' Perceptions and Employment Prospects: Heterogeneity, Duration Dependence and Bias](https://www.aeaweb.org/articles?id=10.1257/aer.20190808)**
-
-*The authors claim to disentangle the effects of duration dependence and dynamic selection by using job seekers' elicited beliefs about job-finding. Assuming (and confirming empirically) that job-seekers have realistic initial beliefs about job-finding they isolate the heterogeneity in jobseekers from true duration dependence. Ultimately, they find that dynamic selection selection explains most of the negative duration dependence (rather than pure, true duration dependence).*
-
-*Findings: Results are remarkably consistent even when including additional data from 2019-2024 (Covid!?). *
-
-2. (Replicated, not yet with additional data) **[Mukoyama et al. 2018: Job Search Over the Business Cycle](https://www.aeaweb.org/articles?id=10.1257/mac.20160202)**
+1. (Replicated with additional data for unemployed jobseekers) **[Mukoyama et al. 2018: Job Search Over the Business Cycle](https://www.aeaweb.org/articles?id=10.1257/mac.20160202)**
 
 *They provide a novel measure of job search effort exploiting the American Time Use and Current Population Surveys which can be reduced to just the intensive margin (changes in search effort by worker!). At the moment, I think this will be the most useful input for our model.*
 
 *Abstract: We examine the cyclicality of search effort using time-series, cross-state, and individual variation and find that it is countercyclical. We then set up a search and matching model with endogenous search effort and show that search effort does not amplify labor market fluctuations but rather dampens them. Lastly, we examine the role of search effort in driving recent unemployment dynamics and show that the unemployment rate would have been 0.5 to 1 percentage points higher in the 2008–2014 period had search effort not increased.*
+
+2. (Replicated with additional data from 2019-2024) **[Mueller et al. 2021: Job Seekers' Perceptions and Employment Prospects: Heterogeneity, Duration Dependence and Bias](https://www.aeaweb.org/articles?id=10.1257/aer.20190808)**
+
+*The authors claim to disentangle the effects of duration dependence and dynamic selection by using job seekers' elicited beliefs about job-finding. Assuming (and confirming empirically) that job-seekers have realistic initial beliefs about job-finding they isolate the heterogeneity in jobseekers from true duration dependence. Ultimately, they find that dynamic selection selection explains most of the negative duration dependence (rather than pure, true duration dependence).*
+
+*Findings: Results are remarkably consistent even when including additional data from 2019-2024 (Covid!?). *
 
 3. (Forthcoming) **[Kroft et al. 2016: Long-Term Unemployment and the Great Recession: The Role of Composition, Duration Dependence, and Nonparticipation](https://www.jstor.org/stable/26588430)**
 
@@ -58,23 +58,11 @@ library(gets)
 
 ```
 
-### Mueller et al. Job Seekers' Perceptions and Employment Prospects: Heterogeneity, Duration Dependence and Bias
-
-[Mueller et al: Job Seekers' Perceptions and Employment Prospects](https://www.aeaweb.org/articles?id=10.1257/aer.20190808)
-
-```{r, echo = FALSE, fig.height = 8, fig.width = 10}
-
-
-source(here("data/behav_params/Mueller_Replication/mueller_repl_analysis_extended_samples.R"))
-
-
-```
-
-### Mukoyama et al. Job Search and the Business Cycle
+## Mukoyama et al. Job Search and the Business Cycle
 
 [Mukoyama: Job Search Over the Business Cycle](https://www.aeaweb.org/articles?id=10.1257/mac.20160202)
 
-```{r, echo = FALSE, fig.height = 4}
+```{r, echo = FALSE, fig.height = 8, fig.width = 10}
 # # 
 # s_theta_df <- read.delim(here("data/behav_params/Mukoyama_Replication/mukoyama_all/programs/Figures/s_theta.m"), sep = ",") %>%
 #   tibble() %>%
@@ -137,6 +125,19 @@ source(here("data/behav_params/Mukoyama_Replication/mukoyama_replication_analysi
 ```
 
 
+
+## Mueller et al. Job Seekers' Perceptions and Employment Prospects: Heterogeneity, Duration Dependence and Bias
+
+[Mueller et al: Job Seekers' Perceptions and Employment Prospects](https://www.aeaweb.org/articles?id=10.1257/aer.20190808)
+
+```{r, echo = FALSE, fig.height = 8, fig.width = 10}
+
+
+source(here("data/behav_params/Mueller_Replication/mueller_repl_analysis_extended_samples.R"))
+
+
+```
+
 ```{r, echo = FALSE}
 
 # realgdp %>% 
@@ -159,18 +160,23 @@ source(here("data/behav_params/Mukoyama_Replication/mukoyama_replication_analysi
 ```
 
 
-### Kroft et al. Long-Term Unemployment and the Great Recession: The Role of Composition, Duration Dependence, and Nonparticipation
-[Kroft et al. Long-Term Unemployment and the Great Recession](https://www.jstor.org/stable/26588430)
-
-
+## Eeckhout et al. 2019 Unemployment Cycles
+[Eeckhout et al. 2019 Unemployment Cycles](https://www.aeaweb.org/articles?id=10.1257/mac.20180105)
 
 ```{r, echo = FALSE}
 
 ```
 
 
+## Kroft et al. Long-Term Unemployment and the Great Recession: The Role of Composition, Duration Dependence, and Nonparticipation
+[Kroft et al. Long-Term Unemployment and the Great Recession](https://www.jstor.org/stable/26588430)
 
-## Own work on microdata...
+```{r, echo = FALSE}
+
+```
+
+
+## Own work on microdata... {.tabset}
 
 Finally, I retain the work summarising the: 
 
@@ -463,7 +469,7 @@ sce_job_search_free %>%
 ```
 
 
-#### On the job search
+### On the job search
 
 ```{r, echo=FALSE, cache = TRUE}
 
