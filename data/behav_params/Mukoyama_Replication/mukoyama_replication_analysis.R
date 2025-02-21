@@ -1,6 +1,6 @@
 # Replicating figures and data in Mukoyama et al
 # Load necessary libraries
-library(dplyr)
+library(tidyverse)
 library(ggplot2)
 library(here)
 library(haven) # To read .dta files
@@ -116,7 +116,7 @@ if(first){
   add_years_unemp <- tibble()
   for(fpath in paths){
     print(fpath)
-    data <- readRDS(here(paste0(fpath, "_all_weights.RDS")))
+    data <- readRDS(here(paste0(fpath, "_all_weights_new.RDS")))
     
     data1 <- data %>% 
       group_by(year, month, searchers) %>%
@@ -144,10 +144,6 @@ if(first){
       summarise(
         numsearch = weighted.mean(numsearch, newwgt, na.rm = TRUE),
         across(contains("time_create"), ~weighted.mean(., newwgt, na.rm = TRUE))
-        # time_create = weighted.mean(time_create, newwgt, na.rm = TRUE),
-        #time_create_orig = weighted.mean(time_create_orig, newwgt, na.rm = TRUE),
-        #time_create_new_2014 = weighted.mean(time_create_new_2014, newwgt, na.rm = TRUE),
-        #time_create_new_2023 = weighted.mean(time_create_new_2023, newwgt, na.rm = TRUE)
       ) %>%
       ungroup()
     
@@ -159,26 +155,6 @@ if(first){
   #data_fig3 <- readRDS(paste0(base, "final_data/R_final/full_CPS_data.RDS"))
   
   #data_fig3 <- readRDS(here(base, "final_data/R_final/temp_full_CPS_data_before_new_years.rds"))
-  
-  # # Calculate weighted sums for different groups
-  # data_fig3_mutated <- data_fig3 %>%
-  #   group_by(year, month, searchers) %>%
-  #   mutate(num_search = if_else(searchers == 1, sum(newwgt, na.rm = TRUE), NA_real_)) %>%
-  #   ungroup() %>%
-  #   group_by(year, month, nonsearchers) %>%
-  #   mutate(num_nonsearch = if_else(nonsearchers == 1, sum(newwgt, na.rm = TRUE), NA_real_)) %>%
-  #   ungroup() %>%
-  #   group_by(year, month, unemp) %>%
-  #   mutate(num_unemp = if_else(unemp == 1, sum(newwgt, na.rm = TRUE), NA_real_)) %>%
-  #   ungroup() %>%
-  #   group_by(year, month, emp) %>%
-  #   mutate(num_emp = if_else(emp == 1, sum(newwgt, na.rm = TRUE), NA_real_)) %>%
-  #   ungroup() %>%
-  #   group_by(year, month, nonpart) %>%
-  #   mutate(num_nonpart = if_else(nonpart == 1, sum(newwgt, na.rm = TRUE), NA_real_)) %>%
-  #   ungroup() %>% 
-  #   select(year, month, num_search, num_nonsearch, num_unemp, num_nonpart, num_emp, newwgt, time_create) %>% 
-  #   rbind(add_years)
   
   # Collapse the data by year and month
   collapsed_data_3a <- add_years %>%
@@ -210,7 +186,7 @@ if(first){
     collapsed_data_3a_adj <- seasonal_adjust(collapsed_data_3a_adj, var)
   }
   
-  #write.csv(collapsed_data_3a_adj, here(paste0(base, "final_data/R_final/Figure3a_data_extended_new.csv")))
+  #write.csv(collapsed_data_3a_adj, here(paste0(base, "final_data/R_final/Figure3a_data_extended_new_corrected.csv")))
 
 # ##############################################################################
 #   Figure 3b: Average search time (methods and Created time)
@@ -242,50 +218,23 @@ for (var in c("numsearch", "time_create")) {
   collapsed_unemp_adj <- seasonal_adjust(collapsed_unemp_adj, var)
 }
 
-#write.csv(collapsed_unemp_adj, here(paste0(base, "final_data/R_final/Figure3b_data_extended_new.csv")))
+#write.csv(collapsed_unemp_adj, here(paste0(base, "final_data/R_final/Figure3b_data_extended_new_corrected.csv")))
 }
 
 ################################################################################
 ############ Figures 2-4 - Data prep
 
-
-# Load data (update file paths as needed)
-fig2a_data <- read.csv(paste0(base, "int_data/ATUS/Fig2a_data.csv")) 
-fig2b_data <- read.csv(paste0(base, "int_data/ATUS/Fig2b_data.csv")) 
-fig2a_data_new <- read.csv(paste0(base, "int_data/ATUS/Fig2a_data_new.csv")) 
-fig2b_data_new <- read.csv(paste0(base, "int_data/ATUS/Fig2b_data_new.csv")) 
-fig2a_data_2014_orig <- read.csv(paste0(base, "int_data/ATUS/Fig2a_data2014_orig.csv")) 
-fig2b_data_2014_orig <- read.csv(paste0(base, "int_data/ATUS/Fig2b_data2014_orig.csv")) 
-fig2a_data_2014_new<- read.csv(paste0(base, "int_data/ATUS/Fig2a_data2014_new.csv")) 
-fig2b_data_2014_new <- read.csv(paste0(base, "int_data/ATUS/Fig2b_data2014_new.csv")) 
-fig2a_data_2023 <- read.csv(paste0(base, "int_data/ATUS/Fig2a_data2023.csv")) 
-fig2b_data_2023 <- read.csv(paste0(base, "int_data/ATUS/Fig2b_data2023.csv")) 
-
-year <- fig2a_data[[1]]
-year_new <- fig2a_data_new[[1]]
-year_2014_orig <- fig2a_data_2014_orig[[1]]
-year_2014_new <- fig2a_data_2014_new[[1]]
-year_2023 <- fig2a_data_2023[[1]]
-
-nonemp_base <- fig2a_data[2:3]
-unemp_base <- fig2b_data[2:3]
-nonemp_base_new <- fig2a_data_new[2:3]
-unemp_base_new <- fig2b_data_new[2:3]
-nonemp_base_2014_orig <- fig2a_data_2014_orig[2:3]
-unemp_base_2014_orig <- fig2b_data_2014_orig[2:3]
-nonemp_base_2014_new <- fig2a_data_2014_new[2:3]
-unemp_base_2014_new <- fig2b_data_2014_new[2:3]
-nonemp_base_2023 <- fig2a_data_2023[2:3]
-unemp_base_2023 <- fig2b_data_2023[2:3]
-
 figure3a_data <-read.csv(paste0(base, "final_data/R_final/Figure3a_data.csv"))[-1] #read_csv(paste0(base, "int_data/CPS/Figure3a_data.csv")) # collapsed_data_3a_adj <- read.csv(here(paste0(base, "final_data/R_final/Figure3a_data.csv")))
 figure3b_data <- read.csv(paste0(base, "final_data/R_final/Figure3b_data.csv"))[-1] #read.csv(paste0(base, "int_data/CPS/Figure3b_data.csv")) # read.csv(data_unemp_adj, here(paste0(base, "final_data/R_final/Figure3b_data.csv")))
 
-fig3a_new <- read.csv(paste0(base, "final_data/R_final/Figure3a_data_extended.csv"))[-1] #collapsed_data_3a_adj
-fig3b_new <-  read.csv(paste0(base, "final_data/R_final/Figure3b_data_extended.csv"))[-1]  #collapsed_unemp_adj
+# fig3a_new <- read.csv(paste0(base, "final_data/R_final/Figure3a_data_extended.csv"))[-1] #collapsed_data_3a_adj
+# fig3b_new <-  read.csv(paste0(base, "final_data/R_final/Figure3b_data_extended.csv"))[-1]  #collapsed_unemp_adj
 
-fig3a_new_2023 <- read.csv(paste0(base, "final_data/R_final/Figure3a_data_extended_new.csv"))[-1] #collapsed_data_3a_adj
-fig3b_new_2023 <-  read.csv(paste0(base, "final_data/R_final/Figure3b_data_extended_new.csv"))[-1]  #collapsed_unemp_adj
+#fig3a_new_2023 <- read.csv(paste0(base, "final_data/R_final/Figure3a_data_extended_new.csv"))[-1] #collapsed_data_3a_adj
+#fig3b_new_2023 <-  read.csv(paste0(base, "final_data/R_final/Figure3b_data_extended_new.csv"))[-1]  #collapsed_unemp_adj
+
+fig3a_new_2023 <- read.csv(paste0(base, "final_data/R_final/Figure3a_data_extended_new_corrected.csv"))[-1] #collapsed_data_3a_adj
+fig3b_new_2023 <-  read.csv(paste0(base, "final_data/R_final/Figure3b_data_extended_new_corrected.csv"))[-1]  #collapsed_unemp_adj
 # Data preprocessing
   
 date <- figure3a_data %>% mutate(date = year + (month/12)) %>% pull(date)
@@ -301,18 +250,18 @@ time_unemp <- figure3b_data[[4]]
 effort_unemp_UNE <- time_unemp * unemp / (unemp + nonpart + emp)
 unemp_frac <- unemp / (unemp + nonpart + emp)
 
-date_new <- fig3a_new %>% mutate(date = year + (month/12)) %>% pull(date)
-searchers_new <- fig3a_new[[3]]
-nonsearchers_new <- fig3a_new[[4]]
-unemp_new <- fig3a_new[[5]]
-nonpart_new <- fig3a_new[[6]]
-emp_new <- fig3a_new[[7]]
-
-frac_unemp_new <- unemp_new / (unemp_new + nonpart_new)
-time_unemp_new <- fig3b_new[[4]]
-
-effort_unemp_UNE_new <- time_unemp_new * unemp_new / (unemp_new + nonpart_new + emp_new)
-unemp_frac_new <- unemp_new / (unemp_new + nonpart_new + emp_new)
+# date_new <- fig3a_new_2023 %>% mutate(date = year + (month/12)) %>% pull(date)
+# searchers_new <- fig3a_new[[3]]
+# nonsearchers_new <- fig3a_new[[4]]
+# unemp_new <- fig3a_new[[5]]
+# nonpart_new <- fig3a_new[[6]]
+# emp_new <- fig3a_new[[7]]
+# 
+# frac_unemp_new <- unemp_new / (unemp_new + nonpart_new)
+# time_unemp_new <- fig3b_new[[4]]
+# 
+# effort_unemp_UNE_new <- time_unemp_new * unemp_new / (unemp_new + nonpart_new + emp_new)
+# unemp_frac_new <- unemp_new / (unemp_new + nonpart_new + emp_new)
 
 date_new_2023 <- fig3a_new_2023 %>% mutate(date = year + (month/12)) %>% pull(date)
 searchers_new_2023 <- fig3a_new_2023[[3]]
@@ -336,142 +285,17 @@ effort_unemp_UNE_2014_new <- time_unemp_2014_new * unemp_new_2023 / (unemp_new_2
 unemp_frac_2014_new <- unemp_new_2023 / (unemp_new_2023 + nonpart_new_2023 + emp_new_2023)
 
 
-
 # Helper function to add shaded recession areas
 add_recession <- function(p) {
   p +
     annotate("rect", xmin = 2007 + 11/12, xmax = 2009.5, ymin = -Inf, ymax = Inf, alpha = 0.2) +
-    annotate("rect", xmin = 2001 + 3/12, xmax = 2001 + 11/12, ymin = -Inf, ymax = Inf, alpha = 0.2)
+    annotate("rect", xmin = 2001 + 3/12, xmax = 2001 + 11/12, ymin = -Inf, ymax = Inf, alpha = 0.2) +
+    annotate("rect", xmin = 2020 + 2/12, xmax = 2020 + 4/12, ymin = -Inf, ymax = Inf, alpha = 0.2)
 }
 
 ##################################
 ############ Figures 2a-b ########
 ##################################
-
-# Figure 2a
-fig2a_old <- ggplot() +
-  geom_line(aes(x = year, y = nonemp_base[[1]]), color = "red",  size = 1) +
-  geom_line(aes(x = year, y = nonemp_base[[2]]), color = "blue", linetype = "dashed", size = 1) +
-  geom_line(aes(x = year_new, y = nonemp_base_new[[1]]), color = "darkgreen",size = 1) +
-  geom_line(aes(x = year_new, y = nonemp_base_new[[2]]), color = "blue", linetype = "dashed",size = 1) +
-  geom_line(aes(x = year_2014_new, y = nonemp_base_2014_new[[1]]), color = "coral",  size = 1) +
-  geom_line(aes(x = year_2014_new, y = nonemp_base_2014_new[[2]]), color = "blue", linetype = "dashed",size = 1) +
-  geom_line(aes(x = year_2014_orig, y = nonemp_base_2014_orig[[1]]), color = "magenta", size = 1) +
-  geom_line(aes(x = year_2014_orig, y = nonemp_base_2014_orig[[2]]), color = "blue", linetype = "dashed",size = 1) +
-  geom_line(aes(x = year_2023, y = nonemp_base_2023[[1]]), color = "steelblue",  size = 1) +
-  geom_line(aes(x = year_2023, y = nonemp_base_2023[[2]]), color = "purple", linetype = "dashed", size = 1) +
-  scale_x_continuous(breaks = 2003:2014) +
-  scale_y_continuous(limits = c(0, 10), breaks = seq(0, 10, by = 2)) +
-  theme_minimal()
-fig2a <- add_recession(fig2a)
-
-
-# Figure 2b
-fig2b <- ggplot() +
-  geom_line(aes(x = year, y = unemp_base[[1]]), color = "red",  size = 1) +
-  geom_line(aes(x = year, y = unemp_base[[2]]), color = "blue", linetype = "dashed", size = 1) +
-  geom_line(aes(x = year_new, y = unemp_base_new[[1]]), color = "darkgreen",size = 1) +
-  geom_line(aes(x = year_new, y = unemp_base_new[[2]]), color = "blue", linetype = "dashed",size = 1) +
-  geom_line(aes(x = year_2014_new, y = unemp_base_2014_new[[1]]), color = "coral",  size = 1) +
-  geom_line(aes(x = year_2014_new, y = unemp_base_2014_new[[2]]), color = "blue", linetype = "dashed",size = 1) +
-  geom_line(aes(x = year_2014_orig, y = unemp_base_2014_orig[[1]]), color = "magenta", size = 1) +
-  geom_line(aes(x = year_2014_orig, y = unemp_base_2014_orig[[2]]), color = "blue", linetype = "dashed",size = 1) +
-  geom_line(aes(x = year_2023, y = unemp_base_2023[[1]]), color = "steelblue",  size = 1) +
-  geom_line(aes(x = year_2023, y = unemp_base_2023[[2]]), color = "purple", linetype = "dashed", size = 1) +
-  scale_x_continuous(breaks = 2003:2014) +
-  scale_y_continuous(limits = c(10, 50), breaks = seq(10, 50, by = 10)) +
-  theme_minimal()
-fig2b <- add_recession(fig2b)
-
-print(fig2a + fig2b + plot_annotation("Figure 2. Actual and Imputed Average Search Time (minutes per day) \nfor All Nonemployed Workers ( panel A) and Unemployed Workers ( panel B)",
-                                caption = "Notes: Regressions are estimated in the ATUS from 2003–2014. \nWhile both panels A and B plot the fitted values from the sample regression, panel A plots the actual and imputed search time for all nonemployed, while panel B plots them for just the unemployed. \nObservations are weighted by their ATUS sample weight.",
-                                theme=theme(plot.title=element_text(hjust=0.5))))
-
-##################################
-############ Figures 3a-b ########
-##################################
-# Figure 3a
-fig3anew <- ggplot() +
-  geom_line(aes(x = date_new_2023, y = frac_unemp_new_2023), color = "red", size = 1) +
-  geom_line(aes(x = date_new, y = frac_unemp_new), color = "red", size = 1) +
-  geom_line(aes(x = date, y = frac_unemp), color = "blue", size = 1) +
-  #scale_x_continuous(breaks = seq(1994, 2014, by = 2)) +
-  scale_y_continuous(limits = c(0.05, 0.25), breaks = seq(0.05, 0.25, by = 0.05)) +
-  theme_minimal() +
-  labs(x = "Date", y = "Extensive Margin")
-fig3anew <- add_recession(fig3anew)
-
-# Figure 3b
-fig3bnew <- ggplot() +
-  geom_line(aes(x = date_new_2023, y = time_unemp_new_2023), color = "green", size = 1) +
-  geom_line(aes(x = date_new_2023, y = time_unemp_2014_orig), color = "darkgreen", size = 1) +
-  geom_line(aes(x = date_new_2023, y = time_unemp_2014_new), color = "purple", size = 1) +
-  #geom_line(aes(x = date_new, y = time_unemp_new), color = "red", size = 1) +
-  geom_line(aes(x = date, y = time_unemp), color = "blue", size = 1) +
-  #scale_x_continuous(breaks = seq(1994, 2014, by = 2)) +
-  scale_y_continuous(limits = c(0, 45), breaks = seq(25, 45, by = 5)) +
-  theme_minimal() +
-  labs(x = "Date", y = "Intensive Margin")
-fig3bnew <- add_recession(fig3bnew)
-
-print(fig3anew + fig3bnew + plot_annotation(
-  "Figure 3. The Time Series of the Extensive Margin (U/(U + N )) ( panel A)\nand the Intensive Margin ( panel B), \nMeasured by the Average Minutes of Search per Day for Unemployed Workers",
-  caption = "Red data is new data. Notes: Panel A plots the monthly ratio of the number of unemployed (U) to the total number of unemployed (U + N ) in the CPS from 1994–2014.", #\nPanel B plots the average minutes of search per day, constructed as described in the text. Each observation is weighted by its CPS sample weight.",
-  theme=theme(plot.title=element_text(hjust=0.5))))
-
-##################################
-############ Figures 4a-b ########
-##################################
-
-# Figure 4a
-fig4a <- ggplot() +
-  #geom_line(aes(x = date_new, y = effort_unemp_UNE_new), color = "red", size = 0.5) +
-  geom_line(aes(x = date, y = effort_unemp_UNE), color = "blue", size = 1) +
-  geom_line(aes(x = date_new, y = effort_unemp_UNE_new_2023), color = "purple", size = 1) +
-  geom_line(aes(x = date_new, y = effort_unemp_UNE_2014_orig), color = "green", size = 1) +
-  geom_line(aes(x = date_new, y = effort_unemp_UNE_2014_new), color = "slateblue", size = 1) +
-  scale_x_continuous(breaks = seq(1994, 2014, by = 2)) +
-  scale_y_continuous(limits = c(0, 2.75), breaks = seq(0, 3, by = 0.5)) +
-  labs(x = "Date", 
-       y = "Total Search Effort (Extensive x Intensive Margin)") + 
-       #title ="Panel A: Time Series of Total Search Effort") + 
-  theme_minimal()
-fig4a <- add_recession(fig4a)
-
-# Figure 4b
-fig4b <- ggplot() +
-  geom_line(aes(x = date, y = effort_unemp_UNE / effort_unemp_UNE[1]), color = "blue", size = 1) +
-  #geom_line(aes(x = date_new, y = effort_unemp_UNE_new / effort_unemp_UNE_new[1]), color = "red", size = 1) +
-  geom_line(aes(x = date_new, y = effort_unemp_UNE_2014_orig / effort_unemp_UNE_2014_orig[1]), color = "purple", size = 1) +
-  geom_line(aes(x = date_new, y = effort_unemp_UNE_2014_new / effort_unemp_UNE_2014_new[1]), color = "green", size = 1) +
-  geom_line(aes(x = date_new, y = effort_unemp_UNE_new_2023 / effort_unemp_UNE_new_2023[1]), color = "slateblue", size = 1) +
-  geom_line(aes(x = date, y = unemp_frac / unemp_frac[1]), color = "blue", linetype = "dashed", size = 1) +
-  geom_line(aes(x = date_new, y = unemp_frac_new / unemp_frac_new[1]), color = "red", linetype = "dashed", size = 0.5) +
-  geom_line(aes(x = date_new, y = unemp_frac_2014_orig / unemp_frac_2014_orig[1]), color = "purple", linetype = "dashed", size = 1) +
-  geom_line(aes(x = date_new, y = unemp_frac_2014_new / unemp_frac_2014_new[1]), color = "green", linetype = "dashed", size = 1) +
-  geom_line(aes(x = date_new, y = unemp_frac_new_2023 / unemp_frac_new_2023[1]), color = "slateblue", linetype = "dashed", size = 1) +
-  scale_x_continuous(breaks = seq(1994, 2014, by = 2)) +
-  scale_y_continuous(limits = c(0, 2.75), breaks = seq(0, 2.5, by = 0.5)) +
-  labs(x = "Date", 
-       y = "Total Search Effort (Extensive x Intensive Margin)") + 
-       #title ="Panel B: Time Series of Total Search Effort \n Using the Search Time of Unemployed Workers \n s*(U/(E + U + N)) (blue) \n vs. Using the Number of Unemployed Workers\nU/(E + U + N) (red)") +
-  theme_minimal()
-fig4b <- add_recession(fig4b)
-
-print(fig4a + fig4b + plot_annotation('Figure 4. Time Series of (Panel A) Total Search Effort and \n(Panel B) Total Search Effort Using the Search Time of\nUnemployed Workers [blue: (s*(U/(E + U + N))] versus \nUsing the Number of Unemployed Workers [red: U/(E + U + N)) (panel B)',
-                                theme=theme(plot.title=element_text(hjust=0.5))))
-
-# # Save figures as PDFs
-# ggsave("Figure2a.pdf", fig2a, width = 10.5, height = 8, units = "in")
-# ggsave("Figure2b.pdf", fig2b, width = 10.5, height = 8, units = "in")
-# ggsave("Figure3a.pdf", fig3a, width = 10.5, height = 8, units = "in")
-# ggsave("Figure3b.pdf", fig3b, width = 10.5, height = 8, units = "in")
-# ggsave("Figure4a.pdf", fig4a, width = 10.5, height = 8, units = "in")
-# ggsave("Figure4b.pdf", fig4b, width = 10.5, height = 8, units = "in")
-
-# Load necessary libraries
-library(ggplot2)
-library(dplyr)
 
 # Define file names
 files <- c("Fig2a_data", "Fig2b_data", "Fig2a_data_new", "Fig2b_data_new", 
@@ -492,40 +316,169 @@ nonemp_base <- bind_rows(lapply(names(data_list[grep("Fig2a", names(data_list))]
   df$Dataset <- name         # Add a column with the original list element name
   return(df)
 }), .id = NULL)
+
+nonemp_base <- nonemp_base %>% mutate(label = case_when(Dataset == "Fig2a_data" ~ "From Paper",
+                  Dataset == "Fig2a_data_new" ~ "Original Weights on Orig. TS new",
+                  Dataset == "Fig2a_data2014_orig" ~ "Original Weights from Orig. TS",
+                  Dataset == "Fig2a_data2014_new" ~ "Weighted",
+                  Dataset == "Fig2a_data2023" ~ "Weighted Ext. TS")) %>% 
+  filter(Dataset != "Fig2a_data2014_orig" & Dataset != "Fig2a_data_new")
+
 unemp_base <- bind_rows(lapply(names(data_list[grep("Fig2b", names(data_list))]), function(name) {
   df <- data_list[[name]]  # Extract dataframe
   df$Dataset <- name         # Add a column with the original list element name
   return(df)
 }), .id = NULL)
-#unemp_base <- lapply(data_list[grep("Fig2b", names(data_list))], function(df) df[2:3])
+unemp_base <- unemp_base %>% mutate(label = case_when(Dataset == "Fig2b_data" ~ "From Paper",
+                                                        Dataset == "Fig2b_data_new" ~ "Original Weights on Orig. TS new",
+                                                        Dataset == "Fig2b_data2014_orig" ~ "Unweighted",
+                                                        Dataset == "Fig2b_data2014_new" ~ "Weighted",
+                                                        Dataset == "Fig2b_data2023" ~ "Weighted Ext. TS")) %>% 
+filter(Dataset != "Fig2b_data2014_orig" & Dataset != "Fig2b_data_new")
 
 # Define function to plot Figure 2
 fig2a <- ggplot() +
-  geom_line(data = nonemp_base, aes(x = year, y = time_create, color = Dataset), size = 1) +
-  geom_line(data = nonemp_base, aes(x = year, y = time_less8, color = Dataset), size = 0.5, linetype = "dashed")+
-  # geom_line(aes(x = year, y = nonemp_base[[2]]), color = "blue", linetype = "dashed", size = 1) +
-  # geom_line(aes(x = year_new, y = nonemp_base_new[[1]]), color = "darkgreen",size = 1) +
-  # geom_line(aes(x = year_new, y = nonemp_base_new[[2]]), color = "blue", linetype = "dashed",size = 1) +
-  # geom_line(aes(x = year_2014_new, y = nonemp_base_2014_new[[1]]), color = "coral",  size = 1) +
-  # geom_line(aes(x = year_2014_new, y = nonemp_base_2014_new[[2]]), color = "blue", linetype = "dashed",size = 1) +
-  # geom_line(aes(x = year_2014_orig, y = nonemp_base_2014_orig[[1]]), color = "magenta", size = 1) +
-  # geom_line(aes(x = year_2014_orig, y = nonemp_base_2014_orig[[2]]), color = "blue", linetype = "dashed",size = 1) +
-  # geom_line(aes(x = year_2023, y = nonemp_base_2023[[1]]), color = "steelblue",  size = 1) +
-  # geom_line(aes(x = year_2023, y = nonemp_base_2023[[2]]), color = "purple", linetype = "dashed", size = 1) +
-  scale_x_continuous(breaks = 2003:2014) +
+  geom_line(data = nonemp_base, aes(x = year, y = time_create, color = label), size = 1) +
+  geom_line(data = nonemp_base, aes(x = year, y = time_less8), color = "purple", size = 0.5, linetype = "dashed")+
+  scale_x_continuous(breaks = 2003:2023) +
   scale_y_continuous(limits = c(0, 10), breaks = seq(0, 10, by = 2)) +
-  theme_minimal()
+  theme_minimal() +
+  theme(legend.position = "bottom")
 fig2a <- add_recession(fig2a)
-fig2a
 
-# Define colors
-colors <- c("red", "darkgreen", "coral", "magenta", "steelblue")
+fig2b <- ggplot() +
+  geom_line(data = unemp_base, aes(x = year, y = time_create, color = label), size = 1) +
+  geom_line(data = unemp_base, aes(x = year, y = time_less8), color = "purple", size = 0.5, linetype = "dashed")+
+  scale_x_continuous(breaks = 2003:2023) +
+  scale_y_continuous(limits = c(15, 45), breaks = seq(0, 45, by = 5)) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+fig2b <- add_recession(fig2b)
 
-# Generate Figures 2a and 2b
-fig2a <- generate_fig2(years, nonemp_base, colors, "Figure 2a: Nonemployment Trends")
-fig2b <- generate_fig2(years, unemp_base, colors, "Figure 2b: Unemployment Trends")
+print(fig2a + fig2b + plot_annotation("Figure 2. Actual and Imputed Average Search Time (minutes per day) \nfor All Nonemployed Workers ( panel A) and Unemployed Workers ( panel B)",
+                                caption = "Notes: Regressions are estimated in the ATUS from 2003–2014. \nWhile both panels A and B plot the fitted values from the sample regression, panel A plots the actual and imputed search time for all nonemployed, while panel B plots them for just the unemployed. \nObservations are weighted by their ATUS sample weight.",
+                                theme=theme(plot.title=element_text(hjust=0.5))))
 
-# Print Figures
-print(fig2a)
-print(fig2b)
+##################################
+############ Figures 3a-b ########
+##################################
+# Figure 3a
+# Define file names for Figure 3a and 3b
+files_3a <- c("Figure3a_data",  "Figure3a_data_extended_new_corrected") # "Figure3a_data_extended",
+files_3b <- c(#"Figure3b_data", "Figure3b_data_extended", 
+  "Figure3b_data_extended_new_corrected")
+
+# Load data dynamically
+data_list_3a <- lapply(files_3a, function(f) read.csv(paste0(base, "final_data/R_final/", f, ".csv"))[-1])
+data_list_3b <- lapply(files_3b, function(f) read.csv(paste0(base, "final_data/R_final/", f, ".csv"))[-1])
+
+# Name the lists
+names(data_list_3a) <- files_3a
+names(data_list_3b) <- files_3b
+
+# Merge Figure 3a data, adding a Dataset column
+fig3a_base <- bind_rows(lapply(names(data_list_3a), function(name) {
+  df <- data_list_3a[[name]]
+  df$Dataset <- name  # Add dataset name as a column
+  df$date <- df$year + (df$month / 12)  # Create date column
+  return(df)
+}), .id = NULL)
+
+fig3b_base <- data_list_3b[[1]] %>% 
+  mutate(date = year + month/12) %>% 
+  select(-year, -month) %>% 
+  pivot_longer(!c(date, numsearch)) %>% 
+  mutate(label = case_when(name == "time_create" ~ "Original Weights on Orig. TS",
+                           name == "time_create_new_2014" ~ "New Weights from Orig. TS",
+                           name == "time_create_new_2023" ~ "New Weights from Ext. TS",
+                           name == "time_create_orig" ~ "Original Weights on Ext. TS"))
+
+# Define function to plot Figure 3a
+fig3a_plot <- ggplot() +
+  geom_line(data = fig3a_base, aes(x = date, y = num_unemp / (num_unemp + num_nonpart), color = Dataset), size = 1) +
+  theme_minimal() +
+  scale_x_continuous(breaks = seq(2003, 2023, by = 2)) +
+  theme_minimal() +
+  labs(x = "Date", y = "Extensive Margin") +
+  theme(legend.position = "none")
+
+fig3a_plot <- add_recession(fig3a_plot)
+
+# Define function to plot Figure 3b
+fig3b_plot <- ggplot() +
+  geom_line(data = fig3b_base, aes(x = date, y = value, color = label), size = 0.5) +
+  theme_minimal() +
+  scale_x_continuous(breaks = seq(2003, 2023, by = 2)) +
+  scale_y_continuous(limits = c(0, 45), breaks = seq(25, 45, by = 5)) +
+  theme_minimal() +
+  labs(x = "Date", y = "Intensive Margin") +
+  theme(legend.position = "bottom") +
+  guides(color=guide_legend(ncol=1))
+
+fig3b_plot <- add_recession(fig3b_plot)
+
+print(fig3a_plot + fig3b_plot + plot_annotation(
+  "Figure 3. The Time Series of the Extensive Margin (U/(U + N )) ( panel A)\nand the Intensive Margin ( panel B), \nMeasured by the Average Minutes of Search per Day for Unemployed Workers",
+  caption = "Red data is new data. Notes: Panel A plots the monthly ratio of the number of unemployed (U) to the total number of unemployed (U + N ) in the CPS from 1994–2014.", #\nPanel B plots the average minutes of search per day, constructed as described in the text. Each observation is weighted by its CPS sample weight.",
+  theme=theme(plot.title=element_text(hjust=0.5))))
+
+##################################
+############ Figures 4a-b ########
+##################################
+
+# Figure 4a
+fig4a <- ggplot() +
+  #geom_line(aes(x = date_new, y = effort_unemp_UNE_new), color = "red", size = 0.5) +
+  geom_line(aes(x = date_new_2023, y = effort_unemp_UNE_new_2023, color = "New Weights from Ext. TS"), size = 0.5) +
+  geom_line(aes(x = date_new_2023, y = effort_unemp_UNE_2014_orig, color = "Original Weights on Ext. TS"), size = 0.5) +
+  geom_line(aes(x = date_new_2023, y = effort_unemp_UNE_2014_new, color = "New Weights from Orig. TS"), size = 0.5) +
+  geom_line(aes(x = date, y = effort_unemp_UNE, color = "Original Weights on Orig. TS"), size = 0.5) +
+  scale_x_continuous(breaks = seq(1994, 2024, by = 2)) +
+  scale_y_continuous(limits = c(0, 2.75), breaks = seq(0, 3, by = 0.5)) +
+  #scale_color_manual(values = c("Original Weights on Orig. TS" = "blue", "New Weights from Orig. TS" = "green", "New Orig. TS" = "purple", "New Weights from Ext. TS" = "darkgreen")) + 
+  labs(x = "Date", 
+       y = "Total Search Effort (Extensive x Intensive Margin)") + 
+       #title ="Panel A: Time Series of Total Search Effort") + 
+  scale_color_manual(values = c("Original Weights on Orig. TS" = "blue", "New Weights from Orig. TS" = "green", "New Weights from Ext. TS" = "purple", "Original Weights on Ext. TS" = "darkgreen")) + 
+  
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  guides(color=guide_legend(ncol=1))
+fig4a <- add_recession(fig4a)
+
+# Figure 4b
+fig4b <- ggplot() +
+  geom_line(aes(x = date, y = effort_unemp_UNE / effort_unemp_UNE[1], color = "Original Weights on Orig. TS"), size = 0.5) +
+  #geom_line(aes(x = date_new, y = effort_unemp_UNE_new / effort_unemp_UNE_new[1]), color = "red", size = 0.5) +
+  geom_line(aes(x = date_new_2023, y = effort_unemp_UNE_2014_orig / effort_unemp_UNE_2014_orig[1], color = "Original Weights on Ext. TS"), size = 0.5) +
+  geom_line(aes(x = date_new_2023, y = effort_unemp_UNE_2014_new / effort_unemp_UNE_2014_new[1], color = "New Weights from Orig. TS"), size = 0.5) +
+  geom_line(aes(x = date_new_2023, y = effort_unemp_UNE_new_2023 / effort_unemp_UNE_new_2023[1], color = "New Weights from Ext. TS"), size = 0.5) +
+  geom_line(aes(x = date, y = unemp_frac / unemp_frac[1], color = "Original Weights on Orig. TS"), linetype = "dashed", size = 0.5) +
+  #geom_line(aes(x = date_new, y = unemp_frac_new / unemp_frac_new[1], color = "test remove"), linetype = "dashed", size = 0.5) +
+  geom_line(aes(x = date_new_2023, y = unemp_frac_2014_orig / unemp_frac_2014_orig[1], color = "Original Weights on Ext. TS"), linetype = "dashed", size = 0.5) +
+  geom_line(aes(x = date_new_2023, y = unemp_frac_2014_new / unemp_frac_2014_new[1], color = "New Weights from Orig. TS"),  linetype = "dashed", size = 0.5) +
+  geom_line(aes(x = date_new_2023, y = unemp_frac_new_2023 / unemp_frac_new_2023[1], color = "New Weights from Ext. TS"),  linetype = "dashed", size = 0.5) +
+  scale_x_continuous(breaks = seq(1994, 2024, by = 2)) +
+  scale_y_continuous(limits = c(0, 2.75), breaks = seq(0, 2.5, by = 0.5)) +
+  scale_color_manual(values = c("Original Weights on Orig. TS" = "blue", "New Weights from Orig. TS" = "green", "New Weights from Ext. TS" = "purple", "Original Weights on Ext. TS" = "darkgreen")) + 
+  labs(x = "Date", 
+       y = "Total Search Effort (Extensive x Intensive Margin)") + 
+       #title ="Panel B: Time Series of Total Search Effort \n Using the Search Time of Unemployed Workers \n s*(U/(E + U + N)) (blue) \n vs. Using the Number of Unemployed Workers\nU/(E + U + N) (red)") +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  guides(color=guide_legend(ncol=1))
+fig4b <- add_recession(fig4b)
+
+print(fig4a + fig4b + plot_annotation('Figure 4. Time Series of (Panel A) Total Search Effort and \n(Panel B) Total Search Effort Using the Search Time of\nUnemployed Workers [solid: (s*(U/(E + U + N))] versus \nUsing the Number of Unemployed Workers [dashed: U/(E + U + N)) (panel B)',
+                                theme=theme(plot.title=element_text(hjust=0.5))))
+
+# # Save figures as PDFs
+# ggsave("Figure2a.pdf", fig2a, width = 10.5, height = 8, units = "in")
+# ggsave("Figure2b.pdf", fig2b, width = 10.5, height = 8, units = "in")
+# ggsave("Figure3a.pdf", fig3a, width = 10.5, height = 8, units = "in")
+# ggsave("Figure3b.pdf", fig3b, width = 10.5, height = 8, units = "in")
+# ggsave("Figure4a.pdf", fig4a, width = 10.5, height = 8, units = "in")
+# ggsave("Figure4b.pdf", fig4b, width = 10.5, height = 8, units = "in")
+
+#lambda <- readRDS(here('data/behav_params/Eeckhout_Replication/lambda_hat.RDS'))
 

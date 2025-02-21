@@ -30,7 +30,7 @@ test_equal <- function(ref_df = ref_file, new_df = cps_data, verbose = FALSE, fu
 
 base <- here("data/behav_params/Mukoyama_Replication/")
 
-# RUN HERE STEP 1 FOR NUMSEARCH CORRECTION
+
 if(new){
   # I need to save them in chunks because the files crash R...
   for(y in 2015:2024){
@@ -119,7 +119,6 @@ if(first){
 # cps_data_short <- cps_data_full %>% filter(year > 2003 & year <= 2005)
 # ref_file_short <- ref_file %>% filter(year > 2003 & year <= 2005) 
 
-# RUN HERE STEP 2 FOR NUMSEARCH CORRECTION
 if(new){
   for(y in 2015:2024){
     base_new <- here("data/behav_params/Mukoyama_Replication/mukoyama_all/final_data/R_final/")
@@ -235,7 +234,9 @@ if(new){
           grdatn <= 38 ~ 1,
           grdatn == 39 ~ 2,
           grdatn > 39 & grdatn <= 42 ~ 3,
-          grdatn >= 43 & grdatn != NA ~ 4
+          grdatn >= 43 & !is.na(grdatn) ~ 4
+          # Mistaken transformation
+          #grdatn >= 43 & grdatn != NA ~ 4
         ),
         hs = ifelse(educ == 2, 1, 0),
         somecol = ifelse(educ == 3, 1, 0),
@@ -311,8 +312,8 @@ if(new){
                layoff = as.numeric(mlr == 3)) %>% 
         rename_with(toupper, c("prdtind1", "prdtocc1"))
       
-    saveRDS(cps_data, here(paste0(base_new, "cps_data_no_time_correct_", as.character(y), ".rds")))
-    print(paste0("Saved: ", as.character(y)))
+    #   saveRDS(cps_data, here(paste0(base_new, "cps_data_no_time_correct_", as.character(y), ".rds")))
+    # print(paste0("Saved: ", as.character(y)))
     }
   }
 }
@@ -368,7 +369,7 @@ for(y in 2015:2024){
 #################################################################
 base <- here("data/behav_params/Mukoyama_Replication/")
 paths <- c(
- # paste0(base, "mukoyama_all/final_data/R_final/full_CPS_data"),
+ paste0(base, "mukoyama_all/final_data/R_final/full_CPS_data"),
            #paste0(base, "mukoyama_all/final_data/R_final/temp_full_CPS_data_before_new_years"),
            paste0(base, "mukoyama_all/final_data/R_final/temp_full_CPS_2015_19_correct"),
            paste0(base, "mukoyama_all/final_data/R_final/temp_full_CPS_2020_24_correct"))
@@ -383,8 +384,22 @@ for(fpath in paths){
   print(fpath)
   # Load the data
   data <- readRDS(here(paste0(fpath, ".RDS")))
-  print(data)
-  
+
+  if(grepl("20", fpath,  fixed = TRUE)){
+    data <- data %>%
+      mutate(educ = case_when(
+      grdatn <= 38 ~ 1,
+      grdatn == 39 ~ 2,
+      grdatn > 39 & grdatn <= 42 ~ 3,
+      grdatn >= 43 & !is.na(grdatn) ~ 4
+      # Mistaken transformation
+      #grdatn >= 43 & grdatn != NA ~ 4
+    ),
+    hs = ifelse(educ == 2, 1, 0),
+    somecol = ifelse(educ == 3, 1, 0),
+    college = ifelse(educ == 4, 1, 0))
+  }
+ 
   # Generate higher-order age variables
   data <- data %>%
     mutate(
@@ -395,9 +410,8 @@ for(fpath in paths){
 
   for(k in names(df_list)){
     wgts <- df_list[[k]]
-  # df_list <- ('orig' = data_time, '')
       data <- data %>% 
-        bind_cols(., wgts)
+        bind_cols(., wgts) 
       
       # Define the variable list
       variables <- c("empldir", "pubemkag", "PriEmpAg", "FrendRel", "SchEmpCt", "Unionpro",
@@ -440,18 +454,53 @@ for(fpath in paths){
           !!sym(label) := psearch * search_cond
         )
       
-      # Replace employed searchers' search time with NA
+      # # Replace employed searchers' search time with NA
       data <- data %>%
         mutate(!!sym(label) := ifelse(mlr == 1 | mlr == 2, NA, !!sym(label)))
       
       # Drop unnecessary variables
       data <- data %>%
         select(-matches("weight"), -sigma_hat, -psearch, -search_cond, -pi, -invmills) %>%
-        filter(!is.na(final_id)) 
+        filter(!is.na(final_id)) #%>% 
+        # group_by(year, month) %>% 
+        # summarise(
+        #   numsearch = weighted.mean(numsearch, newwgt, na.rm = TRUE),
+        #   across(contains("time_create"), ~weighted.mean(., newwgt, na.rm = TRUE))) %>% 
+        # ungroup %>% 
+        # mutate(date = year + (month/12)) 
   }
-  saveRDS(data, here(paste0(fpath, "_all_weights.RDS")))
+  #assign(paste0("data_", as.character(i)), data)
+  saveRDS(data, here(paste0(fpath, "_all_weights_new.RDS")))
   rm(data)
+  #i = i + 1
 }
+
+# ggplot() +
+#   geom_line(data = data_1, aes(x = date, y = time_create_orig), color = "red") +
+#   geom_line(data = data_2, aes(x = date, y = time_create_orig), color = "blue") +
+#   geom_line(data = data_3, aes(x = date, y = time_create_orig), color = "purple")
+# data_1 %>%
+#   bind_rows(data_2) %>%
+#   tibble %>%
+#   mutate(date = year + (month/12)) %>%
+#   select(-year, -month, -newwgt) %>%
+#   pivot_longer(!date) %>%
+#   ggplot() +
+#   geom_line(aes(x = date, y = value, color = name)) +
+#   geom_vline(aes(xintercept = 2015)) +
+#   facet_wrap(~name, scales = "free")
+
+# data_1 %>% 
+#   bind_rows(data_2) %>% 
+#   tibble %>% 
+#   mutate(date = year + (month/12)) %>% 
+#   select(-year, -month, -newwgt) %>% 
+#   pivot_longer(!date) %>% 
+#   ggplot() +
+#   geom_line(aes(x = date, y = value, color = name)) + 
+#   geom_vline(aes(xintercept = 2015)) +
+#   facet_wrap(~name, scales = "free")
+
       
     
       #saveRDS(data, here(paste0(base_new, "cps_data_full_", as.character(y), ".rds")))

@@ -5,6 +5,11 @@ library(haven)
 library(here)
 library(httr)
 
+# testcorrect <- readRDS(here("data/behav_params/Mukoyama_Replication/mukoyama_all/int_data/CPS/R_int/intermediate_201501correct.RDS"))
+# test2012 <- readRDS(here("data/behav_params/Mukoyama_Replication/mukoyama_all/int_data/CPS/R_int/intermediate_200212.rds"))
+# testdta <- read_dta(here("data/behav_params/Mukoyama_Replication/mukoyama_all/int_data/CPS/intermediate_201412.dta"))
+
+
 # Set memory and directory paths (adjust as per your system)
 raw_CPS <- here("data/behav_params/Mukoyama_Replication/mukoyama_all/raw_data/CPS")
 int_CPS <- here("data/behav_params/Mukoyama_Replication/mukoyama_all/int_data/CPS/R_int")
@@ -65,11 +70,11 @@ process_cps <- function(x) {
   if(x > 201412){
     pelkm1 <- tolower(pelkm1)
   }
-  if (tolower(pelkm1) %in% names(data)){data <- rename(data, lkm1 = get(pelkm1))}
+  if(tolower(pelkm1) %in% names(data)){data <- rename(data, lkm1 = get(pelkm1))}
   
   for (t in 2:6) {
     lkm <- paste0("PULKM", t)
-    if(x > 201412){
+    if(x > 201412 | x < 201301){
       lkm <- tolower(lkm)
     }
     if (lkm %in% names(data)) data <- rename(data, !!paste0("lkm", t) := !!sym(lkm))
@@ -136,7 +141,7 @@ process_cps <- function(x) {
 # Loop over date range and process files
 x <- 199401
 #x <- 200301
-while (x <= 201212) {
+while (x <= 199402) {
   process_cps(x)
   second <- ifelse((x - 12) %% 100 == 0, x + 89, x + 1)
   x <- second
