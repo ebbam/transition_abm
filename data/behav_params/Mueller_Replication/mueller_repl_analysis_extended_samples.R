@@ -28,10 +28,10 @@ base <- here("data/behav_params/Mueller_Replication/")
 # Load data file
 list.files(base)
 data_orig <- readRDS(paste0(base, "sce_datafile_em_2025.RDS"))
-data_13_19_orig <- readRDS(paste0(base, "sce_datafile_13_19_constrained_to_orig.RDS"))
-data_13_19 <- readRDS(paste0(base, "sce_datafile_13_19.RDS"))
-data_13_24 <- readRDS(paste0(base, "sce_datafile_13_24.RDS"))
-data_20_24 <- readRDS(paste0(base, "sce_datafile_20_24.RDS"))
+data_13_19_orig <- readRDS(paste0(base, "sce_datafile_13_19_constrained_to_orig_w_lab_survey.RDS"))
+data_13_19 <- readRDS(paste0(base, "sce_datafile_13_19_w_lab_survey.RDS"))
+data_13_24 <- readRDS(paste0(base, "sce_datafile_13_24_w_lab_survey.RDS"))
+data_20_24 <- readRDS(paste0(base, "sce_datafile_20_24_w_lab_survey.RDS"))
 
 df_list <- list("Orig. 2013-19" = data_orig, 
                 #"2013-19 Restr" = data_13_19_orig, 
