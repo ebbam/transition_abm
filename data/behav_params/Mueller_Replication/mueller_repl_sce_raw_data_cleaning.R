@@ -16,6 +16,10 @@ library(dplyr)   # For data manipulation
 library(lubridate) # For date handling
 library(openxlsx)
 
+
+# Set base path
+base <- here("data/behav_params/Mueller_Replication/120501-V1/MST/EMPIRICAL_ANALYSIS/Codes_and_Data/SCE/")
+
 # Load data
 sce_raw <- read_dta(paste0(base, "Raw_data/sce.dta"))
 cleaned_sce <- read_dta(paste0(base, "sce_datafile.dta"))
@@ -36,6 +40,24 @@ raw_latest <- read.xlsx(here("data/behav_params/Mueller_Replication/new_data/frb
 
 identical(names(raw_1316), names(raw_latest))
 
+# Cleaning the Survey on Consumer Expectations Labour Market Survey Supplement###
+# Source: https://www.newyorkfed.org/microeconomics/sce/labor#/
+# Codebook/questionnaire: https://www.newyorkfed.org/medialibrary/media/research/microeconomics/interactive/downloads/sce-labor-questionnaire.pdf?sc_lang=en
+var_names <- read_xlsx(here('data/behav_params/SCE Labour Market Survey/sce_labour_questionnaire_codebook.xlsx'))
+sce_lab <- read_xlsx(here("data/behav_params/SCE Labour Market Survey/sce-labor-microdata-public.xlsx"), sheet = 3, skip = 1,  
+                     col_types = var_names$type)
+
+pull_name <- function(nm){
+  var_names %>% 
+    filter(var == nm) %>% 
+    pull(short_var) %>% return(.)
+}
+
+sce_lab <- sce_lab %>% 
+  rename_with(., .fn = pull_name) %>%
+  mutate(sce_lab_survey = 1)
+
+### Transformation function
 raw_transform <- function(df){
   df %>% 
     fill(contains("Q35"), .direction = "down") %>% 
@@ -75,7 +97,7 @@ raw_transform <- function(df){
     fill(hispanic, .direction = "down") %>% 
     ungroup %>% 
     mutate(
-      date = ceiling_date(ym(date), 'month') - days(1),
+      #date = ceiling_date(ym(date), 'month') - days(1),
       across(c(find_job_12mon, find_job_3mon, find_newjob_3mon), ~ ./100),
       education_1 = edu_cat == 1,
       education_2 = edu_cat == 2,
@@ -115,29 +137,29 @@ sce_13_19_same_t <- raw_1316 %>%
   rbind(raw_1719) %>% 
   filter(date <= 201906) %>% 
   raw_transform(.) %>% 
-  group_by(userid) %>% 
-  filter(any(temp_laid_off == 1 | (not_working_wouldlike == 1 & looking_for_job == 1)))
+  left_join(., sce_lab, by = c('userid', 'date')) %>% 
+  mutate(date = ceiling_date(ym(date), 'month') - days(1)) 
 
 # Full dataset from 2013-2019
 sce_13_19 <- raw_1316 %>% 
   rbind(raw_1719) %>% 
   raw_transform(.) %>% 
-  group_by(userid) %>% 
-  filter(any(temp_laid_off == 1 | (not_working_wouldlike == 1 & looking_for_job == 1)))
+  left_join(., sce_lab, by = c('userid', 'date')) %>% 
+  mutate(date = ceiling_date(ym(date), 'month') - days(1)) 
 
 # All available data 2013-2014
 sce_13_24 <- raw_1316 %>% 
   rbind(raw_1719) %>% 
   rbind(raw_latest) %>% 
   raw_transform(.) %>% 
-  group_by(userid) %>% 
-  filter(any(temp_laid_off == 1 | (not_working_wouldlike == 1 & looking_for_job == 1)))
+  left_join(., sce_lab, by = c('userid', 'date')) %>% 
+  mutate(date = ceiling_date(ym(date), 'month') - days(1))
 
 # Only data from 2020-2024 (date range outside of Mueller paper)
 sce_20_24 <- raw_latest %>% 
   raw_transform(.) %>% 
-  group_by(userid) %>% 
-  filter(any(temp_laid_off == 1 | (not_working_wouldlike == 1 & looking_for_job == 1)))
+  left_join(., sce_lab, by = c('userid', 'date')) %>% 
+  mutate(date = ceiling_date(ym(date), 'month') - days(1)) 
 
 rm(raw_1316, raw_1719, raw_latest, sce_raw, cleaned_sce, raw_transform)
 
