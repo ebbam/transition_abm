@@ -24,7 +24,15 @@ def util(w_current, w_offered, skill_sim):
 # unemployed after which a worker begins to become discouraged. 
 # This follows definition from the US BLS and Pew Research Centre
 def search_effort(t_unemp, bus_cy):
-    apps = round(10*(bus_cy))
+    #apps = max(0, round(10 - 100*(1-bus_cy)))
+    apps = round(10 + 100*(1-bus_cy))
+    # if discouraged:
+    #     apps = round(a_stable/((t_unemp)**2 + 1)) + 1
+    return apps
+
+# Alternative search effort function that is dictated by the time series of a business cycle
+def search_effort_ts(t_unemp, se):
+    apps = max(0, round(10 - 100*(1-se)))
     # if discouraged:
     #     apps = round(a_stable/((t_unemp)**2 + 1)) + 1
     return apps
@@ -72,6 +80,19 @@ class worker:
             vs = random.sample(found_vacs, min(len(found_vacs), 10))
             for r in vs:
                 r.applicants.append(wrkr)
+    
+    # def emp_search_and_apply(wrkr, vac_list, bus_cy):
+    #     # A sample of relevant vacancies are found that are in neighboring occupations
+    #     # Will need to add a qualifier in case sample is greater than available relevant vacancies
+    #     # ^^ have added qualifier...bad form to reassign list?
+    #     # Select different random sample of "relevant" vacancies found by each worker
+    #     found_vacs = random.sample(vac_list, min(len(vac_list), 30))
+    #     # Filter found_vacs to keep only elements where util(el) > 0
+    #     # We assume that employed workers will only apply to vacancies for which there is a wage gain. 
+    #     filtered_vacs = [el for el in found_vacs if util(el) > 0]
+    #     vs = random.sample(filtered_vacs, min(len(filtered_vacs), 5))
+    #     for r in vs:
+    #         r.applicants.append(wrkr)
             
 class occupation:
     def __init__(occ, occupation_id, list_of_employed, list_of_unemployed, 
@@ -109,7 +130,7 @@ class occupation:
         for w in occ.list_of_unemployed:
             w.time_unemployed += 1
             # Chosen 12 months - can be modified
-            w.longterm_unemp = True if w.time_unemployed >= 2 else False
+            w.longterm_unemp = True if w.time_unemployed >= 4 else False
             # Possible for loop to replace
         for e in occ.list_of_employed:
             e.hired = False
