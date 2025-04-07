@@ -236,3 +236,13 @@ data/occ_macro_vars/CPS_LTUER/cps_00006.xml
 data/occ_macro_vars/CPS_LTUER/cps_00006.dat
 data/occ_macro_vars/CPS_LTUER/cps_00006.dat.gz
 data/occ_macro_vars/CPS_LTUER/cps_00006.txt
+data/behav_params/Mueller_Replication/sce_datafile_13_19.RDS
+data/behav_params/Mueller_Replication/sce_datafile_13_19_constrained_to_orig.RDS
+data/behav_params/Mueller_Replication/sce_datafile_13_19_constrained_to_orig_w_lab_survey.RDS
+data/behav_params/Mueller_Replication/sce_datafile_13_19_w_lab_survey.RDS
+data/behav_params/Mueller_Replication/sce_datafile_13_24.RDS
+data/behav_params/Mueller_Replication/sce_datafile_13_24_w_lab_survey.RDS
+data/behav_params/Mueller_Replication/sce_datafile_13_24_w_lab_survey_new.RDS
+data/behav_params/Mueller_Replication/sce_datafile_20_24.RDS
+data/behav_params/Mueller_Replication/sce_datafile_20_24_w_lab_survey.RDS
+data/behav_params/Mueller_Replication/sce_datafile_em_2025.RDS
