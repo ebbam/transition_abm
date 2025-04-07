@@ -1,0 +1,309 @@
+---
+title: "Transition Scenarios"
+author: "Ebba Mark"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+library(readxl)
+library(tidyverse)
+library(janitor)
+library(ggbump)
+library(assertthat)
+library(fixest)
+
+```
+
+## BLS Employment Projections 2023-2033
+Source: https://www.bls.gov/emp/tables.htm
+
+```{r}
+
+bls_high_level <- read_xlsx(here('data/transition_scenarios/BLS_employment_projections/occupation.xlsx'), sheet = 2, skip = 1, n_max= 23) %>% 
+  clean_names %>% 
+  rename(occ_title = x2023_national_employment_matrix_title)
+
+bar_plot <- function(df, xlab = NULL, ylab = NULL, title = NULL, subtitle = NULL){
+  p <- df %>% 
+    arrange(employment_change_percent_2023_33) %>% 
+  ggplot(aes(x = reorder(occ_title, desc(employment_change_percent_2023_33)), y = employment_change_percent_2023_33, fill = employment_change_percent_2023_33 < 0)) +
+  geom_bar(stat = 'identity') +
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle = 90, hjust = 1), legend.position = "none", panel.grid.major = element_blank()) +
+  labs(x = xlab, y = ylab, title = title, subtitle =subtitle)
+  return(p)
+}
+
+bar_plot(bls_high_level, xlab = "Occupation", ylab = "Projected % change from 2023-2033", title = "BLS Employment Projections 2023-2033") 
+ggsave(here('data/transition_scenarios/BLS_employment_projections/bls_high_level_pct.jpg'), width = 8, height = 10)
+
+
+bls_summary <- read_xlsx(here('data/transition_scenarios/BLS_employment_projections/occupation.xlsx'), sheet = 3, skip = 1, n_max = 1113) %>% 
+  clean_names %>% 
+  rename(occ_title = x2023_national_employment_matrix_title,
+         occ_code = x2023_national_employment_matrix_code) %>% 
+  filter(occupation_type == "Summary")
+
+suppress_labels <- function(df, th){
+  x <- df %>% 
+    arrange(employment_change_percent_2023_33) %>% 
+    pull(occ_title) 
+  for(i in 1:(th-1)){
+    x[seq(i, length(x), th)] <- ""
+  }
+  rev(x)
+}
+
+bar_plot(bls_summary,  xlab = "Occupation - Low-level Summary (n = 281)", ylab = "Projected % change from 2023-2033", title = "BLS Employment Projections 2023-2033 (Medium-specificity occupational categories)", subtitle = "Displaying 1/4 of occupational titles") + scale_x_discrete(labels = suppress_labels(bls_summary, 4)) 
+ggsave(here('data/transition_scenarios/BLS_employment_projections/bls_summary_level_pct.jpg'), width = 10, height = 8)
+
+
+bls_low_level <- read_xlsx(here('data/transition_scenarios/BLS_employment_projections/occupation.xlsx'), sheet = 3, skip = 1, n_max = 1113) %>% 
+  clean_names %>% 
+  rename(occ_title = x2023_national_employment_matrix_title,
+         occ_code = x2023_national_employment_matrix_code) %>% 
+  filter(occupation_type == "Line item")
+
+bar_plot(bls_low_level,  xlab = "Occupation - Low-level Line Items (n = 832)", ylab = "Projected % change from 2023-2033", title = "BLS Employment Projections 2023-2033 (High-specificity occupational categories)", subtitle = "Displaying 1/10 of occupational titles") +
+  scale_x_discrete(labels = suppress_labels(bls_low_level, 10))
+
+ggsave(here('data/transition_scenarios/BLS_employment_projections/bls_low_level_pct.jpg'), width = 12, height = 8)
+
+```
+
+
+## Past BLS Employment Projections
+Downloaded from the archive: https://www.bls.gov/emp/data/projections-archive.htm
+
+Need to take occupation codes from the 3rd sheet of the 2008-18 file in order to capture all occupation codes. 
+```{r}
+
+proj_dates <- list.files(here('data/transition_scenarios/BLS_employment_projections/past_projections')) %>% .[!grepl("zip|jpg", .)]
+
+
+# The following loop loads in all employment projections with the followign columns (occupation title, code, employment level in the base year, projected employment, change in numbers, change in percent)
+# Additional variables exist in all files except 2008-18 for the median annual wage. 
+
+# Keeps track of required occupation codes for 23 occupations forecast at this higher level
+occ_codes <- list()
+
+# Create a dataframe of projected versus actual values for all years available starting with most recent 2023-33 projection using (bls_high_level dataframe above)
+
+pred_data <- bls_high_level %>% 
+  rename(occ_code = 2) %>% 
+  mutate(occ_title = tolower(occ_title),
+         occ_title = ifelse(occ_title == "educational instruction and library occupations", "education, training, and library occupations", occ_title)) %>% 
+  select(occ_code, occ_title, employment_2023, employment_2033) %>% 
+  pivot_longer(!c(occ_code, occ_title)) %>% 
+  separate(name, into = c("type", "year"), sep = "_") %>% 
+  mutate(type = ifelse(year == 2023, "actual", "predicted"),
+         year = as.numeric(year),
+         forecast = '2023-33') 
+
+# Creating one to save just percentage change values
+pred_pct <- bls_high_level %>% 
+  rename(occ_code = 2) %>% 
+  mutate(occ_title = tolower(occ_title),
+         occ_title = ifelse(occ_title == "educational instruction and library occupations", "education, training, and library occupations", occ_title)) %>% 
+  select(occ_code, occ_title, contains("employment_change_percent")) %>% 
+  pivot_longer(!c(occ_code, occ_title)) %>% 
+  separate(name, into = c("type", "horizon"), sep = "percent_")
+
+for(proj in rev(proj_dates)){
+  print(proj)
+  tbl <- read_xlsx(here(paste0('data/transition_scenarios/BLS_employment_projections/past_projections/',proj, '/occupation.xlsx')), sheet = 2, skip = 1) %>% 
+    filter(!grepl("Footnotes:|Source:|Note:|Data are from|Wage included represents", .[[1]])) %>% clean_names %>% 
+    rename_with(~gsub(., "occ_title", .), contains('title')) %>% 
+    rename_with(~gsub(., "occ_code", .), contains('code')) %>% 
+    rename_with(~gsub("_1", "", .), ends_with("_1")) %>% 
+    mutate(occ_title = tolower(occ_title)) %>% 
+    mutate(occ_title = ifelse(occ_title == "educational instruction and library occupations", "education, training, and library occupations", occ_title)) %>% 
+    relocate(occ_title) %>% 
+      select(occ_code, occ_title, contains("emp"))
+  
+
+  if(proj == "2008-18"){
+    tbl <- read_xlsx(here(paste0('data/transition_scenarios/BLS_employment_projections/past_projections/2008-18/occupation.xlsx')), sheet = 3, skip = 1) %>% 
+    filter(!grepl("Footnotes:|Source:|Note:|Data are from|Wage included represents", .[[1]])) %>% clean_names %>% 
+    rename_with(~gsub(., "occ_title", .), contains('title')) %>% 
+    rename_with(~gsub(., "occ_code", .), contains('code')) %>% 
+    rename_with(~gsub("_1", "", .), ends_with("_1")) %>% 
+    mutate(occ_title = tolower(occ_title)) %>% 
+    # Replace a few occupation titles that have slightly different names in 2008 (computer/math, comm/social services) and 2019 ("educational instruction and library occupations")
+    mutate(occ_title = ifelse(occ_title == "educational instruction and library occupations", "education, training, and library occupations", 
+                              ifelse(occ_title == "computer and mathematical science occupations", "computer and mathematical occupations",
+                                     ifelse(occ_title == "community and social services occupations", "community and social service occupations", occ_title)))) %>% 
+    filter(occ_code %in% occ_codes) %>% relocate(occ_title) %>% 
+      select(occ_code, occ_title, contains("emp")) %>% 
+      select(-c("employment_percent_2008", "employment_percent_2018"))}
+  assign(paste0("proj_", gsub("-", "_", proj)), tbl)
+
+  occ_codes <- tbl %>% pull(occ_code) %>% c(., occ_codes) %>% unique
+  # Should print 23
+  assert_that(length(occ_codes) == 23)
+  
+    # Create one dataframe with just pct_changes
+  pred_pct <- tbl %>% 
+    rename_with(~gsub("emp_change_percent", "employment_change_percent", .)) %>% 
+    select(occ_code, occ_title, contains("employment_change_percent")) %>% 
+    pivot_longer(!c(occ_code, occ_title)) %>% 
+    separate(name, into = c("type", "horizon"), sep = "percent_") %>% 
+    rbind(pred_pct, .)
+  
+  pred_data <- tbl %>% 
+  select(occ_code, occ_title, eval(paste0('employment_', substr(proj, 1,4))), eval(paste0('employment_20', substr(proj,6,7)))) %>% 
+  pivot_longer(!c(occ_code, occ_title)) %>% 
+  separate(name, into = c("type", "year"), sep = "_") %>% 
+  mutate(type = ifelse(year == substr(proj, 1,4), "actual", "predicted"),
+         year = as.numeric(year),
+         forecast = proj) %>% 
+    rbind(pred_data,.)
+}
+
+
+ggplot() +
+  geom_line(data = filter(pred_data, type == "predicted", occ_title != "total, all occupations"), aes(x = year, y = log(value), color = occ_title), linetype = "dashed") +
+  geom_point(data = filter(pred_data, type == "actual", occ_title != "total, all occupations"), aes(x = year, y = log(value), color = occ_title)) +
+  geom_line(data = filter(pred_data, type == "actual", occ_title != "total, all occupations"), aes(x = year, y = log(value), color = occ_title)) +
+  facet_wrap(~occ_title, scales = "free", ncol = 3) +
+  theme_minimal() +
+      theme(legend.position = "none") +
+  labs(x = "Year", y = "Employment (log)", title = "BLS: Predicted and actual occupation-specific employment")
+
+ggplot() +
+  geom_rect(data = pred_data, xmin = 2018, xmax = 2023, ymin = -Inf, ymax = Inf, fill = "lightblue", alpha = 0.02) +
+  geom_line(data = filter(pred_data, type == "predicted", occ_title != "total, all occupations"), aes(x = year-10, y = log(value), color = occ_title), linetype = "dashed") +
+  geom_point(data = filter(pred_data, type == "actual", occ_title != "total, all occupations"), aes(x = year, y = log(value), color = occ_title)) +
+  geom_line(data = filter(pred_data, type == "actual", occ_title != "total, all occupations"), aes(x = year, y = log(value), color = occ_title)) +
+  # geom_line(data = filter(pred_data, occ_title != "total, all occupations"), aes(x = year, y = log(value), group = forecast, color = occ_title), linetype = "dotted", alpha = 0.6) +
+  facet_wrap(~occ_title, scales = "free", ncol = 3) +
+  theme_minimal() +
+      theme(legend.position = "none") +
+  labs(x = "Year", y = "Employment (log)", title = "BLS: Predicted and actual occupation-specific employment", caption = "The dots and solid lines represent the actual realised values of occupational employment levels. \nThe dashed line indicates the 10-year ahead forecast of occupation-specific employment. \nThe dotted lines connect the base year value to the forecasted value. \nAll values are reported as part of the BLS Employment Projections. \nThe light blue shaded area indicates where forecasts have corresponding real-world values for comparison (2018-23).") +
+  theme(plot.caption = element_text(hjust = 0, size = 12))
+
+ggsave(here('data/transition_scenarios/BLS_employment_projections/past_projections/bls_real_forecast_values_same_year.jpg'), width = 10, height = 12)
+
+library(zoo)
+pred_pct <- pred_pct %>% 
+  filter(occ_title != "total, all occupations") %>% 
+  mutate(year = as.numeric(substr(horizon, 1,4))) %>% 
+  group_by(occ_title, occ_code, type) %>% 
+  complete(year = 2008:2023) %>% 
+  mutate(value_interp = na.approx(value, na.rm=FALSE)) %>% 
+  ungroup 
+
+
+pred_pct %>% 
+  ggplot(aes(x = year, y = value_interp, color = occ_title)) +
+  geom_point() + 
+  geom_smooth(aes(x = year, y = value_interp, color = occ_title), method = "lm", linewidth = 0.2) +
+  geom_hline(aes(yintercept = 0, color = occ_title)) +
+  facet_wrap(~occ_title, scales = "free", ncol = 3) +
+  theme_minimal() +
+  theme(legend.position = "none") 
+
+ggsave(here('data/transition_scenarios/BLS_employment_projections/past_projections/bls_real_forecast_values_pct.jpg'), width = 10, height = 12)
+
+
+library(broom)
+
+res <- pred_pct %>% 
+  feols(value_interp ~ year:occ_title | year + occ_title) %>%
+  summary %>% 
+  tidy %>% 
+  mutate(term = gsub("year:occ_title", "", term)) %>% 
+  arrange(-estimate) 
+  
+res %>% dwplot() +
+  geom_vline(xintercept = mean(res$estimate), linetype = "dashed") +
+  labs(x = "Occupation", y = "Predicted growth-rate from 10-year projections", title = "Predicted Emp Growth (%) per Occupation using 10-year projections from 2008-2023", caption = "Occupation-specific values are drawn from a panel regression estimate of the predicted percentage employment change as a function of an occupation-specific time-trend and occupation- and year-fixed effects.\nVertical dashed line represents the mean treatment effect across occupations.")
+
+ggsave(here('data/transition_scenarios/BLS_employment_projections/past_projections/bls_real_forecast_values_pct_TE.jpg'), width = 10, height = 12)
+
+```
+
+
+## BLS Pandemic Projections
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+bls_pand_mod_summary <- read_xlsx(here('data/transition_scenarios/BLS_pandemic_projections/matrix_pandemic_moderate_impact.xlsx'), skip = 2) %>% clean_names %>% filter(occupation_type == "Summary" & industry_code == "TE1000") %>% select(-c(occupation_type, occupation_code, industry_code, industry_title, industry_type)) %>% mutate(scenario = "moderate")
+
+bls_pand_strong_summary <-read_xlsx(here('data/transition_scenarios/BLS_pandemic_projections/matrix_pandemic_strong_impact.xlsx'), skip = 2) %>% clean_names %>% filter(occupation_type == "Summary" & industry_code == "TE1000") %>% select(-c(occupation_type, occupation_code, industry_code, industry_title, industry_type)) %>% mutate(scenario = "strong")
+
+# bls_pand_mod_summary %>% select(1:9) %>% identical(select(bls_pand_high_summary, 1:9))
+# bls_pand_mod_summary %>% full_join(bls_pand_high_summary, by = names(bls_pand_mod_summary)[1:9])
+
+suppress_labels <- function(df, th){
+  x <- df %>% 
+    filter(scenario == "moderate") %>% 
+    arrange(percent_change_2019_29) %>% 
+    pull(occupation_title) 
+  for(i in 1:(th-1)){
+    x[seq(i, length(x), th)] <- ""
+  }
+  rev(x)
+}
+
+bls_pand_summary <- bls_pand_mod_summary %>% 
+  rbind(bls_pand_strong_summary) %>% relocate(scenario, .after = "occupation_title")
+
+  ggplot() +
+  geom_col(data = filter(bls_pand_summary, scenario == "moderate"), aes(x = reorder(occupation_title, desc(percent_change_2019_29)), y = percent_change_2019_29, fill = scenario), alpha = 0.7) +
+  geom_col(data = filter(bls_pand_summary, scenario == "strong"), aes(x = reorder(occupation_title, desc(percent_change_2019_29)), y = percent_change_2019_29, fill = scenario), alpha = 0.5) +
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle = 90, hjust = 1),  panel.grid.major = element_blank()) +
+    scale_x_discrete(labels = suppress_labels(bls_pand_summary, 3)) +
+  scale_fill_brewer(palette = 'Set2') +
+    labs(x = "Occupation - Low-level Summary (n = 258)", y = "Projected % change from 2019-2029", title = "BLS Pandemic Employment Projections 2019-2029 (Medium-specificity occupational categories)", subtitle = "Displaying 1/3 of occupational titles", fill = "Scenario")
+  
+  ggsave(here('data/transition_scenarios/BLS_pandemic_projections/bls_pandemic_scenarios_pct.jpg'), width = 12, height = 8)
+
+```
+
+
+```{r pressure, echo=FALSE}
+
+bls_pand_mod_low <- read_xlsx(here('data/transition_scenarios/BLS_pandemic_projections/matrix_pandemic_moderate_impact.xlsx'), skip = 2) %>% clean_names %>% filter(occupation_type == "Line item" & industry_code == "TE1000")
+
+bls_pand_mod_summary %>% 
+  ggplot(aes(x = reorder(occupation_title, desc(percent_change_2019_29)), y = percent_change_2019_29, fill = percent_change_2019_29 < 0)) +
+  geom_bar(stat = 'identity') +
+  theme_minimal() +
+  theme(axis.text.x=element_text(angle = 90, hjust = 1), legend.position = "none", panel.grid.major = element_blank()) #+
+  #labs(x = xlab, y = ylab, title = title, subtitle =subtitle)
+  
+  
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+bls_rankings <- bls_high_level %>% 
+  select("occ_title", "employment_2023", "employment_2033") %>% 
+  pivot_longer(!occ_title, names_to = 'year', values_to = 'employment') %>% 
+  
+  mutate(year = as.numeric(gsub("employment_", "", year))) %>% filter(occ_title != "Total, all occupations") %>% 
+  ggplot(aes(x = year, y = employment, color = occ_title)) + 
+  geom_bump() +
+  theme(legend.position = "bottom")
+
+
+
+bls_high_level %>% 
+  select("occ_title", "employment_2023", "employment_2033") %>% 
+  pivot_longer(!occ_title, names_to = 'year', values_to = 'employment') %>% 
+  
+  mutate(year = as.numeric(gsub("employment_", "", year))) %>% filter(occ_title != "Total, all occupations") %>% 
+  ggplot(aes(x = year, y = employment, color = occ_title)) + 
+  geom_area(stat = 'identity') +
+  scale_fill_viridis() +  theme(legend.position = "bottom")
+```
+
+
+
