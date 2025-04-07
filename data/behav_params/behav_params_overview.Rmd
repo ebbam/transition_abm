@@ -3,6 +3,8 @@ title: "Data Scoping: Job Search Effort/Behaviour"
 author: "Ebba Mark"
 date: "`r Sys.Date()`"
 output: html_document
+editor_options: 
+  chunk_output_type: inline
 ---
 
 # Overview
@@ -70,62 +72,6 @@ library(gets)
 [Mukoyama: Job Search Over the Business Cycle](https://www.aeaweb.org/articles?id=10.1257/mac.20160202)
 
 ```{r, echo = FALSE, fig.height = 8, fig.width = 10, cache = FALSE}
-# # 
-# s_theta_df <- read.delim(here("data/behav_params/Mukoyama_Replication/mukoyama_all/programs/Figures/s_theta.m"), sep = ",") %>%
-#   tibble() %>%
-#   rename(s_theta = 1) %>%
-#   mutate(s_theta = as.numeric(s_theta)) %>%
-#   filter(!is.na(s_theta))
-# 
-# ggplot() +
-#   geom_line(data = s_theta_df, aes(x = as.numeric(row.names(s_theta_df)), y = s_theta))
-# 
-# #cps <- read_dta(here("data/behav_params/Mukoyama_Replication/final_data/full_CPS_data.dta"))
-# 
-# cps_minutes <- read.csv(here("data/behav_params/Mukoyama_Replication/mukoyama_all/int_data/CPS/FigureA4_data.csv")) %>% 
-#   tibble() %>% 
-#   mutate(date = ym(paste(year, month, sep = "-"))) 
-# 
-# cps_minutes %>% 
-#   ggplot()+
-#   geom_line(aes(x = date, y = time_create_method), color = "blue") +
-#   geom_line(aes(x = date, y = time_create), color = "red") +
-#   labs(x = "Date", y = "Average minutes searching per day (intensive margin)", title = "Search Effort: Intensive Margin") +
-#   theme_minimal()
-# 
-# library(mFilter)
-# library(zoo)
-# 
-# realgdp <- read.csv(here('data/macro_vars/collated_macro_observations.csv')) %>% select(DATE, REALGDP) %>% 
-#   tibble() %>% 
-#   filter(!is.na(REALGDP)) %>% 
-#   mutate(date = ymd(DATE)) %>% 
-#   left_join(cps_minutes,., by = "date") %>% 
-#   mutate(REALGDPint = na.approx(REALGDP, na.rm = FALSE)) %>% 
-#   fill(REALGDPint, .direction = "down") %>% 
-#   mutate(logrealgdp = log(REALGDPint),
-#          gdp_growth = logrealgdp - dplyr::lag(logrealgdp, 1))
-# 
-# 
-# hpf <- hpfilter(realgdp$logrealgdp, freq = 1500)
-# realgdp$logrealgdpcycle = hpf[['cycle']]
-# #realgdp$logrealgdptrend = hpf[['trend']]
-# 
-# realgdp_gets <- realgdp %>% 
-#   mutate(l1_gdp_growth = lag(gdp_growth, 1),
-#          l2_gdp_growth = lag(gdp_growth, 2),
-#          l3_gdp_growth = lag(gdp_growth, 3),
-#          l4_gdp_growth = lag(gdp_growth, 4),
-#          l5_gdp_growth = lag(gdp_growth, 5),
-#          l6_gdp_growth = lag(gdp_growth, 6),
-#          l7_gdp_growth = lag(gdp_growth, 7),
-#          l8_gdp_growth = lag(gdp_growth, 8),
-#          l9_gdp_growth = lag(gdp_growth, 9),
-#          l10_gdp_growth = lag(gdp_growth, 10),
-#          l11_gdp_growth = lag(gdp_growth, 11),
-#          l12_gdp_growth = lag(gdp_growth, 12),
-#          l13_gdp_growth = lag(gdp_growth, 13))
-
 
 source(here("data/behav_params/Mukoyama_Replication/mukoyama_replication_analysis.R"))
 
