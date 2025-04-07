@@ -3,7 +3,7 @@
 # The following reproduces the empirical analysis of Mueller et al. with additional samples
 
 # Clear the environment
-rm(list = ls())
+#rm(list = ls())
 
 # Load required packages
 library(haven)    # For reading .dta files
