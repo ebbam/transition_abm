@@ -227,3 +227,12 @@ data/behav_params/CPS_BLS_Supplement_18_22/febmay22pub.csv
 /data/transition_scenarios/BLS_employment_projections/past_projections
 /dRC_Replication
 *.zip
+data/occ_macro_vars/CPS_LTUER/cps_00005/cps_00005.txt
+data/occ_macro_vars/CPS_LTUER/cps_00005/cps_00005.dat
+data/occ_macro_vars/CPS_LTUER/cps_00005/cps_00005.dat.gz
+data/occ_macro_vars/CPS_LTUER/cps_00005/cps_00005.xml
+data/occ_macro_vars/CPS_LTUER/cps_00005/cps_ltuer.rtf
+data/occ_macro_vars/CPS_LTUER/cps_00006.xml
+data/occ_macro_vars/CPS_LTUER/cps_00006.dat
+data/occ_macro_vars/CPS_LTUER/cps_00006.dat.gz
+data/occ_macro_vars/CPS_LTUER/cps_00006.txt
