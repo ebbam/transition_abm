@@ -226,3 +226,4 @@ data/behav_params/CPS_BLS_Supplement_18_22/maysep18pub.dat.gz
 data/behav_params/CPS_BLS_Supplement_18_22/febmay22pub.csv
 /data/transition_scenarios/BLS_employment_projections/past_projections
 /dRC_Replication
+*.zip
