@@ -5,6 +5,7 @@ library(ggplot2)
 library(here)
 library(haven) # To read .dta files
 library(patchwork)
+library(urca)
 
 # Set this to false or true depending on if you wish to recompile the input data to figures 3 and 4 based on updated data
 first = FALSE
@@ -386,8 +387,8 @@ fig3a_base <- bind_rows(lapply(names(data_list_3a), function(name) {
 
 fig3b_base <- data_list_3b[[1]] %>% 
   mutate(date = year + month/12) %>% 
-  select(-year, -month) %>% 
-  pivot_longer(!c(date, numsearch)) %>% 
+  #select(-year, -month) %>% 
+  pivot_longer(!c(date, year, month, numsearch)) %>% 
   mutate(label = case_when(name == "time_create" ~ "Original Weights on Orig. TS",
                            name == "time_create_new_2014" ~ "New Weights from Orig. TS",
                            name == "time_create_new_2023" ~ "New Weights from Ext. TS",
@@ -406,21 +407,82 @@ fig3a_plot <- add_recession(fig3a_plot)
 
 # Define function to plot Figure 3b
 fig3b_plot <- ggplot() +
-  geom_line(data = fig3b_base, aes(x = date, y = value, color = label), size = 0.5) +
+  geom_line(data = filter(fig3b_base, date > 1999.9), aes(x = date, y = value, color = label), size = 0.5) +
   theme_minimal() +
-  scale_x_continuous(breaks = seq(2003, 2023, by = 2)) +
-  scale_y_continuous(limits = c(0, 45), breaks = seq(25, 45, by = 5)) +
+  #scale_x_continuous(breaks = seq(2003, 2023, by = 2)) +
+  scale_y_continuous(limits = c(10, 45), breaks = seq(0, 45, by = 5)) +
   theme_minimal() +
-  labs(x = "Date", y = "Intensive Margin") +
+  labs(x = "Date", y = "Intensive Margin", title = "Period: 2000-2024", color = "Weights and Input Data") +
   theme(legend.position = "bottom") +
-  guides(color=guide_legend(ncol=1))
+  guides(color=guide_legend(ncol=2))
+
+fig3bb_plot <- ggplot() +
+  geom_line(data = filter(fig3b_base, date > 1999.9 & date < 2020), aes(x = date, y = value, color = label), size = 0.5) +
+  theme_minimal() +
+  #scale_x_continuous(breaks = seq(2003, 2023, by = 2)) +
+  scale_y_continuous(limits = c(25, 45), breaks = seq(0, 45, by = 5)) +
+  theme_minimal() +
+  labs(x = "Date", y = "Intensive Margin", title = "Period: 2000-2019") +
+  theme(legend.position = "none") +
+  guides(color=guide_legend(ncol=2))
 
 fig3b_plot <- add_recession(fig3b_plot)
+fig3bb_plot <- add_recession(fig3bb_plot)
 
 print(fig3a_plot + fig3b_plot + plot_annotation(
   "Figure 3. The Time Series of the Extensive Margin (U/(U + N )) ( panel A)\nand the Intensive Margin ( panel B), \nMeasured by the Average Minutes of Search per Day for Unemployed Workers",
   caption = "Red data is new data. Notes: Panel A plots the monthly ratio of the number of unemployed (U) to the total number of unemployed (U + N ) in the CPS from 1994–2014.", #\nPanel B plots the average minutes of search per day, constructed as described in the text. Each observation is weighted by its CPS sample weight.",
   theme=theme(plot.title=element_text(hjust=0.5))))
+
+print(fig3b_plot + fig3bb_plot + plot_annotation(
+  "Intensive Margin Measured by the Average Minutes of Search per Day for Unemployed Workers",
+  caption = "Plots the average minutes of search per day,using the imputed minutes as a function of search methods used.\nEach observation is weighted by its CPS sample weight.",
+  theme=theme(plot.title=element_text(hjust=0.5))))
+
+ggplot() +
+  geom_line(data = filter(fig3b_base, date > 1999.9 & name == "time_create_new_2023"), aes(x = date, y = value, color = label), size = 0.5) +
+  theme_minimal() +
+  #scale_x_continuous(breaks = seq(2003, 2023, by = 2)) +
+  scale_y_continuous(limits = c(10, 45), breaks = seq(0, 45, by = 5)) +
+  theme_minimal() +
+  labs(x = "Date", y = "Intensive Margin", title = "Period: 2000-2024", color = "Weights and Input Data") +
+  theme(legend.position = "bottom") +
+  guides(color=guide_legend(ncol=2))
+
+library(slider)
+
+quart_data <- fig3b_base %>%
+  filter(year > 1999 & name == "time_create_new_2023") %>% 
+  mutate(quarter = case_when(
+    month <= 3 ~ 1,
+    month > 3 & month <= 6 ~ 2,
+    month > 6 & month <= 9 ~ 3, 
+    month > 9 ~ 4
+  )) %>%
+  group_by(year, quarter) %>%
+  summarise(value = mean(value, na.rm = TRUE), .groups = "drop") %>%
+  mutate(value_smooth = predict(loess(value ~ as.numeric(row_number()), span = 0.1)))
+       #value_smooth = ifelse(year == 2020 & quarter == 2, 15, value_smooth)) 
+
+monthly_data <- fig3b_base %>% 
+  filter(year > 1999 & name == "time_create_new_2023") %>% 
+  mutate(value_smooth = predict(loess(value ~ as.numeric(row_number()), span = 0.1))) %>% 
+  select(year, month, value, value_smooth)
+  
+
+write.csv(quart_data, here("data/behav_params/Mukoyama_Replication/quarterly_search_ts.csv"))
+write.csv(monthly_data, here("data/behav_params/Mukoyama_Replication/monthly_search_ts.csv"))
+
+ 
+ggplot() +  
+  geom_line(data = quart_data, aes(x = year + quarter/4, y = value, color = "Quarterly"), alpha = 0.5) +  # Original data
+  geom_line(data = quart_data, aes(x = year + quarter/4, y = value_smooth, color = "Quarterly"),  size = 1) +  # Smoothed data
+  geom_line(data = monthly_data, aes(x = year + month/12, y = value, color = "Monthly"), alpha = 0.5) +  # Original data
+  geom_line(data = monthly_data, aes(x = year + month/12, y = value_smooth, color = "Monthly"), size = 1) +  # Smoothed data
+  labs(title = "Smoothed Quarterly & Monthly Search Effort Data for Calibration", 
+       subtitle = "Thin lines represent the observed data whereas the thicker lines represent a smoothing \nof each series using a LOESS fit with 0.1 span.", x = "Year", y = "Value (Minutes Searched per Day", color = "Frequency") +
+  theme_minimal()
+  #mutate(month = date%%round(date)) 
 
 ##################################
 ############ Figures 4a-b ########
@@ -481,4 +543,97 @@ print(fig4a + fig4b + plot_annotation('Figure 4. Time Series of (Panel A) Total 
 # ggsave("Figure4b.pdf", fig4b, width = 10.5, height = 8, units = "in")
 
 #lambda <- readRDS(here('data/behav_params/Eeckhout_Replication/lambda_hat.RDS'))
+
+#############################################################################
+###### Triangulating parameter value of search effort sensitivity to GDP ####
+
+gdp_effort <- read.csv(here("data/macro_vars/detrended_gdp_nocovid.csv")) %>% 
+  tibble %>% 
+  select(DATE, log_Cycle) %>% 
+  mutate(year = year(DATE),
+         month = month(DATE),
+         date = year + month/12) %>% 
+  select(-DATE, -year, -month) %>% 
+  left_join(filter(fig3b_base, label == "New Weights from Ext. TS"), ., by = "date") %>% 
+  mutate(value_smooth = rollmean(value, k = 4, fill = NA, align = "right")) %>% 
+  filter(!is.na(log_Cycle)) 
+
+gdp_effort %>% 
+  ggplot() +
+  geom_line(aes(x = date, y = value)) +
+  geom_line(aes(x = date, y = log_Cycle*30))
+
+gdp_effort %>% 
+  ggplot() +
+  geom_line(aes(x = date, y = value_smooth)) +
+  geom_line(aes(x = date, y = log_Cycle*30))
+
+
+plot_data <- tibble()
+form_list = list("Linear fit" = "y~x", "Linear fit with trend" = "y~x+trend")
+for(form in names(form_list)){
+  temp <- gdp_effort %>% 
+    filter(date > 1999.9)
+  formula = unlist(form_list[names(form_list) == form])
+  
+  # test for stationarity with augmented Dickey-Fuller Test
+  x <- temp$log_Cycle
+  y <- temp$value_smooth
+  trend <- index(x)
+  
+  # Run a linear regression to estimate the long-run relationship
+  reg <- lm(as.formula(formula))
+  
+  # # Get residuals from the regression
+  # residuals <- reg$residuals
+  # 
+  # # Test if residuals are stationary (cointegration test)
+  # coint_test <- ur.df(residuals, type = "none")
+  # summary(coint_test)
+  # 
+  # summary(reg)  # Coefficients give the cointegration relationship
+  # 
+  # # Compute first differences
+  # dy <- diff(temp$value_smooth)
+  # dx <- diff(temp$log_Cycle)
+  # lagged_residuals <- residuals[-1]  # Lag residuals (error correction term)
+  # 
+  # # ECM: Adjustments in dy based on dx and past equilibrium errors
+  # ecm <- lm(dy ~ dx + lagged_residuals)
+  # summary(ecm)
+  
+  # Get predictions with confidence intervals
+  predictions <- predict(reg, interval = "confidence")
+  plot_data <- data.frame(
+    x = temp$date,
+    actual = y,
+    input_x = x,
+    predicted = predictions[, "fit"],
+    lower_ci = predictions[, "lwr"],
+    upper_ci = predictions[, "upr"],
+    group = form
+  ) %>% 
+    rbind(plot_data, .)
+  # Plot actual vs predicted with confidence intervals
+}
+
+ggplot(plot_data, aes(x = x)) +
+  geom_line(aes(y = actual, color = "Actual", color = group), size = 1, color = "blue", linewidth = 0.75) +  # Actual values
+  geom_line(aes(y = predicted, color = group), size = 1, linetype = "dashed") +  # Predicted values
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = group), alpha = 0.2) +  # Confidence interval
+  #geom_line(aes(y = -input_x*30+63, color = "Input X", group = group), size = 1) +  # Input X on secondary axis
+  # scale_y_continuous(
+  #   name = "Actual & Predicted Values",
+  #   sec.axis = sec_axis(~ .*30+63, name = "Input X")  # Secondary axis for input_x
+  # ) +
+  labs(title = "Actual vs. Predicted Values of Search Effort", 
+       y = "Minutes Searched", 
+       x = "Date",
+       color = "Functional Form", 
+       fill = "Functional Form",
+       caption = "The above are predicted values of search effort as a function of the HP-filtered GDP cycle.\nThe dark blue line represents the 'real' search effort in minutes per day calculated using the methodlogy from Mukoyama et al.\nThe red and green represent the fitted or predicted values using a linear predictar and linear predictor with a linear trend component, respectively.") +
+  theme_minimal() +
+  theme(
+    axis.title.y.right = element_text(color = "red")  # Different color for secondary axis
+  )
 
