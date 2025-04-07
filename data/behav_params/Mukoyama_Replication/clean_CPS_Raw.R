@@ -28,18 +28,27 @@ process_cps <- function(x) {
     HRSERSUF = "serial", PEEDUCA = "grdatn", PULINENO = "lineno"
   )
   
-  if(x > 201412){
+  #if(x > 201412){
     names(rename_vars) <- tolower(names(rename_vars))
     # Load data
     file_path <- file.path(raw_CPS, paste0("R_int/cpsb", x, ".dta"))
     if (!file.exists(file_path)) return(NULL)
-    data <- read_dta(file_path)
-  }else{
-    # Load data
-    file_path <- file.path(raw_CPS, paste0("bas", x, ".dta"))
-    if (!file.exists(file_path)) return(NULL)
-    data <- read_dta(file_path)
-  }
+    data <- NULL
+    attempt <- 1
+    while(is.null(data) & attempt <= 3 ) {
+      attempt <- attempt + 1
+      try(
+        data <- read_dta(file_path)
+      )
+    } 
+    if(is.null(data)){break}
+    
+  # }else{
+  #   # Load data
+  #   file_path <- file.path(raw_CPS, paste0("bas", x, ".dta"))
+  #   if (!file.exists(file_path)) return(NULL)
+  #   data <- read_dta(file_path)
+  # }
   
   # Add year and month
   data <- data %>%
@@ -67,9 +76,9 @@ process_cps <- function(x) {
   }
   
   pelkm1 <- "PELKM1"
-  if(x > 201412){
+  #if(x > 201412){
     pelkm1 <- tolower(pelkm1)
-  }
+  #}
   if(tolower(pelkm1) %in% names(data)){data <- rename(data, lkm1 = get(pelkm1))}
   
   for (t in 2:6) {
@@ -139,32 +148,34 @@ process_cps <- function(x) {
 }
 
 # Loop over date range and process files
-x <- 199401
+# Note: created the retry loop at 200010 - if there are any issues between 200010 
+x <- 199901
 #x <- 200301
-while (x <= 199402) {
-  process_cps(x)
-  second <- ifelse((x - 12) %% 100 == 0, x + 89, x + 1)
-  x <- second
-}
-
-cps_13_14 <- read_dta(file.path(raw_CPS, "cps_pull.dta")))
-# Process data from 2013-2014
-x <- 201301
+#while (x <= 199402) {
 while (x <= 201412) {
-  # Similar processing for 2013-2014 format adjustments
-  # Use the process_cps function but adapt as per data format changes
   process_cps(x)
   second <- ifelse((x - 12) %% 100 == 0, x + 89, x + 1)
   x <- second
 }
-
-
-## Files for additional years downloaded using cps_raw_pull_2015_2024.R
-x <- 201501
-while (x <= 202411) {
-  # Similar processing for 2013-2014 format adjustments
-  # Use the process_cps function but adapt as per data format changes
-  process_cps(x)
-  second <- ifelse((x - 12) %% 100 == 0, x + 89, x + 1)
-  x <- second
-}
+# 
+# cps_13_14 <- read_dta(file.path(raw_CPS, "cps_pull.dta")))
+# # Process data from 2013-2014
+# x <- 201301
+# while (x <= 201412) {
+#   # Similar processing for 2013-2014 format adjustments
+#   # Use the process_cps function but adapt as per data format changes
+#   process_cps(x)
+#   second <- ifelse((x - 12) %% 100 == 0, x + 89, x + 1)
+#   x <- second
+# }
+# 
+# 
+# ## Files for additional years downloaded using cps_raw_pull_2015_2024.R
+# x <- 201501
+# while (x <= 202411) {
+#   # Similar processing for 2013-2014 format adjustments
+#   # Use the process_cps function but adapt as per data format changes
+#   process_cps(x)
+#   second <- ifelse((x - 12) %% 100 == 0, x + 89, x + 1)
+#   x <- second
+# }

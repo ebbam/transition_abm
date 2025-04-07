@@ -33,7 +33,7 @@ base <- here("data/behav_params/Mukoyama_Replication/")
 
 if(new){
   # I need to save them in chunks because the files crash R...
-  for(y in 2015:2024){
+  for(y in 1999:2014){
     print(y)
     base_new <- here("data/behav_params/Mukoyama_Replication/mukoyama_all/int_data/CPS/R_int/")
     
