@@ -8,6 +8,7 @@ library(zoo)
 library(seasonal)
 library(openxlsx)
 library(haven)
+library(here)
 library(lubridate)
 
 
@@ -81,10 +82,12 @@ base <- here("data/behav_params/Eeckhout_Replication/116422-V1/data/")
 
 # Load datasets
 allrates <- read_dta(here(paste0(base, "All_rates_and_flows/allrates.dta")))
+allrates <- readRDS(here("data/behav_params/Eeckhout_Replication/cps_data/new_allrates_96_16_full.rds"))
+#allrates <- readRDS(here("data/behav_params/Eeckhout_Replication/cps_data/new_allrates_17_24.rds"))
 EE_x <- read_dta(here(paste0(base, "EE_x/EE_x.dta")))
 
 # Drop unnecessary columns
-EE_x <- EE_x %>% select(-c(cpsidp, earnwt, previous_wage, new_wage, wtfinl_1)) %>% filter(row_number() != 1)
+EE_x <- EE_x %>% select(-c(cpsidp, earnwt, previous_wage, new_wage, wtfinl_1)) %>% filter(row_number() != 1) %>% mutate(date = as.character(date))
 
 # Merge datasets
 final_data <- left_join(allrates, EE_x, by = "date")
@@ -342,7 +345,7 @@ merged_data_old_p1 <- merged_data %>%
                                (time >= as.yearqtr("2007 Q4") & time <= as.yearqtr("2009 Q2")), -0.3, NA))
 
 # Plot
-p1_orig <- ggplot(merged_data, aes(x = time)) +
+p1_orig <- ggplot(merged_data_old_p1, aes(x = time)) +
   geom_bar(aes(y = recession1), stat = "identity", fill = "gray80") +
   geom_bar(aes(y = recession2), stat = "identity", fill = "gray80") +
   geom_line(aes(y = log_gamma_sc, color = "Gamma")) +
@@ -351,6 +354,7 @@ p1_orig <- ggplot(merged_data, aes(x = time)) +
   labs(y = "Gamma (% deviation from trend)", x = "Time", title = "") +
   theme_minimal()
 
+p1_orig
 
 # Load the dataset
 # final_SI <- read_excel(here(paste0(base, "final_SI.xlsx")), col_names = c("A"))
@@ -384,7 +388,7 @@ merged_data_old_p2 <- merged_data %>%
                                time >= as.yearqtr("2007 Q4") & time <= as.yearqtr("2009 Q2"), -0.24, NA))
 
 # # Plot
-p2_orig <- ggplot(merged_data, aes(x = time)) +
+p2_orig <- ggplot(merged_data_old_p2, aes(x = time)) +
   geom_bar(aes(y = recession1), stat = "identity", fill = "gray80") +
   geom_bar(aes(y = recession2), stat = "identity", fill = "gray80") +
   geom_line(aes(y = log_SI_sc, color = "Lambda")) +
@@ -392,3 +396,200 @@ p2_orig <- ggplot(merged_data, aes(x = time)) +
   scale_y_continuous(sec.axis = sec_axis(~ (./8)+0.55, name = "u (level)")) +
   labs(y = "Lambda (% deviation from trend)", x = "Time", title = "") +
   theme_minimal()
+
+p2_orig
+
+
+################################################################################
+# Searcher Composition - taken from composition_analysis.do
+################################################################################
+
+# Load necessary libraries
+# library(readxl)
+# library(dplyr)
+# library(tidyr)
+library(lubridate)
+# library(tsibble)
+# library(mFilter)
+# library(ggplot2)
+# library(tibbletime)
+
+# Set your base path
+# destinationpath <- "XXXX"  # Replace with your actual path
+# setwd(file.path(destinationpath, "composition_analysis"))
+
+# Load and prepare Gamma data
+#setwd(file.path("..", "Gamma_lambda_Mm"))
+gamma_df <- #read_excel("final_gammas.xlsx") %>%
+  final_gammas #%>% 
+  #rename(gamma_s = A) %>%
+  #mutate(time = yearquarter("1997 Q1") + row_number() - 1)
+
+# Save gamma for later merge
+gamma_temp <- gamma_df
+
+# Load and prepare SI data
+SI_df <- final_SI #%>% #read_excel("final_SI.xlsx") %>%
+  #rename(SI_s = A) %>%
+  #mutate(time = yearquarter("1997 Q1") + row_number() - 1)
+
+SI_temp <- SI_df
+
+# Load seasonal adjusted unemployment flow data
+#setwd(file.path("..", "Seasonal_adjustment"))
+flow_df <- quarterly_flow_rates #%>% #read_excel("Quarterly_flow_rates_s.xlsx", sheet = "Sheet1") %>%
+  #select(-time) %>%
+  #mutate(time = yearquarter("1996 Q1") + row_number() - 1)
+
+# Merge datasets
+#setwd(file.path(destinationpath, "composition_analysis"))
+merged_df <- flow_df %>%
+  left_join(gamma_temp, by = "time") %>%
+  left_join(SI_temp, by = "time") %>%
+  mutate(
+    lambdagamma_s = truegamma_s * SI_s,
+    effective_searchers_s = u_quart_s + lambdagamma_s
+  )
+
+# Compute deviation from trend (HP filter)
+merged_df <- merged_df %>%
+  mutate(log_comp_searchers_s = log(lambdagamma_s / effective_searchers_s))
+
+# Step 1: Identify non-NA indices
+valid_idx <- which(!is.na(merged_df$log_comp_searchers_s))
+
+# Step 2: Apply the HP filter only to non-NA values
+hp_result1 <- hpfilter(merged_df$log_comp_searchers_s[valid_idx], freq = 1600)
+
+# Step 3: Create full-length vectors initialized with NA
+merged_df$log_comp_searchers_sc <- NA
+merged_df$log_comp_searchers_st <- NA
+
+# Step 4: Fill in results at the correct positions
+merged_df$log_comp_searchers_sc[valid_idx] <- hp_result1$cycle
+merged_df$log_comp_searchers_st[valid_idx] <- hp_result1$trend
+
+# Recession indicators
+merged_df <- merged_df %>%
+  mutate(
+    recession1 = if_else(time >= as.yearqtr("2001 Q1") & time <= as.yearqtr("2001 Q4") |
+                           (time >= as.yearqtr("2007 Q4") & time <= as.yearqtr("2009 Q2")),
+                         0.2, NA_real_),
+    recession2 = if_else(!is.na(recession1), -0.2, NA_real_)
+  )
+
+rescale_for_secondary_axis <- function(primary, secondary, primary_limits = NULL) {
+  # Remove NA values for calculations
+  primary <- na.omit(primary)
+  secondary <- na.omit(secondary)
+  
+  # Use full range if not provided
+  if (is.null(primary_limits)) {
+    primary_limits <- range(primary, na.rm = TRUE)
+  }
+  
+  secondary_limits <- range(secondary, na.rm = TRUE)
+  
+  # Calculate scaling factor and offset
+  scale_factor <- diff(primary_limits) / diff(secondary_limits)
+  offset <- primary_limits[1] - secondary_limits[1] * scale_factor
+  
+  # Return scaled secondary series and inverse transform for labeling
+  list(
+    scaled_secondary = function(x) x * scale_factor + offset,
+    inverse_transform = function(x) (x - offset) / scale_factor,
+    scale_factor = scale_factor,
+    offset = offset
+  )
+}
+# First plot
+# Apply rescaling
+rescale <- rescale_for_secondary_axis(
+  primary = merged_df$log_comp_searchers_sc,
+  secondary = merged_df$u_quart_s,
+  primary_limits = c(-0.2, 0.2)  # match Stata range
+)
+
+# Add rescaled column
+merged_df$u_quart_s_rescaled <- rescale$scaled_secondary(merged_df$u_quart_s)
+
+# Plot with independent visual scaling
+ggplot(merged_df, aes(x = time)) +
+  geom_bar(aes(y = recession1), stat = "identity", fill = "grey80", na.rm = TRUE) +
+  geom_bar(aes(y = recession2), stat = "identity", fill = "grey80", na.rm = TRUE) +
+  geom_line(aes(y = log_comp_searchers_sc), color = "red") +
+  geom_line(aes(y = u_quart_s_rescaled), color = "red", linetype = "dashed") +
+  scale_y_continuous(
+    name = "% deviation from trend",
+    limits = c(-0.2, 0.2),
+    sec.axis = sec_axis(transform = rescale$inverse_transform, name = "u (level)")
+  ) +
+  theme_minimal() +
+  theme(plot.background = element_rect(fill = "white", color = NA))
+
+p1
+
+#ggsave(file.path(destinationpath, "Figures", "comp_crowding_out_perc_dev.pdf"), p1, width = 10, height = 6)
+
+# Compute second log measure and filter
+merged_df <- flow_df %>%
+  left_join(gamma_temp, by = "time") %>%
+  left_join(SI_temp, by = "time") %>%
+  mutate(
+    lambdagamma_s = truegamma_s * SI_s,
+    effective_searchers_s = u_quart_s + lambdagamma_s
+  ) %>%
+  mutate(log_comp_emp_s = log(truegamma_s / (1 - u_quart_s)))
+
+
+# Step 1: Identify non-NA indices
+valid_idx <- which(!is.na(merged_df$log_comp_emp_s))
+
+# Step 2: Apply the HP filter only to non-NA values
+hp_result2 <- hpfilter(merged_df$log_comp_emp_s[valid_idx], freq = 1600)
+
+# Step 3: Create full-length vectors initialized with NA
+merged_df$log_comp_emp_sc <- NA
+merged_df$log_comp_emp_st <- NA
+
+# Step 4: Fill in results at the correct positions
+merged_df$log_comp_emp_sc[valid_idx] <- hp_result2$cycle
+merged_df$log_comp_emp_st[valid_idx] <- hp_result2$trend
+
+# Update recession indicators
+merged_df <- merged_df %>%
+  mutate(
+    recession1 = if_else(time >= as.yearqtr("2001 Q1") & time <= as.yearqtr("2001 Q4") |
+                           (time >= as.yearqtr("2007 Q4") & time <= as.yearqtr("2009 Q2")),
+                         0.2, NA_real_),
+    recession2 = if_else(!is.na(recession1), -0.3, NA_real_)
+  )
+
+# Second
+# Apply rescaling
+rescale <- rescale_for_secondary_axis(
+  primary = merged_df$log_comp_emp_sc,
+  secondary = merged_df$u_quart_s,
+  primary_limits = c(-0.3, 0.2)  # match Stata range
+)
+
+# Add rescaled column
+merged_df$u_quart_s_rescaled <- rescale$scaled_secondary(merged_df$u_quart_s)
+
+# Second plot
+p2 <- ggplot(merged_df, aes(x = time)) +
+  geom_bar(aes(y = recession1), stat = "identity", fill = "grey80", na.rm = TRUE) +
+  geom_bar(aes(y = recession2), stat = "identity", fill = "grey80", na.rm = TRUE) +
+  geom_line(aes(y = log_comp_emp_sc), color = "red") +
+  geom_line(aes(y = u_quart_s_rescaled), color = "red", linetype = "dashed") +
+  scale_y_continuous(
+    name = "% deviation from trend",
+    limits = c(-0.3, 0.2),
+    sec.axis = sec_axis(transform = rescale$inverse_transform, name = "u (level)")
+  ) +
+  theme_minimal() +
+  ggtitle("") +
+  theme(plot.background = element_rect(fill = "white", color = NA))
+
+p2
+#ggsave(file.path(destinationpath, "Figures", "comp_employed_workers_perc_dev.pdf"), p2, width = 10, height = 6)
