@@ -24,30 +24,37 @@ def plot_records(sim_res, date_start, date_end, save = False, path = None):
 ####################################################
 ############## LTUER ###############################
 ####################################################
-def plot_ltuer(res_dict, macro_obs, save = False, path = None):
-    # Plot each model result
-    colors = ['orange', 'blue', 'purple', 'green']
-    for i, (name, res) in enumerate(res_dict.items()):
-        plt.plot(res['DATE'], res['LTUE Rate'], label=name, color=colors[i])
+def plot_ltuer(res_dict, macro_obs, sep=False, save=False, path=None):
+    def plot_models(ax, models, title, observed):
+        for name, res in models.items():
+            ax.plot(res['DATE'], res['LTUE Rate'], label=name)
+        ax.plot(observed['DATE'], observed['LTUER'], color="black", linestyle="dotted", label="Observed")
+        ax.set_title(title)
+        ax.set_xlabel("DATE")
+        ax.set_ylabel("LTUER")
+        ax.legend()
 
-    # Plot observed LTUER
+    # Prepare observed data once
     observed = macro_obs.dropna(subset=["UNRATE", "VACRATE"]).reset_index()
-    # observed = macro_observations.loc[
-    #     (macro_observations['DATE'] >= calib_date[0]) & 
-    #     (macro_observations['DATE'] <= calib_date[1])
-    # ].dropna(subset=["UNRATE", "VACRATE"]).reset_index()
-    
-    plt.plot(observed['DATE'], observed['LTUER'], color="green", linestyle="dotted", label="LTUER (Observed)")
 
-    # Add labels and legend
-    plt.xlabel('DATE')
-    plt.ylabel('LTUER')
-    plt.title('Long-term Unemployment Rate')
-    plt.legend()
-    plt.show()
+    if sep:
+        # Split into two subplots: True and False
+        true_models = {k: v for k, v in res_dict.items() if "True" in k}
+        false_models = {k: v for k, v in res_dict.items() if "False" in k}
+        
+        fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=True)
+        plot_models(axes[0], false_models, "LTUER - Behavior=False", observed)
+        plot_models(axes[1], true_models, "LTUER - Behavior=True", observed)
+        plt.tight_layout()
+    else:
+        # Single combined plot
+        fig, ax = plt.subplots(figsize=(10, 6))
+        plot_models(ax, res_dict, "LTUER - All Models", observed)
 
+    # Save or show plot
     if save:
-        plt.savefig(f'{path}ltuer_line.jpg', dpi = 300)
+        filename = f'{path}ltuer_line.jpg'
+        plt.savefig(filename, dpi=300)
         plt.close()
     else:
         plt.show()
@@ -56,11 +63,14 @@ def plot_ltuer(res_dict, macro_obs, save = False, path = None):
 ####################################################
 ############## BEV CURVES ##########################
 ####################################################
-def plot_bev_curve(res_dict, macro_obs, save = False, path = None):
+def plot_bev_curve(res_dict, macro_obs, sep = False, save = False, path = None):
     n = len(res_dict)
-    max_cols = 3
-    cols = min(n, max_cols)
-    rows = math.ceil(n / max_cols)
+    if sep:
+        cols = 2
+    else:
+        max_cols = 3
+        cols = min(n, max_cols)
+    rows = math.ceil(n / cols)
 
     fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 4 * rows), squeeze=False)
     axes = axes.flatten()  # Flatten to make indexing easy
@@ -72,8 +82,8 @@ def plot_bev_curve(res_dict, macro_obs, save = False, path = None):
         ax.plot(macro_obs['UER'], macro_obs['VACRATE'], label = "Real Values", color = "grey")
 
         ax.set_title(name)
-        ax.set_xlabel('DATE')
-        ax.set_ylabel('LTUE Rate')
+        ax.set_xlabel('UE Rate')
+        ax.set_ylabel('Vac Rate')
         ax.legend()
 
     # Hide any unused subplots
@@ -91,11 +101,14 @@ def plot_bev_curve(res_dict, macro_obs, save = False, path = None):
 ####################################################
 ############## UER & VAC ###########################
 ####################################################
-def plot_uer_vac(res_dict, macro_obs, recessions, save = False, path = None):
+def plot_uer_vac(res_dict, macro_obs, recessions, sep = False, save = False, path = None):
     n = len(res_dict)
-    max_cols = 3
-    cols = min(n, max_cols)
-    rows = math.ceil(n / max_cols)
+    if sep:
+        cols = 2
+    else:
+        max_cols = 3
+        cols = min(n, max_cols)
+    rows = math.ceil(n / cols)
 
     fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 4 * rows), squeeze=False)
     axes = axes.flatten()  # Flatten to make indexing easy
@@ -124,14 +137,19 @@ def plot_uer_vac(res_dict, macro_obs, recessions, save = False, path = None):
     else:
         plt.show()
 
+
 ####################################################
 ############## SEEKER COMPOSITION ##################
 ####################################################
-def plot_seeker_comp(res_dict, share = False, save = False, path = None):
+def plot_seeker_comp(res_dict, share = False, sep = False, save = False, path = None):
     n = len(res_dict)
-    max_cols = 3
-    cols = min(n, max_cols)
-    rows = math.ceil(n / max_cols)
+    if sep:
+        cols = 2
+    else:
+        max_cols = 3
+        cols = min(n, max_cols)
+    
+    rows = math.ceil(n / cols)
 
     fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 4 * rows), squeeze=False)
     axes = axes.flatten()  # Flatten to make indexing easy
@@ -141,7 +159,7 @@ def plot_seeker_comp(res_dict, share = False, save = False, path = None):
 
         if not share:
             ax.stackplot(res['DATE'], res['Employed Seekers'], res['Unemployed Seekers'], 
-            labels=['Employed Seekers', 'Unemployed Seekers'], colors=['blue', 'red'])
+            labels=['Employed Seekers', 'Unemployed Seekers'], colors=['lightblue', 'lightcoral'])
 
         elif share:
             ax.stackplot(
@@ -149,7 +167,7 @@ def plot_seeker_comp(res_dict, share = False, save = False, path = None):
                 res["Employed Seekers"] / (res["Employed Seekers"] + res["Unemployed Seekers"]),
                 res["Unemployed Seekers"] / (res["Employed Seekers"] + res["Unemployed Seekers"]),
                 labels=["Emp Seekers", "Unemp Seekers"],
-                colors=["blue", "red"]
+                colors=["lightblue", "lightcoral"]
             )
 
         # Set individual titles
@@ -176,14 +194,18 @@ def plot_seeker_comp(res_dict, share = False, save = False, path = None):
 ####################################################
 ############## GENDER WAGE GAPS ####################
 ####################################################
-def plot_gender_gaps(net_dict, save = False, path = None):
+def plot_gender_gaps(net_dict, sep = False, save = False, path = None):
     """
     Function to plot the gender wage disttribution across models
     """
     n = len(net_dict)
-    max_cols = 3
-    cols = min(n, max_cols)
-    rows = math.ceil(n / max_cols)
+    if sep:
+        cols = 2
+    else:
+        max_cols = 3
+        cols = min(n, max_cols)
+        
+    rows = math.ceil(n / cols)
 
     fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 5 * rows), squeeze=False, sharey = True)
     axes = axes.flatten()  # Flatten to make indexing easy
@@ -222,7 +244,14 @@ def plot_gender_gaps(net_dict, save = False, path = None):
         ax.axvline(women.mean(), color='purple', linestyle='dashed', linewidth=1, label = 'Women Avg.')
         ax.axvline(men.mean(), color='green', linestyle='dashed', linewidth=1, label = 'Men Avg.')
         ax.legend(loc='upper right') 
-        ax.annotate(t, xy = (0, -0.3), xycoords='axes fraction')
+        ax.annotate(
+                t,
+                xy=(0.5, 0.5),
+                xycoords='axes fraction',
+                fontsize=7,
+                verticalalignment='center',
+                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.6)
+            )
         ax.set_title(name)
 
     fig.supxlabel("Wage")  # Shared x-axis label
@@ -241,7 +270,7 @@ def plot_gender_gaps(net_dict, save = False, path = None):
 ####################################################
 ############## LTUER DISTRIBUTIONS #################
 ####################################################
-def plot_ltuer_dist(net_dict, gender=False, save=False, path=None):
+def plot_ltuer_dist(net_dict, gender=False, sep = False, save=False, path=None):
     """
     Plots the distribution of time unemployed across models.
 
@@ -254,7 +283,7 @@ def plot_ltuer_dist(net_dict, gender=False, save=False, path=None):
     """
     n_bins = 10
     max_cols = 3
-    colors = ['orange', 'blue', 'purple', 'green']
+    colors = ['orange', 'blue', 'brown', 'green', 'blue', 'grey', 'red', 'cyan']
 
     if gender:
         n = len(net_dict)
@@ -290,21 +319,48 @@ def plot_ltuer_dist(net_dict, gender=False, save=False, path=None):
         plt.tight_layout(rect=[0, 0, 1, 0.95])
 
     else:
-        plt.figure(figsize=(7, 5))
-        for idx, (name, net) in enumerate(net_dict.items()):
+        # Split models into two groups
+        false_models = {name: net for name, net in net_dict.items() if "False" in name}
+        true_models = {name: net for name, net in net_dict.items() if "True" in name}
+
+        fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=True)
+        axes = axes.flatten()
+
+        # Plot False models (left)
+        for idx, (name, net) in enumerate(false_models.items()):
             total_unemp = []
             for occ in net:
                 total_unemp.extend([
                     wrkr.time_unemployed
                     for wrkr in occ.list_of_unemployed
                 ])
-            plt.hist(total_unemp, bins=n_bins, alpha=0.5,
-                     label=name, color=colors[idx])
-            plt.axvline(np.mean(total_unemp), linestyle='dashed',
-                        linewidth=1, color=colors[idx])
+            axes[0].hist(total_unemp, bins=n_bins, alpha=0.5,
+                         label=name, color=colors[idx % len(colors)])
+            axes[0].axvline(np.mean(total_unemp), linestyle='dashed',
+                            linewidth=1, color=colors[idx % len(colors)])
+        axes[0].set_title("Behavior=False")
+        axes[0].set_xlabel("Time Unemployed (simulated months)")
+        axes[0].set_ylabel("Number of Workers")
+        axes[0].legend()
 
-        plt.title('Distribution of Time Spent Unemployed Across Models')
-        plt.xlabel("Time Unemployed (simulated months)")
+        # Plot True models (right)
+        for idx, (name, net) in enumerate(true_models.items()):
+            total_unemp = []
+            for occ in net:
+                total_unemp.extend([
+                    wrkr.time_unemployed
+                    for wrkr in occ.list_of_unemployed
+                ])
+            axes[1].hist(total_unemp, bins=n_bins, alpha=0.5,
+                         label=name, color=colors[idx % len(colors)])
+            axes[1].axvline(np.mean(total_unemp), linestyle='dashed',
+                            linewidth=1, color=colors[idx % len(colors)])
+        axes[1].set_title("Behavior=True")
+        axes[1].set_xlabel("Time Unemployed (simulated months)")
+        axes[1].legend()
+
+        fig.suptitle('Distribution of Time Spent Unemployed (Total)')
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
         plt.ylabel("Number of Workers")
         plt.legend()
 
@@ -320,7 +376,7 @@ def plot_ltuer_dist(net_dict, gender=False, save=False, path=None):
 ####################################################
 def plot_cd_vs_td(res_dict, save = False, path = None):
 
-    colors = ['orange', 'blue', 'purple', 'green']
+    colors = ['orange', 'blue', 'purple', 'green', 'pink', 'grey', 'red', 'cyan', 'brown']
     for i, (name, res) in enumerate(res_dict.items()):
         plt.plot(res['DATE'], res['Current_Demand'], label=f'CD {name}', color=colors[i])
         if i == 0:
@@ -340,3 +396,11 @@ def plot_cd_vs_td(res_dict, save = False, path = None):
         plt.close() 
     else:
         plt.show()
+
+
+def sse_tbl(res_dict, obs):
+    for i, (name, res) in enumerate(res_dict.items()):
+        uer_sse = np.sum((x_["UER"] - y["UER"])**2) / np.var(y["UER"])
+        vacrate_sse = np.sum((x_["VACRATE"] - y["VACRATE"])**2) / np.var(y["VACRATE"])
+
+    return tbl
