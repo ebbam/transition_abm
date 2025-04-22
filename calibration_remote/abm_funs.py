@@ -22,11 +22,16 @@ def util(w_current, w_offered, skill_sim):
 # Simple quadratic for now in which a worker increases search effort for a period of 6 time steps (ie. months) 
 # unemployed after which a worker begins to become discouraged. 
 # This follows definition from the US BLS and Pew Research Centre
+# def search_effort(t_unemp, bus_cy):
+#     #apps = max(0, round(10 - 100*(1-bus_cy)))
+#     apps = round(10 + 100*(1-bus_cy))
+#     # if discouraged:
+#     #     apps = round(a_stable/((t_unemp)**2 + 1)) + 1
+#     return apps
+
 def search_effort(t_unemp, bus_cy):
-    #apps = max(0, round(10 - 100*(1-bus_cy)))
-    apps = round(10 + 100*(1-bus_cy))
-    # if discouraged:
-    #     apps = round(a_stable/((t_unemp)**2 + 1)) + 1
+    apps = 10 + 100 * (1 - bus_cy)
+    apps = round(apps / ((0.01*(t_unemp)**2) + 1)) + 1
     return apps
 
 # Alternative search effort function that is dictated by the time series of a business cycle
