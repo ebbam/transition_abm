@@ -29,9 +29,10 @@ def util(w_current, w_offered, skill_sim):
 #     #     apps = round(a_stable/((t_unemp)**2 + 1)) + 1
 #     return apps
 
-def search_effort(t_unemp, bus_cy):
-    apps = 10 + 100 * (1 - bus_cy)
-    apps = round(apps / ((0.01*(t_unemp)**2) + 1)) + 1
+def search_effort(t_unemp, bus_cy, disc):
+    apps = round(10 + 100 * (1 - bus_cy))
+    if disc:
+        apps = round(apps / ((0.01*(t_unemp)**2) + 1)) + 1
     return apps
 
 # Alternative search effort function that is dictated by the time series of a business cycle
@@ -69,15 +70,16 @@ class worker:
         # Currently takes a value 0-9 indicating at which index of utility ranked vacancies to start sampling/slicing
         wrkr.risk_aversion = risk_av_score
     
-    def search_and_apply(wrkr, net, vac_list, beh, bus_cy):
+    def search_and_apply(wrkr, net, vac_list, disc, bus_cy):
         # A sample of relevant vacancies are found that are in neighboring occupations
         # Will need to add a qualifier in case sample is greater than available relevant vacancies
         # ^^ have added qualifier...bad form to reassign list?
         # Select different random sample of "relevant" vacancies found by each worker
         found_vacs = random.sample(vac_list, min(len(vac_list), 30))
-        if beh:
+        if disc or bus_cy != 1:
             # Sort found relevant vacancies by utility-function defined above and apply to amount dictated by impatience
-            for v in sorted(found_vacs, key = lambda v: util(wrkr.wage, v.wage, net[wrkr.occupation_id].list_of_neigh_weights[v.occupation_id]), reverse = True)[slice(wrkr.risk_aversion, wrkr.risk_aversion + search_effort(wrkr.time_unemployed, bus_cy))]:
+            for v in sorted(found_vacs, key = lambda v: util(wrkr.wage, v.wage, net[wrkr.occupation_id].list_of_neigh_weights[v.occupation_id]), 
+                            reverse = True)[slice(wrkr.risk_aversion, wrkr.risk_aversion + search_effort(wrkr.time_unemployed, bus_cy, disc))]:
                 # Introduce randomness here...?
                 v.applicants.append(wrkr)
         else:
