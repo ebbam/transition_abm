@@ -1,0 +1,666 @@
+---
+title: "CPS Displaced Worker Supplement"
+author: "Ebba Mark"
+date: "`r Sys.Date()`"
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+# Data
+
+As part of the Current Population Survey, the US Census Bureau conducts an annual [Displaced Worker Supplement](https://cps.ipums.org/cps/dw_sample_notes.shtml) in which workers who have lost their job in the last three years are asked additional questions about their unemployment experiences and (if re-employed) their re-employment conditions.
+
+From link above: "The universe for the Displaced Workers Supplement is civilians 20 or older. Respondents are further categorized as a"displaced worker" if they meet additional characteristics (see DWSTAT). After 1998, displaced workers are those who lost or left a job due to layoffs or shutdowns within the past 3 years...were not self-employed, and did not expect to be recalled to work within the next six months.
+
+The data used below is from annual survey responses between 2000-2025.
+I use the supplement sample weights in all results below.
+I note where I have clipped the sample for outliers (wage ratio between [0.25, 2] and unemployment duration less than 96 weeks (\~24 months).
+
+Below I:
+
+1.  Show some descriptives about the data itself.
+2.  Regression results with ratio of new wage to wage at the lost job ($W_{h}$ and $W_{w}$) regressed (cross-sectionally) on unemployment duration with and without various combinations of control variables (whether or not an individual received unemployment compensation, age, race, sex, marital status, education, previous wage level. ) Note that the wages are reported in hourly and weekly values but. this reporting is inconsistent across observations. In other words, though most individuals (4600/6198) report their wage in both units, 270 report only hourly and 1328 report only weekly. I have not reconciled the inconsistency so I use hourly wage ratios in majority of the below document. I could try to reconcile this.
+3.  Outline some considerations for further improvement of the analysis:
+    1.  The sample is non-uniform in unemployment duration (less observations as unemployment duration increases). Try two methods of reweighting to address selection issues (Heckman Selection correction - though I think this is inappropriate for this particular selection issue) and non-uniform (entropy-balancing to deal with representativeness of population over unemployment durations) sample confirm regression results in non-uniform sample.
+    2.  Representativeness of the data to motivate data limitations and inform the ultimate reweighting scheme.
+
+**Overall result (at the moment):** Individuals accept a \~1-percentage point change in the wage ratio per additional month of unemployment.
+Variations using model reweighting, different samples, combinations of control variables, reported hourly and weekly wage ratios do not seem to affect the result.
+However, the data seems to follow a non-linear relationship (we see little satisficing until around \~12 months of unemployment) after which the wage ratio begins to decrease.
+Individuals seem to accept a below-1 relative wage ratio (current wage:wage at lost job) following a year of unemployment.
+If we fit this model with a quadratic fit this could inform our reservation wage adjustment parameter in the model.
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+library(patchwork)
+library(ipumsr)
+library(tidyverse)
+library(haven)
+library(here)
+library(janitor)
+library(modelsummary)
+library(broom)
+library(performance)
+library(WeightIt)
+library(survey)
+library(gt)
+library(cobalt)
+library(sampleSelection)
+
+```
+
+## Data cleaning
+
+Feel free to ignore this code chunk immediately below.
+I include it for your info on binning and outlier trimming.
+
+```{r, warning = FALSE}
+
+# From the original dataset, I include only those that reported having lost a FT job in the last three years
+df <- readRDS(here("data/behav_params/cps_displaced_worker_supplement/cps_disp_filtered.RDS")) %>% 
+  select(hwtfinl, cpsid, wtfinl, age, sex, race, marst, educ, # age, sex, race, marital status, educational attainment
+         dwsuppwt, # Survey weight
+         dwyears, # Years worked at lost job
+         dwben, # Received unemployment benefits
+         dwexben, # Exhausted unemployment benefits
+         dwlastwrk, # Time since worked at last job
+         dwweekc, # Weekly earnings at current job
+         dwweekl, # Weekly earnings at lost job
+         dwwagel, # Hourly earnings at lost job
+         dwwagec, # Hourly wage at current job
+         dwhrswkc, # Hours worked each week at current job
+         dwresp, # Eligibility and interview status for Displaced Worker Supplement
+         # Interestingly the unemployment duration is not directly linked to CURRENT job and we cannot see the wage of the start of the next job...thought this feels problematic, it does indicate more accurately the ultimate "recovered" wage...will need to declare as a limitation but also not completely indefensible
+         dwwksun) %>%  # Number of weeks not working between between end of lost or left job and start of next job
+  # I remove anyone who is Not in Universe (99) and declaring greater than 160 weeks unemployed between jobs
+filter(dwhrswkc != 99 & dwwksun <= 160) %>% 
+  # Replacing NIU values with NA values
+  mutate(dwwagel = ifelse(round(dwwagel) == 100, NA, dwwagel),
+         dwwagec = ifelse(round(dwwagec) == 100, NA, dwwagec),
+         dwweekl = ifelse(round(dwweekl) == 10000, NA, dwweekl),
+         dwweekc = ifelse(round(dwweekc) == 10000, NA, dwweekc),
+         # Binning educational categories
+         educ_cat = case_when(educ %in% c(1) ~ NA, # (NIU)
+                              educ > 1 & educ <= 71 ~ "Less than HS", # Includes "None" - Grade 12 no diploma (8 subcategories (grade 1-11 etc))
+                              educ %in% c(73, 81) ~ "HS Diploma", # Includes "High school Diploma or equivalent" and "some college, but no degree"
+                              educ %in% c(91, 92) ~ "Associate's", # Include "[Associate's degree, occupational/vocational program]" and "Associate's         [Associate's degree, academic program]"
+                              educ %in% c(111) ~ "Bachelor's", # Bachelor's degree
+                              educ > 111 ~ "Postgraduate Degree" # Includes Master's, Professional School, and Doctorate degree
+                              ),
+         # Marital status to binary indicator
+         marst = case_when(marst == 1 ~ 1, # Married with a present spouse
+                           # Might consider dividing this differently
+                           TRUE ~ 0), # Married with absent spouse, separated, divorced, widowed, never married/single
+         # gender to 0,1 values
+         female = sex == 2,
+         # race to higher-level categories w binary values
+         white = race == 100,
+         black = race == 200,
+         mixed = race %in% c(801, 802, 803, 804, 805, 806, 810, 812, 813, 820, 830),
+         aapi = race %in% c(650, 651, 652, 808, 809),
+         native = race == 300
+         # age is a continuous variable which seems fine for now...binning likely unnecessary
+         ) %>% 
+        # Ratio of hourly wage of current job to lost job
+  mutate(ratio_wage = dwwagec/dwwagel,
+         # Ratio of weekly wage of current job to lost job
+         ratio_weekly = dwweekc/dwweekl,
+         # Create monthly unemployment duration for continuous
+         dwmosun = floor(dwwksun/4),
+         # Unemployment duration (reported as time between lost job and start of next job)
+         # I bin in...
+         # monthly intervals (4 weeks) from 1-6 months
+         # quarterly intervals (12 weeks) from 7 mos-1 year
+         # half-year interval from 1-2.5 years
+         # single bin for anyone about 120 weeks
+         dwwksun_bin = case_when(
+           # Monthly intervals (4 weeks) from 1-6 months
+           dwwksun <= 4 ~ 1, #"Less than 4 weeks",
+                                 dwwksun > 4 & dwwksun <= 8 ~ 2,
+                                 dwwksun > 8 & dwwksun <= 12 ~ 3,
+                                 dwwksun > 12 & dwwksun <= 16 ~ 4, 
+                                 dwwksun > 16 & dwwksun <= 20 ~ 5,
+                                 dwwksun > 20 & dwwksun <= 24 ~ 6,
+                                 # Quarterly Intervals (12 weeks) from 6+ mos - 1 year
+                                 dwwksun > 24 & dwwksun <= 36 ~ 7,
+                                 dwwksun > 36 & dwwksun <= 48 ~ 8, 
+                                 # Half-year Intervals (24 weeks) from 1-2.5 years
+                                 dwwksun > 48 & dwwksun <= 72 ~ 9, 
+                                 dwwksun > 72 & dwwksun <= 96 ~ 10, 
+                                 dwwksun > 96 & dwwksun <= 120 ~ 11, 
+                                 # Anyone above - recall this is capped at 160 weeks as per filter above
+                                 dwwksun > 120 ~ 12),
+         # Bin labels
+         dwwksun_bin_labs = case_when(dwwksun_bin == 1 ~ "<= 1 mo.", #"Less than 4 weeks",
+                                 dwwksun_bin == 2 ~ "1-2 mos.",
+                                 dwwksun_bin == 3 ~ "2-3 mos.",
+                                 dwwksun_bin == 4 ~ "3-4 mos.", 
+                                 dwwksun_bin == 5 ~ "4-5 mos.",
+                                 dwwksun_bin == 6 ~ "5-6 mos.",
+                                 # Quarterly Intervals (12 weeks) from 6+ mos - 1 year
+                                 dwwksun_bin == 7 ~ "6-9 mos.",
+                                 dwwksun_bin == 8 ~ "9-12 mos.", 
+                                 # Half-year Intervals (24 weeks) from 1-2.5 years
+                                 dwwksun_bin == 9 ~ "12-18 mos.", 
+                                 dwwksun_bin == 10 ~ "18-24 mos.", 
+                                 dwwksun_bin == 11 ~ "24-30 mos.", 
+                                 # Anyone above - recall this is capped at 160 weeks as per filter above
+                                 dwwksun_bin == 12 ~ "30+ mos."),
+         log_ratio_wage = log(ratio_wage),
+         log_ratio_weekly = log(ratio_weekly),
+         # I clip the sample to an accepted wage ratio between [0.5, 2] and less than 96 weeks of unemployment
+         clipped_sample_hwage = ratio_wage >= 0.5 & ratio_wage <= 2 & dwwksun_bin < 11,
+         clipped_sample_wwage = ratio_weekly >= 0.5 & ratio_weekly <= 2  & dwwksun_bin < 11)
+
+
+```
+
+## Descriptives
+
+All descriptives below us the us the Displaced Worker Sample Weights.
+
+Histogram: sample is skewed (see reweighting alternatives at end of document).
+
+Box plots: Looking at the reported wage ratios in weekly and hourly values, the mean is fixed near 1 until \>12 mos of unemployment in hourly wage reporting.
+In weekly wage reporting, the "satisficing" seems to start earlier in unemployment duration (sample size is larger for weekly reporting - might be worth focusing on those wages).
+
+Scatter plot: I fit a linear and spline fit to the scatted plot of the wage ratio to unemployment duration before using the regression.
+Indicates decline in the wage ratio with unemployment duration that has a potentially non-linear fit.
+
+```{r, echo=FALSE, warning = FALSE}
+
+hist1 <- df %>% 
+  filter(clipped_sample_hwage) %>% 
+  ggplot() + 
+  geom_histogram(aes(x = dwwksun, weight = dwsuppwt), fill = "lightcoral") +
+  labs(y = "Count", x = "Continuous Unemployment Duration", title = "Continuous Unemployment Duration") +
+  theme_minimal()
+
+# Extract unique values and labels
+breaks <- sort(unique(df$dwwksun_bin))
+labels <- df %>%
+  distinct(dwwksun_bin, dwwksun_bin_labs) %>%
+  arrange(dwwksun_bin) %>%
+  pull(dwwksun_bin_labs)
+
+hist2 <- df %>%
+    filter(clipped_sample_hwage) %>% 
+  ggplot() +
+  geom_bar(aes(x = dwwksun_bin, weight = dwsuppwt), fill = "lightblue") +
+  scale_x_continuous(
+    breaks = breaks,
+    labels = labels
+  ) +
+  labs(y = "Count", x = "Continuous Unemployment Duration", title = "Binned Unemployment Duration") +
+  theme_minimal()
+
+(hist1 + hist2) + plot_annotation(title = "Reported unemployment duration between lost job and next job", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+################################################################################
+################################################################################
+
+bp1 <- df %>% 
+  filter(clipped_sample_hwage) %>% 
+  ggplot(aes(x = as.factor(dwwksun_bin), y = ratio_wage)) +
+  geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwwksun_bin)), alpha = 0.3)+
+  geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
+  labs(title = "Hourly Wage Ratio") +
+  theme_minimal() +
+  ylim(0,2.5) +
+  theme(plot.title=element_text(hjust=0.5)) +
+  scale_x_discrete(labels = labels)
+
+bp2 <- df %>%
+  filter(clipped_sample_wwage) %>%
+  ggplot(aes(x = as.factor(dwwksun_bin), y = ratio_weekly)) +
+  geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwwksun_bin)), alpha = 0.3)+
+  geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
+  labs(title = "Weekly Wage Ratio") +
+  theme_minimal() +
+  ylim(0,2.5) +
+  theme(plot.title=element_text(hjust=0.5)) +
+  scale_x_discrete(labels = labels)
+
+(bp1 + bp2) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+
+lin <- df %>% 
+  filter(clipped_sample_hwage) %>% 
+  ggplot(aes(x = dwmosun, y = ratio_wage, weight = dwsuppwt))+
+  geom_jitter() +
+  geom_smooth(method = "lm") +
+  labs(title = "Linear fit", y = "Hourly Wage Ratio", x = "Unemployment Duration (mos.)")
+
+spline <- df %>% 
+  filter(clipped_sample_hwage) %>% 
+  ggplot(aes(x = dwmosun, y = ratio_wage, weight = dwsuppwt))+
+  geom_jitter() +
+  geom_smooth(method = "lm", formula = y ~ splines::bs(x, 3)) +
+  labs(title = "Spline fit", y = "Hourly Wage Ratio", x = "Unemployment Duration (mos.)")
+
+(lin + spline) + plot_annotation(title = "Linear and spline fit to scatter plot of wage ratio vs. unemployment duration in months.", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment and wage ratios below 0.5 and above 2.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+
+```
+
+## Regressions (non-uniform sample) {.tabset}
+
+Next, (ignoring for now the non-uniformity of the sample ie. that there are less observations present for higher unemployment durations) I run the following regression (with various modifications to sample and control variables).
+$W_{i} = \alpha_{i} + \beta_{1} d_{i} + \beta_{2}UI_{i} + \beta_{3}X_{i} + \epsilon_{i}$
+
+where $W_{i}$: Ratio of accepted wage to wage at lost job (hourly values).
+
+$d_{i}$: Unemployment duration (continuous or binned).
+
+$UI_{i}$: Control variable for having used or exhausted unemployment benefits.
+
+$X_{i}$: Vector of control variables (sex, age, race (white, black, mixed), marital status (married or not), whether individual used UI benefits, whether individual exhausted UI benefits, education level, and previous wage level).
+
+There are 48 models present with all combinations of the following:
+
+-   **Continuous vs. Discrete Treatment Variable (2 alternatives):** Continuous (monthly) versus binned unemployment duration.
+
+-   **w. UI vs w. Exhausted UI (3 alternatives):** The data includes a variable for whether individuals USE and/or EXHAUST unemployment benefits.
+    I run the regressions without these UI controls, with control for having used UI, with control for having exhausted UI.
+
+-   **w. Controls (2 alternatives):** With or without additional demographic controls (sex, age, race, married, education)
+
+-   **w. Wage Level (2 alternatives):** With or without wage level of lost job to control for income.
+    The level of the previous wage likely affects the wage ratio.
+
+-   **Outlier clipped sample (2 alternatives):** (As described in the intro section) Remove outliers where the wage ratio is within [0.25, 2.5] and reported unemploymetn duration is below 96 weeks (\~ 2 years).
+
+```{r, echo=FALSE, warning = FALSE}
+
+controls <- " + female + age + white + black + mixed + marst + educ_cat"
+reg_forms <- c("Cont." = "dwmosun",
+               "Cont. w. UI" = "dwmosun + dwben",
+               "Cont. w. exhausted UI" = "dwmosun + dwexben",
+               "Disc." = "dwwksun_bin",
+               "Disc. w. UI" = "dwwksun_bin + dwben",
+               "Disc. w. exhausted UI" = "dwwksun_bin + dwexben")
+reg_forms_controls <- paste0(reg_forms, controls)
+names(reg_forms_controls) <- paste0(names(reg_forms), " w. controls")
+reg_forms_full <- c(reg_forms, reg_forms_controls)
+
+mod_list <- list()
+for(rf in names(reg_forms_full)){
+  #### HOURLY WAGE RATIO OF ACCEPTED TO PREVIOUS
+  ## Unclipped sample
+  mod_list[[rf]] <- lm(data = df, as.formula(paste0("ratio_wage ~ ", reg_forms_full[rf])), weights = dwsuppwt)
+
+  ## Clipped sample
+  mod_list[[paste0(rf, " (clipped)")]] <- df %>% 
+    filter(clipped_sample_hwage) %>% 
+    lm(data = ., as.formula(paste0("ratio_wage ~ ", reg_forms_full[rf])), weights = dwsuppwt)
+  
+  # #### WEEKLY WAGE RATIO OF ACCEPTED TO PREVIOUS
+  # ## Unclipped sample
+  # mod_list[[paste0("WWR ", rf)]] <-filter(df, ratio_weekly != Inf) %>% 
+  # lm(data = ., as.formula(paste0("ratio_weekly ~ dwweekl + ", reg_forms_full[rf])), weights = dwsuppwt)
+  # 
+  # ## Clipped sample
+  # mod_list[[paste0("WWR ", rf, " (clipped)")]] <- filter(df, ratio_weekly != Inf & clipped_sample_wwage) %>% 
+  #   lm(data = ., as.formula(paste0("ratio_weekly ~ dwweekl + ", reg_forms_full[rf])), weights = dwsuppwt)
+}
+
+output_pretty <- function(mods, highlightrows = FALSE, title = NULL){
+  modelsummary(mods, gof_omit = c("Log.Lik.|BIC|AIC"), stars = TRUE, coef_rename = coef_labs,
+               output = "gt", title = title) %>%
+  tab_style(
+    style = list(cell_fill(color = "lightblue")),
+    locations = cells_body(rows = c(highlightrows))  # Highlight 2nd row
+  )
+}
+
+coef_labs = c("dwben" = "Received Unemployment Compensation",
+               "dwexben" = "Exhausted Unemployment Compensation",
+               "marst" = "Married",
+               "femaleTRUE" = "Female",
+               "educ_catBachelor's" = "Bachelor's Degree",
+               "educ_catHS Diploma" = "High School",
+               "educ_catLess than HS" = "Less than HS",
+               "educ_catPostgraduate Degree" = "Postgraduate Degree",
+               "whiteTRUE" = "White",
+               "blackTRUE" = "Black",
+               "mixedTRUE" = "Mixed",
+               "age" = "Age",
+               "dwwagel" = "Hourly Wage of Lost Job",
+               "dwwksun" = "Unemployment Duration (Cont.)",
+               "dwwksun_bin" = "Unemployment Duration (Binned)",
+                # Relabelled for Heckman result below
+               "XO(Intercept)" = "Intercept",
+               "XOdwben" = "Received Unemployment Compensation",
+               "XOdwexben" = "Exhausted Unemployment Compensation",
+               "XOmarst" = "Married",
+               "XOfemaleTRUE" = "Female",
+               "XOeduc_catBachelor's" = "Bachelor's Degree",
+               "XOeduc_catHS Diploma" = "High School",
+               "XOeduc_catLess than HS" = "Less than HS",
+               "XOeduc_catPostgraduate Degree" = "Postgraduate Degree",
+               "XOwhiteTRUE" = "White",
+               "XOblackTRUE" = "Black",
+               "XOmixedTRUE" = "Mixed",
+               "XOage" = "Age",
+               "XOdwwagel" = "Hourly Wage of Lost Job",
+               "XOdwwksun" = "Unemployment Duration (Cont.)",
+               "XOdwwksun_bin" = "Unemployment Duration (Binned)",
+              "imrData$IMR1" = "Inverse Mills Ratio"
+               )
+
+
+
+################################################################################
+################################################################################
+########## TRYING WITH WAGE LEVEL ADDED IN ###########
+
+mod_list2 <- list()
+for(rf in names(reg_forms_full)){
+  #### HOURLY WAGE RATIO OF ACCEPTED TO PREVIOUS
+  ## Unclipped sample
+  mod_list2[[rf]] <- lm(data = df, as.formula(paste0("ratio_wage ~ dwwagel + ", reg_forms_full[rf])), weights = dwsuppwt)
+
+  ## Clipped sample
+  mod_list2[[paste0(rf, " (clipped)")]] <- df %>% 
+    filter(clipped_sample_hwage) %>% 
+    lm(data = ., as.formula(paste0("ratio_wage ~ dwwagel + ", reg_forms_full[rf])), weights = dwsuppwt)
+  
+  # #### WEEKLY WAGE RATIO OF ACCEPTED TO PREVIOUS
+  # ## Unclipped sample
+  # mod_list[[paste0("WWR ", rf)]] <-filter(df, ratio_weekly != Inf) %>% 
+  # lm(data = ., as.formula(paste0("ratio_weekly ~ dwweekl + ", reg_forms_full[rf])), weights = dwsuppwt)
+  # 
+  # ## Clipped sample
+  # mod_list[[paste0("WWR ", rf, " (clipped)")]] <- filter(df, ratio_weekly != Inf & clipped_sample_wwage) %>% 
+  #   lm(data = ., as.formula(paste0("ratio_weekly ~ dwweekl + ", reg_forms_full[rf])), weights = dwsuppwt)
+}
+
+
+```
+
+Across all models in the tabs below we see a consistently negative coefficient on unemployment duration (\~0.7-1 percentage point increase in the wage ratio for each additional month spent in unemployment).
+If we look more closely at the performance of our model with continuous unemployment duration, UI use (not exhaustion), all controls, wage levels, and outlier correction we see that the model performs fairly well across various diagnostic tests.
+
+```{r}
+
+mod_list2[['Cont. w. UI w. controls (clipped)']] %>% 
+  check_model()
+
+```
+
+### Continuous UE Duration {.tabset}
+
+Continuous UE duration treatment is reported in monthly values.
+A one-unit increase in the treatment variable = 1 additional month of unemployment.
+
+#### W.O. Wage Level Control
+
+```{r}
+
+output_pretty(mod_list[grepl("Cont", names(mod_list))], highlightrows = 3, title = "Continuous UE Duration w.o Wage Level Control")
+
+```
+
+#### W. Wage Level Control
+
+```{r}
+
+output_pretty(mod_list2[grepl("Cont", names(mod_list))], highlightrows = c(3,5), title = "Continuous UE Duration w. Wage Level Control")
+
+```
+
+### Binned UE Duration {.tabset}
+
+Binned UE duration treatment is reported in bins as indicated in the box plots and code cleaning above.
+
+#### W.O. Wage Level Control
+
+```{r}
+
+output_pretty(mod_list[grepl("Disc", names(mod_list))], highlightrows = 3, title = "Binned UE Duration w.o Wage Level Control")
+
+```
+
+#### W. Wage Level Control
+
+```{r}
+
+output_pretty(mod_list2[grepl("Disc", names(mod_list))], highlightrows = c(3,5), title = "Binned UE Duration w. Wage Level Control")
+
+```
+
+## Additional Considerations {.tabset}
+
+Below I:
+
+1.  Show results from some sample reweighting to address the non-uniformity of our cross-sectional data.
+2.  Histogram of an additional explanatory variable that might be interesting - the tenure of the lost job. How long (in years) did the individual hold the job they lost.
+3.  Additionally, I show some rough graphs/figures about the sample population (age, education, gender, wage distributions). I am still working on an occupational distribution graph to understand the "skills"/occupational distribution of the sample.
+
+### Selection Issues with Non-Random Sample {.tabset}
+
+One of the challenges with this data is that the sample grows significantly smaller for higher reported of unemployment duration (see scatter plots in Descriptives section).
+One option is a sample reweighting (beyond the census weights) to ensure population similarity across bins (below I choose GLM propensity score matching & entropy-balancing) or a Heckman Selection.
+Again, I include the code below (apologies for verbose output), mainly because I am not yet 100% sure of the implementation as I have never implemented such sample correction in a cross-sectional study).
+Open to suggestions and corrections :)
+
+**Conclusion:** With this implementation (which may very well be wrong for now!), the coefficients on unemployment duration remain stable.
+
+#### Entropy Balancing
+
+Entropy balancing simply reweights observations to ensure population matching across the key dependent variable.
+I d
+
+```{r, warning = FALSE}
+
+# Apply entropy balancing using dwsuppwt sample weights
+# Reweight according to observable characteristics using "ebalance" 
+eb <- weightit(
+  formula = dwmosun ~ female + age + white + black + mixed + marst + educ_cat,
+  data = df,
+  method = "ebalance",
+  s.weights = df$dwsuppwt
+)
+
+# All covariates are balanced at the mean with tight threshold
+bal.tab(eb, stats = c("m", "v"), thresholds = c(m = .001))
+
+# More conventional propensity scoring with a GLM estimator
+glm <- weightit(
+  formula = dwmosun ~ female + age + white + black + mixed + marst + educ_cat,
+  data = df,
+  method = "glm",
+  s.weights = df$dwsuppwt
+)
+
+# All covariates are balanced at the mean with less tight threshold (0.001, very few variables pass with glm esimator)
+bal.tab(glm, stats = c("m", "v"), thresholds = c(m = .01))
+
+# Add the new weights to the dataframe
+df$eb_weight <- eb$weights
+df$glm_weight <- glm$weights
+
+# Run weighted linear regression using entropy-balanced weights
+mod_eb_reweight <- lm(
+  formula = ratio_wage ~ dwmosun + female + age + white + black + mixed + marst + educ_cat,
+  data = df,
+  weights = eb_weight
+)
+
+mod_glm_reweight <- lm(
+  formula = ratio_wage ~ dwmosun + female + age + white + black + mixed + marst + educ_cat,
+  data = df,
+  weights = glm_weight
+)
+
+print("Diagnostic Tests for Entropy-balanced Reweighted Sample")
+mod_eb_reweight %>% check_model()
+
+print("Diagnostic Tests for Propensity Score Matching (GLM) Reweighted Sample")
+mod_glm_reweight %>% check_model()
+
+
+```
+
+#### Heckman Selection
+
+Another option is a Heckman Selection correction though I do not think this addresses the particular selection concern we have where there are simply less observations in longer unemployment durations.
+
+```{r, warning = FALSE}
+
+# Create selection indicator (1 if ratio_wage is observed)
+df$observe_wage <- as.numeric(!is.na(df$ratio_wage))
+
+# Define selection and outcome equations
+selection_eq <- observe_wage ~ female + age + white + black + mixed + marst + educ_cat
+outcome_eq   <- ratio_wage ~ dwmosun + female + age + white + black + mixed + marst + educ_cat
+
+# Run Heckman 
+heckman_model <- selection(
+  selection = selection_eq,
+  outcome = outcome_eq,
+  data = df,
+  method = "2step",       
+  weights = df$dwsuppwt   # Include weights from CPS
+)
+
+# All correction models together
+list("Heckman Correction" = heckman_model$lm, "Entropy Balanced Reweight" = mod_eb_reweight, "GLM Reweight" = mod_glm_reweight) %>% output_pretty(highlightrows = 3)
+
+```
+
+### Job Tenure
+
+We have information on the tenure spent at the last job which could impact the result.
+This could speak to the "adaptability" of individuals.
+Wage ratio seems to decrease (although not sure if meaningfully) with tenure at previous job.
+
+```{r, echo=FALSE, warning = FALSE}
+
+tenure1 <- df %>%
+  mutate(dwyears = ifelse(round(dwyears) == 100, NA, dwyears)) %>% 
+  ggplot() + geom_histogram(aes(x = dwyears, weight = dwsuppwt), fill = "forestgreen", alpha = 0.5) + 
+  labs(x = "Years spent at lost job", title = "Histogram of Reported Tenure at Lost Job") +
+  theme_minimal()
+
+tenure2 <- df %>%
+  mutate(dwyears = ifelse(round(dwyears) == 100, NA, dwyears)) %>% 
+  filter(clipped_sample_hwage) %>% 
+  ggplot(aes(x = dwyears, y = ratio_wage , weight = dwsuppwt)) + 
+  geom_jitter() + 
+  labs(x = "Years spent at lost job", title = "Wage Ratio versus Reported Tenure at Lost Job") +
+  theme_minimal() +
+  geom_smooth(method = "lm", color = "forestgreen", fill = "forestgreen")
+
+tenure1 + tenure2 + plot_annotation(title = "Tenure at Lost Job (years)", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+
+```
+
+### Representation
+
+Although the survey does provide sample weights which we use above, it's still likely that those who are laid off might be systematically more susceptible to layoffs (lower-wage, low-skill occupation, male, etc).
+Below, some (very rough) graphs to indicate what the sample looks like.
+If we wish to pursue this data, I could improve on the below but it will have to do for now.
+
+```{r, echo=FALSE, warning = FALSE}
+# Gender
+female_lfpr <- df %>% 
+  filter(clipped_sample_hwage) %>% 
+  group_by(female) %>% 
+  summarise(tot = sum(dwsuppwt)) %>% 
+  ungroup %>% 
+  pivot_wider(values_from = tot, names_from = female) %>% 
+  rename(male = `FALSE`, female = `TRUE`) %>% 
+  summarise(female/(female + male)) %>% pull(.) %>% round(2)*100
+
+gender <- df %>% 
+  filter(clipped_sample_hwage) %>% 
+  group_by(female) %>% 
+  summarise(tot = sum(dwsuppwt)) %>% 
+  ungroup %>% 
+  mutate(female = ifelse(!female, "Male", "Female")) %>% 
+  ggplot(aes(x = "", y = tot, fill = female), alpha = 0.2) +
+  geom_bar(width = 1, stat = "identity") +
+  coord_polar("y", start = 0) +
+  labs(title = "Gender Share of Sample", subtitle = paste0("Female representation (ie. Female LFPR) as calculated in the sample is ", female_lfpr, "%\n whereas female LFPR in the US is ~57% and their unemployment rates are roughly equal.")) +
+  theme_void() + 
+  scale_fill_brewer(palette = "Set2", name = "Sex")
+
+# Wage representation 
+mean_wage <- df %>% 
+  filter(clipped_sample_hwage) %>%  
+  summarise(weighted.mean(dwwagec, dwsuppwt, na.rm = FALSE)) %>% pull(.)
+
+wage <- df %>% 
+  filter(clipped_sample_hwage) %>% 
+  ggplot() +
+  geom_histogram(aes(x = dwwagec), fill = "blue", alpha = 0.7) +
+  geom_vline(aes(xintercept = mean_wage), color = "blue") + 
+  annotate("text",
+    x = mean_wage, y = 900, label = "Mean Reported Hourly Wage",
+    angle = 90,
+    vjust = -0.5,
+    size = 4,
+    color = "blue"
+  ) +
+  geom_vline(aes(xintercept = 36), color = "red")+
+  annotate("text",
+    x = 36, y = 900, label = "Mean Hourly Wage (BLS Reported - 2024)",
+    angle = 90,
+    vjust = -0.5,
+    size = 4,
+    color = "red"
+  ) +
+  theme_minimal() + labs(x = "Reported Hourly Wage", y = "Count")
+
+
+# Education
+educ <- df %>%
+    filter(clipped_sample_hwage) %>% 
+  group_by(educ_cat) %>%
+  summarise(total = sum(dwsuppwt)) %>%
+  mutate(share = total / sum(total),
+         educ_cat = factor(educ_cat, levels = c("Less than HS", "HS Diploma", "Associate's", "Bachelor's", "Postgraduate Degree"))) %>%
+  ggplot(aes(x = "All", y = share, fill = educ_cat)) +
+  geom_col(width = 0.5) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(x = NULL, y = "Share of Individuals", fill = "Education Level", title = "Education Attainment in Sample") + scale_fill_brewer(palette = "Set2") +
+  theme_minimal()
+
+library(spatstat)
+# age
+median_age <- df %>% 
+  filter(clipped_sample_hwage) %>% 
+  summarise(weighted.median(age, dwsuppwt, na.rm = TRUE)) %>% pull(.)
+
+age <- df %>% 
+  filter(clipped_sample_hwage) %>% 
+  ggplot() + 
+  geom_histogram(aes(x = age), fill = "darkorchid4", alpha = 0.7) +
+  theme_minimal() +
+  geom_vline(aes(xintercept = median_age), color = "darkorchid4") + 
+  annotate("text",
+    x = median_age, y = 300, label = "Median Reported Age",
+    angle = 90,
+    vjust = -0.5,
+    #size = 4,
+    color = "darkorchid4"
+  ) +
+  geom_vline(aes(xintercept = 42.2), color = "darkorange") +
+  annotate("text",
+    x = 42.2, y = 300, label = "Median Labour Force Wage (BLS)",
+    angle = 90,
+    vjust = -0.5,
+    #size = 4,
+    color = "darkorange"
+  ) +
+  labs(x = "Age", y = "Count", title = "Age Distribution in Sample") +
+  theme(legend.position = "none")
+  
+
+((wage + age) /  (educ + gender)) + plot_annotation(title = "Preliminary Look at Sample Composition by Age, Wage, Education, Gender, Occupation", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+  
+
+# Occupation
+
+```
