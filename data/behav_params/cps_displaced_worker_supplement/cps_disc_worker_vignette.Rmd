@@ -8,7 +8,7 @@ editor_options:
     wrap: sentence
 ---
 
-# Data
+# Overview {.tabset}
 
 As part of the Current Population Survey, the US Census Bureau conducts an annual [Displaced Worker Supplement](https://cps.ipums.org/cps/dw_sample_notes.shtml) in which workers who have lost their job in the last three years are asked additional questions about their unemployment experiences and (if re-employed) their re-employment conditions.
 
@@ -20,11 +20,12 @@ I note where I have clipped the sample for outliers (wage ratio between [0.25, 2
 
 Below I:
 
-1.  Show some descriptives about the data itself.
-2.  Regression results with ratio of new wage to wage at the lost job ($W_{h}$ and $W_{w}$) regressed (cross-sectionally) on unemployment duration with and without various combinations of control variables (whether or not an individual received unemployment compensation, age, race, sex, marital status, education, previous wage level. ) Note that the wages are reported in hourly and weekly values but. this reporting is inconsistent across observations. In other words, though most individuals (4600/6198) report their wage in both units, 270 report only hourly and 1328 report only weekly. I have not reconciled the inconsistency so I use hourly wage ratios in majority of the below document. I could try to reconcile this.
-3.  Outline some considerations for further improvement of the analysis:
-    1.  The sample is non-uniform in unemployment duration (less observations as unemployment duration increases). Try two methods of reweighting to address selection issues (Heckman Selection correction - though I think this is inappropriate for this particular selection issue) and non-uniform (entropy-balancing to deal with representativeness of population over unemployment durations) sample confirm regression results in non-uniform sample.
-    2.  Representativeness of the data to motivate data limitations and inform the ultimate reweighting scheme.
+1.  **Data Cleaning Procedure:** Show data cleaning just for reference (feel free to ignore)!.
+2.  **Descriptives:** Show some descriptives about the data itself.
+3.  **Regression Results on Non-Uniform Sample:** Regression results with ratio of new wage to wage at the lost job ($W_{h}$ and $W_{w}$) regressed (cross-sectionally) on unemployment duration with and without various combinations of control variables (whether or not an individual received unemployment compensation, age, race, sex, marital status, education, previous wage level. ) Note that the wages are reported in hourly and weekly values but. this reporting is inconsistent across observations. In other words, though most individuals (4600/6198) report their wage in both units, 270 report only hourly and 1328 report only weekly. I have not reconciled the inconsistency so I use hourly wage ratios in majority of the below document. I could try to reconcile this.
+4.  Outline some considerations for further improvement of the analysis:
+    1.  **Reweighted Samples:** The sample is non-uniform in unemployment duration (less observations as unemployment duration increases). Try two methods of reweighting to address selection issues (Heckman Selection correction - though I think this is inappropriate for this particular selection issue) and non-uniform (entropy-balancing to deal with representativeness of population over unemployment durations) sample confirm regression results in non-uniform sample.
+    2.  **Representativeness of the Sample (Education, Age, Gender, and Wage):** Representativeness of the data to motivate data limitations and inform the ultimate reweighting scheme.
 
 **Overall result (at the moment):** Individuals accept a \~1-percentage point change in the wage ratio per additional month of unemployment.
 Variations using model reweighting, different samples, combinations of control variables, reported hourly and weekly wage ratios do not seem to affect the result.
@@ -170,8 +171,7 @@ In weekly wage reporting, the "satisficing" seems to start earlier in unemployme
 Scatter plot: I fit a linear and spline fit to the scatted plot of the wage ratio to unemployment duration before using the regression.
 Indicates decline in the wage ratio with unemployment duration that has a potentially non-linear fit.
 
-```{r, echo=FALSE, warning = FALSE}
-
+```{r, echo=FALSE, warning = FALSE, fig.height = 10, fig.width = 10, message = FALSE}
 hist1 <- df %>% 
   filter(clipped_sample_hwage) %>% 
   ggplot() + 
@@ -197,7 +197,7 @@ hist2 <- df %>%
   labs(y = "Count", x = "Continuous Unemployment Duration", title = "Binned Unemployment Duration") +
   theme_minimal()
 
-(hist1 + hist2) + plot_annotation(title = "Reported unemployment duration between lost job and next job", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+(hist1 / hist2) + plot_annotation(title = "Reported unemployment duration between lost job and next job", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
 ################################################################################
 ################################################################################
 
@@ -223,8 +223,10 @@ bp2 <- df %>%
   theme(plot.title=element_text(hjust=0.5)) +
   scale_x_discrete(labels = labels)
 
-(bp1 + bp2) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+(bp1 / bp2) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+```
 
+```{r, echo=FALSE, warning = FALSE, fig.height = 8, fig.width = 10, message = FALSE}
 lin <- df %>% 
   filter(clipped_sample_hwage) %>% 
   ggplot(aes(x = dwmosun, y = ratio_wage, weight = dwsuppwt))+
@@ -269,6 +271,9 @@ There are 48 models present with all combinations of the following:
     The level of the previous wage likely affects the wage ratio.
 
 -   **Outlier clipped sample (2 alternatives):** (As described in the intro section) Remove outliers where the wage ratio is within [0.25, 2.5] and reported unemploymetn duration is below 96 weeks (\~ 2 years).
+
+I include the full set of coefficients (again, apologies for verbose output) in case you find the coefficients on the controls interesting (I think the coefficient on age and holding a Bachelor's degree particularly interesting).
+But I highlight in blue our main interest in $\beta_{1}$.
 
 ```{r, echo=FALSE, warning = FALSE}
 
@@ -326,10 +331,13 @@ coef_labs = c("dwben" = "Received Unemployment Compensation",
                "mixedTRUE" = "Mixed",
                "age" = "Age",
                "dwwagel" = "Hourly Wage of Lost Job",
+               "dwmosun" = "Unemployment Duration (Months)",
                "dwwksun" = "Unemployment Duration (Cont.)",
                "dwwksun_bin" = "Unemployment Duration (Binned)",
+               "(Intercept)" = "Intercept",
                 # Relabelled for Heckman result below
                "XO(Intercept)" = "Intercept",
+               "XOdwmosun" = "Unemployment Duration (Months)",
                "XOdwben" = "Received Unemployment Compensation",
                "XOdwexben" = "Exhausted Unemployment Compensation",
                "XOmarst" = "Married",
@@ -381,7 +389,9 @@ for(rf in names(reg_forms_full)){
 Across all models in the tabs below we see a consistently negative coefficient on unemployment duration (\~0.7-1 percentage point increase in the wage ratio for each additional month spent in unemployment).
 If we look more closely at the performance of our model with continuous unemployment duration, UI use (not exhaustion), all controls, wage levels, and outlier correction we see that the model performs fairly well across various diagnostic tests.
 
-```{r}
+```{r, echo = FALSE}
+
+print('Continuous U Duration. w. UI Control w. demographic controls (clipped sample)')
 
 mod_list2[['Cont. w. UI w. controls (clipped)']] %>% 
   check_model()
@@ -395,7 +405,7 @@ A one-unit increase in the treatment variable = 1 additional month of unemployme
 
 #### W.O. Wage Level Control
 
-```{r}
+```{r, echo = FALSE}
 
 output_pretty(mod_list[grepl("Cont", names(mod_list))], highlightrows = 3, title = "Continuous UE Duration w.o Wage Level Control")
 
@@ -403,7 +413,7 @@ output_pretty(mod_list[grepl("Cont", names(mod_list))], highlightrows = 3, title
 
 #### W. Wage Level Control
 
-```{r}
+```{r, echo = FALSE}
 
 output_pretty(mod_list2[grepl("Cont", names(mod_list))], highlightrows = c(3,5), title = "Continuous UE Duration w. Wage Level Control")
 
@@ -415,7 +425,7 @@ Binned UE duration treatment is reported in bins as indicated in the box plots a
 
 #### W.O. Wage Level Control
 
-```{r}
+```{r, echo = FALSE}
 
 output_pretty(mod_list[grepl("Disc", names(mod_list))], highlightrows = 3, title = "Binned UE Duration w.o Wage Level Control")
 
@@ -423,7 +433,7 @@ output_pretty(mod_list[grepl("Disc", names(mod_list))], highlightrows = 3, title
 
 #### W. Wage Level Control
 
-```{r}
+```{r, echo = FALSE}
 
 output_pretty(mod_list2[grepl("Disc", names(mod_list))], highlightrows = c(3,5), title = "Binned UE Duration w. Wage Level Control")
 
@@ -439,6 +449,8 @@ Below I:
 
 ### Selection Issues with Non-Random Sample {.tabset}
 
+NOTE: Skip ahead to "Regression Results with Sample Reweighting for Regression Results if you don't wish to look at the reweighting details below.
+
 One of the challenges with this data is that the sample grows significantly smaller for higher reported of unemployment duration (see scatter plots in Descriptives section).
 One option is a sample reweighting (beyond the census weights) to ensure population similarity across bins (below I choose GLM propensity score matching & entropy-balancing) or a Heckman Selection.
 Again, I include the code below (apologies for verbose output), mainly because I am not yet 100% sure of the implementation as I have never implemented such sample correction in a cross-sectional study).
@@ -449,10 +461,8 @@ Open to suggestions and corrections :)
 #### Entropy Balancing
 
 Entropy balancing simply reweights observations to ensure population matching across the key dependent variable.
-I d
 
 ```{r, warning = FALSE}
-
 # Apply entropy balancing using dwsuppwt sample weights
 # Reweight according to observable characteristics using "ebalance" 
 eb <- weightit(
@@ -465,6 +475,27 @@ eb <- weightit(
 # All covariates are balanced at the mean with tight threshold
 bal.tab(eb, stats = c("m", "v"), thresholds = c(m = .001))
 
+# Add the new weights to the dataframe
+df$eb_weight <- eb$weights
+
+# Run weighted linear regression using entropy-balanced weights
+mod_eb_reweight <- lm(
+  formula = ratio_wage ~ dwmosun + female + age + white + black + mixed + marst + educ_cat,
+  data = df,
+  weights = eb_weight
+)
+```
+
+```{r, echo = FALSE, warning = FALSE}
+print("Diagnostic Tests for Entropy-balanced Reweighted Sample")
+mod_eb_reweight %>% check_model()
+
+
+```
+
+#### Propensity Score Weighting with GLM Estimator
+
+```{r, warning = FALSE}
 # More conventional propensity scoring with a GLM estimator
 glm <- weightit(
   formula = dwmosun ~ female + age + white + black + mixed + marst + educ_cat,
@@ -476,25 +507,16 @@ glm <- weightit(
 # All covariates are balanced at the mean with less tight threshold (0.001, very few variables pass with glm esimator)
 bal.tab(glm, stats = c("m", "v"), thresholds = c(m = .01))
 
-# Add the new weights to the dataframe
-df$eb_weight <- eb$weights
 df$glm_weight <- glm$weights
-
-# Run weighted linear regression using entropy-balanced weights
-mod_eb_reweight <- lm(
-  formula = ratio_wage ~ dwmosun + female + age + white + black + mixed + marst + educ_cat,
-  data = df,
-  weights = eb_weight
-)
 
 mod_glm_reweight <- lm(
   formula = ratio_wage ~ dwmosun + female + age + white + black + mixed + marst + educ_cat,
   data = df,
   weights = glm_weight
 )
+```
 
-print("Diagnostic Tests for Entropy-balanced Reweighted Sample")
-mod_eb_reweight %>% check_model()
+```{r, echo = FALSE, warning = FALSE}
 
 print("Diagnostic Tests for Propensity Score Matching (GLM) Reweighted Sample")
 mod_glm_reweight %>% check_model()
@@ -507,7 +529,6 @@ mod_glm_reweight %>% check_model()
 Another option is a Heckman Selection correction though I do not think this addresses the particular selection concern we have where there are simply less observations in longer unemployment durations.
 
 ```{r, warning = FALSE}
-
 # Create selection indicator (1 if ratio_wage is observed)
 df$observe_wage <- as.numeric(!is.na(df$ratio_wage))
 
@@ -524,6 +545,11 @@ heckman_model <- selection(
   weights = df$dwsuppwt   # Include weights from CPS
 )
 
+```
+
+#### Regression Results with Sample Reweighting
+
+```{r, echo = FALSE, warning = FALSE}
 # All correction models together
 list("Heckman Correction" = heckman_model$lm, "Entropy Balanced Reweight" = mod_eb_reweight, "GLM Reweight" = mod_glm_reweight) %>% output_pretty(highlightrows = 3)
 
@@ -560,9 +586,15 @@ tenure1 + tenure2 + plot_annotation(title = "Tenure at Lost Job (years)", subtit
 
 Although the survey does provide sample weights which we use above, it's still likely that those who are laid off might be systematically more susceptible to layoffs (lower-wage, low-skill occupation, male, etc).
 Below, some (very rough) graphs to indicate what the sample looks like.
+
+**Headline result:** it seems the sample over-represents below-mean wage earners and women.
+Age looks reasonably accurate (in relation to a simple median though....have not checked spread).
+Have not yet checked match to educational attainment.
+Individuals with only a HS diploma is strong majority in sample - not sure how accurate this is (likely correlated with wage however...so this might be cause for concern and confirm a skewed sample in that sense).
+
 If we wish to pursue this data, I could improve on the below but it will have to do for now.
 
-```{r, echo=FALSE, warning = FALSE}
+```{r, echo=FALSE, warning = FALSE, message = FALSE, fig.height = 14, fig.width = 10}
 # Gender
 female_lfpr <- df %>% 
   filter(clipped_sample_hwage) %>% 
@@ -599,13 +631,13 @@ wage <- df %>%
   annotate("text",
     x = mean_wage, y = 900, label = "Mean Reported Hourly Wage",
     angle = 90,
-    vjust = -0.5,
+    vjust = 1.25,
     size = 4,
     color = "blue"
   ) +
   geom_vline(aes(xintercept = 36), color = "red")+
   annotate("text",
-    x = 36, y = 900, label = "Mean Hourly Wage (BLS Reported - 2024)",
+    x = 36, y = 750, label = "Mean Hourly Wage (BLS Reported - 2024)",
     angle = 90,
     vjust = -0.5,
     size = 4,
@@ -640,7 +672,7 @@ age <- df %>%
   theme_minimal() +
   geom_vline(aes(xintercept = median_age), color = "darkorchid4") + 
   annotate("text",
-    x = median_age, y = 300, label = "Median Reported Age",
+    x = median_age, y = 350, label = "Median Reported Age",
     angle = 90,
     vjust = -0.5,
     #size = 4,
