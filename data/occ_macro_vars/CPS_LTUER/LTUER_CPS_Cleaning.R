@@ -9,7 +9,7 @@ library(readxl)
 library(here)
 library(tidyverse)
 library(gridExtra)
-
+library(janitor)
 ### DOWNLOAD FILES ######
 # Base URL before the year
 base_url <- "https://www.bls.gov/cps/cps_aa"
@@ -136,39 +136,68 @@ col_names <- c("occupation", "total_unemployed", "less_than_5_weeks", "wks5_14",
 ########### COMBINE FILES ##########
 
 occ_ltuers <- tibble()
-for(year in 2022:2003){
+ind_ltuers <- tibble()
+for(year in 2022:2002){
   print(year)
-  if(year < 2011){
-    test <- read.csv(here(paste0('data/macro_vars/CPS_LTUER/cps_ltuer_highlevoccs', year,'.csv'))) %>% 
+  if(year == 2003){
+    test <- read.csv(here(paste0('data/occ_macro_vars/CPS_LTUER/cps_ltuer_highlevoccs', year, '.csv')), skip = 3) %>% 
       tibble %>% 
+      select(-1) %>% 
+      rename_with(~col_names) %>%
+      mutate(across(col_names[-1], ~as.numeric(gsub(",", "", .))),
+             occupation = trimws(gsub(".", "", occupation, fixed = TRUE))) 
+
+  }else if(year != 2003 & year < 2011){
+    test <- read.csv(here(paste0('data/occ_macro_vars/CPS_LTUER/cps_ltuer_highlevoccs', year,'.csv'))) %>%
+      tibble %>%
       mutate(across(col_names[-1], ~as.numeric(gsub(",", "", .))),
              occupation = trimws(gsub(".", "", occupation, fixed = TRUE)),
-             occupation = ifelse(occupation == "Mining", "Mining, quarrying, and oil and gas extraction", occupation)) %>%  
-      filter(!(rowSums(across(col_names, ~ is.na(.))) > 7)) 
+             occupation = ifelse(occupation == "Mining", "Mining, quarrying, and oil and gas extraction", occupation)) 
   }
   else if(year >= 2011 & year < 2015){
-    test <- read.csv(here(paste0('data/macro_vars/CPS_LTUER/cps_ltuer_highlevoccs', year,'.csv'))) %>% 
-      tibble %>% 
-      slice(9:nrow(.)) %>% 
-      select(-1) %>% 
-      set_names(col_names) %>% 
-      mutate(across(col_names[-1], ~as.numeric(gsub(",", "", .)))) %>% 
-      filter(!(rowSums(across(col_names, ~ is.na(.))) > 7))
-      
-    
+    test <- read.csv(here(paste0('data/occ_macro_vars/CPS_LTUER/cps_ltuer_highlevoccs', year,'.csv'))) %>%
+      tibble %>%
+      select(-1) %>%
+      set_names(col_names) %>%
+      mutate(across(col_names[-1], ~as.numeric(gsub(",", "", .))))
+
+
   }else if(year >= 2015){
-    test <- read_xlsx(here(paste0('data/macro_vars/CPS_LTUER/cps_ltuer_highlevoccs', year,'.xlsx'))) %>% 
-      tibble %>% 
-      slice(8:nrow(.)) %>% 
-      set_names(col_names) %>% 
-      mutate(across(col_names[-1], ~as.numeric(.))) %>% 
-      filter(!(rowSums(across(col_names, ~ is.na(.))) > 7)) 
+    test <- read_xlsx(here(paste0('data/occ_macro_vars/CPS_LTUER/cps_ltuer_highlevoccs', year,'.xlsx'))) %>%
+      tibble %>%
+      set_names(col_names) %>%
+      mutate(across(col_names[-1], ~as.numeric(.)))
 
   }
+  
+  occupation_row <- which(grepl( "OCCUPATION", test$occupation))[1]
+  industry_row <- which(grepl( "INDUSTRY", test$occupation))[1]
+  if(is.na(occupation_row)){occupation_row <- 1}
+  
 
-  occ_ltuers <- test %>%
+  
+  occ_temp <- test %>% 
+    slice(occupation_row:industry_row) %>%
+    filter(!(rowSums(across(col_names, ~ is.na(.))) >= 7)) 
+  
+  ind_temp <- test %>% 
+    slice(industry_row:nrow(.)) %>%
+    filter(!(rowSums(across(col_names, ~ is.na(.))) >= 7)) %>% 
+    rename(industry = occupation)
+
+  occ_ltuers <- occ_temp %>%
     mutate(year = year) %>%
     bind_rows(., occ_ltuers)
+  
+  ind_ltuers <- ind_temp %>%
+    mutate(year = year) %>%
+    bind_rows(., ind_ltuers)
+  
+  if(year == 2022){
+    ind_temp %>% pull(industry) %>% unique -> list
+  }
+  print(setdiff(list, unique(ind_temp$industry)))
+  print(setdiff(unique(ind_temp$industry), list))
 
 }
 
@@ -200,42 +229,55 @@ ind_interest <- c("Agriculture and related industries",
                   "Public administration")
 
 pp1 <- occ_ltuers %>% 
-  filter(occupation %in% occs_interest) %>% 
+  #filter(occupation %in% occs_interest) %>% 
   ggplot(aes(x = year, y = wks_mean_duration, color = occupation)) +
   geom_line() +
   labs(title = "Mean Duration of Unemployment by Occupation")
 
 pp2 <- occ_ltuers %>% 
-  filter(occupation %in% occs_interest) %>% 
+  #filter(occupation %in% occs_interest) %>% 
   mutate(ltuer = wks27plus/total_unemployed) %>% 
   ggplot(aes(x = year, y = ltuer, color = occupation)) +
   geom_line() +
   labs(title = "LTUER by Occupation")
 
-pp3 <- occ_ltuers %>% 
-  filter(occupation %in% ind_interest) %>%
-  rename(industry = occupation) %>% 
+pp3 <- ind_ltuers %>% 
+  filter(year != 2002) %>% 
+  #filter(occupation %in% ind_interest) %>%
+  #rename(industry = occupation) %>% 
   ggplot(aes(x = year, y = wks_mean_duration, color = industry)) +
   geom_line() +
   labs(title = "Mean Duration of Unemployment by Industry")
 
-pp4 <- occ_ltuers %>% 
-  filter(occupation %in% ind_interest) %>% 
-  rename(industry = occupation) %>% 
+pp4 <- ind_ltuers %>% 
+  filter(year != 2002 & industry != "No previous work experience") %>% 
+  #filter(occupation %in% ind_interest) %>% 
+  #rename(industry = occupation) %>% 
   mutate(ltuer = wks27plus/total_unemployed) %>% 
   ggplot(aes(x = year, y = ltuer, color = industry)) +
   geom_line() +
   labs(title = "LTUER by Industry")
 
+grid.arrange(pp1, pp2)
+grid.arrange(pp3, pp4)
 
-grid.arrange(pp1, pp3, pp2, pp4)
-
-
-
-
-
-
-
+occ_ltuers %>% 
+  mutate(ltuer = wks27plus/total_unemployed) %>% 
+  write.csv(here("data/occ_macro_vars/CPS_LTUER/highlev_occ_ltuers.csv"))
+  #saveRDS(here("data/occ_macro_vars/CPS_LTUER/highlev_occ_ltuers.RDS"))
 
 
+ind_ltuers %>% 
+  mutate(ltuer = wks27plus/total_unemployed) %>% 
+  filter(year != 2002 & industry != "No previous work experience") %>% 
+  saveRDS(here("data/occ_macro_vars/CPS_LTUER/highlev_ind_ltuers.RDS"))
 
+
+readRDS(here("data/occ_macro_vars/CPS_LTUER/highlev_occ_ltuers.RDS")) %>% 
+  group_by(occupation) %>% 
+  summarise(ltuer = mean(ltuer, na.rm = TRUE)) %>% 
+  ungroup %>% 
+  arrange(ltuer) %>% 
+  mutate(occupation = factor(occupation, levels = occupation)) %>%  # order factor
+  ggplot() +
+  geom_point(aes(y = occupation, x = ltuer))
