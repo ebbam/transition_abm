@@ -49,7 +49,7 @@ class worker:
                  # employed, 
                  longterm_unemp, 
                  # time_employed,
-                 time_unemployed, wage, hired, female, risk_av_score):
+                 time_unemployed, wage, hired, female, risk_av_score, ee_rel_wage, ue_rel_wage):
         # State-specific attributes:
         # Occupation id
         wrkr.occupation_id = occupation_id
@@ -69,6 +69,8 @@ class worker:
         # occupations previously held as proxy ie. len(emp_history)
         # Currently takes a value 0-9 indicating at which index of utility ranked vacancies to start sampling/slicing
         wrkr.risk_aversion = risk_av_score
+        wrkr.ee_rel_wage = ee_rel_wage
+        wrkr.ue_rel_wage = ue_rel_wage
     
     def search_and_apply(wrkr, net, vac_list, disc, bus_cy):
         # A sample of relevant vacancies are found that are in neighboring occupations
@@ -136,11 +138,15 @@ class occupation:
         for w in occ.list_of_unemployed:
             w.time_unemployed += 1
             # Chosen 12 months - can be modified
-            w.longterm_unemp = True if w.time_unemployed >= 4 else False
-            # Possible for loop to replace
+            w.longterm_unemp = True if w.time_unemployed >= 3 else False
+            w.ue_rel_wage = None
+            w.ee_rel_wage = None
+            w.hired = False
         for e in occ.list_of_employed:
             e.hired = False
             e.time_unemployed = 0
+            e.ue_rel_wage = None
+            e.ee_rel_wage = None
         
 class vac:
     def __init__(v, occupation_id, applicants, wage, filled, time_open):
@@ -156,16 +162,19 @@ class vac:
         assert(not(a.hired))
         try:
             net[v.occupation_id].list_of_employed.append(net[a.occupation_id].list_of_employed.pop(net[a.occupation_id].list_of_employed.index(a)))
+            a.ee_rel_wage = v.wage/a.wage
             #net[v.occupation_id].list_of_employed.append(a)
             #net[a.occupation_id].list_of_employed.remove(a)
         except ValueError:
             try:
                 # Second attempt (fallback)
                 net[v.occupation_id].list_of_employed.append(net[a.occupation_id].list_of_unemployed.pop(net[a.occupation_id].list_of_unemployed.index(a)))
+                a.ue_rel_wage = v.wage/a.wage   
             except ValueError:
                 print("Indexing failed - worker not found in either employed or unemployed list")
         a.occupation_id = v.occupation_id
         a.time_unemployed = 0
+        # Their new wage is now the vacancy's wage - the relative wage will be updated in the update_workers function
         a.wage = v.wage
         #a.emp_history.append(v.occupation_id)
         a.hired = True
@@ -219,20 +228,20 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
             # Assume they have all at least 1 t.s. of employment
             if np.random.rand() <= g_share:
                 occ.list_of_employed.append(worker(occ.occupation_id, False, 1, wages[i,0], False, True,
-                                               abs(int(np.random.normal(7,2)))))
+                                               abs(int(np.random.normal(7,2))), 1, 1))
             else:
                 occ.list_of_employed.append(worker(occ.occupation_id, False, 1, wages[i,0], False, False,
-                                               abs(int(np.random.normal(3,2)))))
+                                               abs(int(np.random.normal(3,2))), 1, 1))
             ## adding unemployed workers
         for u in range(round(unemployment[i,0])):
             if np.random.rand() <= g_share:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
-                                                     wages[i,0], False, True, abs(int(np.random.normal(fem_ra,0.1)))))
+                                                     wages[i,0], False, True, abs(int(np.random.normal(fem_ra,0.1))), 1, 1))
             else:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
-                                                     wages[i,0], False, False, abs(int(np.random.normal(male_ra,0.1)))))
+                                                     wages[i,0], False, False, abs(int(np.random.normal(male_ra,0.1))), 1, 1))
                 
                 
                 
