@@ -33,6 +33,11 @@ However, the data seems to follow a non-linear relationship (we see little satis
 Individuals seem to accept a below-1 relative wage ratio (current wage:wage at lost job) following a year of unemployment.
 If we fit this model with a quadratic fit this could inform our reservation wage adjustment parameter in the model.
 
+**Important Considerations/Limitations:**
+
+1.  **Displaced worker classification as outlined above.** Can we generalise from this definition to all unemployed workers?
+2.  **The reported 'current wage' is not necessarily the the realised wage post-re-employment.** Individuals report the wage at the lost job, the amount of time unemployed until they were re-employed, and the wage they hold at their current job. However, it is not indicated whether the current job is the same job as the first they were re-employed at. Given various comments in the literature about finding "stop-gap" employment, this might not be a problem in the sense that the "current wage" would more accurately indicate the wage an individual has "landed" at post-unemployment spell. But curious what you think about the defensibility of this.
+
 ```{r setup, include=FALSE}
 
 knitr::opts_chunk$set(echo = TRUE)
