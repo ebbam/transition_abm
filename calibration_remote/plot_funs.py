@@ -169,7 +169,7 @@ def plot_bev_curve(res_dict, macro_obs, sep_strings=None, sep=False, save=False,
 ############## OCC-SPECIFIC LTUER ##################
 ####################################################
 
-def plot_occupation_ltuer(sim_results_dict, observations, save=False, path=None):
+def plot_occupation_uer(sim_results_dict, observations, save=False, path=None):
     """
     Creates scatterplots of mean LTUER by occupation for each element in the dictionary.
     
@@ -179,57 +179,68 @@ def plot_occupation_ltuer(sim_results_dict, observations, save=False, path=None)
     - path: Path to save the plots if save=True
     """
     # First, calculate global y-axis limits
+    all_uer_rates = []
     all_ltuer_rates = []
     for sim_results in sim_results_dict.values():
-        occ_data = sim_results.loc[:, ['Time Step', 'Occupation', 'Workers', 'LT Unemployed Persons']]
-        occ_data['LTUE Rate'] = occ_data['LT Unemployed Persons'] / occ_data['Workers']
-        mean_ltuer = occ_data.groupby('Occupation')['LTUE Rate'].mean()
+        occ_data = sim_results.loc[:, ['Time Step', 'Occupation', 'acs_occ_code', 'Workers', 'Unemployment', 'LT Unemployed Persons']]
+        occ_data['UE Rate'] = occ_data['Unemployment'] / occ_data['Workers']
+        occ_data['LTUE Rate'] = occ_data['LT Unemployed Persons'] / occ_data['Unemployment']
+        mean_uer = occ_data.groupby('acs_occ_code')['UE Rate'].mean()
+        mean_ltuer = occ_data.groupby('acs_occ_code')['LTUE Rate'].mean()
+        all_uer_rates.extend(mean_uer.values)
         all_ltuer_rates.extend(mean_ltuer.values)
     
     # Add some padding to the y-axis limits
-    y_min = min(all_ltuer_rates) * 0.95  # 5% padding below
-    y_max = max(all_ltuer_rates) * 1.05  # 5% padding above
+    y_min = min(all_uer_rates) * 0.95  # 5% padding below
+    y_max = max(all_uer_rates) * 1.05  # 5% padding above
     
     for name, sim_results in sim_results_dict.items():
         # Extract occupation-specific data
-        occ_data = sim_results.loc[:, ['Time Step', 'Occupation', 'Workers', 'LT Unemployed Persons']]
+        temp_data = sim_results.loc[:, ['Time Step', 'Occupation', 'acs_occ_code', 'Workers', 'Unemployment', 'LT Unemployed Persons']]    
+        # Add occupational codes for merging/averaging  
+        temp_data = temp_data.merge(observations, left_on='acs_occ_code', right_on = "acs_occ_code", how='left')
+        for name_k, k in {'acs_occ_code': 'uer_occ', 
+                        'SOC2010_adj': 'uer_soc2010', 
+                        'SOC_major_adj': 'uer_soc_major', 
+                        'SOC_minor_adj': 'uer_soc_minor', 
+                        'SOC_broad_adj': 'uer_soc_broad'
+                        }.items():
+            # Calculate LTUER for each occupation at each time step
+            plot_df = temp_data.groupby([name_k, 'Time Step'])[['LT Unemployed Persons', 'Unemployment', 'Workers']].sum().reset_index()
+            plot_df['UE Rate'] = plot_df['Unemployment'] / plot_df['Workers']
+            plot_df['LTUE Rate'] = plot_df['LT Unemployed Persons'] / plot_df['Unemployment']
+
+            # Calculate mean LTUER for each occupation
+            mean_ltuer = plot_df.groupby(name_k)['LTUE Rate'].mean().reset_index()
+            mean_ltuer = mean_ltuer.merge(observations, left_on=name_k, right_on = name_k, how='left')
+            mean_uer = plot_df.groupby(name_k)['UE Rate'].mean().reset_index()
+            mean_uer = mean_uer.merge(observations, left_on=name_k, right_on = name_k, how='left')
+            
+            # Sort occupations by mean LTUER and create ordered x-axis positions
+            mean_ltuer = mean_ltuer.sort_values('LTUE Rate')
+            mean_uer = mean_uer.sort_values('UE Rate')
+            mean_uer['x_pos'] = range(len(mean_uer))
+            # Create the scatterplot
+            plt.figure(figsize=(12, 6))
+            sns.scatterplot(data=mean_uer, x='x_pos', y='UE Rate', s=50)
+            sns.scatterplot(data=mean_uer, x='x_pos', y='uer_occ', s=50)
         
-        # Calculate LTUER for each occupation at each time step
-        occ_data['LTUE Rate'] = occ_data['LT Unemployed Persons'] / occ_data['Workers']
-        
-        # Calculate mean LTUER for each occupation
-        mean_ltuer = occ_data.groupby('Occupation')['LTUE Rate'].mean().reset_index()
-        mean_ltuer = mean_ltuer.merge(observations, left_on='Occupation', right_index=True, how='left')
-        
-        # Sort occupations by mean LTUER and create ordered x-axis positions
-        mean_ltuer = mean_ltuer.sort_values('LTUE Rate')
-        mean_ltuer['x_pos'] = range(len(mean_ltuer))
-        
-        # Create the scatterplot
-        plt.figure(figsize=(12, 6))
-        sns.scatterplot(data=mean_ltuer, x='x_pos', y='LTUE Rate', s=50)
-        #sns.scatterplot(data=mean_ltuer, x='x_pos', y='ltuer_occ', s=50)
-        #sns.scatterplot(data=mean_ltuer, x='x_pos', y='ltuer_soc2010', s=50)
-        #sns.scatterplot(data=mean_ltuer, x='x_pos', y='ltuer_soc_major', s=50)
-        #sns.scatterplot(data=mean_ltuer, x='x_pos', y='ltuer_soc_minor', s=50)
-        sns.scatterplot(data=mean_ltuer, x='x_pos', y='ltuer_soc_broad', s=50)
-        
-        # Customize the plot
-        plt.title(f'Mean Long-term Unemployment Rate by Occupation ({name})', fontweight='bold')
-        plt.xlabel('Occupation (ordered by mean LTUER)')
-        plt.ylabel('Mean Long-term Unemployment Rate')
-        
-        # Set x-axis ticks to show occupation IDs in the sorted order
-        plt.xticks(mean_ltuer['x_pos'], mean_ltuer['Occupation'], rotation=45, ha='right')
-        
-        # Set consistent y-axis limits
-        plt.ylim(y_min, y_max)
-        
-        # Adjust layout
-        plt.tight_layout()
-        
-        # Show the plot
-        plt.show()
+            # Customize the plot
+            plt.title(f'Mean Unemployment Rate by Occupation ({name})', fontweight='bold')
+            plt.xlabel('Occupation (ordered by mean UER)')
+            plt.ylabel('Mean Unemployment Rate')
+            
+            # Set x-axis ticks to show occupation IDs in the sorted order
+            plt.xticks(mean_uer['x_pos'], mean_uer['acs_occ_code'], rotation=45, ha='right')
+            
+            # Set consistent y-axis limits
+            plt.ylim(y_min, 0.5)
+            
+            # Adjust layout
+            plt.tight_layout()
+            
+            # Show the plot
+            plt.show()
 
         # Save or show
     if save:
@@ -311,6 +322,7 @@ def plot_rel_wages(mod_results_dict, names, save=False, path=None):
         
         # Plot unemployed relative wages (smoothed)
         u_wages = annual_data['U_REL_WAGE_MEAN'].values
+        u_wages = np.clip(u_wages, None, 1.7)
         ax1.plot(dates_array, u_wages, 
                 color=colors[i], label=names[i], marker='o', zorder=3)
         # Add shading

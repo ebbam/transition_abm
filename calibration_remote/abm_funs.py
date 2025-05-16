@@ -30,10 +30,10 @@ def util(w_current, w_offered, skill_sim):
 #     return apps
 
 def search_effort(t_unemp, bus_cy, disc):
-    apps = round(10 + 100 * (1 - bus_cy))
-    if disc:
-        apps = round(apps / ((0.01*(t_unemp)**2) + 1)) + 1
-    return apps
+    apps = 10
+    if t_unemp > 3 & disc:
+        apps = apps * (1 + 0.1*(t_unemp-3))
+    return round(apps)
 
 # Alternative search effort function that is dictated by the time series of a business cycle
 def search_effort_ts(t_unemp, se):
@@ -49,7 +49,7 @@ class worker:
                  # employed, 
                  longterm_unemp, 
                  # time_employed,
-                 time_unemployed, wage, hired, female, risk_av_score, ee_rel_wage, ue_rel_wage):
+                 time_unemployed, wage, hired, female, risk_av_score, ee_rel_wage, ue_rel_wage, applicants_sent):
         # State-specific attributes:
         # Occupation id
         wrkr.occupation_id = occupation_id
@@ -71,6 +71,7 @@ class worker:
         wrkr.risk_aversion = risk_av_score
         wrkr.ee_rel_wage = ee_rel_wage
         wrkr.ue_rel_wage = ue_rel_wage
+        wrkr.apps_sent = applicants_sent
     
     def search_and_apply(wrkr, net, vac_list, disc, bus_cy):
         # A sample of relevant vacancies are found that are in neighboring occupations
@@ -78,29 +79,42 @@ class worker:
         # ^^ have added qualifier...bad form to reassign list?
         # Select different random sample of "relevant" vacancies found by each worker
         found_vacs = random.sample(vac_list, min(len(vac_list), 30))
+        if disc:
+            if wrkr.time_unemployed > 5:
+                res_wage = wrkr.wage * (1-(0.1*(wrkr.time_unemployed-3)))
+            else:
+                res_wage = wrkr.wage
+            found_vacs = [v for v in found_vacs if v.wage >= res_wage]
+        vsent = 0
         if disc or bus_cy != 1:
             # Sort found relevant vacancies by utility-function defined above and apply to amount dictated by impatience
             for v in sorted(found_vacs, key = lambda v: util(wrkr.wage, v.wage, net[wrkr.occupation_id].list_of_neigh_weights[v.occupation_id]), 
                             reverse = True)[slice(wrkr.risk_aversion, wrkr.risk_aversion + search_effort(wrkr.time_unemployed, bus_cy, disc))]:
                 # Introduce randomness here...?
+                vsent += 1
                 v.applicants.append(wrkr)
         else:
             vs = random.sample(found_vacs, min(len(found_vacs), 10))
             for r in vs:
+                vsent += 1
                 r.applicants.append(wrkr)
+        wrkr.apps_sent = vsent
     
-    def emp_search_and_apply(wrkr, net, vac_list):
+    def emp_search_and_apply(wrkr, net, vac_list, disc):
         # A sample of relevant vacancies are found that are in neighboring occupations
         # Will need to add a qualifier in case sample is greater than available relevant vacancies
         # ^^ have added qualifier...bad form to reassign list?
         # Select different random sample of "relevant" vacancies found by each worker
         found_vacs = random.sample(vac_list, min(len(vac_list), 30))
+        # if disc:
+        #     found_vacs = [v for v in found_vacs if v.wage >= wrkr.wage*1.05]
         # Filter found_vacs to keep only elements where util(el) > 0
         # We assume that employed workers will only apply to vacancies for which there is a wage gain. 
         filtered_vacs = [el for el in found_vacs if util(wrkr.wage, el.wage, net[wrkr.occupation_id].list_of_neigh_weights[el.occupation_id]) > 0]
         vs = random.sample(filtered_vacs, min(len(filtered_vacs), 5))
         for r in vs:
             r.applicants.append(wrkr)
+        wrkr.apps_sent = 0
             
 class occupation:
     def __init__(occ, occupation_id, list_of_employed, list_of_unemployed, 
@@ -138,15 +152,17 @@ class occupation:
         for w in occ.list_of_unemployed:
             w.time_unemployed += 1
             # Chosen 12 months - can be modified
-            w.longterm_unemp = True if w.time_unemployed >= 3 else False
+            w.longterm_unemp = True if w.time_unemployed >= 5 else False
             w.ue_rel_wage = None
             w.ee_rel_wage = None
             w.hired = False
+            w.apps_sent = 0
         for e in occ.list_of_employed:
             e.hired = False
             e.time_unemployed = 0
             e.ue_rel_wage = None
             e.ee_rel_wage = None
+            e.apps_sent = 0
         
 class vac:
     def __init__(v, occupation_id, applicants, wage, filled, time_open):
@@ -228,20 +244,20 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
             # Assume they have all at least 1 t.s. of employment
             if np.random.rand() <= g_share:
                 occ.list_of_employed.append(worker(occ.occupation_id, False, 1, wages[i,0], False, True,
-                                               abs(int(np.random.normal(7,2))), 1, 1))
+                                               abs(int(np.random.normal(7,2))), 1, 1,0))
             else:
                 occ.list_of_employed.append(worker(occ.occupation_id, False, 1, wages[i,0], False, False,
-                                               abs(int(np.random.normal(3,2))), 1, 1))
+                                               abs(int(np.random.normal(3,2))), 1, 1,0))
             ## adding unemployed workers
         for u in range(round(unemployment[i,0])):
             if np.random.rand() <= g_share:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
-                                                     wages[i,0], False, True, abs(int(np.random.normal(fem_ra,0.1))), 1, 1))
+                                                     wages[i,0], False, True, abs(int(np.random.normal(fem_ra,0.1))), 1, 1, 1))
             else:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
-                                                     wages[i,0], False, False, abs(int(np.random.normal(male_ra,0.1))), 1, 1))
+                                                     wages[i,0], False, False, abs(int(np.random.normal(male_ra,0.1))), 1, 1, 1))
                 
                 
                 
