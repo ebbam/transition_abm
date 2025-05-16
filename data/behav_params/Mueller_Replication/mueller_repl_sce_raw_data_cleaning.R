@@ -147,6 +147,17 @@ sce_13_19 <- raw_1316 %>%
   left_join(., sce_lab, by = c('userid', 'date')) %>% 
   mutate(date = ceiling_date(ym(date), 'month') - days(1)) 
 
+
+sce_13_24_no_lab <- raw_1316 %>% 
+  rbind(raw_1719) %>% 
+  rbind(raw_latest) %>% 
+  raw_transform(.) %>% 
+  select(userid, date, "female", "hispanic", "black", "r_asoth", "other_race",
+    "age", #"agesq", 
+    "hhinc_2", "hhinc_3", "hhinc_4", 
+    "education_2", "education_3", "education_4", 
+    "education_5", "education_6", "unemployment_duration", "rim_4_original")
+
 # All available data 2013-2014
 sce_13_24 <- raw_1316 %>% 
   rbind(raw_1719) %>% 
@@ -155,13 +166,20 @@ sce_13_24 <- raw_1316 %>%
   left_join(., sce_lab, by = c('userid', 'date')) %>% 
   mutate(date = ceiling_date(ym(date), 'month') - days(1))
 
+# Following test passes
+# raw_1316 %>% 
+# rbind(raw_1719) %>% 
+#   rbind(raw_latest) %>% 
+#   raw_transform(.) %>% left_join(., sce_lab, by = c('userid', 'date')) %>% select(all_of(names(sce_lab))) %>% filter(!if_all(-c(userid, date), is.na)) %>% arrange(userid, date) %>% identical(arrange(sce_lab, userid, date))
+
+
 # Only data from 2020-2024 (date range outside of Mueller paper)
 sce_20_24 <- raw_latest %>% 
   raw_transform(.) %>% 
   left_join(., sce_lab, by = c('userid', 'date')) %>% 
   mutate(date = ceiling_date(ym(date), 'month') - days(1)) 
 
-rm(raw_1316, raw_1719, raw_latest, sce_raw, cleaned_sce, raw_transform)
+#rm(raw_1316, raw_1719, raw_latest, sce_raw, cleaned_sce, raw_transform)
 
 # # 1,079 when not filtering by age
 # sce_raw %>% 
@@ -220,3 +238,6 @@ if(!ignore_addfiles){
   sce <- sce %>% select(-statefips) #filter(sce, x == 1) %>% select(-statefips)
 }
 
+unemp_temp <- sce_lab %>% 
+  left_join(., sce_13_24_no_lab, by = c(userid, date)) %>% 
+  mutate(date = ceiling_date(ym(date), 'month') - days(1))

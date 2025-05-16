@@ -46,6 +46,7 @@ sce <- sce %>% select(-statefips) #filter(sce, x == 1) %>% select(-statefips)
 #################################################################################
 cleaning_function <- function(df, file_name, save = FALSE){
   #print(save)
+  print(paste0("1: ", nrow(df)))
   sce <- df %>%
     group_by(userid) %>% 
     filter(any(temp_laid_off == 1 | (not_working_wouldlike == 1 & looking_for_job == 1)))
@@ -56,6 +57,8 @@ cleaning_function <- function(df, file_name, save = FALSE){
       (temp_laid_off == 1 | (not_working_wouldlike == 1 & looking_for_job == 1))  ~ 2, # Unemployed
       TRUE ~ 3 # Other
     ))
+  
+  print(paste0("2: ", nrow(sce)))
   
   # Rename variable
   sce <- rename(sce, weight = rim_4_original)
@@ -107,6 +110,7 @@ cleaning_function <- function(df, file_name, save = FALSE){
     #test_equal(verbose = TRUE) #Does not pass in this case because of error flagged above
   }
   
+  print(paste0("3: ", nrow(sce)))
   # Measures of unemployment duration
   sce <- sce %>%
     # the adjustment accounts for discrepancy in stata which has origin data of 1960-01-01
@@ -142,6 +146,7 @@ cleaning_function <- function(df, file_name, save = FALSE){
     ) %>%
     ungroup()
   
+  print(paste0("4: ", nrow(sce)))
   # Assuming the data is in a data frame called df
   sce <- sce %>%
     # Group by user and order by date
@@ -184,7 +189,7 @@ cleaning_function <- function(df, file_name, save = FALSE){
            udur = ifelse(udur < 0, NA, udur)) %>% 
     select(-c(udur_test, udur_cumsum))
   
-  
+  print(paste0("5: ", nrow(sce)))
   # There are slight rounding differences in udur between the old and the new so we round the dataframes for comparison:
   #old = mutate(old, udur = round(udur, 2))
   sce = mutate(sce, udur = round(udur, 2))
@@ -201,6 +206,7 @@ cleaning_function <- function(df, file_name, save = FALSE){
       # If we wish to use the data I will remove this. 
       longterm_unemployed = ifelse(userid == "6116900" & date == "2015-11-30", 1, longterm_unemployed))
   
+  print(paste0("6: ", nrow(sce)))
   # Long-term unemployment variables
   sce <- sce %>%
     mutate(findjob_3mon_longterm = find_job_3mon * longterm_unemployed,
@@ -226,6 +232,7 @@ cleaning_function <- function(df, file_name, save = FALSE){
                           userid == "9538700" & date == "2016-12-31" ~ 4,
                           TRUE ~ udur_bins))
   
+  print(paste0("7: ", nrow(sce)))
   # Time since first interview with perceptions
   sce <- sce %>%
     group_by(userid, spell_id) %>%
@@ -247,6 +254,7 @@ cleaning_function <- function(df, file_name, save = FALSE){
     ungroup() %>% 
     select(-c(hasnm_test, survey_duration_cumsum))
   
+  print(paste0("8: ", nrow(sce)))
   # Again, minor rounding differences between survey_duration values in each dataset
   sce <- mutate(sce, survey_duration = round(survey_duration, 4))
   #old <- mutate(old, survey_duration = round(survey_duration, 4))
@@ -263,7 +271,7 @@ cleaning_function <- function(df, file_name, save = FALSE){
     # Therefore, I remove the one column they do not have: nedur_1mo_12 to remain identical to their data. 
     select(-nedur_1mo_12)
   
-  
+  print(paste0("9: ", nrow(sce)))
   # Transitions in labor force states (1-month and 3-month horizons)
   sce <- sce %>% 
     mutate(datem = as.integer(str_split_i(as.period(interval(ymd("1960-01-01"), date, tz = "UTC"), unit = "months"), fixed("m"), 1))) %>%  
@@ -289,6 +297,7 @@ cleaning_function <- function(df, file_name, save = FALSE){
     )) %>% 
     ungroup()
   
+  print(paste0("10: ", nrow(sce)))
   # Job finding in 3 months from now
   sce <- sce %>%
     group_by(userid) %>% 
@@ -320,7 +329,7 @@ cleaning_function <- function(df, file_name, save = FALSE){
                                           TRUE ~ NA_real_)) %>%
     ungroup()
   
-  
+  print(paste0("11: ", nrow(sce)))
   # Inclusion in analysis samples
   sce <- sce %>%
     mutate(in_sample_1 = if_else(find_job_3mon <= find_job_12mon & (!is.na(find_job_3mon) | !is.na(find_job_12mon)) & 
@@ -334,6 +343,7 @@ cleaning_function <- function(df, file_name, save = FALSE){
     mutate(in_sample_1 = ifelse(userid == 2104700 & date == "2013-12-31", 1, in_sample_1),
            in_sample_2 = ifelse(userid == 2104700 & date == "2013-12-31", 1, in_sample_2))
   
+  print(paste0("12: ", nrow(sce)))
   # Save or Return Data
   if(save){
     if(is.null(file_name)){
