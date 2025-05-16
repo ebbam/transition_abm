@@ -5,6 +5,8 @@ library(ipumsr)
 library(tidyverse)
 library(janitor)
 library(here)
+library(zoo)
+library(haven)
 ddi_17 <- read_ipums_ddi(here("data/behav_params/Eeckhout_Replication/cps_data/cps_00009.xml"))
 data_17 <- read_ipums_micro(ddi_17) %>% 
   clean_names %>% filter(year == 2017 & month == 1)
@@ -97,7 +99,7 @@ for (i in 1996:2016) {
     # Append new data using rbind
 
     all_rates <- rbind(all_rates, new_row)
-    saveRDS(all_rates, here('data/behav_params/Eeckhout_Replication/cps_data/new_allrates_96_16.rds'))
+    #saveRDS(all_rates, here('data/behav_params/Eeckhout_Replication/cps_data/new_allrates_96_16.rds'))
 
   if(i == 2016 & j == 12){break
     }
@@ -124,7 +126,7 @@ all_rates_new <- all_rates_new %>%
     NU = NUtotal / LFtotal
   )
 
-saveRDS(all_rates_new, here('data/behav_params/Eeckhout_Replication/cps_data/new_allrates_96_16_full.rds'))
+#saveRDS(all_rates_new, here('data/behav_params/Eeckhout_Replication/cps_data/new_allrates_96_16_full.rds'))
 
 test <- read_dta(here("data/behav_params/Eeckhout_Replication/116422-V1/data/All_rates_and_flows/allrates.dta")) %>% 
   mutate(time = as.yearmon("1996-01") + (row_number() - 1) / 12) 

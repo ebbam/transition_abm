@@ -89,6 +89,8 @@ filter(dwhrswkc != 99 & dwwksun <= 160) %>%
          dwwagec = ifelse(round(dwwagec) == 100, NA, dwwagec),
          dwweekl = ifelse(round(dwweekl) == 10000, NA, dwweekl),
          dwweekc = ifelse(round(dwweekc) == 10000, NA, dwweekc),
+         # dwwage_rec_l = ifelse(is.na(dwagel) & !is.na(dweekl) ~ dwweekl),
+         # dwweekc = ifelse(round(dwweekc) == 10000, NA, dwweekc),
          # Binning educational categories
          educ_cat = case_when(educ %in% c(1) ~ NA, # (NIU)
                               educ > 1 & educ <= 71 ~ "Less than HS", # Includes "None" - Grade 12 no diploma (8 subcategories (grade 1-11 etc))
@@ -115,6 +117,16 @@ filter(dwhrswkc != 99 & dwwksun <= 160) %>%
   mutate(ratio_wage = dwwagec/dwwagel,
          # Ratio of weekly wage of current job to lost job
          ratio_weekly = dwweekc/dwweekl,
+         # Reconciling missing reporting between weekly and hourly wage. Take either the min, max or mean value. 
+         ratio_reconciled_min = case_when(is.na(ratio_wage) ~ ratio_weekly, 
+                                          is.na(ratio_weekly) ~ ratio_wage, 
+                                          TRUE ~ pmin(ratio_weekly, ratio_wage)), 
+         ratio_reconciled_max = case_when(is.na(ratio_wage) ~ ratio_weekly, 
+                                          is.na(ratio_weekly) ~ ratio_wage, 
+                                          TRUE ~ pmax(ratio_weekly, ratio_wage)), 
+         ratio_reconciled_mean = case_when(is.na(ratio_wage) ~ ratio_weekly, 
+                                          is.na(ratio_weekly) ~ ratio_wage, 
+                                          TRUE ~ rowMeans(across(c(ratio_wage, ratio_weekly)), na.rm = TRUE)), 
          # Create monthly unemployment duration for continuous
          dwmosun = floor(dwwksun/4),
          # Unemployment duration (reported as time between lost job and start of next job)
@@ -160,7 +172,10 @@ filter(dwhrswkc != 99 & dwwksun <= 160) %>%
          log_ratio_weekly = log(ratio_weekly),
          # I clip the sample to an accepted wage ratio between [0.5, 2] and less than 96 weeks of unemployment
          clipped_sample_hwage = ratio_wage >= 0.5 & ratio_wage <= 2 & dwwksun_bin < 11,
-         clipped_sample_wwage = ratio_weekly >= 0.5 & ratio_weekly <= 2  & dwwksun_bin < 11)
+         clipped_sample_wwage = ratio_weekly >= 0.5 & ratio_weekly <= 2  & dwwksun_bin < 11,
+         clipped_sample_rec_min = ratio_reconciled_min >= 0.5 & ratio_reconciled_min <= 2 & dwwksun_bin < 11,
+         clipped_sample_rec_max = ratio_reconciled_max >= 0.5 & ratio_reconciled_max <= 2 & dwwksun_bin < 11,
+         clipped_sample_rec_mean = ratio_reconciled_mean >= 0.5 & ratio_reconciled_mean <= 2 & dwwksun_bin < 11)
 
 
 ```
@@ -216,7 +231,8 @@ bp1 <- df %>%
   theme_minimal() +
   ylim(0,2.5) +
   theme(plot.title=element_text(hjust=0.5)) +
-  scale_x_discrete(labels = labels)
+  scale_x_discrete(labels = labels) +
+  theme(legend.position = "none")
 
 bp2 <- df %>%
   filter(clipped_sample_wwage) %>%
@@ -227,9 +243,69 @@ bp2 <- df %>%
   theme_minimal() +
   ylim(0,2.5) +
   theme(plot.title=element_text(hjust=0.5)) +
-  scale_x_discrete(labels = labels)
+  scale_x_discrete(labels = labels)+
+  theme(legend.position = "none")
+
+bp3 <- df %>%
+  filter(clipped_sample_rec_min) %>%
+  ggplot(aes(x = as.factor(dwwksun_bin), y = ratio_reconciled_min)) +
+  geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwwksun_bin)), alpha = 0.3)+
+  geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
+  labs(title = "Wage Ratio", y = "Accepted:Lost Wage Ratio", x = "Unemployment Duration") +
+  theme_minimal() +
+  ylim(0,2.5) +
+  theme(plot.title=element_text(hjust=0.5),
+        axis.text.x = element_text(size = 14),
+        axis.text.y = element_text(size = 14),
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16)) +
+  scale_x_discrete(labels = labels)+
+  theme(legend.position = "none")
+
+bp4 <- df %>%
+  filter(clipped_sample_rec_max) %>%
+  ggplot(aes(x = as.factor(dwwksun_bin), y = ratio_reconciled_max)) +
+  geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwwksun_bin)), alpha = 0.3)+
+  geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
+  labs(title = "Wage Ratio - Reconciled with max") +
+  theme_minimal() +
+  ylim(0,2.5) +
+  theme(plot.title=element_text(hjust=0.5)) +
+  scale_x_discrete(labels = labels)+
+  theme(legend.position = "none")
+
+bp5 <- df %>%
+  filter(clipped_sample_rec_mean) %>%
+  ggplot(aes(x = as.factor(dwwksun_bin), y = ratio_reconciled_mean)) +
+  geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwwksun_bin)), alpha = 0.3)+
+  geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
+  labs(title = "Wage Ratio - Reconciled with mean") +
+  theme_minimal() +
+  ylim(0,2.5) +
+  theme(plot.title=element_text(hjust=0.5)) +
+  scale_x_discrete(labels = labels)+
+  theme(legend.position = "none")
+
+bp_cont <- df %>%
+  filter(clipped_sample_rec_min) %>%
+  mutate(dwmosun_2mo = ceiling(dwmosun/2)*2) %>% 
+  ggplot(aes(x = as.factor(dwmosun_2mo), y = ratio_reconciled_min)) +
+  geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwmosun_2mo)), alpha = 0.3)+
+  geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
+  labs(title = "Wage Ratio - Reconciled with mean") +
+  theme_minimal() +
+  ylim(0,2.5) +
+  theme(plot.title=element_text(hjust=0.5)) +
+  theme(legend.position = "none")
 
 (bp1 / bp2) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+
+(bp3 + bp4 + bp5) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 14)))
+
+(bp3) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 14)))
+
+bp_cont + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+
 ```
 
 ```{r, echo=FALSE, warning = FALSE, fig.height = 8, fig.width = 10, message = FALSE}
