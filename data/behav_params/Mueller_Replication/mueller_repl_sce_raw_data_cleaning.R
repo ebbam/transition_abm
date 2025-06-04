@@ -238,6 +238,6 @@ if(!ignore_addfiles){
   sce <- sce %>% select(-statefips) #filter(sce, x == 1) %>% select(-statefips)
 }
 
-unemp_temp <- sce_lab %>% 
-  left_join(., sce_13_24_no_lab, by = c(userid, date)) %>% 
-  mutate(date = ceiling_date(ym(date), 'month') - days(1))
+# unemp_temp <- sce_lab %>% 
+#   left_join(., sce_13_24_no_lab, by = c(userid, date)) %>% 
+#   mutate(date = ceiling_date(ym(date), 'month') - days(1))

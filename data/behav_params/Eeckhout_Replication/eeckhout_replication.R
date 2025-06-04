@@ -305,7 +305,6 @@ for(new in c(FALSE, TRUE)){
     time_index_end <- which(time_series == enddatenew)
   }
   diff_periods <- (time_index_end - time_index_start + 1)
-  print(diff_periods)
   
   # Define gamma sequence
   sizegamma <- 20
@@ -329,7 +328,6 @@ for(new in c(FALSE, TRUE)){
   
   # Find the true gamma
   sum_gamma <- rowSums(grid2)
-  print(sum_gamma)
   avg_gamma <- sum_gamma / diff_periods
   diff_gamma <- abs(gamma_values - avg_gamma)
   true_gamma_index <- which.min(diff_gamma)
@@ -837,7 +835,6 @@ trend <- index(x)
 forms <- c("Linear" = "y~x", "Linear with Trend" = "y ~ x + trend", "HP Filter" = "y ~ x")
 hp = FALSE
 for(form in names(forms)){
-  print(forms[form])
   if(grepl("HP", form)){
     y <- y_hp
     hp = TRUE

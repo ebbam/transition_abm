@@ -2,7 +2,9 @@ library(here)
 library(tidyverse)
 library(readxl)
 
+source(here("data/behav_params/SCE Labour Market Survey/sce_cleaning.R"))
 source(here("data/behav_params/Mueller_Replication/mueller_repl_sce_raw_data_cleaning.R"))
+
 
 # From mueller_repl_sce_raw_data_cleaning.R
 unemp_temp <- sce_lab %>% 
@@ -455,49 +457,49 @@ t2 <- unemp_only %>%
     y = "(log) Accepted Wage"
   ) 
 
-t3 <- data_fig1 %>%
-  filter(salary_prop_reswage >= 0.25 & salary_prop_reswage <= 2.5& udur <= 60) %>% 
-  ggplot() +
-  geom_histogram(aes(x = salary_prop_reswage)) +
-  labs(
-    title = "All Respondents",
-    x = "Accepted Wage / Reservation Wage"
-  ) +
-  theme_minimal() +
-  theme(
-    legend.position = "bottom",
-    panel.grid.minor = element_blank()
-  ) 
+# t3 <- data_fig1 %>%
+#   filter(salary_prop_reswage >= 0.25 & salary_prop_reswage <= 2.5& udur <= 60) %>% 
+#   ggplot() +
+#   geom_histogram(aes(x = salary_prop_reswage)) +
+#   labs(
+#     title = "All Respondents",
+#     x = "Accepted Wage / Reservation Wage"
+#   ) +
+#   theme_minimal() +
+#   theme(
+#     legend.position = "bottom",
+#     panel.grid.minor = element_blank()
+#   ) 
+# 
+# t4 <- data_fig1 %>%
+#   filter(salary_prop_reswage >= 0.25 & salary_prop_reswage <= 2.5& udur <= 60) %>% 
+#   ggplot() +
+#   geom_jitter(aes(x = log(reservation_wage), y = log(accepted_salary))) +
+#   geom_abline(slope = 1) +
+#   labs(
+#     title = "All Respondents",
+#     x = "(log) Reservation Wage",
+#     y = "(log) Accepted Wage"
+#   ) +
+#   xlim(9, 13) +  # Adjust limits as needed
+#   ylim(8.5, 13)
 
-t4 <- data_fig1 %>%
-  filter(salary_prop_reswage >= 0.25 & salary_prop_reswage <= 2.5& udur <= 60) %>% 
-  ggplot() +
-  geom_jitter(aes(x = log(reservation_wage), y = log(accepted_salary))) +
-  geom_abline(slope = 1) +
-  labs(
-    title = "All Respondents",
-    x = "(log) Reservation Wage",
-    y = "(log) Accepted Wage"
-  ) +
-  xlim(9, 13) +  # Adjust limits as needed
-  ylim(8.5, 13)
+print((t1 + t2))
 
-print((t1 + t2) / (t3 + t4))
-
-t1 <- data_fig1 %>% 
-  filter(!is.na(salary_prop_reswage) & salary_prop_reswage < 2.5 & salary_prop_reswage > 0.25) %>% 
-  ggplot(aes(y = salary_prop_reswage)) +
-  geom_boxplot(aes(weight = weight))+
-  geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
-  labs(title = "Total (n = 735)") +
-  theme_minimal() +
-  ylim(0,2.5) +
-  theme(plot.title=element_text(hjust=0.5),
-        axis.title.x = element_blank(),  # Remove x-axis title
-        axis.text.x = element_blank(),   # Remove x-axis labels
-        axis.ticks.x = element_blank(),
-        panel.grid.major.x = element_blank(),  # Remove major vertical grid lines
-        panel.grid.minor.x = element_blank())   # Remove x-axis ticks
+# t1 <- data_fig1 %>% 
+#   filter(!is.na(salary_prop_reswage) & salary_prop_reswage < 2.5 & salary_prop_reswage > 0.25) %>% 
+#   ggplot(aes(y = salary_prop_reswage)) +
+#   geom_boxplot(aes(weight = weight))+
+#   geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
+#   labs(title = "Total (n = 735)") +
+#   theme_minimal() +
+#   ylim(0,2.5) +
+#   theme(plot.title=element_text(hjust=0.5),
+#         axis.title.x = element_blank(),  # Remove x-axis title
+#         axis.text.x = element_blank(),   # Remove x-axis labels
+#         axis.ticks.x = element_blank(),
+#         panel.grid.major.x = element_blank(),  # Remove major vertical grid lines
+#         panel.grid.minor.x = element_blank())   # Remove x-axis ticks
 
 
 ####### ACCEPTED TO LATEST #########
@@ -626,15 +628,15 @@ mod6b <- lm(data = filter(unemp_only, !is.na(expbest4mos_rel_most_recent) & expb
 
 modelsummary(list("ResWage" = mod1a,"ResWage w.c" = mod1b, 
                   "ResWage/LastWage" =mod2a, "ResWage/LastWage w.c" =mod2b), output = "markdown",
-             stars = TRUE, coef_omit = c(3:16), title = "Reservation Wages and Unemployment Duration") %>% print(.)
+             stars = TRUE, title = "Reservation Wages and Unemployment Duration") %>% print(.)
 
 modelsummary(list(
   "AccptWage" =mod3a, "AccptWage w.c" =mod3b,
   "AccptWage/ResWage" =mod4a, "AccptWage/ResWage w.c" =mod4b), output = "markdown",
-  stars = TRUE, coef_omit = c(3:15), title = "Accepted Wages and Unemployment Duration") %>% print(.)
+  stars = TRUE,  title = "Accepted Wages and Unemployment Duration") %>% print(.)
 
 modelsummary(list(
   "ExpWage/ResWage" =mod5a, "ExpWage/ResWage w.c" =mod5b,
   "ExpWage/LastWage" =mod6a, "ExpWage/LastWage w.c" =mod6b), output = "markdown",
-  stars = TRUE, coef_omit = c(3:16), title = "Expected Wages and Unemployment Duration") %>% print(.)
+  stars = TRUE, title = "Expected Wages and Unemployment Duration") %>% print(.)
 

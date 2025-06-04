@@ -8,8 +8,6 @@ editor_options:
     wrap: sentence
 ---
 
-# Overview {.tabset}
-
 As part of the Current Population Survey, the US Census Bureau conducts an annual [Displaced Worker Supplement](https://cps.ipums.org/cps/dw_sample_notes.shtml) in which workers who have lost their job in the last three years are asked additional questions about their unemployment experiences and (if re-employed) their re-employment conditions.
 
 From link above: "The universe for the Displaced Workers Supplement is civilians 20 or older. Respondents are further categorized as a"displaced worker" if they meet additional characteristics (see DWSTAT). After 1998, displaced workers are those who lost or left a job due to layoffs or shutdowns within the past 3 years...were not self-employed, and did not expect to be recalled to work within the next six months.
@@ -39,7 +37,7 @@ If we fit this model with a quadratic fit this could inform our reservation wage
 2.  **The reported 'current wage' is not necessarily the the realised wage post-re-employment.** Individuals report the wage at the lost job, the amount of time unemployed until they were re-employed, and the wage they hold at their current job. However, it is not indicated whether the current job is the same job as the first they were re-employed at. Given various comments in the literature about finding "stop-gap" employment, this might not be a problem in the sense that the "current wage" would more accurately indicate the wage an individual has "landed" at post-unemployment spell. But curious what you think about the defensibility of this.
 3.  **Outcome variable:** How do we feel about the outcome variable as the ratio of current to latest held job? Might we want to take the log or consider simply the (log) level regressed on the previous wage. Wondering if a ratio-based outcome variable might muddle interpretation. Curious for your reactions.
 
-```{r setup, include=FALSE}
+```{r, include=FALSE}
 
 knitr::opts_chunk$set(echo = TRUE)
 library(patchwork)
@@ -59,7 +57,7 @@ library(sampleSelection)
 
 ```
 
-## Data cleaning
+#### Data cleaning
 
 Feel free to ignore this code chunk immediately below.
 I include it for your info on binning and outlier trimming.
@@ -180,7 +178,7 @@ filter(dwhrswkc != 99 & dwwksun <= 160) %>%
 
 ```
 
-## Descriptives
+#### Descriptives
 
 All descriptives below us the us the Displaced Worker Sample Weights.
 
@@ -327,7 +325,7 @@ spline <- df %>%
 
 ```
 
-## Regressions (non-uniform sample) {.tabset}
+#### Regressions (non-uniform sample) {.tabset}
 
 Next, (ignoring for now the non-uniformity of the sample ie. that there are less observations present for higher unemployment durations) I run the following regression (with various modifications to sample and control variables).
 $W_{i} = \alpha_{i} + \beta_{1} d_{i} + \beta_{2}UI_{i} + \beta_{3}X_{i} + \epsilon_{i}$
@@ -480,12 +478,12 @@ mod_list2[['Cont. w. UI w. controls (clipped)']] %>%
 
 ```
 
-### Continuous UE Duration {.tabset}
+##### Continuous UE Duration {.tabset}
 
 Continuous UE duration treatment is reported in monthly values.
 A one-unit increase in the treatment variable = 1 additional month of unemployment.
 
-#### W.O. Wage Level Control
+###### W.O. Wage Level Control
 
 ```{r, echo = FALSE}
 
@@ -493,7 +491,7 @@ output_pretty(mod_list[grepl("Cont", names(mod_list))], highlightrows = 3, title
 
 ```
 
-#### W. Wage Level Control
+###### W. Wage Level Control
 
 ```{r, echo = FALSE}
 
@@ -501,11 +499,11 @@ output_pretty(mod_list2[grepl("Cont", names(mod_list))], highlightrows = c(3,5),
 
 ```
 
-### Binned UE Duration {.tabset}
+##### Binned UE Duration {.tabset}
 
 Binned UE duration treatment is reported in bins as indicated in the box plots and code cleaning above.
 
-#### W.O. Wage Level Control
+###### W.O. Wage Level Control
 
 ```{r, echo = FALSE}
 
@@ -513,7 +511,7 @@ output_pretty(mod_list[grepl("Disc", names(mod_list))], highlightrows = 3, title
 
 ```
 
-#### W. Wage Level Control
+###### W. Wage Level Control
 
 ```{r, echo = FALSE}
 
@@ -521,7 +519,7 @@ output_pretty(mod_list2[grepl("Disc", names(mod_list))], highlightrows = c(3,5),
 
 ```
 
-## Additional Considerations {.tabset}
+#### Additional Considerations {.tabset}
 
 Below I:
 
@@ -529,7 +527,7 @@ Below I:
 2.  Histogram of an additional explanatory variable that might be interesting - the tenure of the lost job. How long (in years) did the individual hold the job they lost.
 3.  Additionally, I show some rough graphs/figures about the sample population (age, education, gender, wage distributions). I am still working on an occupational distribution graph to understand the "skills"/occupational distribution of the sample.
 
-### Selection Issues with Non-Random Sample {.tabset}
+##### Selection Issues with Non-Random Sample {.tabset}
 
 NOTE: Skip ahead to "Regression Results with Sample Reweighting for Regression Results if you don't wish to look at the reweighting details below.
 
@@ -540,7 +538,7 @@ Open to suggestions and corrections :)
 
 **Conclusion:** With this implementation (which may very well be wrong for now!), the coefficients on unemployment duration remain stable.
 
-#### Entropy Balancing
+###### Entropy Balancing
 
 Entropy balancing simply reweights observations to ensure population matching across the key dependent variable.
 
@@ -575,7 +573,7 @@ mod_eb_reweight %>% check_model()
 
 ```
 
-#### Propensity Score Weighting with GLM Estimator
+###### Propensity Score Weighting with GLM Estimator
 
 ```{r, warning = FALSE}
 # More conventional propensity scoring with a GLM estimator
@@ -606,7 +604,7 @@ mod_glm_reweight %>% check_model()
 
 ```
 
-#### Heckman Selection
+###### Heckman Selection
 
 Another option is a Heckman Selection correction though I do not think this addresses the particular selection concern we have where there are simply less observations in longer unemployment durations.
 
@@ -629,7 +627,7 @@ heckman_model <- selection(
 
 ```
 
-#### Regression Results with Sample Reweighting
+###### Regression Results with Sample Reweighting
 
 ```{r, echo = FALSE, warning = FALSE}
 # All correction models together
@@ -637,7 +635,7 @@ list("Heckman Correction" = heckman_model$lm, "Entropy Balanced Reweight" = mod_
 
 ```
 
-### Job Tenure
+##### Job Tenure
 
 We have information on the tenure spent at the last job which could impact the result.
 This could speak to the "adaptability" of individuals.
@@ -664,7 +662,7 @@ tenure1 + tenure2 + plot_annotation(title = "Tenure at Lost Job (years)", subtit
 
 ```
 
-### Representation
+##### Representation
 
 Although the survey does provide sample weights which we use above, it's still likely that those who are laid off might be systematically more susceptible to layoffs (lower-wage, low-skill occupation, male, etc).
 Below, some (very rough) graphs to indicate what the sample looks like.
