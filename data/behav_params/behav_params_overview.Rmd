@@ -598,6 +598,9 @@ source(here("data/behav_params/Mukoyama_Replication/mukoyama_replication_analysi
 
 [Source](https://www.aeaweb.org/articles?id=10.1257/mac.20180105)
 
+![Employed Search Effort Fit](Eeckhout_Replication/emp_search_effort.png)
+
+
 ```{r, echo = FALSE, fig.height = 8, fig.width = 10, cache = TRUE}
 
 source(here('data/behav_params/Eeckhout_Replication/eeckhout_extended_replication.R'))
