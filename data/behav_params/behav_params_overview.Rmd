@@ -62,39 +62,30 @@ conflicts_prefer(patchwork::area)
 **Data we have decided to keep:**
 
 1.  Current Population Survey 2018 & 2022: Information on applications
-    sent by unemployment duration.
+    sent by unemployment duration.             
+    
 2.  Mukoyama et al. data on the intensive margin of unemployed search
     effort (in minutes searched) over the business cycle. We have chosen
     to include this as a validation exercise of our application effort
-    imposition.
+    imposition.               
 
-<!-- -->
-
-2.  [Eeckhout et al. 2019 Unemployment
+3.  [Eeckhout et al. 2019 Unemployment
     Cycles](https://www.aeaweb.org/articles?id=10.1257/mac.20180105): We
     derive the sensitivity of employed job seekers to the business cycle
     from the employment-to-employment transitions data as used in
     Eeckhout et al. Due to unreliable component parts of the Eeckhout
     analysis, we decided to abandon using their estimated parameters
-    (search intensity for employed workers).
+    (search intensity for employed workers).               
+    
+4.   Displaced Worker Supplement: As part of the Current Population Survey, the US Census Bureau conducts an annual Displaced Worker Supplement in which workers who have lost their job in the last three years are asked additional questions about their unemployment experiences and (if re-employed) their re-employment conditions. From this we draw a reservation wage adjustment rate as a function of unemployment duration.                  
 
-3.   [**Mueller et al. 2021: Job Seekers' Perceptions and Employment
+5.   [**Mueller et al. 2021: Job Seekers' Perceptions and Employment
     Prospects: Heterogeneity, Duration Dependence and
-    Bias**](https://www.aeaweb.org/articles?id=10.1257/aer.20190808)
+    Bias**](https://www.aeaweb.org/articles?id=10.1257/aer.20190808)           
 
 **Additional analyses that we have decided to exclude as data inputs due
 to lack of relevance or poor data quality are in the "Discarded
 Analyses" tab.**
-
-1.*2018/2022 Bureau of Labor Statistics Supplement to the Current
-Population Survey* which asks detailed questions about job search,
-application effort, and unemployment duration to those who did not opt
-in to unemployment insurance/compensation. 2. **Survey on Consumer
-Expectations**: Which is a "nationallly representative" survey with a
-Job Search Supplement conducted from 2014-2021.
-
-I provide some preliminary detail on each of these options below
-including sample size.
 
 ### Applications Sent {.tabset}
 
@@ -242,7 +233,7 @@ Duration](CPS_BLS_Supplement_18_22/udur_survey_question.png)
 ![Survey Question: Applications
 Sent](CPS_BLS_Supplement_18_22/apps_sent_question.png)
 
-```{r, echo=FALSE, fig.height = 8, fig.width = 10, cache = TRUE}
+```{r, echo=FALSE, fig.height = 7, fig.width = 10, cache = TRUE}
 source(here('data/behav_params/CPS_BLS_Supplement_18_22/cps_bls_supp_cleaning.R'))
 
 bea_temp <- bea_2022 %>%
@@ -351,7 +342,7 @@ Assumptions about the probability distribution of the errors associated with eac
 *Preliminary hypothesis:* Best fit will be with a complementary log-log as we care more about distinguishing between lower-level bins and there are few observations in the highest-level bins. 
 
 
-```{r, echo=FALSE, fig.height = 10, fig.width = 10, cache = TRUE}
+```{r, echo=FALSE, fig.height = 6, fig.width = 10, cache = TRUE}
 #        title = "Distribution of Family Income by Unemployment Duration")
 
 bea_temp <- bea_temp %>% 
@@ -474,7 +465,7 @@ Using an AIC information criterion to compare the fit across all models, the fol
 *Result:* For each additional quarter of unemployment, an individual’s odds of dropping to a lower-level application category decreases by ~.1%. This is statistically significant across all specifications at the 0.1% level.
 
 
-```{r, echo=FALSE, fig.height = 10, fig.width = 10, cache = TRUE}
+```{r, echo=FALSE, fig.height = 6, fig.width = 8, cache = TRUE}
 # Normalize AIC relative to the best within each duration variable
 aic_results <- aic_results %>%
   #group_by(Duration_Var) %>%
@@ -496,7 +487,10 @@ ggplot(aic_results, aes(x = Relative_AIC, color = Controls, shape = Method, y = 
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
 
+
+```{r, echo=FALSE, fig.height = 8, fig.width = 10, cache = TRUE}
 # View best model row
 best_row <- aic_results %>% arrange(AIC) %>% slice(1)
 
