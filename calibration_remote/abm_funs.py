@@ -29,11 +29,13 @@ def util(w_current, w_offered, skill_sim):
 #     #     apps = round(a_stable/((t_unemp)**2 + 1)) + 1
 #     return apps
 
-def search_effort(t_unemp, bus_cy, disc):
+def search_effort(t_unemp, bus_cy, disc, alpha):
     apps = 10
-    if t_unemp > 3 & disc:
-        apps = apps * (1 + 0.1*(t_unemp-3))
-    return round(apps)
+    if t_unemp > 1 and disc:
+        apps = round(apps * (1 + alpha*(t_unemp-1)))
+        if t_unemp >= 7 and disc:
+            apps = apps * (1 - alpha*(t_unemp-7))
+    return round(max(1, apps))
 
 # Alternative search effort function that is dictated by the time series of a business cycle
 def search_effort_ts(t_unemp, se):
@@ -73,14 +75,14 @@ class worker:
         wrkr.ue_rel_wage = ue_rel_wage
         wrkr.apps_sent = applicants_sent
     
-    def search_and_apply(wrkr, net, vac_list, disc, bus_cy):
+    def search_and_apply(wrkr, net, vac_list, disc, bus_cy, alpha):
         # A sample of relevant vacancies are found that are in neighboring occupations
         # Will need to add a qualifier in case sample is greater than available relevant vacancies
         # ^^ have added qualifier...bad form to reassign list?
         # Select different random sample of "relevant" vacancies found by each worker
         found_vacs = random.sample(vac_list, min(len(vac_list), 30))
         if disc:
-            if wrkr.time_unemployed > 5:
+            if wrkr.time_unemployed > 3:
                 res_wage = wrkr.wage * (1-(0.1*(wrkr.time_unemployed-3)))
             else:
                 res_wage = wrkr.wage
@@ -89,7 +91,7 @@ class worker:
         if disc or bus_cy != 1:
             # Sort found relevant vacancies by utility-function defined above and apply to amount dictated by impatience
             for v in sorted(found_vacs, key = lambda v: util(wrkr.wage, v.wage, net[wrkr.occupation_id].list_of_neigh_weights[v.occupation_id]), 
-                            reverse = True)[slice(wrkr.risk_aversion, wrkr.risk_aversion + search_effort(wrkr.time_unemployed, bus_cy, disc))]:
+                            reverse = True)[slice(wrkr.risk_aversion, wrkr.risk_aversion + search_effort(wrkr.time_unemployed, bus_cy, disc, alpha))]:
                 # Introduce randomness here...?
                 vsent += 1
                 v.applicants.append(wrkr)
@@ -106,8 +108,8 @@ class worker:
         # ^^ have added qualifier...bad form to reassign list?
         # Select different random sample of "relevant" vacancies found by each worker
         found_vacs = random.sample(vac_list, min(len(vac_list), 30))
-        # if disc:
-        #     found_vacs = [v for v in found_vacs if v.wage >= wrkr.wage*1.05]
+        if disc:
+            found_vacs = [v for v in found_vacs if v.wage >= wrkr.wage*1.05]
         # Filter found_vacs to keep only elements where util(el) > 0
         # We assume that employed workers will only apply to vacancies for which there is a wage gain. 
         filtered_vacs = [el for el in found_vacs if util(wrkr.wage, el.wage, net[wrkr.occupation_id].list_of_neigh_weights[el.occupation_id]) > 0]
@@ -132,16 +134,6 @@ class occupation:
     def separate_workers(occ, delta_u, gam, bus_cy):
         if(len(occ.list_of_employed) != 0):
             sep_prob = delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
-            # sep_prob = delta_u + ((1 - delta_u) * ((gam * max(0, occ.current_demand - occ.target_demand))/(len(occ.list_of_employed) + 1)))
-            # Included as a warning - particularly relevant in parameter inference when sampling from prior
-            # if sep_prob > 1:
-            #     print("Sep Prob: ", sep_prob)
-            #     print("Demand gap: ", occ.current_demand - occ.target_demand)
-            #     sep_prob = 1
-            #     print("sep_prob above 1 - reset")
-            # elif sep_prob < 0:
-            #     sep_prob = 0
-            #     print("sep_prob below 0 - reset")
             w = np.random.binomial(len(occ.list_of_employed), sep_prob)
             separated_workers = random.sample(occ.list_of_employed, w)
             occ.list_of_unemployed = occ.list_of_unemployed + separated_workers

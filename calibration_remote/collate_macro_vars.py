@@ -1,7 +1,12 @@
 # File to collect all macro variables in one file
 import numpy as np
 import pandas as pd
+from statsmodels.tsa.filters import hp_filter, bk_filter, cf_filter
+from quantecon import hamilton_filter
+import matplotlib.pyplot as plt
+import seaborn as sns
 import random as random
+import datetime
 
 path = "~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/calibration_remote/"
 
@@ -108,6 +113,15 @@ hires['FD_HIRESRATE'] = pd.Series(hires['HIRESRATE']).diff()
 
 jolts = pd.merge(jolts, hires, how = 'left', on = 'DATE')
 
+# Layoffs and Discharges rate (Total nonfarm): JOLTS Survey - monthly, seasonally adjusted
+# Source: https://fred.stlouisfed.org/series/JTSLDR
+layoffs = pd.read_csv(path+"data/macro_vars/JTSLDR.csv", delimiter=',', decimal='.')
+layoffs["DATE"] = pd.to_datetime(layoffs["observation_date"])
+layoffs["LAYOFFRATE"] = layoffs['JTSLDR']/100
+layoffs['FD_LAYOFFRATE'] = pd.Series(layoffs['LAYOFFRATE']).diff()
+
+jolts = pd.merge(jolts, layoffs, how = 'left', on = 'DATE')
+
 jolts.to_csv(path + "data/macro_vars/collated_jolts.csv")
 
 ########################################################################################
@@ -138,3 +152,207 @@ t_demand_real['TARGET_DEMAND'] = t_demand_real['JOBOPENINGS'] + t_demand_real['E
 gdp_growth = pd.read_csv(path+"data/macro_vars/GDPC1_pct_ch.csv", delimiter=',', decimal='.')
 gdp_growth["DATE"] = pd.to_datetime(gdp_growth["DATE"])
 gdp_growth["GDP_GROWTH"] = gdp_growth['GDPC1_PC1']
+
+
+#################################################################################################
+####################### INPUT SERIES FOR MODEL ##################################################
+##################################################################################################realgdp = macro_observations[["DATE", "REALGDP"]].dropna(subset=["REALGDP"]).reset_index()
+realgdp['log_REALGDP'] = np.log2(realgdp['REALGDP'])
+
+# GDP Filter
+cycle, trend = hp_filter.hpfilter(realgdp['log_REALGDP'], lamb=129600)
+ 
+# Adding the trend and cycle to the original DataFrame
+realgdp['log_Trend'] = trend+1
+realgdp['log_Cycle'] = cycle+1
+realgdp['Trend'] = np.exp(trend)
+realgdp['Cycle'] = np.exp(cycle)
+
+realgdp_no_covid = realgdp[realgdp['DATE'] < "2019-10-1"].copy()
+realgdp['scaled_log_Cycle'] = (realgdp['log_Cycle'] - realgdp['log_Cycle'].min()) / (realgdp['log_Cycle'].max() - realgdp['log_Cycle'].min())
+realgdp_no_covid['scaled_log_Cycle'] = (realgdp_no_covid['log_Cycle'] - realgdp_no_covid['log_Cycle'].min()) / (realgdp_no_covid['log_Cycle'].max() - realgdp_no_covid['log_Cycle'].min())
+
+k = 12
+bk_cycle = bk_filter.bkfilter(realgdp['log_REALGDP'], low=6, high=32, K=k) + 1
+padded_series = pd.Series(
+    [np.nan]*k + list(bk_cycle) + [np.nan]*k,
+    index=realgdp.index  
+)
+
+# Add it to the DataFrame
+realgdp['bk_gdp'] = padded_series
+
+k = 12
+cf_cycle = cf_filter.cffilter(realgdp['log_REALGDP'], low=6, high=32, drift = True)[0] + 1
+# Add it to the DataFrame
+realgdp['cf_gdp'] = cf_cycle
+
+# 8 recommended for quarterly data: https://quanteconpy.readthedocs.io/en/latest/tools/filter.html
+H = 8
+hamilton_cycle = hamilton_filter(realgdp['log_REALGDP'], h = H)[0] + 1
+
+# Add it to the DataFrame
+realgdp['hamilton_gdp'] = hamilton_cycle
+
+# Load and clean OECD business confidence data
+# Source: https://www.oecd.org/en/data/indicators/business-confidence-index-bci.html
+bus_conf = pd.read_csv(path + "data/macro_vars/OECD_bus_conf_usa.csv")
+bus_conf = bus_conf.loc[:, bus_conf.nunique() > 1]  # fix: assign back
+bus_conf['DATE'] = pd.PeriodIndex(bus_conf['TIME_PERIOD'], freq='Q').start_time
+bus_conf = bus_conf.sort_values(by='DATE')
+
+# Create subplots
+fig, axes = plt.subplots(1, 2, figsize=(10, 8))
+
+# Plot each transformation type
+for i, index_type in enumerate(bus_conf['Transformation'].unique()):
+    subset = bus_conf[bus_conf['Transformation'] == index_type]
+    if index_type == "Index":
+        subset['OBS_VALUE'] = hp_filter.hpfilter(subset['OBS_VALUE'], lamb=1600)[0]*.01+1
+    ax = axes[i]  # fix: access subplot properly
+    ax.plot(subset['DATE'], subset['OBS_VALUE'], marker='o')
+    ax.set_title(f'{index_type}')
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Value')
+    ax.grid(True)
+
+plt.suptitle('OECD Business Confidence Metrics - USA')
+plt.tight_layout()
+plt.show()
+
+# Load JOLTS data
+plt.figure(figsize=(12, 6))
+plt.plot(macro_observations['DATE'], macro_observations['VACRATE'], label='VACRATE')
+plt.plot(jolts['DATE'], jolts['HIRESRATE'], label='HIRESRATE')
+plt.plot(jolts['DATE'], jolts['SEPSRATE'], label='SEPSRATE')
+plt.plot(jolts['DATE'], jolts['QUITSRATE'], label='QUITSRATE')
+plt.plot(jolts['DATE'], jolts['LAYOFFRATE'], label='LAYOFFRATE')
+plt.xlabel('Date')
+plt.ylabel('Rate')
+plt.title('JOLTS Rates Over Time')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+#realgdp = macro_observations[["DATE", "REALGDP"]].dropna(subset=["REALGDP"]).reset_index()
+realgdp['log_REALGDP'] = np.log2(realgdp['REALGDP'])
+
+# GDP Filter
+cycle, trend = hp_filter.hpfilter(realgdp['log_REALGDP'], lamb=129600)
+ 
+# Adding the trend and cycle to the original DataFrame
+realgdp['log_Trend'] = trend+1
+realgdp['log_Cycle'] = cycle+1
+realgdp['Trend'] = np.exp(trend)
+realgdp['Cycle'] = np.exp(cycle)
+
+realgdp_no_covid = realgdp[realgdp['DATE'] < "2019-10-1"].copy()
+realgdp['scaled_log_Cycle'] = (realgdp['log_Cycle'] - realgdp['log_Cycle'].min()) / (realgdp['log_Cycle'].max() - realgdp['log_Cycle'].min())
+realgdp_no_covid['scaled_log_Cycle'] = (realgdp_no_covid['log_Cycle'] - realgdp_no_covid['log_Cycle'].min()) / (realgdp_no_covid['log_Cycle'].max() - realgdp_no_covid['log_Cycle'].min())
+
+k = 12
+bk_cycle = bk_filter.bkfilter(realgdp['log_REALGDP'], low=6, high=32, K=k) + 1
+padded_series = pd.Series(
+    [np.nan]*k + list(bk_cycle) + [np.nan]*k,
+    index=realgdp.index  
+)
+
+# Add it to the DataFrame
+realgdp['bk_gdp'] = padded_series
+
+k = 12
+cf_cycle = cf_filter.cffilter(realgdp['log_REALGDP'], low=6, high=32, drift = True)[0] + 1
+# Add it to the DataFrame
+realgdp['cf_gdp'] = cf_cycle
+
+# 8 recommended for quarterly data: https://quanteconpy.readthedocs.io/en/latest/tools/filter.html
+H = 8
+hamilton_cycle = hamilton_filter(realgdp['log_REALGDP'], h = H)[0] + 1
+
+# Add it to the DataFrame
+realgdp['hamilton_gdp'] = hamilton_cycle
+
+# Extract and filter business confidence "Index"
+bus_conf_index = bus_conf[bus_conf['Transformation'] == "Index"].copy()
+bus_conf_index['OBS_VALUE'] = hp_filter.hpfilter(bus_conf_index['OBS_VALUE'], lamb=1600)[0]
+
+# OPTIONAL: Normalize or scale to GDP cycle range if needed (for better visual comparison)
+bus_conf_index['OBS_VALUE_scaled'] = (
+    (bus_conf_index['OBS_VALUE'] - bus_conf_index['OBS_VALUE'].min()) /
+    (bus_conf_index['OBS_VALUE'].max() - bus_conf_index['OBS_VALUE'].min())
+) * (realgdp['log_Cycle'].max() - realgdp['log_Cycle'].min()) + realgdp['log_Cycle'].min()
+
+# Main axis
+fig, ax1 = plt.subplots()
+
+# Plot on main axis
+line1, = ax1.plot(realgdp['DATE'], realgdp['log_Cycle'], label="GDP (HP) - Current", color="purple")
+line2, = ax1.plot(realgdp['DATE'], realgdp['bk_gdp'], label="GDP (BK)", color="blue", linestyle="dashed")
+line3, = ax1.plot(realgdp['DATE'], realgdp['cf_gdp'], label="GDP (CF)", color="orange", linestyle="dashed")
+line4, = ax1.plot(realgdp['DATE'], realgdp['hamilton_gdp'], label="GDP (Hamilton)", color="darkgreen", linestyle="dashed")
+line5, = ax1.plot(bus_conf_index['DATE'], bus_conf_index['OBS_VALUE_scaled'],
+    label="Business Confidence Index (HP)",
+    color="crimson",
+    linestyle="dotted"
+)
+ax1.set_ylabel("Cyclical GDP (log) and OECD Business Confidence Index")
+ax1.set_ylim([0.925, 1.17])
+
+# Set common attributes
+ax1.set_xlim([datetime.date(2000, 1, 1), datetime.date(2019, 10, 1)])
+ax1.set_title("(log) GDP Filters & Business Confidence Index")
+ax1.set_xlabel("Date")
+
+ax1.fill_between(
+    recessions['DATE'], 0, 1,
+    where=recessions['USREC'] == 1,
+    transform=ax1.get_xaxis_transform(),
+    color='grey', alpha=0.2, label='Recession'
+)
+# Combine legends
+lines = [line1, line2, line3, line4, line5]
+labels = [line.get_label() for line in lines]
+ax1.legend(lines, labels, loc='upper right')
+
+plt.tight_layout()
+plt.show()
+
+# Different calibration windows
+# Full time series: "2024-5-1"
+# calib_date = ["2004-12-01", "2019-05-01"]
+calib_date = ["2000-12-01", "2019-05-01"]
+# calib_date = ["2000-12-01", "2024-05-01"]
+bus_conf_short = bus_conf_index[(bus_conf_index['DATE'] >= calib_date[0]) & (bus_conf_index['DATE'] <= calib_date[1])]
+gdp_dat_pd = realgdp[(realgdp['DATE'] >= calib_date[0]) & (realgdp['DATE'] <= calib_date[1])]
+
+# Interpolate all columns in gdp_dat_pd to monthly frequency
+monthly_dates = pd.date_range(start=gdp_dat_pd['DATE'].min(), end=gdp_dat_pd['DATE'].max(), freq='MS')
+gdp_dat_pd_monthly = gdp_dat_pd.set_index('DATE').reindex(monthly_dates).interpolate(method='time').reset_index().rename(columns={'index': 'DATE'})
+
+# For backward compatibility with previous code
+gdp_dat = gdp_dat_pd_monthly['log_Cycle'].values + np.random.normal(loc=0, scale=0.001, size=len(gdp_dat_pd_monthly))
+gdp_dat_bk = gdp_dat_pd_monthly['bk_gdp'].values + np.random.normal(loc=0, scale=0.001, size=len(gdp_dat_pd_monthly))if 'bk_gdp' in gdp_dat_pd_monthly else None
+gdp_dat_cf = gdp_dat_pd_monthly['cf_gdp'].values + np.random.normal(loc=0, scale=0.001, size=len(gdp_dat_pd_monthly))if 'cf_gdp' in gdp_dat_pd_monthly else None
+gdp_dat_hamilton = gdp_dat_pd_monthly['hamilton_gdp'].values+ np.random.normal(loc=0, scale=0.001, size=len(gdp_dat_pd_monthly)) if 'hamilton_gdp' in gdp_dat_pd_monthly else None
+bus_conf_dat = np.array(bus_conf_short['OBS_VALUE_scaled'])
+
+# PLOTTING
+plt.figure(figsize=(12, 6))
+
+# Plot original data
+sns.lineplot(data = realgdp, x = 'DATE', y = 'log_Cycle', color = "purple", label = "Full GDP Time series - UER and VACRATE data available from 2000", linestyle = "dotted")
+sns.lineplot(x=monthly_dates, y=gdp_dat, color='purple', label='HP Filtered GDP')
+sns.lineplot(x=monthly_dates, y=gdp_dat_bk, color='blue', label='BK Filtered GDP', linestyle = 'dashed')
+sns.lineplot(x=monthly_dates, y=gdp_dat_cf, color='orange', label='CF Filtered GDP', linestyle = 'dashed')
+sns.lineplot(x=monthly_dates, y=gdp_dat_hamilton, color='darkgreen', label='Hamilton Filtered GDP', linestyle = 'dashed')
+sns.lineplot(data = bus_conf_short, x='DATE', y='OBS_VALUE_scaled', color='red', label='Business Confidence Index', linestyle = 'dotted')
+
+# Mark original data boundaries
+plt.axvline(x=gdp_dat_pd['DATE'].min(), color='black', linestyle='--', alpha=0.6)
+plt.axvline(x=gdp_dat_pd['DATE'].max(), color='black', linestyle='--', alpha=0.6)
+
+plt.xlabel('Date')
+plt.ylabel('log_Cycle')
+plt.title('Calibration Window')
+plt.legend()
+plt.show()

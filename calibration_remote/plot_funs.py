@@ -322,7 +322,7 @@ def plot_rel_wages(mod_results_dict, names, save=False, path=None):
         
         # Plot unemployed relative wages (smoothed)
         u_wages = annual_data['U_REL_WAGE_MEAN'].values
-        u_wages = np.clip(u_wages, None, 1.7)
+        #u_wages = np.clip(u_wages, None, 1.7)
         ax1.plot(dates_array, u_wages, 
                 color=colors[i], label=names[i], marker='o', zorder=3)
         # Add shading
@@ -558,7 +558,7 @@ def plot_gender_gaps(net_dict, names, sep = False, save = False, path = None):
     if sep:
         cols = 2
     else:
-        max_cols = 3
+        max_cols = 4
         cols = min(n, max_cols)
         
     rows = math.ceil(n / cols)

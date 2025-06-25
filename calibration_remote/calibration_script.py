@@ -1,42 +1,261 @@
-# # Parameter Inference and Calibration
-#import sys
-# caution: path[0] is reserved for script path (or '' in REPL)
-#sys.path.insert(1, 'Z:/transition_abm/calibration/')
+# %% [markdown]
+# # Parameter Inference and Calibration: Linking UER to GDP
+# 
+# View target demand as input to the model (instead of a stylized sinusoidal business cycle). 
+# 
+# I see two possible options:
+# 1. GDP growth in line with Okun's Law specifically for unemployment - a 1% change in GDP: 0.03-0.05% change in UER
+# 2. Growth in target demand
+# 
 
+# %%
 # Import packages
 from abm_funs import *
-import os
-import pyabc
-import csv
-import tempfile
-import statistics
+from plot_funs import *
 import numpy as np
 import pandas as pd
 import random as random
 import matplotlib.pyplot as plt
-from pyabc.visualization import plot_kde_matrix
+import tempfile
+import pyabc
+from scipy.stats import pearsonr, linregress
+from pyabc.visualization import plot_kde_matrix, plot_kde_1d
 import math as math
-from statistics import mode
 from pyabc.transition import MultivariateNormalTransition
 import seaborn as sns
-from IPython import display
+from IPython.display import display
+from PIL import Image
 from pstats import SortKey
-from scipy.stats import pearsonr
-print("Packages installed.")
+import datetime
+from collate_macro_vars import *
+from statsmodels.tsa.filters import hp_filter, bk_filter, cf_filter
+from quantecon import hamilton_filter
+from statsmodels.tsa.seasonal import seasonal_decompose
+import csv
+from dtaidistance import dtw
+from functools import partial
 
 rng = np.random.default_rng()
-path = ""
-###################################
-# US MODEL CONDITIONS AND DATA ####
-###################################
-# Set preliminary parameters for delta_u, delta_v, and gamma 
-# - these reproduce nice Beveridge curves but were arrived at non-systematically
-del_u = 0.015
-del_v = 0.009
-gamma_u = gamma_v = gamma = 0.1
+test_fun()
 
-A = pd.read_csv(path + "dRC_Replication/data/occupational_mobility_network.csv", header=None)
-employment = round(pd.read_csv(path + "dRC_Replication/data/ipums_employment_2016.csv", header = 0).iloc[:, [4]]/10000)
+path: "~/calibration_remote/"
+
+import os
+print(os.cpu_count()) 
+
+calib = True
+save = True
+
+# %%
+#realgdp = macro_observations[["DATE", "REALGDP"]].dropna(subset=["REALGDP"]).reset_index()
+realgdp['log_REALGDP'] = np.log2(realgdp['REALGDP'])
+
+# GDP Filter
+cycle, trend = hp_filter.hpfilter(realgdp['log_REALGDP'], lamb=129600)
+ 
+# Adding the trend and cycle to the original DataFrame
+realgdp['log_Trend'] = trend+1
+realgdp['log_Cycle'] = cycle+1
+realgdp['Trend'] = np.exp(trend)
+realgdp['Cycle'] = np.exp(cycle)
+
+realgdp_no_covid = realgdp[realgdp['DATE'] < "2019-10-1"].copy()
+realgdp['scaled_log_Cycle'] = (realgdp['log_Cycle'] - realgdp['log_Cycle'].min()) / (realgdp['log_Cycle'].max() - realgdp['log_Cycle'].min())
+realgdp_no_covid['scaled_log_Cycle'] = (realgdp_no_covid['log_Cycle'] - realgdp_no_covid['log_Cycle'].min()) / (realgdp_no_covid['log_Cycle'].max() - realgdp_no_covid['log_Cycle'].min())
+
+# %%
+k = 12
+bk_cycle = bk_filter.bkfilter(realgdp['log_REALGDP'], low=6, high=32, K=k) + 1
+padded_series = pd.Series(
+    [np.nan]*k + list(bk_cycle) + [np.nan]*k,
+    index=realgdp.index  
+)
+
+# Add it to the DataFrame
+realgdp['bk_gdp'] = padded_series
+
+
+# %%
+k = 12
+cf_cycle = cf_filter.cffilter(realgdp['log_REALGDP'], low=6, high=32, drift = True)[0] + 1
+# Add it to the DataFrame
+realgdp['cf_gdp'] = cf_cycle
+
+
+# %%
+# 8 recommended for quarterly data: https://quanteconpy.readthedocs.io/en/latest/tools/filter.html
+H = 8
+hamilton_cycle = hamilton_filter(realgdp['log_REALGDP'], h = H)[0] + 1
+
+# Add it to the DataFrame
+realgdp['hamilton_gdp'] = hamilton_cycle
+
+# %%
+# Load and clean OECD business confidence data
+# Source: https://www.oecd.org/en/data/indicators/business-confidence-index-bci.html
+bus_conf = pd.read_csv(path + "data/macro_vars/OECD_bus_conf_usa.csv")
+bus_conf = bus_conf.loc[:, bus_conf.nunique() > 1]  # fix: assign back
+bus_conf['DATE'] = pd.PeriodIndex(bus_conf['TIME_PERIOD'], freq='Q').start_time
+bus_conf = bus_conf.sort_values(by='DATE')
+
+# Create subplots
+fig, axes = plt.subplots(1, 2, figsize=(10, 8))
+
+# Plot each transformation type
+for i, index_type in enumerate(bus_conf['Transformation'].unique()):
+    subset = bus_conf[bus_conf['Transformation'] == index_type]
+    if index_type == "Index":
+        subset['OBS_VALUE'] = hp_filter.hpfilter(subset['OBS_VALUE'], lamb=1600)[0]*.01+1
+    ax = axes[i]  # fix: access subplot properly
+    ax.plot(subset['DATE'], subset['OBS_VALUE'], marker='o')
+    ax.set_title(f'{index_type}')
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Value')
+    ax.grid(True)
+
+plt.suptitle('OECD Business Confidence Metrics - USA')
+plt.tight_layout()
+plt.show()
+
+# %%
+# Load JOLTS data
+plt.figure(figsize=(12, 6))
+plt.plot(macro_observations['DATE'], macro_observations['VACRATE'], label='VACRATE')
+plt.plot(jolts['DATE'], jolts['HIRESRATE'], label='HIRESRATE')
+plt.plot(jolts['DATE'], jolts['SEPSRATE'], label='SEPSRATE')
+plt.plot(jolts['DATE'], jolts['QUITSRATE'], label='QUITSRATE')
+plt.plot(jolts['DATE'], jolts['LAYOFFRATE'], label='LAYOFFRATE')
+plt.xlabel('Date')
+plt.ylabel('Rate')
+plt.title('JOLTS Rates Over Time')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# %%
+#realgdp = macro_observations[["DATE", "REALGDP"]].dropna(subset=["REALGDP"]).reset_index()
+realgdp['log_REALGDP'] = np.log2(realgdp['REALGDP'])
+
+# GDP Filter
+cycle, trend = hp_filter.hpfilter(realgdp['log_REALGDP'], lamb=129600)
+ 
+# Adding the trend and cycle to the original DataFrame
+realgdp['log_Trend'] = trend+1
+realgdp['log_Cycle'] = cycle+1
+realgdp['Trend'] = np.exp(trend)
+realgdp['Cycle'] = np.exp(cycle)
+
+realgdp_no_covid = realgdp[realgdp['DATE'] < "2019-10-1"].copy()
+realgdp['scaled_log_Cycle'] = (realgdp['log_Cycle'] - realgdp['log_Cycle'].min()) / (realgdp['log_Cycle'].max() - realgdp['log_Cycle'].min())
+realgdp_no_covid['scaled_log_Cycle'] = (realgdp_no_covid['log_Cycle'] - realgdp_no_covid['log_Cycle'].min()) / (realgdp_no_covid['log_Cycle'].max() - realgdp_no_covid['log_Cycle'].min())
+
+k = 12
+bk_cycle = bk_filter.bkfilter(realgdp['log_REALGDP'], low=6, high=32, K=k) + 1
+padded_series = pd.Series(
+    [np.nan]*k + list(bk_cycle) + [np.nan]*k,
+    index=realgdp.index  
+)
+
+# Add it to the DataFrame
+realgdp['bk_gdp'] = padded_series
+
+k = 12
+cf_cycle = cf_filter.cffilter(realgdp['log_REALGDP'], low=6, high=32, drift = True)[0] + 1
+# Add it to the DataFrame
+realgdp['cf_gdp'] = cf_cycle
+
+# 8 recommended for quarterly data: https://quanteconpy.readthedocs.io/en/latest/tools/filter.html
+H = 8
+hamilton_cycle = hamilton_filter(realgdp['log_REALGDP'], h = H)[0] + 1
+
+# Add it to the DataFrame
+realgdp['hamilton_gdp'] = hamilton_cycle
+
+# Extract and filter business confidence "Index"
+bus_conf_index = bus_conf[bus_conf['Transformation'] == "Index"].copy()
+bus_conf_index['OBS_VALUE'] = hp_filter.hpfilter(bus_conf_index['OBS_VALUE'], lamb=1600)[0]
+
+# OPTIONAL: Normalize or scale to GDP cycle range if needed (for better visual comparison)
+bus_conf_index['OBS_VALUE_scaled'] = (
+    (bus_conf_index['OBS_VALUE'] - bus_conf_index['OBS_VALUE'].min()) /
+    (bus_conf_index['OBS_VALUE'].max() - bus_conf_index['OBS_VALUE'].min())
+) * (realgdp['log_Cycle'].max() - realgdp['log_Cycle'].min()) + realgdp['log_Cycle'].min()
+
+# Main axis
+fig, ax1 = plt.subplots()
+
+# Plot on main axis
+line1, = ax1.plot(realgdp['DATE'], realgdp['log_Cycle'], label="GDP (HP) - Current", color="purple")
+line2, = ax1.plot(realgdp['DATE'], realgdp['bk_gdp'], label="GDP (BK)", color="blue", linestyle="dashed")
+line3, = ax1.plot(realgdp['DATE'], realgdp['cf_gdp'], label="GDP (CF)", color="orange", linestyle="dashed")
+line4, = ax1.plot(realgdp['DATE'], realgdp['hamilton_gdp'], label="GDP (Hamilton)", color="darkgreen", linestyle="dashed")
+line5, = ax1.plot(bus_conf_index['DATE'], bus_conf_index['OBS_VALUE_scaled'],
+    label="Business Confidence Index (HP)",
+    color="crimson",
+    linestyle="dotted"
+)
+ax1.set_ylabel("Cyclical GDP (log) and OECD Business Confidence Index")
+ax1.set_ylim([0.925, 1.17])
+
+# Set common attributes
+ax1.set_xlim([datetime.date(2000, 1, 1), datetime.date(2019, 10, 1)])
+ax1.set_title("(log) GDP Filters & Business Confidence Index")
+ax1.set_xlabel("Date")
+
+ax1.fill_between(
+    recessions['DATE'], 0, 1,
+    where=recessions['USREC'] == 1,
+    transform=ax1.get_xaxis_transform(),
+    color='grey', alpha=0.2, label='Recession'
+)
+# Combine legends
+lines = [line1, line2, line3, line4, line5]
+labels = [line.get_label() for line in lines]
+ax1.legend(lines, labels, loc='upper right')
+
+plt.tight_layout()
+plt.show()
+
+
+
+# %%
+# Different calibration windows
+# Full time series: "2024-5-1"
+# calib_date = ["2004-12-01", "2019-05-01"]
+calib_date = ["2000-12-01", "2019-05-01"]
+# calib_date = ["2000-12-01", "2024-05-01"]
+bus_conf_short = bus_conf_index[(bus_conf_index['DATE'] >= calib_date[0]) & (bus_conf_index['DATE'] <= calib_date[1])]
+gdp_dat_pd = realgdp[(realgdp['DATE'] >= calib_date[0]) & (realgdp['DATE'] <= calib_date[1])]
+gdp_dat = np.array(gdp_dat_pd['log_Cycle'])
+gdp_dat_bk = np.array(gdp_dat_pd['bk_gdp'])
+gdp_dat_hamilton = np.array(gdp_dat_pd['hamilton_gdp'])
+bus_conf_dat = np.array(bus_conf_short['OBS_VALUE_scaled'])
+
+# PLOTTING
+plt.figure(figsize=(12, 6))
+
+# Plot original data
+sns.lineplot(data = realgdp, x = 'DATE', y = 'log_Cycle', color = "red", label = "Full GDP Time series - UER and VACRATE data available from 2000", linestyle = "dotted")
+sns.lineplot(data=gdp_dat_pd, x='DATE', y='log_Cycle', color='blue', label='Calibration window')
+
+# Mark original data boundaries
+plt.axvline(x=gdp_dat_pd['DATE'].min(), color='black', linestyle='--', alpha=0.6)
+plt.axvline(x=gdp_dat_pd['DATE'].max(), color='black', linestyle='--', alpha=0.6)
+
+plt.xlabel('Date')
+plt.ylabel('log_Cycle')
+plt.title('Calibration Window')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+# %%
+
+# Macro observations
+observation = macro_observations.loc[(macro_observations['DATE'] >= calib_date[0]) & (macro_observations['DATE'] <= calib_date[1])].dropna(subset=["UNRATE", "VACRATE"]).reset_index()
+# Load US_input data
+A = pd.read_csv(path+"dRC_Replication/data/occupational_mobility_network.csv", header=None)
+employment = round(pd.read_csv(path+"dRC_Replication/data/ipums_employment_2016.csv", header = 0).iloc[:, [4]]/10000)
 # Crude approximation using avg unemployment rate of ~5% - should aim for occupation-specific unemployment rates
 unemployment = round(employment*(0.05/0.95))
 # Less crude approximation using avg vacancy rate - should still aim for occupation-specific vacancy rates
@@ -45,581 +264,585 @@ vacancies = round(employment*vac_rate_base/(1-vac_rate_base))
 # Needs input data...
 demand_target = employment + vacancies
 wages = pd.read_csv(path+"dRC_Replication/data/ipums_variables.csv")[['median_earnings']]
+occ_ids = pd.read_csv(path+"dRC_Replication/data/ipums_variables.csv")[['id', 'acs_occ_code']]
 gend_share = pd.read_csv(path+"data/ipums_variables_w_gender.csv")[['women_pct']]
 mod_data =  {"A": A, "employment": employment, 
              'unemployment':unemployment, 'vacancies':vacancies, 
              'demand_target': demand_target, 'wages': wages, 'gend_share': gend_share}
 
-print("Data imported.")
+###################################
+# Initialise the model
+##################################
+net_temp, vacs = initialise(len(mod_data['A']), mod_data['employment'].to_numpy(), mod_data['unemployment'].to_numpy(), mod_data['vacancies'].to_numpy(), mod_data['demand_target'].to_numpy(), mod_data['A'], mod_data['wages'].to_numpy(), mod_data['gend_share'].to_numpy(), 0, 0)
 
-net_temp, vacs = initialise(len(mod_data['A']), mod_data['employment'].to_numpy(), mod_data['unemployment'].to_numpy(), mod_data['vacancies'].to_numpy(), mod_data['demand_target'].to_numpy(), mod_data['A'], mod_data['wages'].to_numpy(), mod_data['gend_share'].to_numpy(), 0, 3)
-print("Network and vacs initialised.")
+# observation = macro_observations.loc[(macro_observations['DATE'] >= calib_date[0]) & (macro_observations['DATE'] <= calib_date[1])].dropna(subset = ["UNRATE", "VACRATE"]).reset_index()
+# Load calibrated parameters from CSV
+param_df = pd.read_csv("output_28_05/calibrated_params_all.csv")
+# Sort by Timestamp in descending order
+param_df = param_df.sort_values(by='Timestamp', ascending=False)
 
- 
-# Recording outside of loop for global access
-sim_record_t_all, net_behav, net_behav_list = 0, 0, 0
-sim_record_f_all, net_nonbehav, net_nonbehav_list = 0, 0, 0
-for behav_spec in [True, False]:
+params = {'mod_data': mod_data, 
+            'net_temp': net_temp,
+            'vacs': vacs, 
+            'time_steps': len(gdp_dat),
+            'delay': 100,
+            'gdp_data': gdp_dat}
 
-# The following are the input data to the function that runs the model.
-    parameter = {'mod_data': mod_data, # mod_data: occupation-level input data
-        # (ie. employment/uneployment levels, wages, gender ratio, etc.).
-        # net_temp: occupational network
-        'net_temp': net_temp,
-        # list of available vacancies in the economy
-        'vacs': vacs, 
-        # whether or not to enable behavioural element or not (boolean value)
-        'behav_spec': behav_spec,
-        # number of time steps to iterate the model - for now always exclude ~50 time steps for the model to reach a steady-state
-        'time_steps': 300,
-        # del_u: spontaneous separation rate
-        'd_u': del_u,
-        # del_v: spontaneous vacancy rate
-        'd_v': del_v,
-        # gamma: "speed" of adjustment to target demand of vacancies and unemployment
-        'gamma': gamma,
-        # bus_cycle_len: length of typical business cycle (160 months as explained above)
-        'bus_cycle_len': 160,
-        # delay: number of time steps to exclude from calibration sample to allow model 
-        # to reach steady state and expansion phase of business cycle - this is certainly inefficient and should be changed.
-        'delay': 120, 
-        'bus_amp': 0.02}
+# Shorten vac_df to the same length as gdp_dat using a moving average (if needed)   
+vac_df = observation['VACRATE'].to_numpy()
+if len(vac_df) > len(gdp_dat):
+    print("smoothing vac_df")
+    # Apply moving average with window to smooth and match length
+    window = len(vac_df) // len(gdp_dat)
+    vac_dat = pd.Series(vac_df).rolling(window=window, min_periods=1).mean()[window-1::window].reset_index(drop=True)
+    vac_dat = vac_dat[:len(gdp_dat)]
+else:
+    vac_dat = vac_df[:len(gdp_dat)]
+    
+print(len(vac_dat))
+plt.plot(vac_dat, label="Vacancy Rate (smoothed)")
 
-    ####################
-    # Model Run ########
-    ####################
-    def run_single(mod_data = mod_data, 
-                net_temp = net_temp, 
-                vacs = vacs, 
-                behav_spec = behav_spec, 
-                time_steps = 200, 
-                d_u = del_u, 
-                d_v = del_v,
-                gamma = gamma,
-                bus_cycle_len = 160,
-                delay = 80, 
-                bus_amp = 0.02):
-        #net_temp, vacs = initialise(len(mod_data['A']), mod_data['employment'].to_numpy(), mod_data['unemployment'].to_numpy(), mod_data['vacancies'].to_numpy(), mod_data['demand_target'].to_numpy(), mod_data['A'], mod_data['wages'].to_numpy(), mod_data['gend_share'].to_numpy())
-        #behav_spec = False
-        #time_steps = 30
-        #gamma = 0.1
-        #d_v = 0.009
-        
-        """ Runs the model once
-        Argsuments:
-        behav_spec: whether or not to run the behavioural model
-        data: data required of initialise function  
-        time_steps: Number of time steps for single model run
-        d_u: parameter input to separation probability
-        d_v: parameter input to vacancy opening probability
+# %%
+search_effort_dat = pd.read_csv("data/quarterly_search_ts.csv")
+search_effort_dat['DATE'] = pd.to_datetime(search_effort_dat['year'].astype(str) + '-' + (search_effort_dat['quarter'] * 3 - 2).astype(str) + '-01')
+search_effort_np = np.array(search_effort_dat['value_smooth'])
+search_effort_np = search_effort_np/search_effort_np.mean()
 
-        Returns:
-        dataframe of model run results
-        """
-        # Records variables of interest for plotting
-        # Initialise deepcopy occupational mobility network
-        record = [np.sum(np.concatenate((np.zeros((464, 1)), 
-                                        mod_data['employment'].to_numpy(), 
-                                        mod_data['unemployment'].to_numpy(), 
-                                        mod_data['employment'].to_numpy() + mod_data['unemployment'].to_numpy(),
-                                        mod_data['vacancies'].to_numpy(), 
-                                        np.zeros((464, 1)),
-                                        mod_data['demand_target'].to_numpy()), axis = 1), 
-                                        axis = 0)]
-        
-        #print(parameter['vacs'])
-        vacs_temp = deepcopy(vacs)
-        net = deepcopy(net_temp)
-        for t in range(time_steps):
-            # Ensure number of workers in economy has not changed
-            #tic = time.process_time()
-            for occ in net:
-                ### APPLICATIONS
-                # Questions to verify:
-                # - CANNOT be fired and apply in same time step ie. time_unemployed > 0
-                # - CAN be rejected and apply in the same time step - no protected attribute
-                # isolate list of vacancies in economy that are relevant to the occupation
-                # - avoids selecting in each search_and_apply application
-                r_vacs = [vac for vac in vacs_temp if occ.list_of_neigh_bool[vac.occupation_id]]                
-                for u in occ.list_of_unemployed:
-                    u.search_and_apply(net, r_vacs, behav_spec)
+# Define a range of bus_cy values  # Generates 100 values from 0 to 1
+search_effort_values = [search_effort(0, b, False, 0.1) for b in gdp_dat]  # Apply function
+search_effort_bus_conf_values = [search_effort(0, b, False, 0.1) for b in bus_conf_dat]  # Apply function
+search_effort_bk_values = [search_effort(0, b, False, 0.1) for b in gdp_dat_bk]  # Apply function
+search_effort_hamilton_values = [search_effort(0, b, False, 0.1) for b in gdp_dat_hamilton]  # Apply function
+# def search_effort_ts(t_unemp, se):
+#     apps = max(0, round(10 - 100*(1-se)))
+#     # if discouraged:
+#     #     apps = round(a_stable/((t_unemp)**2 + 1)) + 1
+#     return apps
+search_effort_values_dyn = [search_effort_ts(0, b) for b in search_effort_np]
 
-                ### SEPARATIONS
-                occ.separate_workers(d_u, gamma)
+# Plot the results
+plt.figure(figsize=(8, 5))
+plt.plot(range(len(search_effort_values)), search_effort_values, marker='o', linestyle='-', color='b', label="Search Effort")
+plt.plot(range(len(search_effort_bus_conf_values)), search_effort_bus_conf_values, marker='o', linestyle='-', color='pink', label="Search Effort Bus. Conf.")
+plt.plot(range(len(search_effort_bk_values)), search_effort_bk_values, marker='o', linestyle='-', color='g', label="Search Effort BK")
+plt.plot(range(len(search_effort_hamilton_values)), search_effort_hamilton_values, marker='o', linestyle='-', color='purple', label="Search Effort Hamilton")
 
-            ### HIRING
-            # Ordering of hiring randomised to ensure list order does not matter in filling vacancies...
-            # Possibly still introduces some bias...this seems to be where the "multiple offer" challenge Maria mentioned comes from
-            # ....might be better to do this using an unordered set?
-            for v_open in sorted(vacs_temp,key=lambda _: random.random()):
-                # Removes any applicants that have already been hired in another vacancy
-                v_open.applicants[:] = [app for app in v_open.applicants if not(app.hired)]
-                if len(v_open.applicants) > 0:
-                    v_open.hire(net)
-                    v_open.filled = True
-                    #vacs.remove(v_open)
-                    assert(len(v_open.applicants) == 0)
+plt.plot(range(len(search_effort_values_dyn)), search_effort_values_dyn, marker='o', linestyle='-', color='r', label="Search Effort TS")
+plt.xlabel("Business Cycle (bus_cy)")
+plt.ylabel("Search Effort (apps)")
+plt.title("Search Effort vs. Business Cycle")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+
+# %%
+series_dict = {}
+for i, a in enumerate([0.3, 0.2, 0.1, 0.05, 0.01]):
+    efforts = []
+    for t_unemp in range(15):
+        apps = search_effort(t_unemp, 1, True, a)
+        efforts.append(apps)
+
+    series_dict[f"Alpha: {a}"] = {
+        "x": list(range(0, len(efforts))),
+        "y": efforts
+        }
+
+for i, a in series_dict.items():
+    if i == 'Alpha: 0.1':
+        plt.plot(a['x'], a['y'],marker='o', linestyle='-', label=i)
+    else:
+        plt.plot(a['x'], a['y'],  linestyle='-', label=i)
+    plt.xlabel("Unemployment Duration (quarters)")
+    plt.ylabel("Applications Sent")
+
+   
+plt.axvline(x=8, color='black', linestyle='--', linewidth=1, label='2 years')
+plt.axvline(x=12, color='grey', linestyle='--', linewidth=1, label='3 years')
+plt.legend(loc='upper right')
+#plt.grid(True)
+plt.suptitle("Applications Sent by Unemployment Duration")
+plt.tight_layout()
+plt.show()
+
+print(series_dict)
+def utility_fun(lambda_param, utility):
+    if lambda_param == 1:
+        return(np.log(utility))
+    else:
+        return((utility**(1-lambda_param))/(1-lambda_param))
+
+lambdas = [-0.5, -0.3, 0, 0.3, 0.5]
+utilities = [0, 0.2, 0.5, 1, 2]
+
+plt.figure(figsize=(10, 6))
+
+for lambda_p in lambdas:
+    utility_outputs = []
+    for utility in utilities:
+        utility_outputs.append(utility_fun(lambda_p, utility))
+    plt.plot(utilities, utility_outputs, marker='o', label=f'λ={lambda_p}')
+
+plt.xlabel('Utility Input')
+plt.ylabel('Utility Output') 
+plt.title('Utility Function Output for Different λ Values')
+plt.grid(True)
+plt.legend()
+plt.show()
+
+
+# %%
+####################
+# Model Run ########
+####################
+def run_single_local( #behav_spec, 
+                    d_u, 
+                    #d_v,
+                    gamma_u,
+                    #gamma_v,
+                    otj,
+                    cyc_otj, 
+                    cyc_ue, 
+                    disc,
+                    mod_data = mod_data, 
+                    net_temp = net_temp, 
+                    vacs = vacs, 
+                    time_steps = len(gdp_dat), # set equal to length of gdp_data
+                    delay = 100,
+                    gdp_data = gdp_dat,
+                    bus_confidence_dat = gdp_dat,
+                    simple_res = False, 
+                    vac_data = vac_dat):
+    
+    """ Runs the model once
+    Argsuments:
+       behav_spec: whether or not to run the behavioural model
+       data: data required of initialise function  
+       time_steps: Number of time steps for single model run
+       d_u: parameter input to separation probability
+       d_v: parameter input to vacancy opening probability
+
+    Returns:
+       dataframe of model run results
+    """
+    # Records variables of interest for plotting
+    # Initialise deepcopy occupational mobility network
+    #print(behav_spec)
+    record = np.empty((0, 7))
+    #print(parameter['vacs'])
+    vacs_temp = deepcopy(vacs)
+    net = deepcopy(net_temp)
+    seekers_rec = []
+    time_steps = time_steps + delay
+
+    for t in range(time_steps):
+        #if t == 1:
+            #print(behav_spec)
+        if t <= delay:
+            curr_bus_cy = 1
+            bus_conf = 1
+            ue_bc = 1
+            vr_t = 0.03
+        if t > delay:
+            curr_bus_cy = gdp_data[t-delay]
+            bus_conf = bus_confidence_dat[t-delay]
+            ue_bc = curr_bus_cy
+            vr_t = vac_data[t-delay]
+        if not cyc_ue:
+            ue_bc = 1
+        # search_eff_curr = search_eff_ts[t]
+        # Ensure number of workers in economy has not changed
+        #tic = time.process_time()
+        emp_seekers = 0
+        unemp_seekers = 0
+        u_apps = 0
+        u_searchers = 0
+        for occ in net:
+            ### APPLICATIONS
+            # Questions to verify:
+            # - CANNOT be fired and apply in same time step ie. time_unemployed > 0
+            # - CAN be rejected and apply in the same time step - no protected attribute
+            # isolate list of vacancies in economy that are relevant to the occupation
+            # - avoids selecting in each search_and_apply application
+            r_vacs = [vac for vac in vacs_temp if occ.list_of_neigh_bool[vac.occupation_id]]          
+    
+            for u in occ.list_of_unemployed:
+                unemp_seekers += 1
+                # this one if only using simple scaling factor for the search effort
+                u.search_and_apply(net, r_vacs, disc, ue_bc, 0.1)
+                # use the following if we wish to incorporate the entire TS of search effort
+                #u.search_and_apply(net, r_vacs, behav_spec, search_eff_curr)
+            
+            if otj:
+                # For both models, a mean of 40% of employed workers are searching for new jobs
+                # This fluctuates with the business cycle in the behavioural model in line with gdp
+                if cyc_otj:
+                    search_scaling = curr_bus_cy*0.07
+                # Static mean in the non-behavioural model
                 else:
-                    pass
+                    search_scaling = 0.07
+                for e in random.sample(occ.list_of_employed, int(search_scaling*len(occ.list_of_employed))):
+                    emp_seekers += 1
+                    e.emp_search_and_apply(net, r_vacs, disc)
 
-            vacs_temp = [v for v in vacs_temp if not(v.filled)] 
+            u_apps += sum(wrkr.apps_sent for wrkr in occ.list_of_unemployed if  wrkr.apps_sent is not None)
+            u_searchers += len(occ.list_of_unemployed)
 
-            # Reset counters for record in time t
-            empl = 0 
-            unemp = 0
-            n_ltue = 0
-            t_demand = 0
+            ### SEPARATIONS
+            try:
+                occ.separate_workers(d_u, gamma_u, curr_bus_cy)
+            except Exception as e:
+                return np.inf
 
-            ### OPEN VACANCIES
-            # Update vacancies after all shifts have taken place
-            # Could consider making this a function of the class itself?
-            for occ in net:
-                # Update time_unemployed and long-term unemployed status of unemployed workers
-                # Remove protected "hired" attribute of employed workers
-                occ.update_workers()
-                emp = len(occ.list_of_employed)
-                occ.current_demand = bus_cycle_demand(len([v_open for v_open in vacs_temp if v_open.occupation_id == occ.occupation_id]) + emp, t, bus_amp, bus_cycle_len)
-                vac_prob = d_v + ((1 - d_v) * (gamma * max(0, occ.target_demand - occ.current_demand))) / (emp + 1)
-                vacs_create = emp*int(vac_prob) + int(np.random.binomial(emp, vac_prob%1))
-                for v in range(vacs_create):
-                    vacs_temp.append(vac(occ.occupation_id, [], occ.wage, False))
 
-                empl += len(occ.list_of_employed) 
-                unemp += len(occ.list_of_unemployed)
-                n_ltue += sum(wrkr.longterm_unemp for wrkr in occ.list_of_unemployed)
-                t_demand += occ.target_demand
+        ### HIRING
+        # Ordering of hiring randomised to ensure list order does not matter in filling vacancies...
+        # Possibly still introduces some bias...this seems to be where the "multiple offer" challenge Maria mentioned comes from
+        # ....might be better to do this using an unordered set?
+        for v_open in sorted(vacs_temp,key=lambda _: random.random()):
+            # Removes any applicants that have already been hired in another vacancy
+            v_open.applicants[:] = [app for app in v_open.applicants if not(app.hired)]
+            v_open.time_open += 1
+            if len(v_open.applicants) > 0:
+                v_open.hire(net)
+                v_open.filled = True
+                #vacs.remove(v_open)
+                assert(len(v_open.applicants) == 0)
+            else:
+                pass
 
-            ### UPDATE INDICATOR RECORD
-            record = np.append(record, 
-                                np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand]]), 
-                                axis = 0)
+        vacs_temp = [v for v in vacs_temp if not(v.filled) and v.time_open <= 1] 
 
-        print("Done after ", t + 1, " time steps.")
+        # # Reset counters for record in time t
+        empl = 0 
+        unemp = 0
+        n_ltue = 0
+        # curr_demand = 0
+        t_demand = 0
 
+        ### OPEN VACANCIES
+        # Update vacancies after all shifts have taken place
+        # Could consider making this a function of the class itself?
+        for occ in net:
+            u_rel_wage = sum(wrkr.ue_rel_wage for wrkr in occ.list_of_employed if wrkr.hired and wrkr.ue_rel_wage is not None)
+            e_rel_wage = sum(wrkr.ee_rel_wage for wrkr in occ.list_of_employed if wrkr.hired and wrkr.ee_rel_wage is not None)
+            ue = len([w for w in occ.list_of_employed if w.hired and w.ue_rel_wage is not None])
+            ee = len([w for w in occ.list_of_employed if w.hired and w.ee_rel_wage is not None])
+            # Update time_unemployed and long-term unemployed status of unemployed workers
+            # Remove protected "hired" attribute of employed workers
+            occ.update_workers()
+            # Assert that all unemployed people have spent 1 or more time periods unemployed
+            assert(sum([worker.time_unemployed <= 0 for worker in occ.list_of_unemployed]) == 0)
+            # Assert that all employed people have spent 0 time periods unemployed
+            assert(sum([worker.time_unemployed <= 0 for worker in occ.list_of_employed]) == len(occ.list_of_employed))
+            emp = len(occ.list_of_employed)
+            curr_vacs = len([v_open for v_open in vacs_temp if v_open.occupation_id == occ.occupation_id])
+            occ.current_demand = (curr_vacs + emp + 1)
+            # If real-world vacancy rate is greater than the current vacancy rate, then we create new vacancies 
+            vac_prob = max(0, vr_t - (curr_vacs/occ.current_demand))
+            # vac_prob = d_v + ((gamma_v * max(0, occ.target_demand*(bus_conf) - occ.current_demand)) / (emp + 1))
+            vacs_create = emp*int(vac_prob) + int(np.random.binomial(emp, vac_prob%1))
+            for v in range(vacs_create):
+                vacs_temp.append(vac(occ.occupation_id, [], occ.wage, False, 0))
+            empl += len(occ.list_of_employed) 
+            unemp += len(occ.list_of_unemployed)
+            n_ltue += sum(wrkr.longterm_unemp for wrkr in occ.list_of_unemployed)
+            t_demand += occ.target_demand
+
+        ### UPDATE INDICATOR RECORD
+        record = np.append(record, 
+                       np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand]]), axis=0)
         # clean_record = pd.DataFrame(record[delay:])
         # clean_record.columns =['Time Step', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Target_Demand']
         # clean_record['UER'] = clean_record['Unemployment']/clean_record['Workers']
         # clean_record['VACRATE'] = clean_record['Vacancies']/clean_record['Target_Demand']
         #data = clean_record[['Time Step', 'UER', 'VACRATE']]
-        data = {'UER': record[delay:,2]/record[delay:,3], 
-                'VACRATE': record[delay:,4]/record[delay:,6]}
+    data = {'UER': np.array(record[delay:,2]/record[delay:,3]), 
+            'VACRATE': np.array(record[delay:,4]/(record[delay:,4] + record[delay:,1]))}
+    #     seekers_rec.append([t+1, unemp_seekers, u_apps])
 
-        #ltuer = (clean_record['LT Unemployed Persons']/clean_record['Workers']).mean(axis = 0)
-        #vac_rate = (clean_record['Vacancies']/clean_record['Target_Demand']).mean(axis = 0)
+
+    # record_temp_df = pd.DataFrame(record, columns=['Time Step', 'Occupation', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Current_Demand', 'Target_Demand', 'Employed Seekers', 'Unemployed Seekers', 'Total_Wages', 'U_Rel_Wage', 'E_Rel_Wage', 'UE_Transitions', 'EE_Transitions'])
+    # record_df = record_temp_df[record_temp_df['Time Step'] > delay]
+    # grouped = record_df.groupby('Time Step').sum().reset_index()
+
+    # grouped['UER'] = grouped['Unemployment'] / grouped['Workers']
+    # grouped['U_REL_WAGE_MEAN'] = grouped['U_Rel_Wage'] / grouped['UE_Transitions']
+    # grouped['E_REL_WAGE_MEAN'] = grouped['E_Rel_Wage'] / grouped['EE_Transitions']
+    # grouped['UE_Trans_Rate'] = grouped['UE_Transitions'] / grouped['Workers']
+    # grouped['EE_Trans_Rate'] = grouped['EE_Transitions'] / grouped['Workers']
+    # grouped['VACRATE'] = grouped['Vacancies'] / (grouped['Vacancies'] + grouped['Employment'])
+
+    #data = {'UER': np.array(grouped['UER']), 'VACRATE': np.array(grouped['VACRATE'])}
+
+
+    #seekers_rec = pd.DataFrame(seekers_rec, columns=['Time Step', 'Unemployed Seekers', 'Applications Sent'])
+    #seekers_rec = seekers_rec[seekers_rec['Time Step'] > delay]
+
+    if simple_res:
         return data
-
-    # The following line runs one base example of the model itself with the parameters outlined above. 
-    # This demonstrates the issue I mention above about needing time to achieve a "steady-state" from the initialised state of about 50 time steps.
-    # Run model without behavioural spec
-    rec = run_single(**parameter)
-    print("Single run executed.")
-
-    # ## Parameter inference
-    # 
-    # ### Observed Values/Data
-    # 
-    # Reference values for the various calibration steps are loaded and plotted below for reference. Thus far, I have included variables from the JOLTS (total nonfarm job openings rate, separation rate, quits rate, hires rate - all in seasonally adjusted monthly values). Additionally, I include the seasonally adjusted monthly unemployment rate and quarterly real GDP (although the latter has not been used yet in this script). 
-    # 
-    # Recession dates are downloaded from FRED but sourced from NBER business cycle indicators mentioned above. For each time series, I include the source URL. 
-
-    # Observed unemployment rate
-    # Monthly, seasonally adjusted
-    # Source: https://fred.stlouisfed.org/series/UNRATE
-
-    unrate = pd.read_csv(path+"data/macro_vars/UNRATE.csv", delimiter=',', decimal='.')
-    unrate["DATE"] = pd.to_datetime(unrate["DATE"])
-    unrate["UER"] = unrate['UNRATE']/100
-    unrate['FD_UNRATE'] = pd.Series(unrate['UER']).diff()
-
-    # Monthly, seasonally adjusted job openings rate (total nonfarm)
-    # Source: https://fred.stlouisfed.org/series/JTSJOR
-
-    jorate = pd.read_csv(path+"data/macro_vars/JTSJOR.csv", delimiter=',', decimal='.')
-    jorate["DATE"] = pd.to_datetime(jorate["DATE"])
-    jorate["VACRATE"] = jorate['JTSJOR']/100
-    jorate['FD_VACRATE'] = pd.Series(jorate['VACRATE']).diff()
-
-    macro_observations = pd.merge(unrate, jorate, how = 'outer', on = 'DATE')
-
-    # Recession dates
-    # Source: https://fred.stlouisfed.org/series/USREC#:%7E:text=For%20daily%20data%2C%20the%20recession,the%20month%20of%20the%20trough
-
-    recessions = pd.read_csv(path+"data/macro_vars/USREC.csv", delimiter=',', decimal='.')
-    recessions["DATE"] = pd.to_datetime(recessions["DATE"])
-
-    # Real GDP
-    # Source: https://fred.stlouisfed.org/series/GDPC1
-    realgdp = pd.read_csv(path+"data/macro_vars/GDPC1.csv", delimiter=',', decimal='.')
-    realgdp["DATE"] = pd.to_datetime(realgdp["DATE"])
-    realgdp["REALGDP"] = realgdp['GDPC1']
-    realgdp['FD_REALGDP'] = pd.Series(realgdp['REALGDP']).diff()
-
-    macro_observations = pd.merge(macro_observations, realgdp, how = 'outer', on = 'DATE')
-
-    ## JOLTS SURVEY: https://www.bls.gov/charts/job-openings-and-labor-turnover/hire-seps-rates.htm
-
-    # Separation rates (Total nonfarm): JOLTS Survey - monthly, seasonally adjusted
-    # Source: https://fred.stlouisfed.org/series/JTSTSR
-    seps = pd.read_csv(path+"data/macro_vars/JTSTSR.csv", delimiter=',', decimal='.')
-    seps["DATE"] = pd.to_datetime(seps["DATE"])
-    seps["SEPSRATE"] = seps['JTSTSR']/100
-    seps['FD_SEPSRATE'] = pd.Series(seps['SEPSRATE']).diff()
-
-    # Quits rate (Total nonfarm): JOLTS Survey - monthly, seasonally adjusted
-    # Source: https://fred.stlouisfed.org/series/JTSQUR
-    quits = pd.read_csv(path+"data/macro_vars/JTSQUR.csv", delimiter=',', decimal='.')
-    quits["DATE"] = pd.to_datetime(quits["DATE"])
-    quits["QUITSRATE"] = quits['JTSQUR']/100
-    quits['FD_QUITSRATE'] = pd.Series(quits['QUITSRATE']).diff()
-
-    jolts = pd.merge(quits, seps, how = 'left', on = 'DATE')
-
-    # Hires rate (Total nonfarm): JOLTS Survey - monthly, seasonally adjusted
-    # Source: https://fred.stlouisfed.org/series/JTSHIR
-    hires = pd.read_csv(path+"data/macro_vars/JTSHIR.csv", delimiter=',', decimal='.')
-    hires["DATE"] = pd.to_datetime(hires["DATE"])
-    hires["HIRESRATE"] = hires['JTSHIR']/100
-    hires['FD_HIRESRATE'] = pd.Series(hires['HIRESRATE']).diff()
-
-    jolts = pd.merge(jolts, hires, how = 'left', on = 'DATE')
-
-    # Incorporating one set of simulated data
-    sim_data = pd.DataFrame(rec)
-    sim_data['PROV DATE'] = pd.date_range(start = "2010-01-01", periods = len(sim_data), freq = "ME")
-    sim_data['FD_SIMUER'] = pd.Series(sim_data['UER']).diff()
-    sim_data['FD_SIMVACRATE'] = pd.Series(sim_data['VACRATE']).diff()
-
-    # Non-recession period
-    fig, ax = plt.subplots()
-    macro_observations.plot.line(ax = ax, figsize = (8,5), x= 'DATE', y = 'UER', color = "blue", linestyle = "dotted")
-    macro_observations.plot.line(ax = ax, figsize = (8,5), x= 'DATE', y = 'VACRATE', color = "red", linestyle = "dotted")
-    recessions.plot.area(ax = ax, figsize = (8,5), x= 'DATE', color = "grey", alpha = 0.2)
-    sim_data.plot.line(ax = ax, x = 'PROV DATE', y = 'UER', color = "purple", label = "UER (sim.)")
-    sim_data.plot.line(ax = ax, x = 'PROV DATE', y = 'VACRATE', color = "pink", label = "VACRATE (sim.)")
-
-    sim_data['VACRATE'].mean()
-
-    plt.xlim("2010-01-01", "2019-12-01")
-    plt.ylim(0.01, 0.11)
-
-    # Add title and axis labels
-    plt.title('Fig. 6: Monthly US Unemployment Rate (Seasonally Adjusted)')
-    plt.xlabel('Time')
-    plt.ylabel('Monthly UER')
-    plt.xticks(rotation=45)
-
-    # Save the plot
-    if behav_spec:
-        plt.savefig(path + 'output/uer_vac_descriptive_behav.jpg', dpi = 300)
     else:
-        plt.savefig(path + 'output/uer_vac_descriptive.jpg', dpi = 300)
+        return record_df, grouped, net, data, seekers_rec
 
-    print("Macro variables loaded and abbreviated.")
+#########################################
+# Wrapper for pyabc ########
+#########################################
+def pyabc_run_single(parameter):     
+    res = run_single_local(**parameter)
+    return res 
 
-    def pyabc_run_single(parameter):     
-        res = run_single(**parameter)
-        return res 
+run_single_local(
+    d_u = 0.01, 
+    #d_v = 0.1,
+    gamma_u = 0.01,
+    #gamma_v = 0.1,
+    otj = True,
+    cyc_otj = True, 
+    cyc_ue = True, 
+    disc = False,
+    mod_data = mod_data, 
+    net_temp = net_temp, 
+    vacs = vacs, 
+    time_steps = len(gdp_dat), # set equal to length of gdp_data
+    delay = 100,
+    gdp_data = gdp_dat,
+    bus_confidence_dat = gdp_dat,
+    simple_res = True, 
+    vac_data = vac_dat
+)
 
-    # Proposed priors for d_u and d_v taken from the separations and 
-    # job openings rates modelled in the first few plots of this notebook
-    # These priors can of course be more carefully selected calculating directly from those rates....next steps
-    prior = pyabc.Distribution(d_u = pyabc.RV("uniform", 0.001, 0.05),
-                            d_v = pyabc.RV("uniform", 0.001, 0.05),
-                            gamma = pyabc.RV("uniform", 0.05, 0.3),
-                            # TASK: INCREASE UPPER PRIOR BOUND HERE!!! Previously 0.04... now testing up to 0.1
-                            bus_amp = pyabc.RV("uniform", 0.005, 0.1))
-
-    # distance function jointly minimises distance between simulated 
-    # mean of UER and vacancy rates to real-world UER and vacancy rates
-    # Now also matches the shape/oscillation of each variable
-    def distance_weighted(x, y, weight_shape=0.5, weight_mean=0.5):
-        """
-        Weighted distance function combining mean difference and correlation.
-
-        Args:
-            x (dict): Simulated data with keys "UER" and "VACRATE".
-            y (dict): Real-world data with keys "UER" and "VACRATE".
-            weight_shape (float): Weight for shape matching (correlation).
-            weight_mean (float): Weight for mean matching (SSE).
-
-        Returns:
-            dist (float): Combined distance measure (UER and VACRATE).
-        """
-        # Calculate sum of squared errors (SSE) for UER and VACRATE
-        uer_sse = np.sum(((x["UER"][0:120] - y["UER"]) / np.mean(y["UER"]))**2)
-        vacrate_sse = np.sum(((x["VACRATE"][0:120] - y["VACRATE"]) / np.mean(y["VACRATE"]))**2)
+# %%
+def harmonise_length(x, y):
+    """
+    GDP data used to calibrate has lower periodicity than the UER and VACRATE used for calibration. The following linearly interpolates the simulated output to match the frequency of the UER and Vacancy Rate data
+    Harmonises the length of the time series to compare to each other. 
         
-        # Correlation between simulated and real-world VACRATE (shape matching)
-        corr_vacrate = 1 - pearsonr(x["VACRATE"][0:120], y["VACRATE"])[0]
+    Args:
+        x (dict): Simulated data with keys "UER" and "VACRATE".
+        y (dict): Real-world data with keys "UER" and "VACRATE".
+    
+    Returns:
+        expanded_format: x expanded via linear interpolation - now of same length as y (observed time series of UER and vacancy rate)
+    """
+    expanded_format = pd.DataFrame({
+        col: np.interp(
+            np.linspace(0, len(x[col]) - 1, len(y[col])),
+            np.linspace(0, len(x[col]) - 1, len(x[col])),
+            x[col]
+            )
+            for col in x.keys()
+            })
+    return expanded_format
+
+def distance_weighted(x, y): #weight_shape=0, weight_mean=1):
+    x_ = harmonise_length(x, y)
+    
+    # Normalized SSE using variance
+    uer_sse = np.sum((x_["UER"] - y["UER"])**2) / np.var(y["UER"])
+    #vacrate_sse = np.sum((x_["VACRATE"] - y["VACRATE"])**2) / np.var(y["VACRATE"])
+
+    # Weighted combination
+    dist = (np.sqrt(uer_sse))
+    return dist
+
+
+# %%
+calib_list = {
+    # "nonbehav": {"otj": False, # has been run
+    #                        "cyc_otj": False, 
+    #                        "cyc_ue": False, 
+    #                        "disc": False,
+    #                        "bus_confidence_dat": bus_conf_dat},
+              # "otj_nonbehav": {"otj": True, # has been run
+              #              "cyc_otj": False, 
+              #              "cyc_ue": False, 
+              #              "disc": False, 
+              #              "bus_confidence_dat": gdp_dat},
+    #           "otj_cyclical_e": {"otj": True,
+    #                        "cyc_otj": True, 
+    #                        "cyc_ue": False, 
+    #                        "disc": False,
+    #                        "bus_confidence_dat": bus_conf_dat},
+            #   "otj_cyclical_ue ": {"otj": True,
+            #                "cyc_otj": False, 
+            #                "cyc_ue": True, 
+            #                "disc": False},
+            #   "otj_cyclical_e_ue": {"otj": True,
+            #                "cyc_otj": True, 
+            #                "cyc_ue": True, 
+            #                "disc": False},
+              "otj_cyclical_e_disc": {"otj": True,
+                           "cyc_otj": True, 
+                           "cyc_ue": False, 
+                           "disc": True,
+                           "vac_data": vac_dat,
+                           'simple_res': True,
+                           "bus_confidence_dat": gdp_dat,
+                           'delay': 5},
+              # "otj_cyclical_ue_disc": {"otj": True,
+              #              "cyc_otj": False, 
+              #              "cyc_ue": True, 
+              #              "disc": True},
+              # "otj_cyclical_e_ue_disc": {"otj": True,
+              #              "cyc_otj": True, 
+              #              "cyc_ue": True, 
+              #              "disc": True}
+              "otj_disc": {"otj": True,
+                            "cyc_otj": False, 
+                            "cyc_ue": False, 
+                            "disc": True,
+                            "vac_data": vac_dat,
+                            'simple_res': True,
+                            "bus_confidence_dat": gdp_dat,
+                            'delay': 5}
+            }
+
+# %%
+observation = macro_observations.loc[(macro_observations['DATE'] >= calib_date[0]) & (macro_observations['DATE'] <= calib_date[1])].dropna(subset = ["UNRATE", "VACRATE"]).reset_index()
+
+if calib:
+    prior = pyabc.Distribution(d_u = pyabc.RV("uniform", 0.00001, 0.2),
+                        #d_v = pyabc.RV("uniform", 0.00001, 0.06),
+                        gamma_u = pyabc.RV("uniform", 0.00001, 0.7))
+                        #gamma_v = pyabc.RV("uniform", 0.00001, 1)) 
+    
+    
+    # Define possible distance functions and behav_spec values
+    #behav_spec_values = [False, True]
+
+    # CSV filename
+    csv_filename = os.path.expanduser(path + f"output_28_05/calibrated_params_all.csv")
+
+    # Ensure CSV file starts with headers
+    if not os.path.exists(csv_filename):
+        with open(csv_filename, "w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(["Parameter", "Value", "otj", "cyc_otj", "cyc_ue", "disc", "Timestamp"])
+
+
+    for name, temp_params in calib_list.items():
+        print(f"Running calibration for {name}")
+
+        # Create a new version with different default values
+        temp_run = partial(run_single_local, **temp_params)
+            
+        #########################################
+        # Wrapper for pyabc ########
+        #########################################
+        def pyabc_run_single(parameter):     
+            res = temp_run(**parameter)
+            return res
+
+        # Set up ABC calibration
+        calib_sampler = pyabc.sampler.MulticoreEvalParallelSampler(n_procs=3)
         
-        # Correlation between simulated and real-world UER (shape matching)
-        corr_uer = 1- pearsonr(x["UER"][0:120], y["UER"])[0]
-        
-        # Define total distance as weighted sum of mean and shape components
-        dist = weight_mean * (np.sqrt(uer_sse) + np.sqrt(vacrate_sse)) + weight_shape * (corr_vacrate + corr_uer)
-        return dist
+        abc = pyabc.ABCSMC(pyabc_run_single, prior, distance_weighted, population_size=50, sampler=calib_sampler)
 
-    calib_sampler = pyabc.sampler.MulticoreEvalParallelSampler(n_procs = 100)
-    abc = pyabc.ABCSMC(pyabc_run_single, prior, distance_weighted, population_size = 500, sampler = calib_sampler)
+        db_path = os.path.join(tempfile.gettempdir(), f"test_{name}.db")
+        # The following creates the "reference" values from the observed data - I pull the non-recession or expansion period from 2010-2019.
+        #observation = macro_observations.loc[(macro_observations['DATE'] >= calib_date[0]) & (macro_observations['DATE'] <= calib_date[1])].dropna(subset = ["UNRATE", "VACRATE"]).reset_index()
 
-    db_path = os.path.join(tempfile.gettempdir(), "test.db")
-
-    # The following creates the "reference" values from the observed data - I pull the non-recession or expansion period from 2010-2019.
-    observation = macro_observations.loc[(macro_observations['DATE'] >= '2006-12-01') & (macro_observations['DATE'] <= "2016-11-01")].reset_index()
-    #buffer = int((len(observation) - parameter['time_steps'])/2)
-    #obs_abbrev = (observation[buffer + (int(parameter['delay']/2)):(buffer + parameter['time_steps']) - int((parameter['delay']/2))]).reset_index()
-    #
-    data = {'UER': np.array(observation['UER']),
+        data = {'UER': np.array(observation['UER']),
             'VACRATE': np.array(observation['VACRATE'])}
+    
+        abc.new("sqlite:///" + db_path, data)
 
-    abc.new("sqlite:///" + db_path, data)
+        history = abc.run(minimum_epsilon=0.1, max_nr_populations=15)
 
-    history = abc.run(minimum_epsilon=0.1, max_nr_populations=5)
+        # Extract parameter estimates
+        df, w = history.get_distribution(t=history.max_t)
+        final_params = {
+            "d_u": np.sum(df["d_u"] * w),
+            #"d_v": np.sum(df["d_v"] * w),
+            "gamma_u": np.sum(df["gamma_u"] * w),
+            #"gamma_v": np.sum(df["gamma_v"] * w),
+        }
 
-    print("Pyabc run finished.")
+        # Save parameter estimates to CSV
+        with open(csv_filename, "a", newline="") as file:
+            writer = csv.writer(file)
+            for param, value in final_params.items():
+                writer.writerow([param, value, temp_params['otj'], temp_params['cyc_otj'], temp_params['cyc_ue'], temp_params['disc'], datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
 
-
-    gt = {"d_u": jolts['SEPSRATE'].mean(axis = 0), "d_v": jolts['QUITSRATE'].mean(axis = 0), "gamma": 0.2, "bus_amp": 0.02}
-
-    df, w = history.get_distribution()
-    gt = {"d_u": df['d_u'].mean(axis = 0), "d_v": np.sum(df['d_v']*w), "gamma": np.sum(df['gamma']*w), "bus_amp": np.sum(df['bus_amp']*w)}
-
-    plot_kde_matrix(
-        df,
-        w,
-        limits={"d_u": (0.001, 0.05), "d_v": (0.001, 0.05), "gamma": (0.05, 0.3), 'bus_amp': (0.005, 0.1)},
-        refval=gt,
-        refval_color='k',
-    )
-    # Not sure if the value to be extracted is the weighted mean of the outcome or simply the mean?
-    sns.kdeplot(x = "d_u", y = "d_v", data = df, weights = w, cmap = "viridis", fill = True)
-    plt.axvline(x = df['d_u'].mean(axis = 0))
-    plt.axvline(x = np.sum(df['d_u']*w), color = 'red')
-    plt.axhline(y = df['d_v'].mean(axis = 0))
-    plt.axhline(y = np.sum(df['d_v']*w), color = 'red')
-    if behav_spec:
-        plt.savefig(path + 'output/kde_plot_behav.jpg', dpi = 300)
-    else:
-        plt.savefig(path + 'output/kde_plot.jpg', dpi = 300)
-
-    sns.jointplot(x = "d_u", y = "d_v", kind = "kde", data = df, weights = w, cmap = "viridis_r")
-    plt.axvline(x = df['d_u'].mean(axis = 0))
-    plt.axvline(x = np.sum(df['d_u']*w), color = 'red')
-    plt.axhline(y = df['d_v'].mean(axis = 0))
-    plt.axhline(y = np.sum(df['d_v']*w), color = 'red')
-    plt.title("KDE Plot")
-    if behav_spec:
-        plt.savefig(path + 'output/joint_plot_behav.jpg', dpi = 300)
-    else:
-        plt.savefig(path + 'output/joint_plot.jpg', dpi = 300)
-
-
-    # The following graphs shows simulation results using parameter combinations sampled from the original prior (worst fit), final posterior (better fit), and accepted parameter combinations from the final posterior distribution which gives the best fit. It seems the prior set is likelly too restrictive as the algorithm has a difficult time arriving at an adequate vacancy rate! To be explored further...The left (right) column shows the results for the UER (Vacancy rate) and the black line in each plot demonstrates the observed data from BLS and JOLTS.
-
-    ####################################################################################
-    #### Prior and Posterior Distribution outputs versus Observed UER and Vacancy Rates
-    fig, axes = plt.subplots(3, 2, sharex=True)
-    fig.set_size_inches(8, 12)
-    n = 5  # Number of samples to plot from each category
-    #Plot samples from the prior
-    alpha = 0.5
-    for _ in range(n):
-        parameter.update(prior.rvs())
-        prior_sample = run_single(**parameter)
-        #print(prior_sample)
-        axes[0,0].plot(prior_sample["UER"], color="red", alpha=alpha)
-        axes[0,1].plot(prior_sample["VACRATE"], color="red", alpha=alpha)
-
-    # Fit a posterior KDE and plot samples form it
-    posterior = MultivariateNormalTransition()
-    posterior.fit(*history.get_distribution(m=0))
-
-    for _ in range(n):
-        parameter.update(posterior.rvs())
-        posterior_sample = run_single(**parameter)
-        axes[1,0].plot(posterior_sample["UER"], color="blue", alpha=alpha)
-        axes[1,1].plot(posterior_sample["VACRATE"], color="blue", alpha=alpha)
-        axes[1,0].set_xlim([0,120])
-        axes[1,1].set_xlim([0,120])
-
-    # Plot the stored summary statistics
-    sum_stats = history.get_weighted_sum_stats(t=history.max_t)
-    for stored in sum_stats[1][:n]:
-        axes[2,0].plot(stored["UER"], color="green", alpha=alpha)
-        axes[2,1].plot(stored["VACRATE"], color="green", alpha=alpha)
-
-    # Plot the observed UER from BLS
-    for ax in axes[:,0]:
-        observation.plot(y="UER", ax=ax, color="black", linewidth=1.5)
-        ax.legend().set_visible(False)
-        ax.set_ylabel("UER")
+        # Generate and save plots
+        plot_directory = os.path.expanduser(path + "output_28_05/")
+        os.makedirs(plot_directory, exist_ok=True)
+        plot_filename_base = plot_directory + f"calibration_{name}"
         
-    # Plot the observed VACRATE from JOLTS
-    for ax in axes[:,1]:
-        observation.plot(y="VACRATE", ax=ax, color="black", linewidth=1.5)
-        ax.legend().set_visible(False)
-        ax.set_ylabel("VACANCY RATE")
-        ax.yaxis.set_label_position("right")
+        # KDE Matrix
+        plt.figure()
+        plot_kde_matrix(
+            df, 
+            w, 
+            limits={"d_u": (0.00001, 0.2),
+                     #"d_v": (0.00001, 0.1),
+                       "gamma_u": (0.00001, 0.7)},
+                        # "gamma_v": (0.00001, 1)}, 
+            refval=final_params, 
+            names={"d_u": r"$\delta_u$", 
+                   #"d_v": r"$\delta_v$", 
+                   "gamma_u": r"$\gamma_u$"} 
+                   #"gamma_v": r"$\gamma_v$"}
+        )
+        plt.savefig(f"{plot_filename_base}_kde_matrix.png", bbox_inches='tight', pad_inches=0.5)
+        plt.close()
 
-    fig.suptitle("Simulation Results using Parameters from Prior (sampled), Posterior (sampled), and Posterior (sampled & accepted)")
-    # Add a legend with pseudo artists to first plot
-    fig.legend(
-        [
-            plt.plot([0], color="red")[0],
-            plt.plot([0], color="blue")[0],
-            plt.plot([0], color="green")[0],
-            plt.plot([0], color="black")[0],
-        ],
-        ["Prior", "Posterior", "Stored, accepted", "Observation"],
-        bbox_to_anchor=(0.5, 0.9),
-        loc="lower center",
-        ncol=4,
-    )
+        # Joint KDE Plot for d_u and gamma_u
+        sns.jointplot(x="d_u", y="gamma_u", kind="kde", data=df, weights=w, cmap="viridis_r", marginal_kws={'fill': True})
+        plt.xlabel(r'$\delta_u$')
+        plt.ylabel(r'$\gamma_u$')
+        plt.axvline(x=np.sum(df["d_u"] * w), color="green", linestyle='dashed')
+        plt.axhline(y=np.sum(df["gamma_u"] * w), color="green", linestyle='dashed')
+        plt.suptitle(r"Kernel Density Estimate: $\delta_u$, $\gamma_u$", y=1.02)
+        plt.savefig(f"{plot_filename_base}_joint_delta.png", bbox_inches='tight', pad_inches=0.5)
+        plt.close()
 
-    if behav_spec:
-        plt.savefig(path + 'output/prior_post_selected_distributions_plot_behav.jpg', dpi = 300)
-    else:
-        plt.savefig(path + 'output/prior_post_selected_distributions_plot.jpg', dpi = 300)
-    
+        # Simulation Results Plot
+        fig, axes = plt.subplots(2, 1, sharex=True)
+        fig.set_size_inches(8, 12)
+        n = 15  # Number of samples to plot from each category
+        alpha = 0.5
 
-    # ## Testing Selected Parameters
-    # 
-    # Below I pull the weighted mean of the posterior. Not sure if this is the correct way to pull the triangulated parameter estimate...? Indeed, the model run with these parameters does not look good and both look lower than represented in the heat/contour maps above. The model results with these parameters look bad both with respect to replicating a Beveridge curve as well as we did earlier with hand-selected estimates (and you'll see by the warnings that the delta_u is likely too high....again, I think that this is becuause of poor choice of arguments to the SMCABC algorithm above. In other words, not quite there...to be improved...but getting closer :) 
+        sum_stats = history.get_weighted_sum_stats_for_model(m=0, t=history.max_t)
+        calib_date = [pd.to_datetime(calib_date[0]), pd.to_datetime(calib_date[1])]
+        buffer = pd.DateOffset(years=1)
 
-    d_u_hat = np.sum(df['d_u']*w)
-    print("d_u_hat: ", d_u_hat)
+        for stored in sum_stats[1][:n]:
+            stored_ = harmonise_length(stored, observation)
+            date_range = pd.date_range(start=calib_date[0], end=calib_date[1], periods=len(stored_))
+            axes[0].plot(date_range, stored_["UER"], color="green", alpha=alpha)
+            axes[1].plot(date_range, stored_["VACRATE"], color="green", alpha=alpha)
 
-    d_v_hat = np.sum(df['d_v']*w)
-    print("d_v_hat: ", d_v_hat)
+        #for ax in axes[0]:
+        observation.plot(x = "DATE", y="UER", ax=axes[0], color="black", linewidth=1.5)
+        axes[0].legend().set_visible(False)
+        axes[0].set_ylabel("UER")
+        axes[0].set_xlim([calib_date[0], calib_date[1]])
 
-    gamma_hat = np.sum(df['gamma']*w)
-    print("gamma_hat: ", gamma_hat)
+        #for ax in axes[1]:
+        observation.plot(x = "DATE", y = "VACRATE", ax=axes[1], color="black", linewidth=1.5)
+        axes[1].legend().set_visible(False)
+        axes[1].set_ylabel("VACANCY RATE")
+        axes[1].set_xlim([calib_date[0] - buffer, calib_date[1] + buffer])
+        #ax.yaxis.set_label_position("right")
 
-    bus_amp_hat = np.sum(df['bus_amp']*w)
-    print('bus_amp_hat: ', bus_amp_hat)
+        fig.suptitle(f"Simulation Results using Parameters from Posterior (sampled & accepted)_{name}")
 
+        fig.legend(
+            [
+                plt.plot([0], color="green")[0],
+                plt.plot([0], color="black")[0],
+            ],
+            ["Stored, accepted", "Observation"],
+            bbox_to_anchor=(0.5, 0.9),
+            loc="lower center",
+            ncol=4,
+        )
+        plt.savefig(f"{plot_filename_base}_sim_results.png", bbox_inches='tight', pad_inches=0.5)
+        plt.close()
 
-    parameter.pop('delay', None)
-    parameter.update({'runs': 2,
-                    'd_u': d_u_hat,
-                    'd_v': d_v_hat,
-                    'gamma': gamma_hat,
-                    'bus_amp': bus_amp_hat})
-
-    if behav_spec:
-        sim_record_t_all, net_behav, net_behav_list = run_sim(**parameter)
-
-        calib_params = {"d_u": [d_u_hat],
-                    "d_v": [d_v_hat],
-                    "gamma": [gamma_hat],
-                    "bus_hat": [bus_amp_hat]}
-
-        # Writing the parameter values to CSV
-        with open(path + 'data/calibrated_params_behav.csv', 'w', newline='') as csvfile:
-            # Initialize the writer object
-            writer = csv.writer(csvfile)
-            
-            # Write the header (the keys of the dictionary)
-            writer.writerow(calib_params.keys())
-            
-            # Write the values (taking the first element of each list)
-            writer.writerow([calib_params[key][0] for key in calib_params])
-    else:
-        sim_record_f_all, net_nonbehav, net_nonbehav_list = run_sim(**parameter)
-        calib_params = {"d_u": [d_u_hat],
-                    "d_v": [d_v_hat],
-                    "gamma": [gamma_hat],
-                    "bus_hat": [bus_amp_hat]}
-
-        # Writing the parameter values to CSV
-        with open(path + 'data/calibrated_params.csv', 'w', newline='') as csvfile:
-            # Initialize the writer object
-            writer = csv.writer(csvfile)
-            
-            # Write the header (the keys of the dictionary)
-            writer.writerow(calib_params.keys())
-            
-            # Write the values (taking the first element of each list)
-            writer.writerow([calib_params[key][0] for key in calib_params])
-    
-
-
-# Summary values for one run 
-sim_record_t = pd.DataFrame(np.transpose(np.hstack(sim_record_t_all)))
-sim_record_t.columns =['Sim', 'Time Step', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Target_Demand']
-sim_record_f = pd.DataFrame(np.transpose(np.hstack(sim_record_f_all)))
-sim_record_f.columns =['Sim', 'Time Step', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Target_Demand']
-
-record1_t = sim_record_t[(sim_record_t['Sim'] == 0)].groupby(['Sim', 'Time Step']).sum().reset_index() #  
-record1_f = sim_record_f[(sim_record_f['Sim'] == 0)].groupby(['Sim', 'Time Step']).sum().reset_index() #  & (sim_record_t['Time Step'] >= 80)
-
-end_t = record1_t[(record1_t['Time Step'] == 280)]
-end_f = record1_f[(record1_f['Time Step'] == 280)]
-
-ue_vac_f = record1_f.loc[:,['Workers', 'Unemployment', 'Vacancies', 'Target_Demand']]
-ue_vac_f['UE Rate'] = ue_vac_f['Unemployment'] / ue_vac_f['Workers']
-ue_vac_f['Vac Rate'] = ue_vac_f['Vacancies'] / ue_vac_f['Target_Demand']
-ue_vac_f = ue_vac_f[46:]
-
-ue_vac_t = record1_t.loc[:,['Workers', 'Unemployment', 'Vacancies', 'Target_Demand']]
-ue_vac_t['UE Rate'] = ue_vac_t['Unemployment'] / ue_vac_t['Workers']
-ue_vac_t['Vac Rate'] = ue_vac_t['Vacancies'] / ue_vac_t['Target_Demand']
-ue_vac_t = ue_vac_t[46:]
-
-
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 6))
-#ue_vac_f = ue_vac_f[40:]
-#ue_vac_t = ue_vac_t[40:]
-
-ax1.plot(ue_vac_f['UE Rate'], ue_vac_f['Vac Rate'])
-ax1.scatter(ue_vac_f['UE Rate'], ue_vac_f['Vac Rate'], c=ue_vac_f.index, s=100, lw=0)
-ax1.plot(observation['UER'], observation['VACRATE'], c = "grey", alpha = 0.5)
-ax1.set_title("Non-behavioural")
-ax1.set_xlabel("UE Rate")
-ax1.set_ylabel("Vacancy Rate")
-
-ax2.plot(ue_vac_t['UE Rate'], ue_vac_t['Vac Rate'])
-ax2.set_title("Behavioural")
-ax2.scatter(ue_vac_t['UE Rate'], ue_vac_t['Vac Rate'], c=ue_vac_t.index, s=100, lw=0) 
-ax2.plot(observation['UER'], observation['VACRATE'], c="grey", alpha = 0.5)
-ax2.set_xlabel("UE Rate")
-ax2.set_ylabel("Vacancy Rate")
-    
-fig.suptitle("USA Model Beveridge Curve", fontweight = 'bold')
-fig.tight_layout()
-
-plt.savefig(path + 'output/run_w_calib_params.jpg', dpi = 300)
-
-
-# Incorporating one set of simulated data
-ue_vac_f['PROV DATE'] = pd.date_range(start = "2005-12-01", periods = len(ue_vac_f), freq = "ME")
-ue_vac_f['FD_SIMUER'] = pd.Series(ue_vac_f['UE Rate']).diff()
-ue_vac_f['FD_SIMVACRATE'] = pd.Series(ue_vac_f['Vac Rate']).diff()
-
-ue_vac_t['PROV DATE'] = pd.date_range(start = "2005-12-01", periods = len(ue_vac_f), freq = "ME")
-ue_vac_t['FD_SIMUER'] = pd.Series(ue_vac_t['UE Rate']).diff()
-ue_vac_t['FD_SIMVACRATE'] = pd.Series(ue_vac_t['Vac Rate']).diff()
-
-
-# Non-recession period
-fig, ax = plt.subplots()
-macro_observations.plot.line(ax = ax, figsize = (8,5), x= 'DATE', y = 'UER', color = "blue", linestyle = "dotted")
-macro_observations.plot.line(ax = ax, figsize = (8,5), x= 'DATE', y = 'VACRATE', color = "red", linestyle = "dotted")
-recessions.plot.area(ax = ax, figsize = (8,5), x= 'DATE', color = "grey", alpha = 0.2)
-ue_vac_f.plot.line(ax = ax, x = 'PROV DATE', y = 'UE Rate', color = "blue", label = "UER (Sim. Non-behav.)")
-ue_vac_f.plot.line(ax = ax, x = 'PROV DATE', y = 'Vac Rate', color = "red", label = "VACRATE (Sim. Non-behav)")
-ue_vac_t.plot.line(ax = ax, x = 'PROV DATE', y = 'UE Rate', color = "skyblue", label = "UER (Sim. Behav.)")
-ue_vac_t.plot.line(ax = ax, x = 'PROV DATE', y = 'Vac Rate', color = "lightcoral", label = "VACRATE (Sim. Behav.)")
-plt.xlim('2005-12-01', "2020-01-01")
-plt.ylim(0, 0.2)
-
-# Add title and axis labels
-plt.title('Monthly US Unemployment Rate (Seasonally Adjusted)')
-plt.xlabel('Time')
-plt.ylabel('Monthly UER')
-plt.xticks(rotation=45)
-
-plt.savefig(path + 'output/run_w_calib_params_real_rates.jpg', dpi = 300)
-
+    print("Calibration complete. Results saved to CSV and plots saved as images.")
 
 
