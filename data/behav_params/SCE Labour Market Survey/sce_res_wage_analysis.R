@@ -627,16 +627,16 @@ mod6b <- lm(data = filter(unemp_only, !is.na(expbest4mos_rel_most_recent) & expb
 
 
 modelsummary(list("ResWage" = mod1a,"ResWage w.c" = mod1b, 
-                  "ResWage/LastWage" =mod2a, "ResWage/LastWage w.c" =mod2b), output = "markdown",
+                  "ResWage/LastWage" =mod2a, "ResWage/LastWage w.c" =mod2b), output = "latex",
              stars = TRUE, title = "Reservation Wages and Unemployment Duration") %>% print(.)
 
 modelsummary(list(
   "AccptWage" =mod3a, "AccptWage w.c" =mod3b,
-  "AccptWage/ResWage" =mod4a, "AccptWage/ResWage w.c" =mod4b), output = "markdown",
+  "AccptWage/ResWage" =mod4a, "AccptWage/ResWage w.c" =mod4b), output = "latex",
   stars = TRUE,  title = "Accepted Wages and Unemployment Duration") %>% print(.)
 
 modelsummary(list(
   "ExpWage/ResWage" =mod5a, "ExpWage/ResWage w.c" =mod5b,
-  "ExpWage/LastWage" =mod6a, "ExpWage/LastWage w.c" =mod6b), output = "markdown",
+  "ExpWage/LastWage" =mod6a, "ExpWage/LastWage w.c" =mod6b), output = "latex",
   stars = TRUE, title = "Expected Wages and Unemployment Duration") %>% print(.)
 
