@@ -2,7 +2,10 @@
 title: "Data Scoping: Job Search Behaviour"
 author: "Ebba Mark"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  pdf_document:
+    keep_tex: true
+    latex_engine: xelatex
 editor_options: 
   chunk_output_type: console
   markdown: 
@@ -501,7 +504,7 @@ best_model <- best_row$mod_res[[1]]
 new_data <- data.frame(PRUNEDUR_MO = seq(
   min(bea_temp$PRUNEDUR_MO, na.rm = TRUE),
   max(bea_temp$PRUNEDUR_MO, na.rm = TRUE),
-  length.out = 100
+  length.out = max(bea_temp$PRUNEDUR_MO, na.rm = TRUE) + 1
 ))
 
 new_data$PRUNEDUR_MO2 <- new_data$PRUNEDUR_MO^2
@@ -567,6 +570,9 @@ p2 <- new_data %>%
       plot.subtitle = element_text(size = 12)
     )
   )
+
+# new_data %>% 
+#   write.csv(., here("data/behav_params/CPS_BLS_Supplement_18_22/app_probs.csv"))
 
 ```
 
