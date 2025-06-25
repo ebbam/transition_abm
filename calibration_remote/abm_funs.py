@@ -4,6 +4,7 @@ import pandas as pd
 import random as random
 from copy import deepcopy 
 import math as math
+from collections import defaultdict
 import cProfile, pstats, io
 rng = np.random.default_rng()
 
@@ -29,7 +30,75 @@ def util(w_current, w_offered, skill_sim):
 #     #     apps = round(a_stable/((t_unemp)**2 + 1)) + 1
 #     return apps
 
-def search_effort(t_unemp, bus_cy, disc, alpha):
+
+#### Dynamic Search Effort ######
+# Load the data
+
+app_effort = pd.read_csv("~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/data/behav_params/CPS_BLS_Supplement_18_22/app_probs_long.csv")
+
+# Helper function: Sample an integer from the bin's internal distribution
+def sample_within_bin(bin_label, expectation=False):
+    if bin_label == "0":
+        return 1
+    elif bin_label == "1 to 10":
+        return 5.5 if expectation else random.randint(1, 10)
+    elif bin_label == "11 to 20":
+        return 15.5 if expectation else random.randint(11, 20)
+    elif bin_label == "21 to 80":
+        return 50.5 if expectation else random.randint(21, 80)
+    elif bin_label == "81 or more":
+        return 90.5 if expectation else random.randint(81, 100)
+    else:
+        raise ValueError(f"Unknown bin label: {bin_label}")
+
+# Main function: given duration and bin probabilities, return application count
+def applications_sent(duration_months,
+                             duration_to_prob_dict,
+                             expectation=False):
+    """
+    If expectation=True return the expected value (float);
+    otherwise return a random draw (int).
+    """
+    if duration_months not in duration_to_prob_dict:
+        #raise ValueError(f"No probability distribution for duration {duration_months}")
+        return 1
+
+    # dict: bin_label -> probability
+    bin_probs = duration_to_prob_dict[duration_months]
+
+    if expectation:                       # new deterministic branch
+        exp_val = sum(
+            p * sample_within_bin(b, expectation=True)
+            for b, p in bin_probs.items()
+        )
+        return exp_val                  # float (can be fractional)
+
+    # ------- stochastic branch (unchanged) -------
+    bin_labels     = list(bin_probs.keys())
+    probabilities  = list(bin_probs.values())
+    chosen_bin     = random.choices(bin_labels, weights=probabilities, k=1)[0]
+    return sample_within_bin(chosen_bin, expectation=False)
+
+# Convert duration to int (you can round or floor as needed)
+app_effort["PRUNEDUR_MO"] = app_effort["PRUNEDUR_MO"].round().astype(int)
+
+# Create mapping: duration -> {bin_label: probability}
+duration_to_prob_dict = defaultdict(dict)
+
+for _, row in app_effort.iterrows():
+    duration = row["PRUNEDUR_MO"]
+    category = row["Category"]
+    prob = row["Probability"]
+    duration_to_prob_dict[duration][category] = prob
+
+# Convert defaultdict to plain dict (optional)
+duration_to_prob_dict = dict(duration_to_prob_dict)
+
+apps = applications_sent(duration_months=1, duration_to_prob_dict=duration_to_prob_dict, expectation = True)
+
+print(f"Applications sent: {apps}")
+
+def search_effort_alpha(t_unemp, bus_cy, disc, alpha):
     apps = 10
     if t_unemp > 1 and disc:
         apps = round(apps * (1 + alpha*(t_unemp-1)))
@@ -75,7 +144,7 @@ class worker:
         wrkr.ue_rel_wage = ue_rel_wage
         wrkr.apps_sent = applicants_sent
     
-    def search_and_apply(wrkr, net, vac_list, disc, bus_cy, alpha):
+    def search_and_apply(wrkr, net, vac_list, disc, bus_cy, alpha, app_effort):
         # A sample of relevant vacancies are found that are in neighboring occupations
         # Will need to add a qualifier in case sample is greater than available relevant vacancies
         # ^^ have added qualifier...bad form to reassign list?
@@ -91,7 +160,7 @@ class worker:
         if disc or bus_cy != 1:
             # Sort found relevant vacancies by utility-function defined above and apply to amount dictated by impatience
             for v in sorted(found_vacs, key = lambda v: util(wrkr.wage, v.wage, net[wrkr.occupation_id].list_of_neigh_weights[v.occupation_id]), 
-                            reverse = True)[slice(wrkr.risk_aversion, wrkr.risk_aversion + search_effort(wrkr.time_unemployed, bus_cy, disc, alpha))]:
+                            reverse = True)[slice(wrkr.risk_aversion, wrkr.risk_aversion + applications_sent(wrkr.time_unemployed, app_effort, expectation = False))]:
                 # Introduce randomness here...?
                 vsent += 1
                 v.applicants.append(wrkr)
