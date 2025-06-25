@@ -483,6 +483,8 @@ mod_list2[['Cont. w. UI w. controls (clipped)']] %>%
 Continuous UE duration treatment is reported in monthly values.
 A one-unit increase in the treatment variable = 1 additional month of unemployment.
 
+\begin{landscape}
+
 ###### W.O. Wage Level Control
 
 ```{r, echo = FALSE}
@@ -518,6 +520,8 @@ output_pretty(mod_list[grepl("Disc", names(mod_list))], highlightrows = 3, title
 output_pretty(mod_list2[grepl("Disc", names(mod_list))], highlightrows = c(3,5), title = "Binned UE Duration w. Wage Level Control")
 
 ```
+
+\end{landscape}
 
 #### Additional Considerations {.tabset}
 
