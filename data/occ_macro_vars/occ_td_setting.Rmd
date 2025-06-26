@@ -1,0 +1,51 @@
+---
+title: "Setting Occupational Target Demand"
+author: "Ebba Mark"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, echo = FALSE, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, cache = FALSE)
+library(here)
+
+```
+
+# Setting Occupational Target Demand
+
+Using reported occupational shares of industry employment from the Bureau of Labor Statistics’ Occupational Employment and Wages dataset and the industry Value Added (quarterly data available from 2005 and annual data available from 1999).
+
+What we will assume is that the baseline de-trended demand for occupation $i$ in the economy $D_{i}$ is:
+
+$D_{i} = \sum_{j=1}^{n} \bar d_{ij} = 1$
+
+where the de-trended fluctuating demand (ie. demand at time $t$ for occupation $i$) is:
+
+$D_{it} = \sum_{j=1}^{n} \hat d_{ijt}$
+
+$\hat d_{ijt} = \sum_{j=1}^{n} \bar d_{ij} \theta_{jt}$
+
+in which $\bar d_{ij}$ is the average share of occupation $i$ in industry $j$ and $\theta_{jt}$ is the de-trended value-added of industry $j$ at time $t$. Thus, we obtain occupation-specific fluctuations in demand dependent on their "exposure" or the share of a specific occupation in industry $j$. We de-trend the value added in the same way as in the GDP series such that we obtain the fluctuation around a mean. 
+
+## Value Added by Industry
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 10, fig.width = 8}
+
+source(here("data/occ_macro_vars/bea_industry_va.R"))
+
+```
+
+## Occupation-shares of industry
+
+We use annual occupational shares of employment from the Occupational Employment and Wage Statistics database from the US Bureau of Labour Statistics to derive our $\bar d{ij}$. 
+
+Excludes public administration. The first figure shows the “reported percent total” from the OEWS data. The discrepances in reporting is almost certainly due to a reshuffling of occupational codes in 2010 and 2018. 
+
+If we look at the shares as a percentage of total reported employment in a particular industry the “shares” are not consistent across the recategorisation - I will need to investigate this again.
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 10, fig.width = 8}
+
+source(here("data/occ_macro_vars/OEWS/occ_emp_industry_oews.R"))
+
+```
+

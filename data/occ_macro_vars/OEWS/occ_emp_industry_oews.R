@@ -19,7 +19,6 @@ read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oes00in3/nat2d_
 df <- tibble()
 for(yr in 1999:2024){
   yr_tmp <- substr(yr, 3,4)
-  print(yr_tmp)
   if(yr == 1999){
     tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oes", yr_tmp, "in3/nat2d_sic_", as.character(yr), "_dl.xls")), skip = 35) 
   }else if(yr == 2000){
@@ -58,9 +57,11 @@ temp <- df %>% select(year, naics, naics_title, sic, sic_title, occ_code, occ_ti
   filter(naics %in% c('11', '21', '22', '23', '31-33', '42', '44-45', '48-49', '51', '52', '53', '54', '55', '56', '61', '62', '71', '72', '81') & occ_code %in% abm$SOC2010) %>% 
   group_by(naics) %>% 
   # Make NAICS titles consistent with latest attributed title
-  mutate(naics_title = last(naics_title)) %>% 
+  mutate(naics_title = last(naics_title),
+         tot_emp_char = tot_emp,
+         tot_emp = as.numeric(tot_emp_char)) %>% 
   ungroup %>% 
-  select(year, naics, naics_title, occ_code, pct_total) %>% 
+  select(year, naics, naics_title, occ_code, pct_total, tot_emp) %>% 
   distinct
 
   # group_by(occ_code, naics, naics_title) %>% 
@@ -75,7 +76,9 @@ temp %>%
   facet_wrap(~naics_title) +
   theme_minimal() +
   theme(legend.position = "none") +
-  labs(x = "Year", y = "Reported Pct Shares", title = "Occupational Employment Shares by 2-digit NAICS")
+  labs(x = "Year", y = "Reported Pct Shares", title = "Occupational Employment Shares by 2-digit NAICS") -> p1
+
+print(p1)
 
 temp %>% 
   group_by(occ_code, naics, naics_title) %>% 
@@ -90,4 +93,124 @@ temp %>%
   facet_wrap(~naics_title) +
   theme_minimal() +
   theme(legend.position = "none") +
-  labs(x = "Year", title = "Occupational Employment Shares by 2-digit NAICS", y= "Shares of Total")
+  labs(x = "Year", title = "Occupational Employment Shares by 2-digit NAICS", y= "Shares of Total") -> p2
+
+print(p2)
+
+shares <- temp %>% 
+  # Create total annual occupation-level employment
+  group_by(occ_code, year) %>% 
+  mutate(occ_total = sum(tot_emp, na.rm = TRUE)) %>% 
+  # Create total annual industry-specific occupation-level employment
+  group_by(naics_title, occ_code, year) %>% 
+  mutate(occ_ind_total = sum(tot_emp, na.rm = TRUE)) %>% 
+  ungroup %>% 
+  # Create share of annual occupation employment in a specific industry
+  mutate(occ_share = occ_ind_total/occ_total) 
+
+# test completeness
+shares %>% 
+  group_by(year, occ_code) %>% 
+  summarise(occ_share = sum(occ_share, na.rm = TRUE)) %>% 
+  # Lose one observation in 2021 where occupation was 0 - all NAs for occupation code "33-9093" - "transportation security screeners"
+  filter(round(occ_share) == 1)
+
+shares %>% ggplot(aes(x = year, y = occ_share, color = occ_code)) + geom_line() + facet_wrap(~naics_title) + theme(legend.position = "none")
+
+shares_ma <- function(s_dat, len){
+  plot <- s_dat %>% 
+    arrange(naics_title, occ_code, year) %>%       
+    group_by(naics_title, occ_code) %>%           
+    mutate(
+      occ_share_ma = rollmean(
+        x      = occ_share,
+        k      = len,   
+        fill   = NA,      
+        align  = "right"       
+      )
+    ) %>% 
+    ungroup() %>% 
+    ggplot(aes(x = year, y = occ_share_ma, colour = occ_code)) +
+    geom_line() +
+    facet_wrap(~ naics_title) +
+    labs(y = paste0(as.character(len), "-year moving average of occ_share"),
+         title = paste0(as.character(len), "-year moving average of occ_share"),
+         x = "Year") +
+    theme_minimal() +
+    theme(legend.position = "none")
+  
+  return(plot)
+  
+}
+
+shares_ma(shares, 3)
+shares_ma(shares, 5)
+shares_ma(shares, 10)
+
+shares %>% 
+  group_by(year) %>% 
+  summarise(n_occs = n_distinct(occ_code)) %>% 
+  filter(year > 2012)
+
+# Only 2012 and 2013
+shares %>% 
+  group_by(year) %>% 
+  summarise(n_occs = n_distinct(occ_code)) %>% 
+  filter(n_occs >= 463)
+
+# I take the years where all/majority (97%) of occ codes are present: between 2012 and 2018
+mean_shares <- shares %>% 
+  group_by(year) %>% 
+  mutate(n_occs = n_distinct(occ_code)) %>% 
+  filter(n_occs >= 450) %>% 
+  group_by(occ_code, naics_title) %>% 
+  summarise(mean_share = mean(occ_share, na.rm = TRUE))
+
+# Testing to see sum
+mean_shares %>% 
+    arrange(naics_title) %>% 
+  group_by(occ_code) %>% 
+  summarise(test = sum(mean_share, na.rm= TRUE)) %>% 
+  arrange(-test)
+
+
+mean_shares %>% 
+  group_by(naics_title) %>% 
+  mutate(mean_order = mean(mean_share),
+         max_order = max(mean_share),
+         zeros = sum(mean_share != 0)) %>% 
+  ungroup %>% 
+  # turn the two keys into factors so ggplot keeps a stable order
+  mutate(
+    occ_code   = factor(occ_code),
+    naics_title = fct_reorder(naics_title, zeros)
+  ) %>% 
+  filter(mean_share >= 0.05) %>% 
+
+  ggplot(aes(x = naics_title, y = occ_code, fill = mean_share)) +
+  geom_tile(colour = "grey90") +
+  
+  # colour bar
+  scale_fill_viridis_c(
+    option = "magma",      # or "plasma", "viridis"
+    labels  = percent_format(accuracy = 0.01),
+    trans  = "log10",  
+    name    = "Employment\nshare",
+    direction = -1
+  ) +
+  
+  # axis text tweaks
+  theme_minimal(base_size = 10) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
+    panel.grid  = element_blank()
+  ) +
+  labs(
+    x = "Industry (NAICS title)",
+    y = "Occupation (SOC code)",
+    title = "Occupation–Industry Employment Shares",
+    subtitle = "The colors display the share of total occupational employment in each industry.\nIndustries are ordered by the total number of occupations they employ in ascending order.\nDisplay only those occupations whose industrial-level employment share is at least 5%."
+  ) -> p6
+
+print(p6)
+
