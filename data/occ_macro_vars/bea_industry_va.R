@@ -129,8 +129,22 @@ final %>%
 
 print(p4/p5)
 
+cat("\n")
+cat("\n")
+cat("\n")
 print(p3)
+cat("\n")
+cat("\n")
+cat("\n")
+
 print(p2)
+cat("\n")
+cat("\n")
+cat("\n")
+
+ind_va_for_abm <- final %>% 
+  filter(tolower(industry) %in% tolower(names(rel_inds))) %>% 
+  mutate(date = as.Date(paste0(date, "-01-01")))
 
 # Quarterly Data from 2005-2024
 # The year and quarter are not combined in one header requiring a strange read-in process below
@@ -182,3 +196,4 @@ final %>%
        y = "Real Value Added in 2017-chained USD", color = "Industry Level of Aggregation") -> p1
 
 print(p1)
+cat("\n")

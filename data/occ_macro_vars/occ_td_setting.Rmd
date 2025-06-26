@@ -8,6 +8,8 @@ output: pdf_document
 ```{r setup, echo = FALSE, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, cache = FALSE)
 library(here)
+library(gridExtra)
+library(mFilter)
 
 ```
 
@@ -15,7 +17,7 @@ library(here)
 
 Using reported occupational shares of industry employment from the Bureau of Labor Statistics’ Occupational Employment and Wages dataset and the industry Value Added (quarterly data available from 2005 and annual data available from 1999).
 
-What we will assume is that the baseline de-trended demand for occupation $i$ in the economy $D_{i}$ is:
+Assume that the baseline de-trended demand for occupation $i$ in the economy $D_{i}$ is:
 
 $D_{i} = \sum_{j=1}^{n} \bar d_{ij} = 1$
 
@@ -29,7 +31,7 @@ in which $\bar d_{ij}$ is the average share of occupation $i$ in industry $j$ an
 
 ## Value Added by Industry
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 10, fig.width = 8}
+```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 8, fig.width = 7}
 
 source(here("data/occ_macro_vars/bea_industry_va.R"))
 
@@ -43,9 +45,58 @@ Excludes public administration. The first figure shows the “reported percent t
 
 If we look at the shares as a percentage of total reported employment in a particular industry the “shares” are not consistent across the recategorisation - I will need to investigate this again.
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 10, fig.width = 8}
+We take the mean industry-share of occupational employment reported in the years where majority (>97%) of our occ codes are present (2012-2018 - after and before SOC reorganisation of 2010 and 2018).
+
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 8, fig.width = 7}
 
 source(here("data/occ_macro_vars/OEWS/occ_emp_industry_oews.R"))
+
+```
+
+## Bringing them together
+
+```{r, echo = FALSE, message = FALSE, fig.height = 8, fig.width = 7}
+inds <- ind_va_for_abm %>% 
+  pull(industry) %>% unique
+
+trend_tibble <- tibble()
+for(k in inds){
+  trend <- ind_va_for_abm %>% 
+    filter(grepl(k, industry)) %>% 
+    pull(real_VA) %>% 
+    hpfilter(.,freq = 1600, type=c("lambda")) 
+
+  trend_tibble <- trend$cycle %>% 
+    tibble %>% 
+    rename(trend = '.') %>% 
+    mutate(date = ind_va_for_abm$date[1:28], 
+           industry = k) %>% 
+    rbind(trend_tibble, .)
+
+}
+
+trend_tibble %>% 
+    ggplot() +  
+    geom_line(aes(x = date, y = trend/100)) +
+  facet_wrap(~industry) +
+    theme_minimal() +
+    labs(title = "Deviation from Trend (HP Filter)",
+         subtitle = "All plotted on same scale to show varying volatility.",
+         x = "Date",
+         y = "Trend deviation %")
+```
+
+
+```{r, echo = FALSE, message = FALSE, fig.height = 8, fig.width = 7}
+
+trend_tibble %>% 
+  ggplot() +  
+    geom_line(aes(x = date, y = trend/100, color = industry)) +
+    theme_minimal() +
+    labs(title = "Deviation from Trend (HP Filter)",
+         x = "Date",
+         y = "Trend deviation %") 
 
 ```
 
