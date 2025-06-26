@@ -96,8 +96,8 @@ final %>%
   #facet_wrap(~industry, scales = "free_y") + 
   scale_y_continuous(trans = log_trans()) +
   theme_minimal() +
-  labs(title = "(log) Annual Real VA by Industry 1997-2024", 
-       subtitle = "Data from Bureau of Economic Analysis Economic Accounts", 
+  labs(title = "(log) Annual Real VA\nby Industry 1997-2024", 
+       subtitle = "Data from Bureau of Economic Analysis\nEconomic Accounts", 
        x = "Year", y = "log Real Value Added in 2017-chained USD", color = "Industry Level of Aggregation") -> p4
 
 
@@ -124,7 +124,7 @@ final %>%
   theme_minimal() +
   theme(legend.position = "bottom") +
   labs(x = "Year", y = "VA or GDP Value", 
-       title = "Comparison of Quarterly GDP Series and Real Value Added as Reported by Industry", 
+       title = "Comparison of Quarterly GDP\nSeries and Real Value Added\nas Reported by Industry", 
        color = "Series") -> p5
 
 print(p4/p5)
@@ -190,6 +190,7 @@ final %>%
   geom_line(aes(x = date, y = real_VA, group = industry, color = label)) +
   facet_wrap(~label_2, scales = "free_y") + 
   theme_minimal() +
+  theme(legend.position = "bottom") +
   labs(title = "Quarterly Real VA by Industry 2005-2024", 
        subtitle = "Data from Bureau of Economic Analysis Economic Accounts", 
        x = "Year-Quarter", 

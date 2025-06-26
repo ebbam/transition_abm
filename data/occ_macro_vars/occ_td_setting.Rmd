@@ -1,11 +1,11 @@
 ---
 title: "Setting Occupational Target Demand"
-author: "Ebba Mark"
 date: "`r Sys.Date()`"
 output: pdf_document
 ---
 
 ```{r setup, echo = FALSE, include=FALSE}
+
 knitr::opts_chunk$set(echo = FALSE, cache = FALSE)
 library(here)
 library(gridExtra)
