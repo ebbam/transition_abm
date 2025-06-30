@@ -471,6 +471,25 @@ for(rf in names(reg_forms_full)){
 
 ```
 
+```{r, echo = FALSE}
+# Dataframe needed for predictions
+
+newdata <- data.frame(
+  dwmosun = seq(0, 36, by = 1),  # months of unemployment
+  female = as.logical(round(mean(df$female))),                   # male
+  age = median(df$age, na.rm = TRUE),
+  white = as.logical(round(mean(df$white))),
+  black = as.logical(round(mean(df$black))),
+  mixed = as.logical(round(mean(df$mixed))),
+  marst = round(mean(df$marst)),
+  educ_cat = factor("HS Diploma", levels = levels(df$educ_cat))
+) %>% 
+  mutate(dwmosun2 = dwmosun^2,
+         dwmosun3 = dwmosun^3)
+
+```
+
+
 Across all models in the tabs below we see a consistently negative coefficient on unemployment duration (\~0.7-1 percentage point increase in the wage ratio for each additional month spent in unemployment).
 If we look more closely at the performance of our model with continuous unemployment duration, UI use (not exhaustion), all controls, wage levels, and outlier correction we see that the model performs fairly well across various diagnostic tests.
 
@@ -574,24 +593,6 @@ Again, I include the code below (apologies for verbose output), mainly because I
 Open to suggestions and corrections :)
 
 **Conclusion:** With this implementation (which may very well be wrong for now!), the coefficients on unemployment duration remain stable.
-```{r}
-# Dataframe needed for predictions
-
-newdata <- data.frame(
-  dwmosun = seq(0, 36, by = 1),  # months of unemployment
-  female = as.logical(round(mean(df$female))),                   # male
-  age = median(df$age, na.rm = TRUE),
-  white = as.logical(round(mean(df$white))),
-  black = as.logical(round(mean(df$black))),
-  mixed = as.logical(round(mean(df$mixed))),
-  marst = round(mean(df$marst)),
-  educ_cat = factor("HS Diploma", levels = levels(df$educ_cat))
-) %>% 
-  mutate(dwmosun2 = dwmosun^2,
-         dwmosun3 = dwmosun^3)
-
-```
-
 
 #### Entropy Balancing
 
@@ -891,7 +892,8 @@ ggplot(sim_all, aes(x = factor(dur_unemp), y = sim_val, fill = model)) +
   )  +
   scale_fill_brewer(palette = 'Dark2')
 
-
+res_wage_input %>% 
+  write.csv(here('data/behav_params/cps_displaced_worker_supplement/res_wage_dists.csv'))
 #ggsave(here('data/behav_params/cps_displaced_worker_supplement/res_wage_dists.jpg'), dpi = 300, width = 11, height = 8)
 
 
