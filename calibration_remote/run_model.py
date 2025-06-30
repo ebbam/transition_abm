@@ -21,6 +21,7 @@ from pandas import Series
 import os
 import seaborn as sns
 import datetime
+
 from collate_macro_vars import *
 from statsmodels.tsa.filters import hp_filter, bk_filter, cf_filter
 from quantecon import hamilton_filter
@@ -30,7 +31,7 @@ import csv
 rng = np.random.default_rng()
 test_fun()
 
-path = "~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/calibration_remote/"
+path = "~/calibration/calibration_remote/"
 
 import os
 print(os.cpu_count()) 
@@ -46,9 +47,9 @@ search_effort_np = search_effort_np/search_effort_np.mean()
 #realgdp[(realgdp['DATE'] >= calib_date[0]) & (realgdp['DATE'] <= calib_date[1])]
 
 # Define a range of bus_cy values  # Generates 100 values from 0 to 1
-search_effort_values = [search_effort(0, b, False, 0.1) for b in gdp_dat]  # Apply function
-search_effort_bk_values = [search_effort(0, b, False, 0.1) for b in gdp_dat_bk]  # Apply function
-search_effort_hamilton_values = [search_effort(0, b, False, 0.1) for b in gdp_dat_hamilton]  # Apply function
+search_effort_values = [search_effort_alpha(0, b, False, 0.1) for b in gdp_dat]  # Apply function
+search_effort_bk_values = [search_effort_alpha(0, b, False, 0.1) for b in gdp_dat_bk]  # Apply function
+search_effort_hamilton_values = [search_effort_alpha(0, b, False, 0.1) for b in gdp_dat_hamilton]  # Apply function
 # def search_effort_ts(t_unemp, se):
 #     apps = max(0, round(10 - 100*(1-se)))
 #     # if discouraged:
@@ -70,18 +71,32 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
+# %% [markdown]
+# We draw the probability distribution of sending a particular binned value of applications from our work on the BLS Suppelement. We assume a uniform distribution within each bin setting a maximum application effort in the highest bin to 100 applications. 
+
 # %%
+from scipy.stats import truncnorm
+
 series_dict = {}
-for i, a in enumerate([0.3, 0.2, 0.1, 0.05, 0.01]):
+for i, a in enumerate([0.2, 0.1, 0.05, 0.01]):
     efforts = []
-    for t_unemp in range(15):
-        apps = search_effort(t_unemp, 1, True, a)
+    for t_unemp in range(36):
+        apps = search_effort_alpha(t_unemp, 1, True, a)
         efforts.append(apps)
 
     series_dict[f"Alpha: {a}"] = {
         "x": list(range(0, len(efforts))),
         "y": efforts
         }
+
+imposed_efforts = []
+for t_unemp in range(40):
+    apps = applications_sent(duration_months=t_unemp, duration_to_prob_dict=duration_to_prob_dict, expectation = True)
+    imposed_efforts.append(apps)
+series_dict['BLS Efforts - Survey Data'] = {
+    "x": list(range(0, len(imposed_efforts))),
+    "y": imposed_efforts
+    }
 
 for i, a in series_dict.items():
     print(a)
@@ -93,12 +108,12 @@ for i, a in series_dict.items():
     plt.ylabel("Applications Sent")
 
    
-plt.axvline(x=8, color='black', linestyle='--', linewidth=1, label='2 years')
-plt.axvline(x=12, color='grey', linestyle='--', linewidth=1, label='3 years')
+plt.axvline(x=24, color='black', linestyle='--', linewidth=1, label='2 years')
+plt.axvline(x=36, color='grey', linestyle='--', linewidth=1, label='3 years')
 plt.legend(loc='upper right')
-plt.grid(True)
 plt.suptitle("Applications Sent by Unemployment Duration")
 plt.tight_layout()
+# plt.savefig("output/figures/applications_sent_by_unemployment_duration.png", dpi=300)
 plt.show()
 
 print(series_dict)
@@ -160,7 +175,7 @@ net_temp, vacs = initialise(len(mod_data['A']), mod_data['employment'].to_numpy(
 
 # observation = macro_observations.loc[(macro_observations['DATE'] >= calib_date[0]) & (macro_observations['DATE'] <= calib_date[1])].dropna(subset = ["UNRATE", "VACRATE"]).reset_index()
 # Load calibrated parameters from CSV
-param_df = pd.read_csv("output_06_06/calibrated_params_all.csv")
+param_df = pd.read_csv(path+"output/calibrated_params_all.csv")
 # Sort by Timestamp in descending order
 param_df = param_df.sort_values(by='Timestamp', ascending=False)
 
@@ -206,6 +221,7 @@ def run_single_local( #behav_spec,
                     delay = 100,
                     gdp_data = gdp_dat,
                     bus_confidence_dat = gdp_dat,
+                    app_effort_dat = duration_to_prob_dict,
                     simple_res = False, 
                     vac_data = vac_dat):
     
@@ -252,7 +268,12 @@ def run_single_local( #behav_spec,
         unemp_seekers = 0
         u_apps = 0
         u_searchers = 0
+        
         for occ in net:
+            # Exit and entry
+            # Remove the top 2% of earners in an occupation's employed list
+            occ.entry_and_exit(0.02)
+
             ### APPLICATIONS
             # Questions to verify:
             # - CANNOT be fired and apply in same time step ie. time_unemployed > 0
@@ -264,7 +285,7 @@ def run_single_local( #behav_spec,
             for u in occ.list_of_unemployed:
                 unemp_seekers += 1
                 # this one if only using simple scaling factor for the search effort
-                u.search_and_apply(net, r_vacs, disc, ue_bc, 0.1)
+                u.search_and_apply(net, r_vacs, disc, ue_bc, 0.1, app_effort_dat)
                 # use the following if we wish to incorporate the entire TS of search effort
                 #u.search_and_apply(net, r_vacs, behav_spec, search_eff_curr)
             
@@ -306,7 +327,7 @@ def run_single_local( #behav_spec,
             else:
                 pass
 
-        vacs_temp = [v for v in vacs_temp if not(v.filled) and v.time_open <= 1] 
+        vacs_temp = [v for v in vacs_temp if not(v.filled)] 
 
         # # Reset counters for record in time t
         # empl = 0 
@@ -403,27 +424,28 @@ run_single_local(
     delay = 100,
     gdp_data = gdp_dat,
     bus_confidence_dat = gdp_dat,
+    app_effort_dat = duration_to_prob_dict,
     simple_res = False, 
     vac_data = vac_dat
 )
 
 # %%
 calib_list = {
-    "nonbehav": {"otj": False, # has been run
-                           "cyc_otj": False, 
-                           "cyc_ue": False, 
-                           "disc": False,
-                           "vac_data": vac_dat,
-                           "delay": 70,
-                           "bus_confidence_dat": gdp_dat,
-                           'vac_data': vac_dat},
-              "otj_nonbehav": {"otj": True, # has been run
-                           "cyc_otj": False, 
-                           "cyc_ue": False, 
-                           "disc": False, 
-                           "delay": 70,
-                           "bus_confidence_dat": gdp_dat,
-                           "vac_data": vac_dat},
+    # "nonbehav": {"otj": False, # has been run
+    #                        "cyc_otj": False, 
+    #                        "cyc_ue": False, 
+    #                        "disc": False,
+    #                        "vac_data": vac_dat,
+    #                        "delay": 120,
+    #                        "bus_confidence_dat": gdp_dat,
+    #                        'vac_data': vac_dat},
+    #           "otj_nonbehav": {"otj": True, # has been run
+    #                        "cyc_otj": False, 
+    #                        "cyc_ue": False, 
+    #                        "disc": False, 
+    #                        "delay": 120,
+    #                        "bus_confidence_dat": gdp_dat,
+    #                        "vac_data": vac_dat},
             #   "otj_cyclical_e": {"otj": True,
             #                "cyc_otj": True, 
             #                "cyc_ue": False, 
@@ -443,7 +465,7 @@ calib_list = {
                            "cyc_otj": True, 
                            "cyc_ue": False, 
                            "disc": True,
-                           "delay": 70,
+                           "delay": 120,
                            "bus_confidence_dat": gdp_dat,
                            "vac_data": vac_dat},
             #   "otj_cyclical_ue_disc": {"otj": True,
@@ -460,7 +482,7 @@ calib_list = {
                           "cyc_otj": False, 
                           "cyc_ue": False, 
                           "disc": True,
-                            "delay": 70,
+                            "delay": 120,
                           "bus_confidence_dat": gdp_dat,
                           "vac_data": vac_dat}
             }
@@ -518,6 +540,7 @@ for name, item in calib_list.items():
     seekers_recs[name] = seekers_rec
 
 # %%
+output_path = "output/figures/"
 filtered_model_results = {key: model_results[key] for key in ["nonbehav","otj_nonbehav", "otj_cyclical_e_disc", 'otj_disc'] if key in model_results}
 filtered_net_results = {key: net_results[key] for key in ["nonbehav","otj_nonbehav", "otj_cyclical_e_disc", 'otj_disc'] if key in net_results}
 filtered_sim_results = {key: sim_results[key] for key in ["nonbehav","otj_nonbehav", "otj_cyclical_e_disc", 'otj_disc'] if key in sim_results}
@@ -531,15 +554,20 @@ plt.ylabel('Applications per Unemployed Seeker')
 plt.title('Application Rate Over Time')
 plt.tight_layout()
 plt.legend()
+#plt.savefig(path+"output/figures/applications_per_unemployed_seeker.png")
 plt.show()
 
+import plot_funs
+importlib.reload(plot_funs)
+from plot_funs import *
 
-plot_ltuer(filtered_model_results, observation, sep_strings = [("nonbehav", "Non-behavioural w. and w.o OTJ"), ("disc", "Behavioural")], sep = True)
-plot_ltuer_dist(filtered_net_results, gender = False, names = ["Nonbehav", "Nonbehav w. OTJ", "Behavioural w. Cyc. OTJ","Behavioural w.o. Cyc. OTJ"])
-plot_bev_curve(filtered_model_results, observation, sep_strings = [("nonbehav", "Non-behavioural w. and w.o OTJ"), ("disc", "Behavioural")], sep = True)
-plot_uer_vac(filtered_model_results, observation, sep_strings = [("nonbehav", "Non-behavioural w. and w.o OTJ"), ("disc", "Behavioural")], sep = True)
-plot_seeker_comp(filtered_model_results, share = True)
-plot_cd_vs_td(filtered_model_results)
+
+plot_ltuer(filtered_model_results, observation, sep_strings = [("nonbehav", "Non-behavioural w. and w.o OTJ"), ("disc", "Behavioural")], sep = True, save = False, path = output_path)
+plot_ltuer_dist(filtered_net_results, gender = False, names = ["Nonbehav", "Nonbehav w. OTJ", "Behavioural w. Cyc. OTJ","Behavioural w.o. Cyc. OTJ"], save = False, path = output_path)
+plot_bev_curve(filtered_model_results, observation, sep_strings = [("nonbehav", "Non-behavioural w. and w.o OTJ"), ("disc", "Behavioural")], sep = True, save = False, path = output_path)
+plot_uer_vac(filtered_model_results, observation, sep_strings = [("nonbehav", "Non-behavioural w. and w.o OTJ"), ("disc", "Behavioural")], sep = True, save = False, path = output_path)
+plot_seeker_comp(filtered_model_results, sep = True, share = True, save = False, path = output_path)
+plot_cd_vs_td(filtered_model_results, save = False, path = output_path)
 
 
 # %%
@@ -548,12 +576,8 @@ all_rates_new = pd.read_csv('data/transition_rates_96_24.csv')
 all_rates_new = all_rates_new[(all_rates_new['date'] >= calib_date[0]) & (all_rates_new['date'] <= calib_date[1])]
 all_rates_new['DATE'] = pd.to_datetime(all_rates_new['date'])
 
-import plot_funs
-importlib.reload(plot_funs)
-from plot_funs import *
-
-plot_trans_rates(filtered_model_results, observation = all_rates_new, names = ["Nonbehav", "Nonbehav w. OTJ", "Behavioural w. Cyc. OTJ","Behavioural w.o. Cyc. OTJ"])
-plot_rel_wages(filtered_model_results, names = ["Nonbehav", "Nonbehav w. OTJ", "Behavioural w. Cyc. OTJ","Behavioural w.o. Cyc. OTJ"])
+plot_trans_rates(filtered_model_results, observation = all_rates_new, names = ["Nonbehav", "Nonbehav w. OTJ", "Behavioural w. Cyc. OTJ","Behavioural w.o. Cyc. OTJ"], save = False, path = output_path)
+plot_rel_wages(filtered_model_results, names = ["Nonbehav", "Nonbehav w. OTJ", "Behavioural w. Cyc. OTJ","Behavioural w.o. Cyc. OTJ"], save = False, path = output_path)
 
 
 # %%
@@ -567,10 +591,135 @@ import plot_funs
 importlib.reload(plot_funs)
 from plot_funs import *
 
-plot_occupation_uer(filtered_sim_results, occ_ltuer_obs)
-# plot_ltuer_difference_heatmap(filtered_sim_results, 
-#                               occ_ltuer_obs, 
-#                               difference_type='absolute', save=False, path=path)
+def plot_occupation_ltuer_grid(sim_results_dict,
+                               observations,
+                               occ_map=None,               # {occ_col : obs_rate_col}
+                               save=False,
+                               path="occ_ltuer_grid.png"):
+    """
+    Grid of mean LTUER by occupation
+    ────────────────────────────────
+    • columns = simulation models   (keys of sim_results_dict)
+    • rows    = occupation columns  (keys of occ_map)
+    • blue •  = simulated LTUER (mean over time)
+    • orange × = observed LTUER     (already in `observations`)
+    """
+
+    # ------------------------------------------------------------------
+    # 0.  Which occupation levels (rows) do we want?
+    # ------------------------------------------------------------------
+    if occ_map is None:
+        occ_map = {
+            "acs_occ_code":  "uer_occ",
+            "SOC2010_adj":   "uer_soc2010",
+            "SOC_major_adj": "uer_soc_major",
+            "SOC_minor_adj": "uer_soc_minor",
+            "SOC_broad_adj": "uer_soc_broad",
+        }
+
+    occ_levels        = list(occ_map.keys())
+    n_rows, n_cols    = len(occ_levels), len(sim_results_dict)
+
+    # ------------------------------------------------------------------
+    # 1.  Global y-axis limits (simulated data only, drop NaN/Inf)
+    # ------------------------------------------------------------------
+    ltuer_vals = []
+    for df in sim_results_dict.values():
+        ok = df["Unemployment"] > 0          # avoid div-by-zero
+        ltuer_vals.append(
+            (df.loc[ok, "LT Unemployed Persons"] /
+             df.loc[ok, "Unemployment"]).values
+        )
+    ltuer_vals = np.concatenate(ltuer_vals)
+    ltuer_vals = ltuer_vals[np.isfinite(ltuer_vals)]    # remove NaN / inf
+
+    # fallback if everything is empty
+    y_max = np.nanmax(ltuer_vals) * 1.05 if ltuer_vals.size else 1.0
+    y_min = 0.0
+
+    # ------------------------------------------------------------------
+    # 2.  Subplot grid
+    # ------------------------------------------------------------------
+    fig, axes = plt.subplots(
+        n_rows, n_cols,
+        figsize=(4.2 * n_cols, 2.8 * n_rows),
+        sharey="row"
+    )
+    axes = np.atleast_2d(axes)     # always 2-D for easy indexing
+
+    first = True                   # one legend label only
+
+    # ------------------------------------------------------------------
+    # 3.  Populate each panel
+    # ------------------------------------------------------------------
+    for col, (model_name, sim_df) in enumerate(sim_results_dict.items()):
+
+        sim_df = sim_df.copy()
+        sim_df["LTUE Rate"] = np.where(
+            sim_df["Unemployment"] > 0,
+            sim_df["LT Unemployed Persons"] / sim_df["Unemployment"],
+            np.nan
+        )
+
+        for row, occ_col in enumerate(occ_levels):
+            obs_col = occ_map[occ_col]
+            ax      = axes[row, col]
+
+            # ---- simulated mean LTUER by occupation -----------------
+            sim_mean = (
+                sim_df.groupby([occ_col, "Time Step"])["LTUE Rate"].mean()
+                      .groupby(level=0).mean()
+                      .reset_index()
+                      .rename(columns={"LTUE Rate": "sim_ltuer"})
+                      .dropna()
+                      .sort_values("sim_ltuer")
+            )
+            sim_mean["x"] = range(len(sim_mean))
+
+            # ---- observed LTUER -------------------------------------
+            obs_use = observations[[occ_col, obs_col]].dropna()
+            merged  = sim_mean.merge(obs_use, on=occ_col, how="left")
+
+            # simulated points
+            sns.scatterplot(data=merged,
+                            x="x", y="sim_ltuer",
+                            color="steelblue", s=35, ax=ax,
+                            label="Simulated" if first else None)
+
+            # observed points (if present)
+            sns.scatterplot(data=merged.dropna(subset=[obs_col]),
+                            x="x", y=obs_col,
+                            color="darkorange", marker="X", s=55, ax=ax,
+                            label="Observed" if first else None)
+
+            # axis cosmetics
+            ax.set_ylim(y_min, y_max)
+            ax.set_xticks(merged["x"])
+            ax.set_xticklabels(merged[occ_col], rotation=90, fontsize=6)
+
+            if row == 0:
+                ax.set_title(model_name, fontweight="bold")
+            if col == 0:
+                ax.set_ylabel(f"Mean LTUER\n({occ_col})")
+            else:
+                ax.set_ylabel("")
+            ax.set_xlabel("")
+
+            first = False
+
+    # single legend
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    if handles:
+        fig.legend(handles, labels, loc="upper right")
+
+    plt.tight_layout()
+    if save:
+        fig.savefig(path, dpi=300, bbox_inches="tight")
+    plt.show()
+# plot_occupation_ltuer_grid(filtered_sim_results, occ_ltuer_obs)
+# # plot_ltuer_difference_heatmap(filtered_sim_results, 
+# #                               occ_ltuer_obs, 
+# #                               difference_type='absolute', save=False, path=path)
 
 
 # %%
@@ -620,9 +769,9 @@ plt.show()
 womens_wage = (gender_income['Ceiling'] * gender_income['Full-Time Females']).sum()/(gender_income['Full-Time Females'].sum())
 mens_wage = (gender_income['Ceiling'] * gender_income['Full-Time Males']).sum()/(gender_income['Full-Time Males'].sum())
 
-plot_gender_gaps(filtered_net_results, names = ["Nonbehav", "Nonbehav w. OTJ", "Behavioural w. Cyc. OTJ","Behavioural w.o. Cyc. OTJ"])
+plot_gender_gaps(filtered_net_results, names = ["Nonbehav", "Nonbehav w. OTJ", "Behavioural w. Cyc. OTJ","Behavioural w.o. Cyc. OTJ"], save = True, path = output_path)
 
-
+len(filtered_net_results)
 
 # %%
 from PIL import Image, ImageDraw, ImageFont
@@ -714,7 +863,7 @@ def combine_model_images(image_dir, calib_list, sep_strings, output_path="combin
     print(f"Combined image saved to {output_path}")
 
 combine_model_images(
-    image_dir="output_06_06/",
+    image_dir=f'{path}output/',
     calib_list=calib_list,
     sep_strings=[
         ("nonbehav", "Non-behavioural w. and w.o OTJ"),

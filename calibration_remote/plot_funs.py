@@ -77,13 +77,10 @@ def plot_ltuer(res_dict, macro_obs, sep_strings=None, sep=False, save=False, pat
 
     # Save or show plot
     if save:
-        if not path:
-            path = "./"
-        filename = f'{path.rstrip("/")}/ltuer_line.jpg'
-        plt.savefig(filename, dpi=300)
-        plt.close()
-    else:
-        plt.show()
+        plt.savefig(f'{path}ltuer_line.jpg', dpi=300)
+    
+    plt.show()
+
 
 ####################################################
 ############## BEV CURVES ##########################
@@ -155,15 +152,12 @@ def plot_bev_curve(res_dict, macro_obs, sep_strings=None, sep=False, save=False,
             fig.delaxes(axes[j])
 
         plt.tight_layout()
+    
 
-    # Save or show
     if save:
-        if not path:
-            path = "./"
-        plt.savefig(f'{path.rstrip("/")}/bev_curves.jpg', dpi=300)
-        plt.close()
-    else:
-        plt.show()
+        plt.savefig(f'{path}bev_curves.jpg', dpi=300)
+    plt.show()
+
 
 ####################################################
 ############## OCC-SPECIFIC LTUER ##################
@@ -226,7 +220,7 @@ def plot_occupation_uer(sim_results_dict, observations, save=False, path=None):
             sns.scatterplot(data=mean_uer, x='x_pos', y='uer_occ', s=50)
         
             # Customize the plot
-            plt.title(f'Mean Unemployment Rate by Occupation ({name})', fontweight='bold')
+            plt.title(f'Mean Unemployment Rate by Occupation ({name}; {name_k})', fontweight='bold')
             plt.xlabel('Occupation (ordered by mean UER)')
             plt.ylabel('Mean Unemployment Rate')
             
@@ -238,18 +232,132 @@ def plot_occupation_uer(sim_results_dict, observations, save=False, path=None):
             
             # Adjust layout
             plt.tight_layout()
-            
-            # Show the plot
-            plt.show()
 
         # Save or show
+
     if save:
-        if not path:
-            path = "./"
-        plt.savefig(f'{path.rstrip("/")}/occ_ltuer.jpg', dpi=300)
-        plt.close()
-    else:
-        plt.show()
+        plt.savefig(f'{path}occ_ltuer.jpg', dpi=300)
+    plt.show()
+
+
+def plot_occupation_uer_new(sim_results_dict, observations,
+                        occ_levels=None, save=False, path="occ_ltuer.jpg"):
+
+    # ------------------------------------------------------------------
+    # 0.  Which occupational granularities do you want in the rows?
+    # ------------------------------------------------------------------
+    if occ_levels is None:          # default: your five levels
+        occ_levels = {
+            "acs_occ_code":   "uer_occ",
+            "SOC2010_adj":    "uer_soc2010",
+            "SOC_major_adj":  "uer_soc_major",
+            "SOC_minor_adj":  "uer_soc_minor",
+            "SOC_broad_adj":  "uer_soc_broad"
+        }
+
+    n_rows  = len(occ_levels)
+    n_cols  = len(sim_results_dict)
+
+    # ------------------------------------------------------------------
+    # 1.  Compute global y-axis range (so all panels share the same scale)
+    # ------------------------------------------------------------------
+    all_sim_rates = []
+
+    for sim_results in sim_results_dict.values():
+        tmp = sim_results[["Unemployment", "Workers"]].copy()
+        tmp["UE Rate"] = tmp["Unemployment"] / tmp["Workers"]
+        all_sim_rates.extend(tmp["UE Rate"].values)
+
+    y_min = 0.95 * np.nanmin(all_sim_rates)
+    y_max = 1.05 * np.nanmax(all_sim_rates)
+
+    # ------------------------------------------------------------------
+    # 2.  Set up the subplot grid
+    # ------------------------------------------------------------------
+    fig, axes = plt.subplots(
+        n_rows, n_cols,
+        figsize=(4 * n_cols, 3.5 * n_rows),
+        sharey="row"
+    )
+
+    if n_rows == 1:       # keep indexing simple even for 1×N or N×1
+        axes = np.array([axes])
+    if n_cols == 1:
+        axes = axes[:, np.newaxis]
+
+    # ------------------------------------------------------------------
+    # 3.  Loop over models (columns) and occ levels (rows)
+    # ------------------------------------------------------------------
+    for col, (model_name, sim_results) in enumerate(sim_results_dict.items()):
+        # common pre-processing once per model
+        base = sim_results.merge(observations, on="acs_occ_code", how="left")
+
+        # add unemployment-rate columns once
+        base["UE Rate"] = base["Unemployment"] / base["Workers"]
+
+        for row, (occ_col, obs_col) in enumerate(occ_levels.items()):
+            ax = axes[row, col]
+
+            # aggregate at the chosen occupational resolution
+            g = (
+                base
+                .groupby([occ_col, "Time Step"])
+                [["Unemployment", "Workers"]]
+                .sum()
+                .reset_index()
+            )
+            g["UE Rate"] = g["Unemployment"] / g["Workers"]
+
+            # simulation mean by occupation
+            sim_mean = (
+                g.groupby(occ_col)["UE Rate"]
+                .mean()
+                .reset_index()
+                .rename(columns={"UE Rate": "sim_rate"})
+            )
+
+            # merge observed rate for same occupation level
+            sim_vs_obs = sim_mean.merge(
+                observations[[occ_col, obs_col]],
+                on=occ_col,
+                how="left"
+            ).dropna()
+
+            # x-axis position just for ordering; could also sort by obs
+            sim_vs_obs = sim_vs_obs.sort_values(obs_col).reset_index(drop=True)
+            sim_vs_obs["xpos"] = sim_vs_obs.index
+
+            # ----------------------------------------------------------
+            # scatter-plot: observed (x) vs simulated (y)
+            # ----------------------------------------------------------
+            sns.scatterplot(
+                data=sim_vs_obs,
+                x=obs_col, y="sim_rate",
+                s=40, ax=ax
+            )
+
+            # aesthetics
+            ax.set_ylim(y_min, y_max)
+            if row == n_rows - 1:               # bottom row
+                ax.set_xlabel("Observed UE rate")
+            else:
+                ax.set_xlabel("")
+                ax.tick_params(labelbottom=False)
+
+            if col == 0:                        # first column
+                ax.set_ylabel(f"Simulated UE rate\n({occ_col})")
+            else:
+                ax.set_ylabel("")
+
+            if row == 0:                        # titles only on top row
+                ax.set_title(model_name, fontweight="bold")
+
+    plt.tight_layout()
+    plt.show()
+
+    if save:
+        fig.savefig(path, dpi=300, bbox_inches="tight")
+
 
 ####################################################
 ############## AVERAGE WAGE BY OCCUPATION ##########
@@ -282,15 +390,121 @@ def plot_avg_wages(mod_results_dict, save=False, path=None):
     # Adjust layout
     plt.tight_layout()
     plt.legend()
-    
+
     # Save or show
     if save:
-        if not path:
-            path = "./"
-        plt.savefig(f'{path.rstrip("/")}/avg_wage_overall.jpg', dpi=300)
-        plt.close()
-    else:
-        plt.show()
+        plt.savefig(f'{path}avg_wage_overall.jpg', dpi=300)
+        
+    plt.show()
+    
+
+
+
+def plot_occupation_ltuer_newnew(sim_results_dict,
+                          observations,
+                          occ_levels=None,
+                          save=False,
+                          path="occ_ltuer_grid.png"):
+
+    # ---------------------------------------------------------------
+    # 0.  Which “rows” (occupation variables) do you want?
+    # ---------------------------------------------------------------
+    if occ_levels is None:
+        occ_levels = [
+            "acs_occ_code",
+            "SOC2010_adj",
+            "SOC_major_adj",
+            "SOC_minor_adj",
+            "SOC_broad_adj"
+        ]
+
+    n_rows = len(occ_levels)
+    n_cols = len(sim_results_dict)
+
+    # ---------------------------------------------------------------
+    # 1.  Get global y-axis range (so every panel shares a scale)
+    # ---------------------------------------------------------------
+    ltuer_vals = []
+    for df in sim_results_dict.values():
+        ltuer_vals.append((df["LT Unemployed Persons"] / df["Unemployment"]).values)
+    ltuer_vals = np.concatenate(ltuer_vals)
+    y_min, y_max = 0, np.nanmax(ltuer_vals) * 1.05   # padding at top
+
+    # ---------------------------------------------------------------
+    # 2.  Create subplot grid
+    # ---------------------------------------------------------------
+    fig, axes = plt.subplots(
+        n_rows, n_cols,
+        figsize=(4.2 * n_cols, 2.8 * n_rows),
+        sharey="row"
+    )
+    axes = np.atleast_2d(axes)          # ensures 2-D indexing even if 1 row/col
+
+    # ---------------------------------------------------------------
+    # 3.  Populate grid: rows = occ var, cols = models
+    # ---------------------------------------------------------------
+    for col, (model_name, sim_df) in enumerate(sim_results_dict.items()):
+
+        # merge observations once so they are available for all occ levels
+        base = sim_df.merge(observations, on="acs_occ_code", how="left")
+
+        # add UE + LTUER columns once
+        base["UE Rate"]   = base["Unemployment"] / base["Workers"]
+        base["LTUE Rate"] = base["LT Unemployed Persons"] / base["Unemployment"]
+
+        for row, occ_var in enumerate(occ_levels):
+            ax = axes[row, col]
+
+            # aggregate to chosen occupation level, then take time-average
+            agg = (
+                base.groupby([occ_var, "Time Step"])
+                [["LT Unemployed Persons", "Unemployment"]]
+                .sum()
+                .reset_index()
+            )
+            agg["LTUE Rate"] = agg["LT Unemployed Persons"] / agg["Unemployment"]
+
+            mean_ltuer = (
+                agg.groupby(occ_var)["LTUE Rate"]
+                .mean()
+                .reset_index()
+                .sort_values("LTUE Rate")
+            )
+            mean_ltuer["xpos"] = range(len(mean_ltuer))
+
+            # plot
+            sns.scatterplot(
+                data=mean_ltuer,
+                x="xpos",
+                y="LTUE Rate",
+                s=30,
+                ax=ax
+            )
+
+            # axis formatting
+            ax.set_ylim(y_min, y_max)
+
+            # x-tick labels = occupation codes
+            ax.set_xticks(mean_ltuer["xpos"])
+            ax.set_xticklabels(mean_ltuer[occ_var], rotation=90, fontsize=6)
+
+            # titles and labels only where needed
+            if row == 0:
+                ax.set_title(model_name, fontweight="bold")
+            if col == 0:
+                ax.set_ylabel(f"Mean LTUER\n({occ_var})")
+            else:
+                ax.set_ylabel("")
+            ax.set_xlabel("")     # we keep the codes as tick labels
+
+    plt.tight_layout()
+
+    if save:
+        fig.savefig(path, dpi=300, bbox_inches="tight")
+    
+    plt.show()
+    
+
 
 ####################################################
 ############## RELATIVE WAGES ##########
@@ -364,12 +578,10 @@ def plot_rel_wages(mod_results_dict, names, save=False, path=None):
     
     # Save or show
     if save:
-        if not path:
-            path = "./"
-        plt.savefig(f'{path.rstrip("/")}/relative_wages.jpg', dpi=300)
-        plt.close()
-    else:
-        plt.show()
+        plt.savefig(f'{path}relative_wages.jpg', dpi=300)
+    
+    plt.show()
+    
 
 ####################################################
 ############## UER & VAC ###########################
@@ -406,9 +618,7 @@ def plot_rel_wages(mod_results_dict, names, save=False, path=None):
 #     plt.tight_layout()
 #     if save:
 #         plt.savefig(f'{path}uer_vac.jpg', dpi = 300)
-#         plt.close()
-#     else:
-#         plt.show()
+#     plt.show()
 
 
 
@@ -484,14 +694,12 @@ def plot_uer_vac(res_dict, macro_obs, recessions=None, sep_strings=None, sep=Fal
 
         plt.tight_layout()
 
+
     # Save or show
     if save:
-        if not path:
-            path = "./"
-        plt.savefig(f'{path.rstrip("/")}/uer_vac.jpg', dpi=300)
-        plt.close()
-    else:
-        plt.show()
+        plt.savefig(f'{path}uer_vac.jpg', dpi=300)
+    plt.show()
+
 
 
 ####################################################
@@ -539,12 +747,12 @@ def plot_seeker_comp(res_dict, share = False, sep = False, save = False, path = 
             ax.legend(loc="upper right")  # Apply legend to relevant subplots
         #recessions.plot.area(ax = a,  x= 'DATE', color = "grey", alpha = 0.2)
 
+
     # Show plot
     if save:
         plt.savefig(f'{path}seeker_composition.png', dpi = 300)
-        plt.close()
-    else: 
-        plt.show()
+    plt.show()
+
 
 
 ####################################################
@@ -614,89 +822,122 @@ def plot_gender_gaps(net_dict, names, sep = False, save = False, path = None):
     fig.suptitle('Distribution of Male and Female Wages', fontsize = 15) 
     fig.subplots_adjust(bottom=0.1)
 
+
     if save:
         plt.savefig(f'{path}gender_wage_gaps.jpg', dpi = 300)
-        plt.close()
-    else:
-        plt.show()
+    plt.show()
+
 
 
 ####################################################
 ############## LTUER DISTRIBUTIONS #################
 ####################################################
-def plot_ltuer_dist(net_dict, names, gender=False, sep = False, save=False, path=None):
-    """
-    Plots the distribution of time unemployed across models.
+def plot_ltuer_dist(net_dict, names,
+                    gender=False, sep=False,
+                    save=False, path="./"):
 
-    Parameters:
-    - net_dict: dict of model_name -> list of occupations
-    - gender: if True, plots one subplot per model showing men and women distributions
-              if False, plots one figure comparing all models (total only)
-    - save: if True, saves figure to `path`
-    - path: save location (if save=True)
-    """
-    n_bins = 10
+    n_bins  = 30
     max_cols = 3
-    colors = ['orange', 'blue', 'brown', 'green', 'blue', 'grey', 'red', 'cyan']
+    colors  = ['orange', 'blue', 'brown', 'green',
+               'blue', 'grey', 'red', 'cyan']
 
+    # ---------------------------------------------------------------
+    #  gender branch (unchanged)
+    # ---------------------------------------------------------------
     if gender:
+        import math, numpy as np, matplotlib.pyplot as plt
+
         n = len(net_dict)
         cols = min(n, max_cols)
         rows = math.ceil(n / cols)
-        fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 5 * rows), sharex=True, sharey=True)
+        fig, axes = plt.subplots(rows, cols,
+                                 figsize=(5 * cols, 5 * rows),
+                                 sharex=True, sharey=True)
         axes = np.array(axes).flatten()
 
         for i, (name, net) in enumerate(net_dict.items()):
             ax = axes[i]
-            w_time_unemp = []
-            m_time_unemp = []
+            w_time_unemp, m_time_unemp = [], []
 
             for occ in net:
-                w_time_unemp.extend([wrkr.time_unemployed for wrkr in occ.list_of_unemployed if wrkr.female])
-                m_time_unemp.extend([wrkr.time_unemployed for wrkr in occ.list_of_unemployed if not wrkr.female])
+                w_time_unemp.extend([wrkr.time_unemployed
+                                     for wrkr in occ.list_of_unemployed
+                                     if wrkr.female])
+                m_time_unemp.extend([wrkr.time_unemployed
+                                     for wrkr in occ.list_of_unemployed
+                                     if not wrkr.female])
 
-            ax.hist(w_time_unemp, bins=n_bins, alpha=0.5, label='Women', color=colors[0])
-            ax.hist(m_time_unemp, bins=n_bins, alpha=0.5, label='Men', color=colors[1])
-            ax.axvline(np.mean(w_time_unemp), linestyle='dashed', linewidth=1, color=colors[0])
-            ax.axvline(np.mean(m_time_unemp), linestyle='dashed', linewidth=1, color=colors[1])
+            ax.hist(w_time_unemp, bins=n_bins, alpha=0.5,
+                    label='Women', color=colors[0])
+            ax.hist(m_time_unemp, bins=n_bins, alpha=0.5,
+                    label='Men',   color=colors[1])
+            ax.axvline(np.mean(w_time_unemp), ls='--', lw=1, color=colors[0])
+            ax.axvline(np.mean(m_time_unemp), ls='--', lw=1, color=colors[1])
 
             ax.set_title(name)
-            ax.set_xlabel("Time Unemployed (simulated months)")
+            ax.set_xlabel("Time Unemployed (sim months)")
             ax.set_ylabel("Number of Workers (Ks)")
             ax.legend()
 
-        # Hide any unused subplots
+        # hide unused subplots
         for j in range(i + 1, len(axes)):
-            axes[j].axis('off')
+            axes[j].axis("off")
 
         fig.suptitle('Distribution of Time Spent Unemployed by Gender per Model')
         plt.tight_layout(rect=[0, 0, 1, 0.95])
-        plt.show()
 
+    # ---------------------------------------------------------------
+    #  combined plot branch  (modified)
+    # ---------------------------------------------------------------
     else:
-        plt.figure(figsize=(8, 6))  # <--- Add this line
+        import numpy as np, matplotlib.pyplot as plt
+
+        # two side-by-side panels that share the y-axis
+        fig, (ax_full, ax_zoom) = plt.subplots(
+            1, 2, figsize=(12, 6), sharey=True
+        )
+
         for idx, (name, net) in enumerate(net_dict.items()):
             total_unemp = []
             for occ in net:
-                total_unemp.extend([
+                total_unemp.extend(
                     wrkr.time_unemployed
                     for wrkr in occ.list_of_unemployed
-                ])
-            plt.hist(total_unemp, bins=n_bins, alpha=0.5,
-                    label=names[idx], color=colors[idx % len(colors)])
-            plt.axvline(np.mean(total_unemp), linestyle='dashed',
-                        linewidth=1, color=colors[idx % len(colors)])
-        plt.xlabel("Time Unemployed (Simulated weeks)")
-        plt.ylabel("Number of Workers")
-        plt.title('Distribution of Time Spent Unemployed')
-        plt.tight_layout(rect=[0, 0, 1, 0.95])
-        plt.legend()
+                )
 
+            color = colors[idx % len(colors)]
+
+            # full histogram
+            ax_full.hist(total_unemp, bins=n_bins, alpha=0.5,
+                         label=names[idx], color=color)
+            ax_full.axvline(np.mean(total_unemp), ls='--', lw=1, color=color)
+
+            # zoomed histogram (0–36 weeks)
+            ax_zoom.hist(total_unemp, bins=n_bins, range=(0, 36), alpha=0.5,
+                         label=names[idx], color=color)
+            ax_zoom.axvline(np.mean(total_unemp), ls='--', lw=1, color=color)
+
+        # labels and titles
+        ax_full.set_xlabel("Time Unemployed (weeks)")
+        ax_zoom.set_xlabel("Time Unemployed (weeks, zoom ≤ 36)")
+        ax_full.set_ylabel("Number of Workers")
+        ax_full.set_title("Full distribution")
+        ax_zoom.set_title("Zoom ≤ 12 weeks")
+        ax_zoom.set_xlim(0, 12)
+
+        # one legend for both panels
+        ax_full.legend(loc="upper right")
+
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
+
+    # ---------------------------------------------------------------
+    #  save & show
+    # ---------------------------------------------------------------
     if save:
-        plt.savefig(f'{path}ltuer_distributions.jpg', dpi=300)
-        plt.close()
-    else:
-        plt.show()
+        fig.savefig(f'{path}ltuer_distributions.jpg', dpi=300,
+                    bbox_inches="tight")
+    plt.show()
+
 
 
 ####################################################
@@ -718,12 +959,12 @@ def plot_cd_vs_td(res_dict, save = False, path = None):
     plt.legend(loc = 'upper right')
 
     plt.tight_layout()
+
     # Save the figure to the output folder
     if save:
-        plt.savefig(path + f'{path}cd_vs_td.png', dpi=300)
-        plt.close() 
-    else:
-        plt.show()
+        plt.savefig(f'{path}cd_vs_td.png', dpi=300)
+    plt.show()
+
 
 
 def sse_tbl(res_dict, obs):
@@ -784,15 +1025,13 @@ def plot_avg_wage_by_occupation(sim_results_dict, save=False, path=None):
         
         # Adjust layout
         plt.tight_layout()
+
         
         # Save or show
         if save:
-            if not path:
-                path = "./"
-            plt.savefig(f'{path.rstrip("/")}/avg_wage_by_occupation_{name}.jpg', dpi=300)
-            plt.close()
-        else:
-            plt.show()
+            plt.savefig(f'{path}avg_wage_by_occupation_{name}.jpg', dpi=300)
+        plt.show()
+
 
 ####################################################
 ############## TRANSITION RATES #####################
@@ -886,15 +1125,14 @@ def plot_trans_rates(mod_results_dict, observation, names, save=False, path=None
     
     # Adjust layout
     plt.tight_layout()
+
     
     # Save or show
     if save:
-        if not path:
-            path = "./"
-        plt.savefig(f'{path.rstrip("/")}/transition_rates_comparison.jpg', dpi=300)
-        plt.close()
-    else:
-        plt.show()
+        plt.savefig(f'{path}transition_rates_comparison.jpg', dpi=300)
+    plt.show()
+
+
 
 def plot_ltuer_comparison(sim_results_dict, observed_data, save=False, path=None):
     """
@@ -953,15 +1191,12 @@ def plot_ltuer_comparison(sim_results_dict, observed_data, save=False, path=None
                     fontsize=10)
     
     plt.tight_layout()
-    
+
     # Save or show
     if save:
-        if not path:
-            path = "./"
-        plt.savefig(f'{path.rstrip("/")}/ltuer_comparison.jpg', dpi=300)
-        plt.close()
-    else:
-        plt.show()
+        plt.savefig(f'{path}ltuer_comparison.jpg', dpi=300)
+    plt.show()
+            
 
 def plot_ltuer_difference_heatmap(sim_results_dict, observed_data, difference_type='absolute', save=False, path=None):
     """
@@ -1031,13 +1266,10 @@ def plot_ltuer_difference_heatmap(sim_results_dict, observed_data, difference_ty
     plt.xticks(rotation=45, ha='right')
     
     plt.tight_layout()
+
     
     # Save or show
     if save:
-        if not path:
-            path = "./"
-        plt.savefig(f'{path.rstrip("/")}/ltuer_difference_heatmap_{difference_type}.jpg', 
+        plt.savefig(f'{path}ltuer_difference_heatmap_{difference_type}.jpg', 
                    dpi=300, bbox_inches='tight')
-        plt.close()
-    else:
-        plt.show()
+    plt.show()

@@ -8,7 +8,9 @@ from collections import defaultdict
 import cProfile, pstats, io
 rng = np.random.default_rng()
 
-path = "~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/calibration_remote/"
+path = "~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/calibration_remote/data/"
+
+#########################################
 
 # Testing import works
 def test_fun():
@@ -30,11 +32,10 @@ def util(w_current, w_offered, skill_sim):
 #     #     apps = round(a_stable/((t_unemp)**2 + 1)) + 1
 #     return apps
 
-
 #### Dynamic Search Effort ######
 # Load the data
 
-app_effort = pd.read_csv("~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/data/behav_params/CPS_BLS_Supplement_18_22/app_probs_long.csv")
+app_effort = pd.read_csv(path + "app_probs_long.csv")
 
 # Helper function: Sample an integer from the bin's internal distribution
 def sample_within_bin(bin_label, expectation=False):
@@ -96,7 +97,8 @@ duration_to_prob_dict = dict(duration_to_prob_dict)
 
 apps = applications_sent(duration_months=1, duration_to_prob_dict=duration_to_prob_dict, expectation = True)
 
-print(f"Applications sent: {apps}")
+if __name__ == "__main__":
+    print(f"Applications sent: {apps}")
 
 def search_effort_alpha(t_unemp, bus_cy, disc, alpha):
     apps = 10
@@ -224,7 +226,33 @@ class occupation:
             e.ue_rel_wage = None
             e.ee_rel_wage = None
             e.apps_sent = 0
-        
+    
+    def entry_and_exit(occ, rate):
+        """ Function to handle entry and exit of workers in the economy """
+        # Take the top 2% of earners and assume they are new entrants
+        # Remove them from list_of_employed and move them to list_of_unemployed in the same occupation with the lowest wage in that occupation
+        occ.list_of_employed.sort(key=lambda x: x.wage, reverse=True)
+        emp_no = len(occ.list_of_employed)
+        if emp_no == 0:
+            new_wage = occ.wage
+        else:
+            bottom_10 = max(1, int(emp_no * 0.05))
+            new_wage = np.mean([wrkr.wage for wrkr in occ.list_of_employed[-bottom_10:]])
+        n_new = int(emp_no * rate)
+        new_workers = occ.list_of_employed[:n_new]
+        occ.list_of_employed = occ.list_of_employed[n_new:]
+
+        # Add new workers to the unemployed list with a wage of 0 and time unemployed of 0
+        for nw in new_workers:
+            nw.longterm_unemp = False
+            nw.time_unemployed = 0
+            nw.wage = new_wage
+            nw.hired = False
+            nw.ue_rel_wage = None
+            nw.ee_rel_wage = None
+            nw.apps_sent = 0
+            occ.list_of_unemployed.append(nw)
+
 class vac:
     def __init__(v, occupation_id, applicants, wage, filled, time_open):
         v.occupation_id = occupation_id
@@ -314,14 +342,13 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
             if np.random.rand() <= g_share:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
-                                                     wages[i,0], False, True, abs(int(np.random.normal(fem_ra,0.1))), 1, 1, 1))
+                                                     np.random.normal(wages[i,0], 0.05* wages[i,0]), False, True, abs(int(np.random.normal(fem_ra,0.1))), 1, 1, 1))
             else:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
-                                                     wages[i,0], False, False, abs(int(np.random.normal(male_ra,0.1))), 1, 1, 1))
-                
-                
-                
+                                                     np.random.normal(wages[i,0], 0.05* wages[i,0]), False, False, abs(int(np.random.normal(male_ra,0.1))), 1, 1, 1))
+
+
         occs.append(occ)
         ids += 1
     return occs, vac_list
