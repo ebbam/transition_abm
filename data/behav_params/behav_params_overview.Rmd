@@ -500,27 +500,46 @@ best_row <- aic_results %>% arrange(AIC) %>% slice(1)
 # Access the stored model object
 best_model <- best_row$mod_res[[1]]
 
-# Prediction data
-new_data <- data.frame(PRUNEDUR_MO = seq(
-  min(bea_temp$PRUNEDUR_MO, na.rm = TRUE),
-  max(bea_temp$PRUNEDUR_MO, na.rm = TRUE),
-  length.out = max(bea_temp$PRUNEDUR_MO, na.rm = TRUE) + 1
-))
+create_data <- function(length = NULL){
+  if(is.null(length)){
+    # Prediction data
+      dat <- data.frame(PRUNEDUR_MO = seq(
+        min(bea_temp$PRUNEDUR_MO, na.rm = TRUE),
+        max(bea_temp$PRUNEDUR_MO, na.rm = TRUE),
+        length.out = max(bea_temp$PRUNEDUR_MO, na.rm = TRUE) + 1
+    ))
+  }else{
+        # Prediction data
+      dat <- data.frame(PRUNEDUR_MO = seq(
+        min(bea_temp$PRUNEDUR_MO, na.rm = TRUE),
+        length,
+        length.out = length + 1))
+  }
+  
+  dat$PRUNEDUR_MO2 <- dat$PRUNEDUR_MO^2
+  
+  # Add average control values
+  for (var in control_vars) {
+    dat[[var]] <- mean(bea_temp[[var]], na.rm = TRUE)
+  }
+  
+  # Predict
+  probs <- predict(best_model, newdata = dat, type = "probs") 
+  
+  dat <- dat %>% 
+      select(PRUNEDUR_MO) %>%
+            bind_cols(as.data.frame(probs)) %>%
+            pivot_longer(cols = -PRUNEDUR_MO, names_to = "Category", values_to = "Probability") 
 
-new_data$PRUNEDUR_MO2 <- new_data$PRUNEDUR_MO^2
-
-# Add average control values
-for (var in control_vars) {
-  new_data[[var]] <- mean(bea_temp[[var]], na.rm = TRUE)
+  return(dat)
 }
 
-# Predict
-probs <- predict(best_model, newdata = new_data, type = "probs") 
+new_data <- create_data()
+new_data_long <- create_data(200)
 
-new_data <- new_data %>% 
-    select(PRUNEDUR_MO) %>%
-          bind_cols(as.data.frame(probs)) %>%
-          pivot_longer(cols = -PRUNEDUR_MO, names_to = "Category", values_to = "Probability") 
+identical(new_data, slice(new_data_long, 1:nrow(new_data)))
+all.equal(new_data, mutate(tibble(read.csv(here("data/behav_params/CPS_BLS_Supplement_18_22/app_probs.csv"))[,-1]), PRUNEDUR_MO = as.numeric(PRUNEDUR_MO)))
+
 
 limits_df <- new_data %>%
   group_by(Category) %>%
@@ -574,6 +593,9 @@ p2 <- new_data %>%
 # new_data %>% 
 #   write.csv(., here("data/behav_params/CPS_BLS_Supplement_18_22/app_probs.csv"))
 
+# new_data_long %>%
+#   write.csv(., here("data/behav_params/CPS_BLS_Supplement_18_22/app_probs_long.csv"))
+
 ```
 
 #### Validation: Mukoyama et al. Job Search and the Business Cycle
@@ -589,7 +611,7 @@ source(here("data/behav_params/Mukoyama_Replication/mukoyama_replication_analysi
 
 ### Reservation Wage Adjustment {.tabset}
 
-```{r, child = "cps_displaced_worker_supplement/cps_disc_worker_vignette.rmd"}
+```{r, child = "cps_displaced_worker_supplement/cps_disc_worker_vignette.Rmd"}
 ```
 
 ### OTJ Search {.tabset}
@@ -680,7 +702,7 @@ cross-sectional setting we are able to deduce some weak relationships
 between Unemployment Duration and Absolute Reservation Wages and Wage
 Expectations.*
 
-```{r, fig.height = 8, fig.width = 10, cache = TRUE}
+```{r, fig.height = 8, fig.width = 10}
 
 source(here("data/behav_params/SCE Labour Market Survey/sce_res_wage_analysis.R"))
 
