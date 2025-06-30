@@ -913,7 +913,7 @@ def plot_occupation_uer_grid(sim_results, observation, save=False, path=None):
 
     plt.tight_layout(rect=[0, 0, 1, 0.97])
     if save:
-        fig1.savefig(f'{path} occupation_uer_grid.png', dpi=300)
+        fig1.savefig(f'{path}occupation_uer_grid.png', dpi=300)
         fig2.savefig(f'{path}occupation_ltuer_grid.png', dpi=300)
     plt.show()
    
