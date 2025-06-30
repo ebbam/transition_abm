@@ -75,7 +75,7 @@ def run_single_local( #behav_spec,
         emp_seekers = 0
         unemp_seekers = 0
         u_apps = 0
-        u_searchers = 0
+        #u_searchers = 0
         
         for occ in net:
             # Exit and entry
@@ -110,13 +110,15 @@ def run_single_local( #behav_spec,
                     e.emp_search_and_apply(net, r_vacs, disc)
 
             u_apps += sum(wrkr.apps_sent for wrkr in occ.list_of_unemployed if  wrkr.apps_sent is not None)
-            u_searchers += len(occ.list_of_unemployed)
+            #u_searchers += len(occ.list_of_unemployed)
 
             ### SEPARATIONS
             try:
                 occ.separate_workers(d_u, gamma_u, curr_bus_cy)
             except Exception as e:
                 return np.inf
+                    
+        seekers_rec.append([t+1, unemp_seekers, u_apps])
 
 
         ### HIRING
@@ -192,8 +194,6 @@ def run_single_local( #behav_spec,
                 # record = np.append(record, 
                 #                         np.array([[t+1, occ.occupation_id, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, curr_demand, t_demand, emp_seekers, unemp_seekers]]), 
                 #                         axis = 0)
-            
-        seekers_rec.append([t+1, unemp_seekers, u_apps])
 
 
         if simple_res:
@@ -215,14 +215,14 @@ def run_single_local( #behav_spec,
 
             data = {'UER': grouped['UER'], 'VACRATE': grouped['VACRATE']}
 
-            seekers_rec = pd.DataFrame(seekers_rec, columns=['Time Step', 'Unemployed Seekers', 'Applications Sent'])
-            seekers_rec = seekers_rec[seekers_rec['Time Step'] > delay]
-
     if simple_res:
         data = {'UER': np.array(record[delay:,2]/record[delay:,3]), 
             'VACRATE': np.array(record[delay:,4]/(record[delay:,4] + record[delay:,1]))}
         return data
     else:
+
+        seekers_rec = pd.DataFrame(seekers_rec, columns=['Time Step', 'Unemployed Seekers', 'Applications Sent'])
+        seekers_rec = seekers_rec[seekers_rec['Time Step'] > delay]
         return record_df, grouped, net, data, seekers_rec
 
 #########################################

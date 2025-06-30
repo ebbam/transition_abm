@@ -159,205 +159,6 @@ def plot_bev_curve(res_dict, macro_obs, sep_strings=None, sep=False, save=False,
     plt.show()
 
 
-####################################################
-############## OCC-SPECIFIC LTUER ##################
-####################################################
-
-def plot_occupation_uer(sim_results_dict, observations, save=False, path=None):
-    """
-    Creates scatterplots of mean LTUER by occupation for each element in the dictionary.
-    
-    Parameters:
-    - sim_results_dict: Dictionary containing simulation results DataFrames
-    - save: Boolean indicating whether to save the plots
-    - path: Path to save the plots if save=True
-    """
-    # First, calculate global y-axis limits
-    all_uer_rates = []
-    all_ltuer_rates = []
-    for sim_results in sim_results_dict.values():
-        occ_data = sim_results.loc[:, ['Time Step', 'Occupation', 'acs_occ_code', 'Workers', 'Unemployment', 'LT Unemployed Persons']]
-        occ_data['UE Rate'] = occ_data['Unemployment'] / occ_data['Workers']
-        occ_data['LTUE Rate'] = occ_data['LT Unemployed Persons'] / occ_data['Unemployment']
-        mean_uer = occ_data.groupby('acs_occ_code')['UE Rate'].mean()
-        mean_ltuer = occ_data.groupby('acs_occ_code')['LTUE Rate'].mean()
-        all_uer_rates.extend(mean_uer.values)
-        all_ltuer_rates.extend(mean_ltuer.values)
-    
-    # Add some padding to the y-axis limits
-    y_min = min(all_uer_rates) * 0.95  # 5% padding below
-    y_max = max(all_uer_rates) * 1.05  # 5% padding above
-    
-    for name, sim_results in sim_results_dict.items():
-        # Extract occupation-specific data
-        temp_data = sim_results.loc[:, ['Time Step', 'Occupation', 'acs_occ_code', 'Workers', 'Unemployment', 'LT Unemployed Persons']]    
-        # Add occupational codes for merging/averaging  
-        temp_data = temp_data.merge(observations, left_on='acs_occ_code', right_on = "acs_occ_code", how='left')
-        for name_k, k in {'acs_occ_code': 'uer_occ', 
-                        'SOC2010_adj': 'uer_soc2010', 
-                        'SOC_major_adj': 'uer_soc_major', 
-                        'SOC_minor_adj': 'uer_soc_minor', 
-                        'SOC_broad_adj': 'uer_soc_broad'
-                        }.items():
-            # Calculate LTUER for each occupation at each time step
-            plot_df = temp_data.groupby([name_k, 'Time Step'])[['LT Unemployed Persons', 'Unemployment', 'Workers']].sum().reset_index()
-            plot_df['UE Rate'] = plot_df['Unemployment'] / plot_df['Workers']
-            plot_df['LTUE Rate'] = plot_df['LT Unemployed Persons'] / plot_df['Unemployment']
-
-            # Calculate mean LTUER for each occupation
-            mean_ltuer = plot_df.groupby(name_k)['LTUE Rate'].mean().reset_index()
-            mean_ltuer = mean_ltuer.merge(observations, left_on=name_k, right_on = name_k, how='left')
-            mean_uer = plot_df.groupby(name_k)['UE Rate'].mean().reset_index()
-            mean_uer = mean_uer.merge(observations, left_on=name_k, right_on = name_k, how='left')
-            
-            # Sort occupations by mean LTUER and create ordered x-axis positions
-            mean_ltuer = mean_ltuer.sort_values('LTUE Rate')
-            mean_uer = mean_uer.sort_values('UE Rate')
-            mean_uer['x_pos'] = range(len(mean_uer))
-            # Create the scatterplot
-            plt.figure(figsize=(12, 6))
-            sns.scatterplot(data=mean_uer, x='x_pos', y='UE Rate', s=50)
-            sns.scatterplot(data=mean_uer, x='x_pos', y='uer_occ', s=50)
-        
-            # Customize the plot
-            plt.title(f'Mean Unemployment Rate by Occupation ({name}; {name_k})', fontweight='bold')
-            plt.xlabel('Occupation (ordered by mean UER)')
-            plt.ylabel('Mean Unemployment Rate')
-            
-            # Set x-axis ticks to show occupation IDs in the sorted order
-            plt.xticks(mean_uer['x_pos'], mean_uer['acs_occ_code'], rotation=45, ha='right')
-            
-            # Set consistent y-axis limits
-            plt.ylim(y_min, 0.5)
-            
-            # Adjust layout
-            plt.tight_layout()
-
-        # Save or show
-
-    if save:
-        plt.savefig(f'{path}occ_ltuer.jpg', dpi=300)
-    plt.show()
-
-
-def plot_occupation_uer_new(sim_results_dict, observations,
-                        occ_levels=None, save=False, path="occ_ltuer.jpg"):
-
-    # ------------------------------------------------------------------
-    # 0.  Which occupational granularities do you want in the rows?
-    # ------------------------------------------------------------------
-    if occ_levels is None:          # default: your five levels
-        occ_levels = {
-            "acs_occ_code":   "uer_occ",
-            "SOC2010_adj":    "uer_soc2010",
-            "SOC_major_adj":  "uer_soc_major",
-            "SOC_minor_adj":  "uer_soc_minor",
-            "SOC_broad_adj":  "uer_soc_broad"
-        }
-
-    n_rows  = len(occ_levels)
-    n_cols  = len(sim_results_dict)
-
-    # ------------------------------------------------------------------
-    # 1.  Compute global y-axis range (so all panels share the same scale)
-    # ------------------------------------------------------------------
-    all_sim_rates = []
-
-    for sim_results in sim_results_dict.values():
-        tmp = sim_results[["Unemployment", "Workers"]].copy()
-        tmp["UE Rate"] = tmp["Unemployment"] / tmp["Workers"]
-        all_sim_rates.extend(tmp["UE Rate"].values)
-
-    y_min = 0.95 * np.nanmin(all_sim_rates)
-    y_max = 1.05 * np.nanmax(all_sim_rates)
-
-    # ------------------------------------------------------------------
-    # 2.  Set up the subplot grid
-    # ------------------------------------------------------------------
-    fig, axes = plt.subplots(
-        n_rows, n_cols,
-        figsize=(4 * n_cols, 3.5 * n_rows),
-        sharey="row"
-    )
-
-    if n_rows == 1:       # keep indexing simple even for 1×N or N×1
-        axes = np.array([axes])
-    if n_cols == 1:
-        axes = axes[:, np.newaxis]
-
-    # ------------------------------------------------------------------
-    # 3.  Loop over models (columns) and occ levels (rows)
-    # ------------------------------------------------------------------
-    for col, (model_name, sim_results) in enumerate(sim_results_dict.items()):
-        # common pre-processing once per model
-        base = sim_results.merge(observations, on="acs_occ_code", how="left")
-
-        # add unemployment-rate columns once
-        base["UE Rate"] = base["Unemployment"] / base["Workers"]
-
-        for row, (occ_col, obs_col) in enumerate(occ_levels.items()):
-            ax = axes[row, col]
-
-            # aggregate at the chosen occupational resolution
-            g = (
-                base
-                .groupby([occ_col, "Time Step"])
-                [["Unemployment", "Workers"]]
-                .sum()
-                .reset_index()
-            )
-            g["UE Rate"] = g["Unemployment"] / g["Workers"]
-
-            # simulation mean by occupation
-            sim_mean = (
-                g.groupby(occ_col)["UE Rate"]
-                .mean()
-                .reset_index()
-                .rename(columns={"UE Rate": "sim_rate"})
-            )
-
-            # merge observed rate for same occupation level
-            sim_vs_obs = sim_mean.merge(
-                observations[[occ_col, obs_col]],
-                on=occ_col,
-                how="left"
-            ).dropna()
-
-            # x-axis position just for ordering; could also sort by obs
-            sim_vs_obs = sim_vs_obs.sort_values(obs_col).reset_index(drop=True)
-            sim_vs_obs["xpos"] = sim_vs_obs.index
-
-            # ----------------------------------------------------------
-            # scatter-plot: observed (x) vs simulated (y)
-            # ----------------------------------------------------------
-            sns.scatterplot(
-                data=sim_vs_obs,
-                x=obs_col, y="sim_rate",
-                s=40, ax=ax
-            )
-
-            # aesthetics
-            ax.set_ylim(y_min, y_max)
-            if row == n_rows - 1:               # bottom row
-                ax.set_xlabel("Observed UE rate")
-            else:
-                ax.set_xlabel("")
-                ax.tick_params(labelbottom=False)
-
-            if col == 0:                        # first column
-                ax.set_ylabel(f"Simulated UE rate\n({occ_col})")
-            else:
-                ax.set_ylabel("")
-
-            if row == 0:                        # titles only on top row
-                ax.set_title(model_name, fontweight="bold")
-
-    plt.tight_layout()
-    plt.show()
-
-    if save:
-        fig.savefig(path, dpi=300, bbox_inches="tight")
-
 
 ####################################################
 ############## AVERAGE WAGE BY OCCUPATION ##########
@@ -396,120 +197,12 @@ def plot_avg_wages(mod_results_dict, save=False, path=None):
         plt.savefig(f'{path}avg_wage_overall.jpg', dpi=300)
         
     plt.show()
-    
-
-
-
-def plot_occupation_ltuer_newnew(sim_results_dict,
-                          observations,
-                          occ_levels=None,
-                          save=False,
-                          path="occ_ltuer_grid.png"):
-
-    # ---------------------------------------------------------------
-    # 0.  Which “rows” (occupation variables) do you want?
-    # ---------------------------------------------------------------
-    if occ_levels is None:
-        occ_levels = [
-            "acs_occ_code",
-            "SOC2010_adj",
-            "SOC_major_adj",
-            "SOC_minor_adj",
-            "SOC_broad_adj"
-        ]
-
-    n_rows = len(occ_levels)
-    n_cols = len(sim_results_dict)
-
-    # ---------------------------------------------------------------
-    # 1.  Get global y-axis range (so every panel shares a scale)
-    # ---------------------------------------------------------------
-    ltuer_vals = []
-    for df in sim_results_dict.values():
-        ltuer_vals.append((df["LT Unemployed Persons"] / df["Unemployment"]).values)
-    ltuer_vals = np.concatenate(ltuer_vals)
-    y_min, y_max = 0, np.nanmax(ltuer_vals) * 1.05   # padding at top
-
-    # ---------------------------------------------------------------
-    # 2.  Create subplot grid
-    # ---------------------------------------------------------------
-    fig, axes = plt.subplots(
-        n_rows, n_cols,
-        figsize=(4.2 * n_cols, 2.8 * n_rows),
-        sharey="row"
-    )
-    axes = np.atleast_2d(axes)          # ensures 2-D indexing even if 1 row/col
-
-    # ---------------------------------------------------------------
-    # 3.  Populate grid: rows = occ var, cols = models
-    # ---------------------------------------------------------------
-    for col, (model_name, sim_df) in enumerate(sim_results_dict.items()):
-
-        # merge observations once so they are available for all occ levels
-        base = sim_df.merge(observations, on="acs_occ_code", how="left")
-
-        # add UE + LTUER columns once
-        base["UE Rate"]   = base["Unemployment"] / base["Workers"]
-        base["LTUE Rate"] = base["LT Unemployed Persons"] / base["Unemployment"]
-
-        for row, occ_var in enumerate(occ_levels):
-            ax = axes[row, col]
-
-            # aggregate to chosen occupation level, then take time-average
-            agg = (
-                base.groupby([occ_var, "Time Step"])
-                [["LT Unemployed Persons", "Unemployment"]]
-                .sum()
-                .reset_index()
-            )
-            agg["LTUE Rate"] = agg["LT Unemployed Persons"] / agg["Unemployment"]
-
-            mean_ltuer = (
-                agg.groupby(occ_var)["LTUE Rate"]
-                .mean()
-                .reset_index()
-                .sort_values("LTUE Rate")
-            )
-            mean_ltuer["xpos"] = range(len(mean_ltuer))
-
-            # plot
-            sns.scatterplot(
-                data=mean_ltuer,
-                x="xpos",
-                y="LTUE Rate",
-                s=30,
-                ax=ax
-            )
-
-            # axis formatting
-            ax.set_ylim(y_min, y_max)
-
-            # x-tick labels = occupation codes
-            ax.set_xticks(mean_ltuer["xpos"])
-            ax.set_xticklabels(mean_ltuer[occ_var], rotation=90, fontsize=6)
-
-            # titles and labels only where needed
-            if row == 0:
-                ax.set_title(model_name, fontweight="bold")
-            if col == 0:
-                ax.set_ylabel(f"Mean LTUER\n({occ_var})")
-            else:
-                ax.set_ylabel("")
-            ax.set_xlabel("")     # we keep the codes as tick labels
-
-    plt.tight_layout()
-
-    if save:
-        fig.savefig(path, dpi=300, bbox_inches="tight")
-    
-    plt.show()
-    
 
 
 ####################################################
 ############## RELATIVE WAGES ##########
 ####################################################
-def plot_rel_wages(mod_results_dict, names, save=False, path=None):
+def plot_rel_wages(mod_results_dict, names, save=False, path=None, freq = 'Y'):
     """
     Creates plots of relative wages with annual smoothing:
     - Left: Unemployed relative wages
@@ -528,8 +221,11 @@ def plot_rel_wages(mod_results_dict, names, save=False, path=None):
     
     for i, (name, res) in enumerate(mod_results_dict.items()):
         # Resample to annual frequency
-        annual_data = res.set_index('DATE').resample('Y').mean()
-        
+        if freq != 'M':
+            annual_data = res.set_index('DATE').resample(freq).mean()
+        else:
+            annual_data = res
+
         # Create arrays for x-axis values
         dates_array = np.array([d for d in annual_data.index])
         ones_array = np.ones_like(dates_array)
@@ -1133,70 +829,94 @@ def plot_trans_rates(mod_results_dict, observation, names, save=False, path=None
     plt.show()
 
 
-
-def plot_ltuer_comparison(sim_results_dict, observed_data, save=False, path=None):
+####################################################
+############## OCC-SPECIFIC LTUER ##################
+####################################################
+         
+def plot_occupation_uer_grid(sim_results, observation, save=False, output_path=None):
     """
-    Creates a scatter plot comparing simulated vs observed LTUER values by occupation.
+    Creates a grid of scatter plots comparing simulated vs observed UER and LTUER values by occupation.
     
     Parameters:
-    - sim_results_dict: Dictionary containing simulation results DataFrames
-    - observed_data: DataFrame containing observed LTUER values by occupation
+    - sim_results: Dictionary containing simulation results DataFrames
+    - observation: DataFrame containing observed UER and LTUER values by occupation
     - save: Boolean indicating whether to save the plots
     - path: Path to save the plots if save=True
     """
-    colors = ["orange", "blue", "green", "red", "purple", "brown", "pink", "gray", "olive", "cyan"]
-    
-    # Create figure
-    plt.figure(figsize=(10, 8))
-    
-    # Plot perfect fit line
-    max_val = max(observed_data['LTUER'].max(), 
-                 max(sim_results_dict.values(), key=lambda x: x['LTUE Rate'].max())['LTUE Rate'].max())
-    plt.plot([0, max_val], [0, max_val], 'k--', alpha=0.5, label='Perfect Fit')
-    
-    # Plot each model's results
-    for i, (name, sim_results) in enumerate(sim_results_dict.items()):
-        # Calculate mean LTUER for each occupation
-        occ_data = sim_results.loc[:, ['Time Step', 'Occupation', 'Workers', 'LT Unemployed Persons']]
-        occ_data['LTUE Rate'] = occ_data['LT Unemployed Persons'] / occ_data['Workers']
-        mean_ltuer = occ_data.groupby('Occupation')['LTUE Rate'].mean()
-        
-        # Plot scatter points
-        plt.scatter(observed_data['LTUER'], mean_ltuer, 
-                   color=colors[i], label=name, alpha=0.7)
-        
-        # Add occupation labels
-        for occ, (obs_val, sim_val) in enumerate(zip(observed_data['LTUER'], mean_ltuer)):
-            plt.annotate(f'O{occ+1}', 
-                        (obs_val, sim_val),
-                        xytext=(5, 5), textcoords='offset points',
-                        fontsize=8)
-    
-    # Customize plot
-    plt.title('Simulated vs Observed LTUER by Occupation', fontweight='bold')
-    plt.xlabel('Observed LTUER')
-    plt.ylabel('Simulated LTUER')
-    plt.legend()
-    
-    # Add R² value
-    # Note: This is a simple implementation - you might want to calculate R² for each model separately
-    for i, (name, sim_results) in enumerate(sim_results_dict.items()):
-        occ_data = sim_results.loc[:, ['Time Step', 'Occupation', 'Workers', 'LT Unemployed Persons']]
-        occ_data['LTUE Rate'] = occ_data['LT Unemployed Persons'] / occ_data['Workers']
-        mean_ltuer = occ_data.groupby('Occupation')['LTUE Rate'].mean()
-        slope, intercept, r_value, p_value, std_err = stats.linregress(observed_data['LTUER'], mean_ltuer)
-        plt.annotate(f'{name} R² = {r_value**2:.3f}',
-                    xy=(0.05, 0.95 - i*0.05),
-                    xycoords='axes fraction',
-                    fontsize=10)
-    
-    plt.tight_layout()
+    # Define aggregation levels and corresponding observed columns
+    agg_levels = {
+        'SOC2010_adj': ('uer_soc2010', 'ltuer_soc2010'), 
+        'SOC_broad_adj': ('uer_soc_broad', 'ltuer_soc_broad'),
+        'SOC_minor_adj': ('uer_soc_minor', 'ltuer_soc_minor'), 
+    'SOC_major_adj': ('uer_soc_major', 'ltuer_soc_major')
+    }
 
-    # Save or show
-    if save:
-        plt.savefig(f'{path}ltuer_comparison.jpg', dpi=300)
-    plt.show()
+    model_names = list(sim_results.keys())
+    num_rows = len(agg_levels)
+    num_cols = len(model_names)
+
+
+    # ----------- Plot 1: UER ---------------
+    fig1, axes1 = plt.subplots(num_rows, num_cols, figsize=(5*num_cols, 4*num_rows), sharex=False, sharey=False)
+    fig1.suptitle("Unemployment Rate (UER): Simulated vs Observed (Sorted by Observed UER)", fontsize=16)
+
+    # ----------- Plot 2: LTUER ---------------
+    fig2, axes2 = plt.subplots(num_rows, num_cols, figsize=(5*num_cols, 4*num_rows), sharex=False, sharey=False)
+    fig2.suptitle("Long-Term Unemployment Rate (LTUER): Simulated vs Observed (Sorted by Observed LTUER)", fontsize=16)
+
+    for col_idx, (model_name, sims) in enumerate(sim_results.items()):
+        for row_idx, (name_k, (k_uer, k_ltuer)) in enumerate(agg_levels.items()):
             
+            temp_codes = observation.loc[:, ['acs_occ_code', name_k, k_uer, k_ltuer]]
+            occ_data = sims.loc[:, ['Time Step', 'Occupation', 'acs_occ_code', 'Workers', 'Unemployment', 'LT Unemployed Persons']]
+            occ_data = occ_data.merge(temp_codes, on='acs_occ_code', how='left')
+            
+            # Group and calculate metrics
+            occ_data = occ_data.groupby([name_k, 'Time Step']).sum().reset_index()
+            occ_data['UER'] = occ_data['Unemployment'] / occ_data['Workers']
+            occ_data['LTUE Rate'] = occ_data['LT Unemployed Persons'] / occ_data['Unemployment']
+            
+            mean_occ_data = occ_data.groupby(name_k)[['UER', 'LTUE Rate']].mean().reset_index()
+            obs_values = observation.loc[:, [name_k, k_uer, k_ltuer]].drop_duplicates(subset=[name_k])
+            mean_occ_data = mean_occ_data.merge(obs_values, on=name_k, how='left')
+
+            # -------- UER Plot (sorted by observed UER) --------
+            mean_occ_data_uer = mean_occ_data.sort_values(by=k_uer)
+            
+            ax1 = axes1[row_idx, col_idx]
+            ax1.scatter(mean_occ_data_uer[name_k], mean_occ_data_uer['UER'], color='blue', label='Simulated', alpha=0.7)
+            ax1.scatter(mean_occ_data_uer[name_k], mean_occ_data_uer[k_uer], color='orange', label='Observed', alpha=0.7, marker='X')
+            ax1.set_title(f"{model_name} - {name_k}")
+            if row_idx == num_rows - 1:
+                ax1.set_xlabel(name_k)
+            if col_idx == 0:
+                ax1.set_ylabel('UER')
+            ax1.tick_params(axis='x', rotation=45)
+            ax1.set_ylim(0, 0.3) 
+
+            # -------- LTUER Plot (sorted by observed LTUER) --------
+            mean_occ_data_ltuer = mean_occ_data.sort_values(by=k_ltuer)
+            ax2 = axes2[row_idx, col_idx]
+            ax2.scatter(mean_occ_data_ltuer[name_k], mean_occ_data_ltuer['LTUE Rate'], color='blue', label='Simulated', alpha=0.7)
+            ax2.scatter(mean_occ_data_ltuer[name_k], mean_occ_data_ltuer[k_ltuer], color='darkorange', label='Observed', alpha=0.7, marker="X")
+            ax2.set_title(f"{model_name} - {name_k}")
+            if row_idx == num_rows - 1:
+                ax2.set_xlabel(name_k)
+            if col_idx == 0:
+                ax2.set_ylabel('LTUE Rate')
+            ax2.tick_params(axis='x', rotation=45)
+            ax2.set_ylim(0, 1) 
+
+    # Add legends once
+    axes1[0, 0].legend()
+    axes2[0, 0].legend()
+
+    plt.tight_layout(rect=[0, 0, 1, 0.97])
+    if save:
+        fig1.savefig(os.path.join(output_path, "occupation_uer_grid.png"), dpi=300)
+        fig2.savefig(os.path.join(output_path, "occupation_ltuer_grid.png"), dpi=300)
+    plt.show()
+   
 
 def plot_ltuer_difference_heatmap(sim_results_dict, observed_data, difference_type='absolute', save=False, path=None):
     """
@@ -1213,17 +933,17 @@ def plot_ltuer_difference_heatmap(sim_results_dict, observed_data, difference_ty
     differences = {}
     for name, sim_results in sim_results_dict.items():
         # Calculate mean LTUER for each occupation
-        occ_data = sim_results.loc[:, ['Time Step', 'Occupation', 'Workers', 'LT Unemployed Persons']]
-        occ_data['LTUE Rate'] = occ_data['LT Unemployed Persons'] / occ_data['Workers']
+        occ_data = sim_results.loc[:, ['Time Step', 'Occupation', 'Workers', 'Unemployment', 'LT Unemployed Persons']]
+        occ_data['LTUE Rate'] = occ_data['LT Unemployed Persons'] / occ_data['Unemployment']
         mean_ltuer = occ_data.groupby('Occupation')['LTUE Rate'].mean()
         
         if difference_type == 'absolute':
             # Calculate absolute differences
-            diff = mean_ltuer - observed_data['LTUER'].values
+            diff = mean_ltuer - observed_data['ltuer_occ'].values
         else:
             # Calculate percentage differences
-            diff = ((mean_ltuer - observed_data['LTUER'].values) / observed_data['LTUER'].values) * 100
-        
+            diff = ((mean_ltuer - observed_data['ltuer_occ'].values) / observed_data['ltue_occ'].values) * 100
+
         differences[name] = diff
     
     # Create DataFrame for heatmap

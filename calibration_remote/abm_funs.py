@@ -111,8 +111,6 @@ def search_effort_alpha(t_unemp, bus_cy, disc, alpha):
 # Alternative search effort function that is dictated by the time series of a business cycle
 def search_effort_ts(t_unemp, se):
     apps = max(0, round(10 - 100*(1-se)))
-    # if discouraged:
-    #     apps = round(a_stable/((t_unemp)**2 + 1)) + 1
     return apps
 
 ## Defining classes
@@ -148,8 +146,6 @@ class worker:
     
     def search_and_apply(wrkr, net, vac_list, disc, bus_cy, alpha, app_effort):
         # A sample of relevant vacancies are found that are in neighboring occupations
-        # Will need to add a qualifier in case sample is greater than available relevant vacancies
-        # ^^ have added qualifier...bad form to reassign list?
         # Select different random sample of "relevant" vacancies found by each worker
         found_vacs = random.sample(vac_list, min(len(vac_list), 30))
         if disc:
@@ -215,7 +211,7 @@ class occupation:
         for w in occ.list_of_unemployed:
             w.time_unemployed += 1
             # Chosen 12 months - can be modified
-            w.longterm_unemp = True if w.time_unemployed >= 5 else False
+            w.longterm_unemp = True if w.time_unemployed >= 6 else False
             w.ue_rel_wage = None
             w.ee_rel_wage = None
             w.hired = False
