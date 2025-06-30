@@ -57,9 +57,9 @@ library(sampleSelection)
 
 ```
 
-#### Data cleaning
+## Data cleaning
 
-Feel free to ignore this code chunk immediately below.
+Feel free to ignore this code chunk immediately below - included for now for transparency in case you spot issues. 
 I include it for your info on binning and outlier trimming.
 
 ```{r, warning = FALSE}
@@ -90,13 +90,13 @@ filter(dwhrswkc != 99 & dwwksun <= 160) %>%
          # dwwage_rec_l = ifelse(is.na(dwagel) & !is.na(dweekl) ~ dwweekl),
          # dwweekc = ifelse(round(dwweekc) == 10000, NA, dwweekc),
          # Binning educational categories
-         educ_cat = case_when(educ %in% c(1) ~ NA, # (NIU)
+         educ_cat = factor(case_when(educ %in% c(1) ~ NA, # (NIU)
                               educ > 1 & educ <= 71 ~ "Less than HS", # Includes "None" - Grade 12 no diploma (8 subcategories (grade 1-11 etc))
                               educ %in% c(73, 81) ~ "HS Diploma", # Includes "High school Diploma or equivalent" and "some college, but no degree"
                               educ %in% c(91, 92) ~ "Associate's", # Include "[Associate's degree, occupational/vocational program]" and "Associate's         [Associate's degree, academic program]"
                               educ %in% c(111) ~ "Bachelor's", # Bachelor's degree
                               educ > 111 ~ "Postgraduate Degree" # Includes Master's, Professional School, and Doctorate degree
-                              ),
+                              ), , levels = c("Less than HS", "HS Diploma", "Associate's", "Bachelor's", "Postgraduate Degree")),
          # Marital status to binary indicator
          marst = case_when(marst == 1 ~ 1, # Married with a present spouse
                            # Might consider dividing this differently
@@ -127,6 +127,8 @@ filter(dwhrswkc != 99 & dwwksun <= 160) %>%
                                           TRUE ~ rowMeans(across(c(ratio_wage, ratio_weekly)), na.rm = TRUE)), 
          # Create monthly unemployment duration for continuous
          dwmosun = floor(dwwksun/4),
+         dwmosun2 = dwmosun^2,
+         dwmosun3 = dwmosun^3,
          # Unemployment duration (reported as time between lost job and start of next job)
          # I bin in...
          # monthly intervals (4 weeks) from 1-6 months
@@ -178,9 +180,9 @@ filter(dwhrswkc != 99 & dwwksun <= 160) %>%
 
 ```
 
-#### Descriptives
+# Descriptives
 
-All descriptives below us the us the Displaced Worker Sample Weights.
+All descriptives below use the Displaced Worker Sample Weights.
 
 Histogram: sample is skewed (see reweighting alternatives at end of document).
 
@@ -325,7 +327,7 @@ spline <- df %>%
 
 ```
 
-#### Regressions (non-uniform sample) {.tabset}
+# Regressions (non-uniform sample) {.tabset}
 
 Next, (ignoring for now the non-uniformity of the sample ie. that there are less observations present for higher unemployment durations) I run the following regression (with various modifications to sample and control variables).
 $W_{i} = \alpha_{i} + \beta_{1} d_{i} + \beta_{2}UI_{i} + \beta_{3}X_{i} + \epsilon_{i}$
@@ -361,6 +363,9 @@ controls <- " + female + age + white + black + mixed + marst + educ_cat"
 reg_forms <- c("Cont." = "dwmosun",
                "Cont. w. UI" = "dwmosun + dwben",
                "Cont. w. exhausted UI" = "dwmosun + dwexben",
+               "Cont. Sq" = "dwmosun + dwmosun2 ",
+               "Cont. Sq w. UI" = "dwmosun + dwmosun2 + dwben",
+               "Cont. Sq w. exhausted UI" = "dwmosun + dwmosun2 + dwexben",
                "Disc." = "dwwksun_bin",
                "Disc. w. UI" = "dwwksun_bin + dwben",
                "Disc. w. exhausted UI" = "dwwksun_bin + dwexben")
@@ -478,22 +483,52 @@ mod_list2[['Cont. w. UI w. controls (clipped)']] %>%
 
 ```
 
-##### Continuous UE Duration {.tabset}
+## Continuous UE Duration {.tabset}
 
 Continuous UE duration treatment is reported in monthly values.
 A one-unit increase in the treatment variable = 1 additional month of unemployment.
 
-\begin{landscape}
-
-###### W.O. Wage Level Control
+### W.O. Wage Level Control
 
 ```{r, echo = FALSE}
 
 output_pretty(mod_list[grepl("Cont", names(mod_list))], highlightrows = 3, title = "Continuous UE Duration w.o Wage Level Control")
 
+lm1 <- lm(ratio_wage ~ dwmosun + female + age + white + black + mixed + marst + educ_cat, data = df, weights = dwsuppwt)
+lm2 <- lm(ratio_wage ~ dwmosun + dwmosun2 + female + age + white + black + mixed + marst + educ_cat, data = df, weights = dwsuppwt)
+lm3 <- lm(ratio_wage ~ dwmosun + dwmosun2 + dwmosun3 + female + age + white + black + mixed + marst + educ_cat, data = df, weights = dwsuppwt)
+
+lm_preds  <- as.data.frame(predict(lm1,  newdata = newdata, interval = "confidence")) %>% rename_with(~paste0("lm_preds_",.))
+lm_preds2 <- as.data.frame(predict(lm2, newdata = newdata, interval = "confidence")) %>% rename_with(~paste0("lm_preds2_",.))
+lm_preds3 <- as.data.frame(predict(lm3, newdata = newdata, interval = "confidence")) %>% rename_with(~paste0("lm_preds3_",.))
+
+lm_full <- cbind(lm_preds, lm_preds2, lm_preds3)
+
+lm_full %>% 
+  ggplot(aes(x = 0:(nrow(lm_full)-1))) +
+    # Model 1
+    geom_line(aes(y = lm_preds_fit), color = "blue", linewidth = 1) +
+    geom_ribbon(aes(ymin = lm_preds_lwr, ymax = lm_preds_upr), fill = "blue", alpha = 0.2) +
+  
+    # Model 2
+    geom_line(aes(y = lm_preds2_fit), color = "darkgreen", linewidth = 1) +
+    geom_ribbon(aes(ymin = lm_preds2_lwr, ymax = lm_preds2_upr), fill = "darkgreen", alpha = 0.2) +
+  
+    # Model 3
+    geom_line(aes(y = lm_preds3_fit), color = "firebrick", linewidth = 1) +
+    geom_ribbon(aes(ymin = lm_preds3_lwr, ymax = lm_preds3_upr), fill = "firebrick", alpha = 0.2) +
+  
+    labs(
+      title = "Predicted Wage Ratios by Unemployment Duration",
+      subtitle = "From non-reweighted regressions: linear, quadratic, and cubic specifications",
+      x = "Unemployment Duration (months)",
+      y = "Predicted Wage Ratio"
+    ) +
+    theme_minimal()
+
 ```
 
-###### W. Wage Level Control
+### W. Wage Level Control
 
 ```{r, echo = FALSE}
 
@@ -501,11 +536,11 @@ output_pretty(mod_list2[grepl("Cont", names(mod_list))], highlightrows = c(3,5),
 
 ```
 
-##### Binned UE Duration {.tabset}
+## Binned UE Duration {.tabset}
 
 Binned UE duration treatment is reported in bins as indicated in the box plots and code cleaning above.
 
-###### W.O. Wage Level Control
+### W.O. Wage Level Control
 
 ```{r, echo = FALSE}
 
@@ -513,7 +548,7 @@ output_pretty(mod_list[grepl("Disc", names(mod_list))], highlightrows = 3, title
 
 ```
 
-###### W. Wage Level Control
+### W. Wage Level Control
 
 ```{r, echo = FALSE}
 
@@ -521,9 +556,7 @@ output_pretty(mod_list2[grepl("Disc", names(mod_list))], highlightrows = c(3,5),
 
 ```
 
-\end{landscape}
-
-#### Additional Considerations {.tabset}
+## Additional Considerations {.tabset}
 
 Below I:
 
@@ -531,7 +564,7 @@ Below I:
 2.  Histogram of an additional explanatory variable that might be interesting - the tenure of the lost job. How long (in years) did the individual hold the job they lost.
 3.  Additionally, I show some rough graphs/figures about the sample population (age, education, gender, wage distributions). I am still working on an occupational distribution graph to understand the "skills"/occupational distribution of the sample.
 
-##### Selection Issues with Non-Random Sample {.tabset}
+### Selection Issues with Non-Random Sample {.tabset}
 
 NOTE: Skip ahead to "Regression Results with Sample Reweighting for Regression Results if you don't wish to look at the reweighting details below.
 
@@ -541,8 +574,26 @@ Again, I include the code below (apologies for verbose output), mainly because I
 Open to suggestions and corrections :)
 
 **Conclusion:** With this implementation (which may very well be wrong for now!), the coefficients on unemployment duration remain stable.
+```{r}
+# Dataframe needed for predictions
 
-###### Entropy Balancing
+newdata <- data.frame(
+  dwmosun = seq(0, 36, by = 1),  # months of unemployment
+  female = as.logical(round(mean(df$female))),                   # male
+  age = median(df$age, na.rm = TRUE),
+  white = as.logical(round(mean(df$white))),
+  black = as.logical(round(mean(df$black))),
+  mixed = as.logical(round(mean(df$mixed))),
+  marst = round(mean(df$marst)),
+  educ_cat = factor("HS Diploma", levels = levels(df$educ_cat))
+) %>% 
+  mutate(dwmosun2 = dwmosun^2,
+         dwmosun3 = dwmosun^3)
+
+```
+
+
+#### Entropy Balancing
 
 Entropy balancing simply reweights observations to ensure population matching across the key dependent variable.
 
@@ -568,18 +619,64 @@ mod_eb_reweight <- lm(
   data = df,
   weights = eb_weight
 )
+
+mod_eb_reweight2 <- lm(
+  formula = ratio_wage ~ dwmosun + dwmosun2 + female + age + white + black + mixed + marst + educ_cat,
+  data = df,
+  weights = eb_weight
+)
+
+mod_eb_reweight3 <- lm(
+  formula = ratio_wage ~ dwmosun + dwmosun2 + dwmosun3 + female + age + white + black + mixed + marst + educ_cat,
+  data = df,
+  weights = eb_weight
+)
+
+
+# Extract prediction intervals as data frames
+eb_preds  <- as.data.frame(predict(mod_eb_reweight,  newdata = newdata, interval = "confidence")) %>% rename_with(~paste0("eb_preds_",.))
+eb_preds2 <- as.data.frame(predict(mod_eb_reweight2, newdata = newdata, interval = "confidence")) %>% rename_with(~paste0("eb_preds2_",.))
+eb_preds3 <- as.data.frame(predict(mod_eb_reweight3, newdata = newdata, interval = "confidence")) %>% rename_with(~paste0("eb_preds3_",.))
+
+eb_full <- cbind(eb_preds, eb_preds2, eb_preds3)
+
+eb_full %>% 
+  ggplot(aes(x = 0:(nrow(eb_full)-1))) +
+    # Model 1
+    geom_line(aes(y = eb_preds_fit), color = "blue", linewidth = 1) +
+    geom_ribbon(aes(ymin = eb_preds_lwr, ymax = eb_preds_upr), fill = "blue", alpha = 0.2) +
+  
+    # Model 2
+    geom_line(aes(y = eb_preds2_fit), color = "darkgreen", linewidth = 1) +
+    geom_ribbon(aes(ymin = eb_preds2_lwr, ymax = eb_preds2_upr), fill = "darkgreen", alpha = 0.2) +
+  
+    # Model 3
+    geom_line(aes(y = eb_preds3_fit), color = "firebrick", linewidth = 1) +
+    geom_ribbon(aes(ymin = eb_preds3_lwr, ymax = eb_preds3_upr), fill = "firebrick", alpha = 0.2) +
+  
+    labs(
+      title = "Predicted Wage Ratios by Unemployment Duration",
+      subtitle = "From EB-weighted regressions: linear, quadratic, and cubic specifications",
+      x = "Unemployment Duration (months)",
+      y = "Predicted Wage Ratio"
+    ) +
+    theme_minimal()
+    
 ```
 
 ```{r, echo = FALSE, warning = FALSE}
+
 print("Diagnostic Tests for Entropy-balanced Reweighted Sample")
 mod_eb_reweight %>% check_model()
-
+mod_eb_reweight2 %>% check_model()
+mod_eb_reweight3 %>% check_model()
 
 ```
 
-###### Propensity Score Weighting with GLM Estimator
+#### Propensity Score Weighting with GLM Estimator
 
 ```{r, warning = FALSE}
+
 # More conventional propensity scoring with a GLM estimator
 glm <- weightit(
   formula = dwmosun ~ female + age + white + black + mixed + marst + educ_cat,
@@ -598,6 +695,46 @@ mod_glm_reweight <- lm(
   data = df,
   weights = glm_weight
 )
+mod_glm_reweight2 <- lm(
+  formula = ratio_wage ~ dwmosun + dwmosun2 + female + age + white + black + mixed + marst + educ_cat,
+  data = df,
+  weights = glm_weight
+)
+mod_glm_reweight3 <- lm(
+  formula = ratio_wage ~ dwmosun + dwmosun2 + dwmosun3 + female + age + white + black + mixed + marst + educ_cat,
+  data = df,
+  weights = glm_weight
+)
+
+# Extract prediction intervals as data frames
+glm_preds  <- as.data.frame(predict(mod_glm_reweight,  newdata = newdata, interval = "confidence")) %>% rename_with(~paste0("glm_preds_",.))
+glm_preds2 <- as.data.frame(predict(mod_glm_reweight2, newdata = newdata, interval = "confidence")) %>% rename_with(~paste0("glm_preds2_",.))
+glm_preds3 <- as.data.frame(predict(mod_glm_reweight3, newdata = newdata, interval = "confidence")) %>% rename_with(~paste0("glm_preds3_",.))
+
+glm_full <- cbind(glm_preds, glm_preds2, glm_preds3)
+
+glm_full %>% 
+  ggplot(aes(x = 0:36)) +
+    # Model 1
+    geom_line(aes(y = glm_preds_fit), color = "blue", linewidth = 1) +
+    geom_ribbon(aes(ymin = glm_preds_lwr, ymax = glm_preds_upr), fill = "blue", alpha = 0.2) +
+  
+    # Model 2
+    geom_line(aes(y = glm_preds2_fit), color = "darkgreen", linewidth = 1) +
+    geom_ribbon(aes(ymin = glm_preds2_lwr, ymax = glm_preds2_upr), fill = "darkgreen", alpha = 0.2) +
+  
+    # Model 3
+    geom_line(aes(y = glm_preds3_fit), color = "firebrick", linewidth = 1) +
+    geom_ribbon(aes(ymin = glm_preds3_lwr, ymax = glm_preds3_upr), fill = "firebrick", alpha = 0.2) +
+  
+    labs(
+      title = "Predicted Wage Ratios by Unemployment Duration",
+      subtitle = "From GLM-weighted regressions: linear, quadratic, and cubic specifications",
+      x = "Unemployment Duration (months)",
+      y = "Predicted Wage Ratio"
+    ) +
+    theme_minimal()
+
 ```
 
 ```{r, echo = FALSE, warning = FALSE}
@@ -608,7 +745,7 @@ mod_glm_reweight %>% check_model()
 
 ```
 
-###### Heckman Selection
+#### Heckman Selection
 
 Another option is a Heckman Selection correction though I do not think this addresses the particular selection concern we have where there are simply less observations in longer unemployment durations.
 
@@ -618,7 +755,9 @@ df$observe_wage <- as.numeric(!is.na(df$ratio_wage))
 
 # Define selection and outcome equations
 selection_eq <- observe_wage ~ female + age + white + black + mixed + marst + educ_cat
-outcome_eq   <- ratio_wage ~ dwmosun + female + age + white + black + mixed + marst + educ_cat
+outcome_eq  <- ratio_wage ~ dwmosun + female + age + white + black + mixed + marst + educ_cat
+outcome_eq2 <- ratio_wage ~ dwmosun + dwmosun2 + female + age + white + black + mixed + marst + educ_cat
+outcome_eq3 <- ratio_wage ~ dwmosun + dwmosun2 + dwmosun3 + female + age + white + black + mixed + marst + educ_cat 
 
 # Run Heckman 
 heckman_model <- selection(
@@ -629,9 +768,45 @@ heckman_model <- selection(
   weights = df$dwsuppwt   # Include weights from CPS
 )
 
+# Run Heckman 
+heckman_model2 <- selection(
+  selection = selection_eq,
+  outcome = outcome_eq2,
+  data = df,
+  method = "2step",       
+  weights = df$dwsuppwt   # Include weights from CPS
+)
+
+# Run Heckman 
+heckman_model3 <- selection(
+  selection = selection_eq,
+  outcome = outcome_eq3,
+  data = df,
+  method = "2step",       
+  weights = df$dwsuppwt   # Include weights from CPS
+)
+
+# Predict ratio_wage (corrected for selection)
+preds <- predict(heckman_model, newdata = newdata, part = "outcome", type = "unconditional")
+preds2 <- predict(heckman_model2, newdata = newdata, part = "outcome", type = "unconditional")
+preds3 <- predict(heckman_model3, newdata = newdata, part = "outcome", type = "unconditional")
+
+
+# Combine with original durations for plotting or inspection
+newdata$predicted_ratio <- preds
+newdata$predicted_ratio2 <- preds2
+newdata$predicted_ratio3 <- preds3
+
+ggplot(newdata, aes(x = dwmosun)) +
+  geom_line(aes(y = predicted_ratio)) +
+  geom_line(aes(y = predicted_ratio2)) +
+  geom_line(aes(y = predicted_ratio3)) +
+  labs(x = "Unemployment Duration (months)", y = "Predicted Wage Ratio", title = "Predicted Wage Ratio vs. Unemployment Duration") +
+  theme_minimal()
+
 ```
 
-###### Regression Results with Sample Reweighting
+#### Regression Results with Sample Reweighting
 
 ```{r, echo = FALSE, warning = FALSE}
 # All correction models together
@@ -639,7 +814,91 @@ list("Heckman Correction" = heckman_model$lm, "Entropy Balanced Reweight" = mod_
 
 ```
 
-##### Job Tenure
+
+
+```{r, echo = FALSE, warning = FALSE}
+
+ggplot() + 
+  geom_line(data = lm_full, aes(x = 0:36, y = lm_preds_fit), color = "blue") +
+  geom_ribbon(data = lm_full, aes(x = 0:36, ymin = lm_preds_lwr, ymax = lm_preds_upr), fill = "blue", alpha = 0.2) +
+  geom_line(data = glm_full, aes(x = 0:36, y = glm_preds_fit), color = "red") +
+  geom_ribbon(data = glm_full, aes(x = 0:36, ymin = glm_preds_lwr, ymax = glm_preds_upr), fill = "red", alpha = 0.2) +
+  geom_line(data = eb_full, aes(x = 0:36, y = eb_preds_fit), color = "darkgreen") +
+  geom_ribbon(data = eb_full, aes(x = 0:36, ymin = eb_preds_lwr, ymax = eb_preds_upr), fill = "darkgreen", alpha = 0.2) +
+  geom_line(data = newdata, aes(x = 0:36, y = predicted_ratio)) +
+  labs(x = "Unemployment Duration (months)", y = "Predicted Wage Ratio", title = "Predicted Wage Ratio vs. Unemployment Duration") +
+  theme_minimal()
+
+res_wage_input <- select(lm_full, contains("lm_preds_")) %>% 
+  cbind(select(glm_full, contains("glm_preds_"))) %>% 
+  cbind(select(eb_full, contains('eb_preds_'))) %>% 
+  #cbind(newdata[c('dwmosun', 'predicted_ratio')]) %>% 
+  mutate(lm_se = (lm_preds_upr - lm_preds_lwr) / (2 * 1.96),
+         glm_se = (glm_preds_upr - glm_preds_lwr) / (2 * 1.96),
+         eb_se = (eb_preds_upr - eb_preds_lwr) / (2 * 1.96),
+         dur_unemp = 0:36) %>% 
+  #relocate(dwmosun) %>% 
+  tibble()
+  
+set.seed(123)
+# Simulate samples from normal distribution based on predicted means & SEs
+simulate_values <- function(pred, se, dur_unemp, model_name, n = 1000) {
+  tibble(
+    dur_unemp = dur_unemp,
+    model = model_name,
+    sim_val = rnorm(n, mean = pred, sd = se)
+  )
+}
+
+# Simulate for each model
+sim_lm <- pmap_dfr(
+  list(res_wage_input$lm_preds_fit, res_wage_input$lm_se, res_wage_input$dur_unemp),
+  simulate_values,
+  model_name = "LM"
+)
+
+sim_glm <- pmap_dfr(
+  list(res_wage_input$glm_preds_fit, res_wage_input$glm_se, res_wage_input$dur_unemp),
+  simulate_values,
+  model_name = "GLM"
+)
+
+sim_eb <- pmap_dfr(
+  list(res_wage_input$eb_preds_fit, res_wage_input$eb_se, res_wage_input$dur_unemp),
+  simulate_values,
+  model_name = "EB"
+)
+
+# Combine all simulated data
+sim_all <- bind_rows(sim_lm, sim_glm, sim_eb)
+
+# Plot: Violin plots of simulated predicted values
+ggplot(sim_all, aes(x = factor(dur_unemp), y = sim_val, fill = model)) +
+  geom_violin(position = position_dodge(width = 0.8), color = NA, width = 0.7, alpha = 0.7) +
+  stat_summary(fun = mean, geom = "point", position = position_dodge(width = 0.8), 
+               shape = 21, size = 1.5, color = "black", fill = "white") +
+  labs(
+    title = "Simulated Predicted Wage Ratio Distributions by Unemployment Duration",
+    subtitle = "Violin plots from LM, GLM, and EB model predictions",
+    x = "Unemployment Duration (months)",
+    y = "Simulated Predicted Wage Ratio",
+    fill = "Model"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, size = 8),
+    legend.position = "bottom"
+  )  +
+  scale_fill_brewer(palette = 'Dark2')
+
+
+#ggsave(here('data/behav_params/cps_displaced_worker_supplement/res_wage_dists.jpg'), dpi = 300, width = 11, height = 8)
+
+
+```
+
+
+### Job Tenure
 
 We have information on the tenure spent at the last job which could impact the result.
 This could speak to the "adaptability" of individuals.
@@ -666,7 +925,7 @@ tenure1 + tenure2 + plot_annotation(title = "Tenure at Lost Job (years)", subtit
 
 ```
 
-##### Representation
+### Representation
 
 Although the survey does provide sample weights which we use above, it's still likely that those who are laid off might be systematically more susceptible to layoffs (lower-wage, low-skill occupation, male, etc).
 Below, some (very rough) graphs to indicate what the sample looks like.
