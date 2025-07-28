@@ -67,6 +67,9 @@ temp <- df %>% select(year, naics, naics_title, sic, sic_title, occ_code, occ_ti
   # group_by(occ_code, naics, naics_title) %>% 
   # fill(pct_total, .direction = "down") %>% 
   # ungroup %>% 
+
+codes <- temp %>% select(naics, naics_title) %>% distinct
+
 temp %>% 
   group_by(occ_code, naics, naics_title) %>% 
   fill(pct_total, .direction = "down") %>% 
@@ -214,3 +217,28 @@ mean_shares %>%
 
 print(p6)
 
+mean_shares %>% 
+  group_by(occ_code) %>% 
+  summarise(temp = sum(mean_share, na.rm = TRUE)) %>% 
+  ggplot() + 
+  geom_histogram(aes(x = temp)) +
+  labs(
+    x = "Total Occupational Employment represented by Mean Shares",
+    y = "Occupation Count (n = 463)",
+    title = "Representativeness/Accuracy of Mean Share Calculation (sum of industry share of occupation = 1)") +
+  theme_minimal()
+
+odd_ones <- mean_shares %>% 
+     group_by(occ_code) %>% 
+  summarise(total_share = sum(mean_share, na.rm = TRUE)) %>% arrange(-total_share) %>% filter(total_share > 1.1) %>% 
+  left_join(., abm, by = c("occ_code" = "SOC2010")) %>% 
+  select("SOC2010 Occupational Code" = occ_code, "Occupational Label" = OCC2010_desc, "Sum of Mean Shares" = total_share)
+
+print("Two occupational categories have a sum of mean shares > 1.1:")
+
+odd_ones %>% kable(format = "latex") %>% print(.)
+
+
+mean_shares_for_bind <- mean_shares %>% 
+  ungroup %>% 
+  left_join(., codes, by = "naics_title") 

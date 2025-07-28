@@ -144,7 +144,8 @@ cat("\n")
 
 ind_va_for_abm <- final %>% 
   filter(tolower(industry) %in% tolower(names(rel_inds))) %>% 
-  mutate(date = as.Date(paste0(date, "-01-01")))
+  mutate(date = as.Date(paste0(date, "-01-01")),
+         log_real_VA = log(real_VA))
 
 # Quarterly Data from 2005-2024
 # The year and quarter are not combined in one header requiring a strange read-in process below

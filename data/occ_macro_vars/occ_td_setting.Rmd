@@ -11,6 +11,8 @@ library(here)
 library(gridExtra)
 library(mFilter)
 
+save_data = FALSE
+
 ```
 
 # Setting Occupational Target Demand
@@ -27,7 +29,7 @@ $D_{it} = \sum_{j=1}^{n} \hat d_{ijt}$
 
 $\hat d_{ijt} = \sum_{j=1}^{n} \bar d_{ij} \theta_{jt}$
 
-in which $\bar d_{ij}$ is the average share of occupation $i$ in industry $j$ and $\theta_{jt}$ is the de-trended value-added of industry $j$ at time $t$. Thus, we obtain occupation-specific fluctuations in demand dependent on their "exposure" or the share of a specific occupation in industry $j$. We de-trend the value added in the same way as in the GDP series such that we obtain the fluctuation around a mean. 
+in which $\bar d_{ij}$ is the average share of occupation $i$ in industry $j$ and $\theta_{jt}$ is the de-trended value-added of industry $j$ at time $t$. Thus, we obtain occupation-specific fluctuations in demand dependent on their "exposure" or the share of a specific occupation in industry $j$. We de-trend the value added in the same way as in the GDP series such that we obtain the fluctuation around a mean.
 
 ## Value Added by Industry
 
@@ -39,16 +41,15 @@ source(here("data/occ_macro_vars/bea_industry_va.R"))
 
 ## Occupation-shares of industry
 
-We use annual occupational shares of employment from the Occupational Employment and Wage Statistics database from the US Bureau of Labour Statistics to derive our $\bar d{ij}$. 
+We use annual occupational shares of employment from the Occupational Employment and Wage Statistics database from the US Bureau of Labour Statistics to derive our $\bar d{ij}$.
 
-Excludes public administration. The first figure shows the “reported percent total” from the OEWS data. The discrepances in reporting is almost certainly due to a reshuffling of occupational codes in 2010 and 2018. 
+Excludes public administration. The first figure shows the “reported percent total” from the OEWS data. The discrepances in reporting is almost certainly due to a reshuffling of occupational codes in 2010 and 2018.
 
 If we look at the shares as a percentage of total reported employment in a particular industry the “shares” are not consistent across the recategorisation - I will need to investigate this again.
 
-We take the mean industry-share of occupational employment reported in the years where majority (>97%) of our occ codes are present (2012-2018 - after and before SOC reorganisation of 2010 and 2018).
+We take the mean industry-share of occupational employment reported in the years where majority (\>97%) of our occ codes are present (2012-2018 - after and before SOC reorganisation of 2010 and 2018).
 
-
-```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 8, fig.width = 7}
+```{r, echo = FALSE, results = 'asis', message = FALSE, warning = FALSE, fig.height = 8, fig.width = 7}
 
 source(here("data/occ_macro_vars/OEWS/occ_emp_industry_oews.R"))
 
@@ -60,43 +61,88 @@ source(here("data/occ_macro_vars/OEWS/occ_emp_industry_oews.R"))
 inds <- ind_va_for_abm %>% 
   pull(industry) %>% unique
 
-trend_tibble <- tibble()
-for(k in inds){
-  trend <- ind_va_for_abm %>% 
-    filter(grepl(k, industry)) %>% 
-    pull(real_VA) %>% 
-    hpfilter(.,freq = 1600, type=c("lambda")) 
+# trend_tibble <- tibble()
+# for(k in inds){
+#   trend <- ind_va_for_abm %>% 
+#     filter(grepl(k, industry)) %>% 
+#     pull(log_real_VA) %>% 
+#     hpfilter(.,freq = 129600, type=c("lambda")) 
+# 
+#   trend_tibble <- trend$cycle %>% 
+#     tibble %>% 
+#     rename(trend = '.') %>% 
+#     mutate(date = ind_va_for_abm$date[1:28], 
+#            industry = k) %>% 
+#     rbind(trend_tibble, .)
+# 
+# }
 
-  trend_tibble <- trend$cycle %>% 
-    tibble %>% 
-    rename(trend = '.') %>% 
-    mutate(date = ind_va_for_abm$date[1:28], 
-           industry = k) %>% 
-    rbind(trend_tibble, .)
-
-}
-
-trend_tibble %>% 
-    ggplot() +  
-    geom_line(aes(x = date, y = trend/100)) +
-  facet_wrap(~industry) +
-    theme_minimal() +
-    labs(title = "Deviation from Trend (HP Filter)",
-         subtitle = "All plotted on same scale to show varying volatility.",
-         x = "Date",
-         y = "Trend deviation %")
 ```
-
 
 ```{r, echo = FALSE, message = FALSE, fig.height = 8, fig.width = 7}
 
-trend_tibble %>% 
+# Detrend and normalize each industry's GDP
+gdp_processed <- ind_va_for_abm %>%
+  group_by(industry) %>%
+  arrange(date) %>%
+  mutate(
+    # HP filter: lambda = 1600 for quarterly data
+    gdp_trend = hpfilter(log_real_VA, freq = 1600)$trend,
+    gdp_cycle = hpfilter(log_real_VA, freq = 1600)$cycle,
+
+    # Normalization 1: Percent deviation from trend
+    gdp_pct_dev = (log_real_VA - gdp_trend) / gdp_trend,
+
+    # Normalization 2: Z-score of cycle
+    gdp_cycle_z = as.numeric(scale(gdp_cycle)),
+
+    # Optional: Clip extreme values to avoid large shocks
+    gdp_cycle_z_capped = pmin(pmax(gdp_cycle_z, -0.5), 0.5)
+  ) %>%
+  ungroup()
+
+gdp_processed %>% 
+  select(date, industry, gdp_pct_dev, contains("gdp_cycle")) %>% 
+  pivot_longer(!c(date, industry)) %>% 
+  ggplot() +
+  geom_line(aes(x = date, y = value, color = name)) +
+  facet_wrap(~industry) +
+    labs(title = "Comparison of Different HP Filter Normalisation Methods",
+         x = "Date",
+         y = "Trend deviation %",
+         color = "Normalisation Method") +
+  theme_minimal()
+
+gdp_processed %>% 
   ggplot() +  
-    geom_line(aes(x = date, y = trend/100, color = industry)) +
+    geom_line(aes(x = date, y = gdp_cycle, color = industry)) +
     theme_minimal() +
-    labs(title = "Deviation from Trend (HP Filter)",
+    labs(title = "Deviation from Trend (HP log Filter)",
          x = "Date",
          y = "Trend deviation %") 
 
 ```
+
+```{r, echo = FALSE, message = FALSE, fig.height = 8, fig.width = 7}
+
+if(save_data){
+  gdp_processed %>% 
+    select(!contains("label"), !contains("indent")) %>% 
+  saveRDS(., here("data/occ_macro_vars/bea_industry_va_for_abm.RDS"))
+}
+
+```
+
+Important future work should aim to accommodate shifts in labor productivity of different industries and/or shifting industry-specific occupational shares to account for additional sources of structural transformation beyond those explored in this work. 
+
+```{r}
+
+gdp_processed <- readRDS(here("data/occ_macro_vars/bea_industry_va_for_abm.RDS")) %>% 
+  select(industry, )
+# take mean shares from occ_emp_industry_oews.R
+mean_shares_for_bind %>% 
+  left_join(., gdp_pro)
+
+```
+
 
