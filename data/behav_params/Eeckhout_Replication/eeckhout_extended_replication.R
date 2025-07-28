@@ -447,7 +447,8 @@ p1 <- ggplot() +
   title = "On-the-job searchers γ (de-trended) and unemployment rate") +
   theme_minimal() +
   theme(legend.position = "bottom") +
-  guides(color=guide_legend(ncol=2))
+  guides(color=guide_legend(ncol=2)) +
+  common_theme
 
 # Plot
 p2 <- ggplot() +
@@ -461,7 +462,8 @@ p2 <- ggplot() +
   labs(y = "Lambda (% deviation from trend)", x = "Time", title = "Search intensity λ (de-trended) and unemployment rate") +
   theme_minimal() +
   theme(legend.position = "bottom") +
-  guides(color=guide_legend(ncol=2))
+  guides(color=guide_legend(ncol=2)) +
+  common_theme
 
 #saveRDS(merged_data2, here('data/behav_params/Eeckhout_Replication/lambda_hat.RDS'))
 

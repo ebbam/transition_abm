@@ -205,7 +205,8 @@ prod_fig1 <- function(data, title){
     theme(
       legend.position = "none",
       panel.grid.minor = element_blank()
-    )
+    ) +
+    common_theme
   
   return(p)
   
@@ -251,12 +252,12 @@ prod_fig1 <- function(df_list) {
       limits = c(0, 3), 
       breaks = seq(0, 2, by = 0.5)
     ) + 
-    theme_minimal() + 
     theme(
       legend.title = element_blank(),
       legend.position = "bottom",  # Adjust legend position
       panel.grid.minor = element_blank()
     ) +
+    common_theme +
     scale_fill_manual(values = c("grey85", "skyblue", "lightgreen", "lightpink", "lightblue", "orange")) +  # Custom colors
     scale_color_manual(values = c("black", "skyblue", "lightgreen", "lightpink", "lightblue", "orange"))  # Custom colors
   
@@ -354,7 +355,7 @@ p <- ggplot(combined_data, aes(x = x_adjusted-0.02,
     labels = scales::label_number(accuracy = 0.01)
   ) +
   scale_y_continuous(breaks = seq(0, 1, by = 0.1)) +
-  theme_minimal() +
+  common_theme + 
   theme(legend.title = element_blank(), panel.grid.major.x = element_blank()) +
   geom_abline(intercept = 0, slope = 1, color = "gray50", linetype = "dashed", size = 1) 
 
@@ -671,12 +672,12 @@ p <- ggplot(combined_data_fig3, aes(x = undur)) +
   scale_color_manual(
     values = c("Orig." = "black", setNames(hue_pal()(length(df_list) - 1), names(df_list)[-1]))
   ) +
-  theme_minimal() +
   theme(
     legend.position = "none",
     legend.title = element_blank()
   ) +
-  facet_wrap(~Source, nrow = 2)
+  facet_wrap(~Source, nrow = 2) +
+  common_theme
 
 print(p)
 
@@ -752,12 +753,12 @@ p <- ggplot(combined_fig3_by_recession, aes(x = undur)) +
   #  values = c("Orig." = "black", setNames(hue_pal()(length(df_list) - 1), names(df_list)[-1]))
   #) +
   #ylim(0, 1)+
-  theme_minimal() +
   theme(
     legend.position = "none",
     legend.title = element_blank()
   ) +
-  facet_wrap(~recession, nrow = 1, scales = "free")
+  facet_wrap(~recession, nrow = 1, scales = "free")  +
+  common_theme
 
 print(p)
 
@@ -1100,8 +1101,8 @@ prod_fig4 <- function(data){
       xlab("Time Since First Interview, in Months") +
       ylab("Elicited 3-Month Job-Finding Probability") +
       ggtitle("Within and Across Spell Changes") +
-      ylim(-0.25, 0.15) +
-      theme_minimal()
+      ylim(-0.25, 0.15)  +
+    common_theme
 
   plot2 <- coeffs_data %>%
     filter(model == "Fixed Effects" &
@@ -1115,8 +1116,8 @@ prod_fig4 <- function(data){
       ylim(-0.25, 0.15) +
       xlab("Time Since First Interview, in Months") +
       ylab("Elicited 3-Month Job-Finding Probability") +
-      ggtitle("Within Spell Changes Only") +
-      theme_minimal()
+      ggtitle("Within Spell Changes Only")  +
+    common_theme
 
   return(plot1 + plot2)
 }
@@ -1208,7 +1209,7 @@ prod_fig4_multi <- function(df_list) {
          subtitle = "Figure 4 illustrates the difference between the observed (cross-sectional - left panel) dura-
 tion dependence and the true (individual-level - right panel) duration dependence in the reported
 beliefs graphically.") +
-    theme_minimal() +
+    common_theme +
     theme(legend.position = "bottom", legend.title = element_blank(), panel.grid.major.x = element_blank())
   
   return(plot)
@@ -1284,11 +1285,11 @@ p <- ggplot(combined_jf_uetr_year, aes(x = year)) +
   #  values = c("Orig." = "black", setNames(hue_pal()(length(df_list) - 1), names(df_list)[-1]))
   #) +
   #ylim(0, 1)+
-  theme_minimal() +
   theme(
     legend.position = "none",
     legend.title = element_blank()
-  )
+  ) +
+  common_theme
 
 print(p)
 
@@ -1353,7 +1354,7 @@ p <- ggplot(combined_jf_uetr_year_by_udur_bin, aes(x = year)) +
   #  values = c("Orig." = "black", setNames(hue_pal()(length(df_list) - 1), names(df_list)[-1]))
   #) +
   #ylim(0, 1)+
-  theme_minimal() +
+  common_theme +
   theme(
     legend.position = "none",
     legend.title = element_blank()

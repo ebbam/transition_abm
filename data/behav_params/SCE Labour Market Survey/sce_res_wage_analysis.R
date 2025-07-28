@@ -225,7 +225,8 @@ unemp_only %>%
     ggplot() + 
     geom_point(aes(x = time_period, y = value, group = userid, color = name)) +
     geom_line(aes(x = time_period, y = value, group = userid, color = name)) +
-    facet_wrap(~name, ncol = 1)
+    facet_wrap(~name, ncol = 1) +
+  common_theme
 
 unemp_only %>%
     filter(!is.na(reservation_wage)) %>%
@@ -270,7 +271,8 @@ res_wage_prop1 <- data_fig1 %>%
     legend.position = "bottom",
     panel.grid.minor = element_blank()
   ) + 
-  xlim(0.25, 2)
+  xlim(0.25, 2) +
+  common_theme
 
 res_wage_prop2 <- data_fig1 %>% 
   ggplot() +
@@ -286,7 +288,8 @@ res_wage_prop2 <- data_fig1 %>%
     legend.position = "bottom",
     panel.grid.minor = element_blank()
   )  +
-  xlim(0.25, 2)
+  xlim(0.25, 2) +
+  common_theme
 
 print(res_wage_prop1 / res_wage_prop2)
 
@@ -297,6 +300,7 @@ t1 <- unemp_only %>%
   geom_point()+ #color = "Reservation wage vs. Current")) +
   geom_smooth(method = "lm", formula = y~x, mapping = aes(weight = weight), show.legend = FALSE) +
   #geom_point(aes(x = log(wage_most_recent_job), y = log(reservation_wage), color = "Reservation wage vs. Last Held")) +
+  common_theme +
   theme(legend.position = "none") +
   labs(title = "Reservation Wage (log) by Unemp. Dur.",
        x = "Unemployment Duration", 
@@ -311,7 +315,8 @@ t2 <- unemp_only %>%
   theme(legend.position = "none") +
   labs(title = "Reservation Wage (log) by Unemp. Dur.",
        x = "Unemployment Duration", 
-       y = "(log) Reservation Wage")
+       y = "(log) Reservation Wage") +
+  common_theme
 
 t3 <- unemp_only %>% 
   #filter(!is.na(udur_bins)) %>% 
@@ -324,7 +329,8 @@ t3 <- unemp_only %>%
   labs(title = "ResWage:Latest by Unemp. Dur.",
        x = "Unemployment Duration", 
        y = "Reservation Wage:Latest Held Wage") +
-  scale_x_continuous(breaks = 1:4, labels = c("<4 mos", "4-6 mos",  "7-12 mos", ">12 mos"))
+  scale_x_continuous(breaks = 1:4, labels = c("<4 mos", "4-6 mos",  "7-12 mos", ">12 mos")) +
+  common_theme
 
 t4 <- unemp_only %>% 
   filter(res_wage_to_latest >=0.25 & res_wage_to_latest <=2.5 & udur <= 60) %>% 
@@ -335,7 +341,8 @@ t4 <- unemp_only %>%
   theme(legend.position = "none") +
   labs(title = "ResWage:Latest by Unemp. Dur.",
        x = "Unemployment Duration", 
-       y = "Reservation Wage:Latest Held Wage")
+       y = "Reservation Wage:Latest Held Wage") +
+  common_theme
 
 print((t1 + t3) / (t2 + t4))
 
@@ -357,7 +364,8 @@ t1a <- data_fig1 %>%
         axis.text.x = element_blank(),   # Remove x-axis labels
         axis.ticks.x = element_blank(),
         panel.grid.major.x = element_blank(),  # Remove major vertical grid lines
-        panel.grid.minor.x = element_blank())   # Remove x-axis ticks)
+        panel.grid.minor.x = element_blank())  + # Remove x-axis ticks)
+  common_theme 
 
 t1b <- data_fig1 %>% 
   filter(!is.na(expbest4mos_rel_most_recent) & expbest4mos_rel_most_recent < 2.5 & expbest4mos_rel_most_recent > 0.25) %>% 
@@ -367,6 +375,7 @@ t1b <- data_fig1 %>%
   labs(title = "Exp. offer:latest wage") +
   theme_minimal() +
   ylim(0,2.5) +
+  common_theme +
   theme(plot.title=element_text(hjust=0.5),
         axis.title.x = element_blank(),  # Remove x-axis title
         axis.text.x = element_blank(),   # Remove x-axis labels
@@ -384,6 +393,7 @@ t2 <- unemp_only %>%
   labs(title = "Exp. best offer:res. wage") +
   theme_minimal() +
   ylim(0,2.5) +
+  common_theme + 
   theme(plot.title=element_text(hjust=0.5)) +
   scale_x_discrete(labels = c("<4 mos", "4-6 mos",  "7-12 mos", ">12 mos"))
 
@@ -399,7 +409,8 @@ t3 <- unemp_only %>%
   theme_minimal() +
   ylim(0,2.5)  +
   theme(plot.title=element_text(hjust=0.5)) +
-  scale_x_discrete(labels = c("<4 mos", "4-6 mos",  "7-12 mos", ">12 mos"))
+  scale_x_discrete(labels = c("<4 mos", "4-6 mos",  "7-12 mos", ">12 mos")) +
+  common_theme
 
 
 t4 <- data_fig1 %>% 
@@ -414,7 +425,8 @@ t4 <- data_fig1 %>%
   labs(title = "Exp. best offer:res wage") +
   theme_minimal() +
   ylim(0,2.5) +
-  theme(plot.title=element_text(hjust=0.5))
+  theme(plot.title=element_text(hjust=0.5)) +
+  common_theme
 
 print((t1a + t1b + t4) / (t2 + t3) + 
         plot_annotation("Ratio of Expected Best Offer to Various Benchmarks (Reservation, Current, Latest Held Wage",
@@ -437,6 +449,7 @@ t1 <- unemp_only %>%
     x = "Accepted Wage / Reservation Wage"
   ) +
   theme_minimal() +
+  common_theme + 
   theme(
     legend.position = "bottom",
     panel.grid.minor = element_blank()
@@ -455,7 +468,8 @@ t2 <- unemp_only %>%
     title = "Unemployed Only",
     x = "(log) Reservation Wage",
     y = "(log) Accepted Wage"
-  ) 
+  ) +
+  common_theme
 
 # t3 <- data_fig1 %>%
 #   filter(salary_prop_reswage >= 0.25 & salary_prop_reswage <= 2.5& udur <= 60) %>% 
@@ -517,15 +531,6 @@ data_cleaned <- unemp_only %>%
   ungroup %>% 
   mutate(udur_bins = ifelse(is.na(udur_bins), 0, udur_bins))
 
-# Base theme tweaks
-pretty_theme <- theme_minimal(base_size = 13) +
-  theme(
-    plot.title = element_text(hjust = 0.5, face = "bold", size = 14),
-    axis.title.x = element_text(margin = margin(t = 10)),
-    axis.title.y = element_text(margin = margin(r = 10)),
-    panel.grid.major.x = element_blank(),
-    panel.grid.minor = element_blank()
-  )
 
 t1 <- data_cleaned %>% 
   filter(!is.na(salary_to_latest) & between(salary_to_latest, 0.25, 2) & udur <= 60) %>%
@@ -535,7 +540,7 @@ t1 <- data_cleaned %>%
   labs(title = "Accepted : Latest Salary\n(n = 56)", y = NULL, x = NULL) +
   scale_x_discrete(labels = c("<4 mos", "4-6 mos", "7-12 mos", ">12 mos")) +
   coord_cartesian(ylim = c(0, 2.5)) +
-  pretty_theme
+  common_theme
 
 t2 <- data_cleaned %>% 
   filter(!is.na(salary_prop_reswage) & between(salary_prop_reswage, 0.25, 2) & udur <= 60) %>%
@@ -545,7 +550,7 @@ t2 <- data_cleaned %>%
   labs(title = "Accepted : Reservation\n(n = 160)", y = NULL, x = "Unemployment Duration Bin") +
   scale_x_discrete(labels = c("<4 mos", "4-6 mos", "7-12 mos", ">12 mos")) +
   coord_cartesian(ylim = c(0, 2.5)) +
-  pretty_theme
+  common_theme
 
 t3 <- data_cleaned %>% 
   filter(!is.na(salary_prop_effreswage) & between(salary_prop_effreswage, 0.25, 2) & udur <= 60) %>%
@@ -555,7 +560,7 @@ t3 <- data_cleaned %>%
   labs(title = "Accepted : Effective Reservation\n(n = 184)", y = NULL, x = NULL) +
   scale_x_discrete(labels = c("<4 mos", "4-6 mos", "7-12 mos", ">12 mos")) +
   coord_cartesian(ylim = c(0, 2.5)) +
-  pretty_theme
+  common_theme
 
 # Combine plots with annotation
 final_plot <- (t1 | t2 | t3) + 

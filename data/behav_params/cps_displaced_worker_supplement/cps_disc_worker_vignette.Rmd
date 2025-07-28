@@ -54,6 +54,7 @@ library(survey)
 library(gt)
 library(cobalt)
 library(sampleSelection)
+source(here('code/formatting/plot_dicts.R'))
 
 ```
 
@@ -198,7 +199,7 @@ hist1 <- df %>%
   ggplot() + 
   geom_histogram(aes(x = dwwksun, weight = dwsuppwt), fill = "lightcoral") +
   labs(y = "Count", x = "Continuous Unemployment Duration", title = "Continuous Unemployment Duration") +
-  theme_minimal()
+  common_theme
 
 # Extract unique values and labels
 breaks <- sort(unique(df$dwwksun_bin))
@@ -216,7 +217,7 @@ hist2 <- df %>%
     labels = labels
   ) +
   labs(y = "Count", x = "Continuous Unemployment Duration", title = "Binned Unemployment Duration") +
-  theme_minimal()
+  common_theme
 
 (hist1 / hist2) + plot_annotation(title = "Reported unemployment duration between lost job and next job", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
 ################################################################################
@@ -232,6 +233,7 @@ bp1 <- df %>%
   ylim(0,2.5) +
   theme(plot.title=element_text(hjust=0.5)) +
   scale_x_discrete(labels = labels) +
+  common_theme +
   theme(legend.position = "none")
 
 bp2 <- df %>%
@@ -240,7 +242,7 @@ bp2 <- df %>%
   geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwwksun_bin)), alpha = 0.3)+
   geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
   labs(title = "Weekly Wage Ratio") +
-  theme_minimal() +
+  common_theme +
   ylim(0,2.5) +
   theme(plot.title=element_text(hjust=0.5)) +
   scale_x_discrete(labels = labels)+
@@ -252,7 +254,7 @@ bp3 <- df %>%
   geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwwksun_bin)), alpha = 0.3)+
   geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
   labs(title = "Wage Ratio", y = "Accepted:Lost Wage Ratio", x = "Unemployment Duration") +
-  theme_minimal() +
+  common_theme +
   ylim(0,2.5) +
   theme(plot.title=element_text(hjust=0.5),
         axis.text.x = element_text(size = 14),
@@ -268,7 +270,7 @@ bp4 <- df %>%
   geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwwksun_bin)), alpha = 0.3)+
   geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
   labs(title = "Wage Ratio - Reconciled with max") +
-  theme_minimal() +
+  common_theme + 
   ylim(0,2.5) +
   theme(plot.title=element_text(hjust=0.5)) +
   scale_x_discrete(labels = labels)+
@@ -280,7 +282,7 @@ bp5 <- df %>%
   geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwwksun_bin)), alpha = 0.3)+
   geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
   labs(title = "Wage Ratio - Reconciled with mean") +
-  theme_minimal() +
+  common_theme + 
   ylim(0,2.5) +
   theme(plot.title=element_text(hjust=0.5)) +
   scale_x_discrete(labels = labels)+
@@ -293,7 +295,7 @@ bp_cont <- df %>%
   geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwmosun_2mo)), alpha = 0.3)+
   geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
   labs(title = "Wage Ratio - Reconciled with mean") +
-  theme_minimal() +
+  common_theme + 
   ylim(0,2.5) +
   theme(plot.title=element_text(hjust=0.5)) +
   theme(legend.position = "none")
@@ -314,14 +316,16 @@ lin <- df %>%
   ggplot(aes(x = dwmosun, y = ratio_wage, weight = dwsuppwt))+
   geom_jitter() +
   geom_smooth(method = "lm") +
-  labs(title = "Linear fit", y = "Hourly Wage Ratio", x = "Unemployment Duration (mos.)")
+  labs(title = "Linear fit", y = "Hourly Wage Ratio", x = "Unemployment Duration (mos.)") +
+  common_theme 
 
 spline <- df %>% 
   filter(clipped_sample_hwage) %>% 
   ggplot(aes(x = dwmosun, y = ratio_wage, weight = dwsuppwt))+
   geom_jitter() +
   geom_smooth(method = "lm", formula = y ~ splines::bs(x, 3)) +
-  labs(title = "Spline fit", y = "Hourly Wage Ratio", x = "Unemployment Duration (mos.)")
+  labs(title = "Spline fit", y = "Hourly Wage Ratio", x = "Unemployment Duration (mos.)") +
+  common_theme
 
 (lin + spline) + plot_annotation(title = "Linear and spline fit to scatter plot of wage ratio vs. unemployment duration in months.", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment and wage ratios below 0.5 and above 2.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
 
@@ -400,7 +404,10 @@ output_pretty <- function(mods, highlightrows = FALSE, title = NULL){
   tab_style(
     style = list(cell_fill(color = "lightblue")),
     locations = cells_body(rows = c(highlightrows))  # Highlight 2nd row
-  )
+  ) %>%
+    tab_options(latex.table.width = "\\linewidth") %>%
+    as_latex() %>%
+    asis_output()
 }
 
 coef_labs = c("dwben" = "Received Unemployment Compensation",
@@ -543,7 +550,7 @@ lm_full %>%
       x = "Unemployment Duration (months)",
       y = "Predicted Wage Ratio"
     ) +
-    theme_minimal()
+    common_theme
 
 ```
 
@@ -661,7 +668,7 @@ eb_full %>%
       x = "Unemployment Duration (months)",
       y = "Predicted Wage Ratio"
     ) +
-    theme_minimal()
+    common_theme
     
 ```
 
@@ -734,7 +741,7 @@ glm_full %>%
       x = "Unemployment Duration (months)",
       y = "Predicted Wage Ratio"
     ) +
-    theme_minimal()
+    common_theme
 
 ```
 
@@ -803,7 +810,7 @@ ggplot(newdata, aes(x = dwmosun)) +
   geom_line(aes(y = predicted_ratio2)) +
   geom_line(aes(y = predicted_ratio3)) +
   labs(x = "Unemployment Duration (months)", y = "Predicted Wage Ratio", title = "Predicted Wage Ratio vs. Unemployment Duration") +
-  theme_minimal()
+  common_theme
 
 ```
 
@@ -828,7 +835,7 @@ ggplot() +
   geom_ribbon(data = eb_full, aes(x = 0:36, ymin = eb_preds_lwr, ymax = eb_preds_upr), fill = "darkgreen", alpha = 0.2) +
   geom_line(data = newdata, aes(x = 0:36, y = predicted_ratio)) +
   labs(x = "Unemployment Duration (months)", y = "Predicted Wage Ratio", title = "Predicted Wage Ratio vs. Unemployment Duration") +
-  theme_minimal()
+  common_theme
 
 res_wage_input <- select(lm_full, contains("lm_preds_")) %>% 
   cbind(select(glm_full, contains("glm_preds_"))) %>% 
@@ -885,7 +892,7 @@ ggplot(sim_all, aes(x = factor(dur_unemp), y = sim_val, fill = model)) +
     y = "Simulated Predicted Wage Ratio",
     fill = "Model"
   ) +
-  theme_minimal() +
+  common_theme +
   theme(
     axis.text.x = element_text(angle = 90, vjust = 0.5, size = 8),
     legend.position = "bottom"
@@ -912,7 +919,7 @@ tenure1 <- df %>%
   mutate(dwyears = ifelse(round(dwyears) == 100, NA, dwyears)) %>% 
   ggplot() + geom_histogram(aes(x = dwyears, weight = dwsuppwt), fill = "forestgreen", alpha = 0.5) + 
   labs(x = "Years spent at lost job", title = "Histogram of Reported Tenure at Lost Job") +
-  theme_minimal()
+  common_theme
 
 tenure2 <- df %>%
   mutate(dwyears = ifelse(round(dwyears) == 100, NA, dwyears)) %>% 
@@ -920,8 +927,8 @@ tenure2 <- df %>%
   ggplot(aes(x = dwyears, y = ratio_wage , weight = dwsuppwt)) + 
   geom_jitter() + 
   labs(x = "Years spent at lost job", title = "Wage Ratio versus Reported Tenure at Lost Job") +
-  theme_minimal() +
-  geom_smooth(method = "lm", color = "forestgreen", fill = "forestgreen")
+  geom_smooth(method = "lm", color = "forestgreen", fill = "forestgreen") +
+  common_theme
 
 tenure1 + tenure2 + plot_annotation(title = "Tenure at Lost Job (years)", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
 
@@ -960,8 +967,8 @@ gender <- df %>%
   geom_bar(width = 1, stat = "identity") +
   coord_polar("y", start = 0) +
   labs(title = "Gender Share of Sample", subtitle = paste0("Female representation (ie. Female LFPR) as calculated in the sample is ", female_lfpr, "%\n whereas female LFPR in the US is ~57% and their unemployment rates are roughly equal.")) +
-  theme_void() + 
-  scale_fill_brewer(palette = "Set2", name = "Sex")
+  scale_fill_brewer(palette = "Set2", name = "Sex") +
+  common_theme
 
 # Wage representation 
 mean_wage <- df %>% 
@@ -988,8 +995,8 @@ wage <- df %>%
     size = 4,
     color = "red"
   ) +
-  theme_minimal() + labs(x = "Reported Hourly Wage", y = "Count")
-
+  labs(x = "Reported Hourly Wage", y = "Count") +
+  common_theme
 
 # Education
 educ <- df %>%
@@ -1002,7 +1009,7 @@ educ <- df %>%
   geom_col(width = 0.5) +
   scale_y_continuous(labels = scales::percent_format()) +
   labs(x = NULL, y = "Share of Individuals", fill = "Education Level", title = "Education Attainment in Sample") + scale_fill_brewer(palette = "Set2") +
-  theme_minimal()
+  common_theme
 
 library(spatstat)
 # age
@@ -1014,7 +1021,6 @@ age <- df %>%
   filter(clipped_sample_hwage) %>% 
   ggplot() + 
   geom_histogram(aes(x = age), fill = "darkorchid4", alpha = 0.7) +
-  theme_minimal() +
   geom_vline(aes(xintercept = median_age), color = "darkorchid4") + 
   annotate("text",
     x = median_age, y = 350, label = "Median Reported Age",
@@ -1032,6 +1038,7 @@ age <- df %>%
     color = "darkorange"
   ) +
   labs(x = "Age", y = "Count", title = "Age Distribution in Sample") +
+  common_theme + 
   theme(legend.position = "none")
   
 

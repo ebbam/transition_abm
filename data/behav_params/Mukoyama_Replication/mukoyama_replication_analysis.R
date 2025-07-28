@@ -57,7 +57,8 @@ p1 <- ggplot(collapsed_data_2014, aes(x = as.factor(numsearch), y = time_less8))
     panel.background = element_rect(fill = "white"),
     panel.grid.major = element_line(color = "gray"),
     panel.grid.minor = element_blank()
-  )
+  ) +
+  common_theme
 
 p2 <- ggplot(collapsed_data_2023, aes(x = as.factor(numsearch), y = time_less8)) +
   geom_bar(stat = "identity", fill = "purple", color = "black") +
@@ -73,7 +74,8 @@ p2 <- ggplot(collapsed_data_2023, aes(x = as.factor(numsearch), y = time_less8))
     panel.background = element_rect(fill = "white"),
     panel.grid.major = element_line(color = "gray"),
     panel.grid.minor = element_blank()
-  )
+  ) +
+  common_theme
 
 
 p3 <- ggplot(collapsed_data_all, aes(x = as.factor(numsearch), y = time_less8)) +
@@ -90,7 +92,8 @@ p3 <- ggplot(collapsed_data_all, aes(x = as.factor(numsearch), y = time_less8)) 
     panel.background = element_rect(fill = "white"),
     panel.grid.major = element_line(color = "gray"),
     panel.grid.minor = element_blank()
-  )
+  ) +
+  common_theme
 
 p3 + p1 / p2
 
@@ -345,7 +348,8 @@ fig2a <- ggplot() +
   scale_x_continuous(breaks = 2003:2023) +
   scale_y_continuous(limits = c(0, 10), breaks = seq(0, 10, by = 2)) +
   theme_minimal() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom")+
+  common_theme
 fig2a <- add_recession(fig2a)
 
 fig2b <- ggplot() +
@@ -354,7 +358,8 @@ fig2b <- ggplot() +
   scale_x_continuous(breaks = 2003:2023) +
   scale_y_continuous(limits = c(15, 45), breaks = seq(0, 45, by = 5)) +
   theme_minimal() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom")+
+  common_theme
 fig2b <- add_recession(fig2b)
 
 print(fig2a + fig2b + plot_annotation("Figure 2. Actual and Imputed Average Search Time (minutes per day) \nfor All Nonemployed Workers ( panel A) and Unemployed Workers ( panel B)",
@@ -402,7 +407,8 @@ fig3a_plot <- ggplot() +
   scale_x_continuous(breaks = seq(2003, 2023, by = 2)) +
   theme_minimal() +
   labs(x = "Date", y = "Extensive Margin") +
-  theme(legend.position = "none")
+  theme(legend.position = "none")+
+  common_theme
 
 fig3a_plot <- add_recession(fig3a_plot)
 
@@ -415,7 +421,8 @@ fig3b_plot <- ggplot() +
   theme_minimal() +
   labs(x = "Date", y = "Intensive Margin", title = "Period: 2000-2024", color = "Weights and Input Data") +
   theme(legend.position = "bottom") +
-  guides(color=guide_legend(ncol=2))
+  guides(color=guide_legend(ncol=2))+
+  common_theme
 
 fig3bb_plot <- ggplot() +
   geom_line(data = filter(fig3b_base, date > 1999.9 & date < 2020), aes(x = date, y = value, color = label), size = 0.5) +
@@ -425,7 +432,8 @@ fig3bb_plot <- ggplot() +
   theme_minimal() +
   labs(x = "Date", y = "Intensive Margin", title = "Period: 2000-2019") +
   theme(legend.position = "none") +
-  guides(color=guide_legend(ncol=2))
+  guides(color=guide_legend(ncol=2))+
+  common_theme
 
 fig3b_plot <- add_recession(fig3b_plot)
 fig3bb_plot <- add_recession(fig3bb_plot)
@@ -448,7 +456,8 @@ ggplot() +
   theme_minimal() +
   labs(x = "Date", y = "Intensive Margin", title = "Period: 2000-2024", color = "Weights and Input Data") +
   theme(legend.position = "bottom") +
-  guides(color=guide_legend(ncol=2))
+  guides(color=guide_legend(ncol=2))+
+  common_theme
 
 library(slider)
 
@@ -482,7 +491,7 @@ ggplot() +
   geom_line(data = monthly_data, aes(x = year + month/12, y = value_smooth, color = "Monthly"), size = 1) +  # Smoothed data
   labs(title = "Smoothed Quarterly & Monthly Search Effort Data for Calibration", 
        subtitle = "Thin lines represent the observed data whereas the thicker lines represent a smoothing \nof each series using a LOESS fit with 0.1 span.", x = "Year", y = "Value (Minutes Searched per Day", color = "Frequency") +
-  theme_minimal()
+  common_theme
   #mutate(month = date%%round(date)) 
 
 ##################################
@@ -504,7 +513,7 @@ fig4a <- ggplot() +
        #title ="Panel A: Time Series of Total Search Effort") + 
   scale_color_manual(values = c("Original Weights on Orig. TS" = "blue", "New Weights from Orig. TS" = "green", "New Weights from Ext. TS" = "purple", "Original Weights on Ext. TS" = "darkgreen")) + 
   
-  theme_minimal() +
+  common_theme + 
   theme(legend.position = "bottom") +
   guides(color=guide_legend(ncol=1))
 fig4a <- add_recession(fig4a)
@@ -529,7 +538,8 @@ fig4b <- ggplot() +
        #title ="Panel B: Time Series of Total Search Effort \n Using the Search Time of Unemployed Workers \n s*(U/(E + U + N)) (blue) \n vs. Using the Number of Unemployed Workers\nU/(E + U + N) (red)") +
   theme_minimal() +
   theme(legend.position = "bottom") +
-  guides(color=guide_legend(ncol=1))
+  guides(color=guide_legend(ncol=1)) +
+  common_theme
 fig4b <- add_recession(fig4b)
 
 print(fig4a + fig4b + plot_annotation('Figure 4. Time Series of (Panel A) Total Search Effort and \n(Panel B) Total Search Effort Using the Search Time of\nUnemployed Workers [solid: (s*(U/(E + U + N))] versus \nUsing the Number of Unemployed Workers [dashed: U/(E + U + N)) (panel B)',
@@ -562,12 +572,14 @@ gdp_effort <- read.csv(here("data/macro_vars/detrended_gdp_nocovid.csv")) %>%
 gdp_effort %>% 
   ggplot() +
   geom_line(aes(x = date, y = value)) +
-  geom_line(aes(x = date, y = log_Cycle*30))
+  geom_line(aes(x = date, y = log_Cycle*30))+
+  common_theme
 
 gdp_effort %>% 
   ggplot() +
   geom_line(aes(x = date, y = value_smooth)) +
-  geom_line(aes(x = date, y = log_Cycle*30))
+  geom_line(aes(x = date, y = log_Cycle*30))+
+  common_theme
 
 
 plot_data <- tibble()
@@ -636,5 +648,6 @@ ggplot(plot_data, aes(x = x)) +
   theme_minimal() +
   theme(
     axis.title.y.right = element_text(color = "red")  # Different color for secondary axis
-  )
+  )+
+  common_theme
 
