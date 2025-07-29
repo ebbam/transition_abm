@@ -1,15 +1,19 @@
 ---
 title: "Setting Occupational Target Demand"
 date: "`r Sys.Date()`"
-output: pdf_document
+output: 
+  pdf_document:
+    latex_engine: xelatex
 ---
 
 ```{r setup, echo = FALSE, include=FALSE}
 
-knitr::opts_chunk$set(echo = FALSE, cache = FALSE)
+knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 8, fig.width = 7)
 library(here)
+library(RColorBrewer)
 library(gridExtra)
 library(mFilter)
+source(here('code/formatting/plot_dicts.R'))
 
 save_data = FALSE
 
@@ -33,7 +37,7 @@ in which $\bar d_{ij}$ is the average share of occupation $i$ in industry $j$ an
 
 ## Value Added by Industry
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.height = 8, fig.width = 7}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 
 source(here("data/occ_macro_vars/bea_industry_va.R"))
 
@@ -49,7 +53,7 @@ If we look at the shares as a percentage of total reported employment in a parti
 
 We take the mean industry-share of occupational employment reported in the years where majority (\>97%) of our occ codes are present (2012-2018 - after and before SOC reorganisation of 2010 and 2018).
 
-```{r, echo = FALSE, results = 'asis', message = FALSE, warning = FALSE, fig.height = 8, fig.width = 7}
+```{r, echo = FALSE, results = 'asis', message = FALSE, warning = FALSE}
 
 source(here("data/occ_macro_vars/OEWS/occ_emp_industry_oews.R"))
 
@@ -57,7 +61,7 @@ source(here("data/occ_macro_vars/OEWS/occ_emp_industry_oews.R"))
 
 ## Bringing them together
 
-```{r, echo = FALSE, message = FALSE, fig.height = 8, fig.width = 7}
+```{r, echo = FALSE, message = FALSE}
 inds <- ind_va_for_abm %>% 
   pull(industry) %>% unique
 
@@ -79,8 +83,7 @@ inds <- ind_va_for_abm %>%
 
 ```
 
-```{r, echo = FALSE, message = FALSE, fig.height = 8, fig.width = 7}
-
+```{r, echo = FALSE, message = FALSE}
 # Detrend and normalize each industry's GDP
 gdp_processed <- ind_va_for_abm %>%
   group_by(industry) %>%
@@ -102,28 +105,56 @@ gdp_processed <- ind_va_for_abm %>%
   ungroup()
 
 gdp_processed %>% 
-  select(date, industry, gdp_pct_dev, contains("gdp_cycle")) %>% 
+  select(date, industry, contains('z')) %>% 
   pivot_longer(!c(date, industry)) %>% 
   ggplot() +
   geom_line(aes(x = date, y = value, color = name)) +
-  facet_wrap(~industry) +
-    labs(title = "Comparison of Different HP Filter Normalisation Methods",
+  facet_wrap_custom(~industry) +
+    labs(title = "Industry-level Value Added Shocks",
+         subtitle = "Normalisation of HP Filter Method: Raw Z-Score vs. Z-Score capped at [-0.5, 0.5]",
          x = "Date",
          y = "Trend deviation %",
          color = "Normalisation Method") +
-  theme_minimal()
+  common_theme +
+  theme(legend.position = "bottom")
 
+```
+
+
+```{r, echo = FALSE, message = FALSE}
+
+gdp_processed %>% 
+  select(date, industry, gdp_pct_dev, gdp_cycle) %>% 
+  pivot_longer(!c(date, industry)) %>% 
+  ggplot() +
+  geom_line(aes(x = date, y = value, color = name)) +
+  facet_wrap_custom(~industry) +
+    labs(title = "Industry-level Value Added Shocks",
+         subtitle = "Normalisation of HP Filter Method: Raw HP Filter vs. Percent Deviation",
+         x = "Date",
+         y = "Trend deviation %",
+         color = "Normalisation Method") +
+  common_theme +
+  theme(legend.position = "bottom")
+
+```
+
+
+```{r, echo = FALSE, message = FALSE}
 gdp_processed %>% 
   ggplot() +  
     geom_line(aes(x = date, y = gdp_cycle, color = industry)) +
     theme_minimal() +
     labs(title = "Deviation from Trend (HP log Filter)",
          x = "Date",
-         y = "Trend deviation %") 
+         y = "Trend deviation %",
+         color = "Industry") +
+  common_theme +
+  theme(legend.position = "bottom")
 
 ```
 
-```{r, echo = FALSE, message = FALSE, fig.height = 8, fig.width = 7}
+```{r, echo = FALSE, message = FALSE}
 
 if(save_data){
   gdp_processed %>% 
@@ -135,14 +166,117 @@ if(save_data){
 
 Important future work should aim to accommodate shifts in labor productivity of different industries and/or shifting industry-specific occupational shares to account for additional sources of structural transformation beyond those explored in this work. 
 
-```{r}
+```{r, echo = FALSE, message = FALSE}
+
+names(rel_inds) <- tolower(names(rel_inds))
 
 gdp_processed <- readRDS(here("data/occ_macro_vars/bea_industry_va_for_abm.RDS")) %>% 
-  select(industry, )
+  select(industry, date, contains("real_VA"), contains("gdp")) %>% 
+  mutate(naics = rel_inds[tolower(industry)])
+
+# Sanity checks
+stopifnot(mean_shares_for_bind %>% filter(!(naics %in% gdp_processed$naics)) %>% nrow(.) == 0)
+stopifnot(gdp_processed %>% filter(!(naics %in% mean_shares_for_bind$naics)) %>% nrow(.) == 0)
+stopifnot(gdp_processed %>% filter(is.na(naics)) %>% nrow(.) == 0)
+stopifnot(mean_shares_for_bind %>% filter(is.na(naics)) %>% nrow(.) == 0)
+
+# OCC2010-SOC Code Crosswalk
+# Using this for labels in the graphs
+# https://www.census.gov/topics/employment/industry-occupation/guidance/code-lists.html
+# More specifically: 2010 Census Occupation Codes with Crosswalk
+cw <- read_xlsx(here('data/occ_macro_vars/CPS_LTUER/2010-occ-codes-with-crosswalk-from-2002-2011.xlsx'), 
+                sheet = 1, skip = 6) %>% 
+  rename(major_cat = 1, OCC2010_desc = 2, OCC2010 = 3, SOC2010 = 4) %>% 
+  filter(nchar(SOC2010) == 7 & substr(SOC2010,4,7) == "0000") %>% 
+  select(-major_cat, - OCC2010) %>% 
+  mutate(broad_occ = substr(SOC2010, 1, 2)) %>% 
+  mutate(OCC2010_desc = gsub(":", "", OCC2010_desc)) %>% 
+  select(-SOC2010)
+
 # take mean shares from occ_emp_industry_oews.R
-mean_shares_for_bind %>% 
-  left_join(., gdp_pro)
+occ_shocks <- mean_shares_for_bind %>% 
+  mutate(date = NA) %>% 
+  group_by(occ_code, naics_title, mean_share, naics) %>% 
+  complete(date = unique(gdp_processed$date)) %>% 
+  left_join(., gdp_processed, by = c('naics', 'date')) %>% 
+  select(occ_code, industry, naics, naics_title, date, mean_share, gdp_cycle) %>% 
+  ungroup %>% 
+  mutate(shock = mean_share*gdp_cycle) %>% 
+  group_by(occ_code, date) %>%
+  summarise(shock = sum(shock, na.rm = TRUE)) %>% 
+  ungroup %>% 
+  mutate(broad_occ = substr(occ_code, 1, 2)) %>% 
+  left_join(cw, by = "broad_occ") %>% 
+  filter(!is.na(date)) %>% 
+  # quarterly interpolation until I incorporate quarterly data
+    group_by(occ_code, broad_occ, OCC2010_desc) %>%
+  # Complete the date range to quarterly
+  complete(date = seq(min(date), max(date), by = "quarter")) %>%
+  # Fill in group data for new rows
+  fill(broad_occ, OCC2010_desc, .direction = "downup") %>%
+  # Linearly interpolate shock values
+  arrange(occ_code, date) %>%
+  group_by(occ_code) %>%
+  mutate(shock = zoo::na.approx(shock, x = date, na.rm = FALSE)) %>%
+  ungroup()
 
 ```
+
+Important note is that we are missing information on occupation code 13-2081 (Tax examiners and collectors, and revenue agents) which are present in our occupational network but not in our VA data as they are only employed in public administration. VA information does not exist for public administration. For now, I will use the shocks to 13-2082 as the shocks to 13-2081 though we might consider changing this. For example, we could potentially abstract to say that public administration fluctuations should depend on just GDP fluctuations (ie. we use the HP-filtered GDP series that we were originally using as the direct shock to occupations employed only in public administration). 
+
+```{r, echo = FALSE, message = FALSE}
+
+occ_shocks_full <- occ_shocks %>% 
+  filter(occ_code == "13-2082") %>% 
+  mutate(occ_code = "13-2081") %>% 
+  rbind(occ_shocks)
+
+# Create monochromatic color palette
+n_colors <- length(unique(occ_shocks_full$occ_code))
+purple_palette <- colorRampPalette(brewer.pal(9, "Purples"))(n_colors)
+
+# Randomly shuffle the colors
+set.seed(42)  
+shuffled_palette <- sample(purple_palette)
+color_map <- setNames(shuffled_palette, sort(unique(occ_shocks_full$occ_code)))
+
+# Plot with manual color scale
+occ_shocks_full %>% 
+  ggplot() +
+  geom_line(aes(x = date, y = shock, color = occ_code)) +
+  facet_wrap_custom(~OCC2010_desc) + 
+  scale_color_manual(values = color_map) +
+  labs(
+    x = "Date", 
+    y = "Occupation Specific VA Shock (Deviation from Trend)",
+    title = "Occupation Specific Value Added Shock", 
+    subtitle = "Composite of Industry VA shocks x Industry Occupational Shares"
+  ) +
+  common_theme +
+  theme(legend.position = "none")
+
+abm_cw <- read.csv(here('data/crosswalk_occ_soc_cps_codes.csv')) %>% 
+  #select(X, SOC2010) %>% 
+  mutate(SOC2010_adj = gsub("X", "0", SOC2010))
+
+occ_shocks_full %>% 
+  left_join(select(abm_cw, SOC2010_adj, X), by = c("occ_code" = "SOC2010_adj")) -> temp
+
+```
+
+```{r, echo = FALSE, message = FALSE}
+
+stopifnot(temp %>% filter(is.na(X)) %>% nrow(.) == 0)
+stopifnot(temp %>% filter(is.na(date)) %>% nrow(.) == 0)
+stopifnot(temp %>% filter(is.na(shock)) %>% nrow(.) == 0)
+
+temp %>% 
+  select(X, date, shock) %>% 
+  arrange(X, date) %>% 
+  pivot_wider(names_from = date, values_from = shock) %>%
+  write.csv(here("calibration_remote/data/occupational_va_shocks.csv"))
+
+```
+
 
 

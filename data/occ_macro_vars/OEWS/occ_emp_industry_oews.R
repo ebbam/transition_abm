@@ -11,40 +11,46 @@ library(janitor)
 library(readxl)
 library(assertthat)
 conflict_prefer_all("dplyr", quiet = TRUE)
+new_data = FALSE
 
-
-read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oes00in3/nat2d_sic_2000_dl.xls")),
-               skip = 33)
-
-df <- tibble()
-for(yr in 1999:2024){
-  yr_tmp <- substr(yr, 3,4)
-  if(yr == 1999){
-    tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oes", yr_tmp, "in3/nat2d_sic_", as.character(yr), "_dl.xls")), skip = 35) 
-  }else if(yr == 2000){
-    tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oes", yr_tmp, "in3/nat2d_sic_", as.character(yr), "_dl.xls")),  skip = 33)
-  }else if(yr == 2001){
-    tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oes", yr_tmp, "in3/nat2d_sic_", as.character(yr), ".xls"))) 
-  }else if(yr == 2002){
-    tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oes", yr_tmp, "in4/nat4d_", as.character(yr), "_dl.xls")))
-  }else if(yr == 2003){
-    tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oesm", yr_tmp, "in4/nat3d_may", as.character(yr), "_dl.xls"))) 
-  }else if (yr > 2003 & yr < 2008){
-    tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oesm", yr_tmp, "in4/natsector_may",as.character(yr), "_dl.xls"))) 
-  }else if(yr >= 2008 & yr < 2014){
-    tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oesm", yr_tmp, "in4/natsector_M",as.character(yr), "_dl.xls"))) 
-  }else{
-    tmp <- read_xlsx(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oesm", yr_tmp, "in4/natsector_M",as.character(yr), "_dl.xlsx")))  
+if(new_data){
+  df <- tibble()
+  for(yr in 1999:2024){
+    yr_tmp <- substr(yr, 3,4)
+    if(yr == 1999){
+      tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oes", yr_tmp, "in3/nat2d_sic_", as.character(yr), "_dl.xls")), skip = 35) 
+    }else if(yr == 2000){
+      tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oes", yr_tmp, "in3/nat2d_sic_", as.character(yr), "_dl.xls")),  skip = 33)
+    }else if(yr == 2001){
+      tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oes", yr_tmp, "in3/nat2d_sic_", as.character(yr), ".xls"))) 
+    }else if(yr == 2002){
+      tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oes", yr_tmp, "in4/nat4d_", as.character(yr), "_dl.xls")))
+    }else if(yr == 2003){
+      tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oesm", yr_tmp, "in4/nat3d_may", as.character(yr), "_dl.xls"))) 
+    }else if (yr > 2003 & yr < 2008){
+      tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oesm", yr_tmp, "in4/natsector_may",as.character(yr), "_dl.xls"))) 
+    }else if(yr >= 2008 & yr < 2014){
+      tmp <- read_xls(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oesm", yr_tmp, "in4/natsector_M",as.character(yr), "_dl.xls"))) 
+    }else{
+      tmp <- read_xlsx(here(paste0("data/occ_macro_vars/OEWS/industry_specific/oesm", yr_tmp, "in4/natsector_M",as.character(yr), "_dl.xlsx")))  
+    }
+    
+    df <- tmp %>% 
+      clean_names %>% 
+      mutate(year = yr) %>% 
+      select(-contains("pct_rpt")) %>% 
+      mutate(across(c(pct_total, a_mean, emp_prse, mean_prse), ~as.numeric(.)),
+             annual = as.logical(annual)) %>% 
+      bind_rows(df, .)
+    
+    
   }
-  
-  df <- tmp %>% 
-    clean_names %>% 
-    mutate(year = yr) %>% 
-    select(-contains("pct_rpt")) %>% 
-    mutate(across(c(pct_total, a_mean, emp_prse, mean_prse), ~as.numeric(.)),
-           annual = as.logical(annual)) %>% 
-    bind_rows(df, .)
-}
+  df %>% saveRDS(here("data/occ_macro_vars/OEWS/occ_ind_employment_compiled.RDS"))
+  }else{
+    df <- readRDS(here("data/occ_macro_vars/OEWS/occ_ind_employment_compiled.RDS"))
+  }
+
+
 
 # Which occupations are in the crosswalk. 
 abm <- read.csv(here("data/crosswalk_occ_soc_cps_codes.csv")) %>% 
@@ -76,10 +82,10 @@ temp %>%
   ungroup %>% 
   ggplot() + 
   geom_area(aes(x = year, y = pct_total, fill = occ_code)) +
-  facet_wrap(~naics_title) +
-  theme_minimal() +
-  theme(legend.position = "none") +
-  labs(x = "Year", y = "Reported Pct Shares", title = "Occupational Employment Shares by 2-digit NAICS") -> p1
+  facet_wrap_custom(~naics_title) +
+  labs(x = "Year", y = "Reported Pct Shares", title = "Occupational Employment Shares by 2-digit NAICS") +
+  common_theme +
+  theme(legend.position = "none") -> p1
 
 print(p1)
 
@@ -93,10 +99,10 @@ temp %>%
   ungroup %>% 
   ggplot() + 
   geom_area(aes(x = year, y = pct_total_norm, fill = occ_code), stat = "identity") +
-  facet_wrap(~naics_title) +
-  theme_minimal() +
-  theme(legend.position = "none") +
-  labs(x = "Year", title = "Occupational Employment Shares by 2-digit NAICS", y= "Shares of Total") -> p2
+  facet_wrap_custom(~naics_title) +
+  labs(x = "Year", title = "Occupational Employment Shares by 2-digit NAICS", y= "Shares of Total") +
+  common_theme +
+  theme(legend.position = "none") -> p2
 
 print(p2)
 
@@ -118,7 +124,8 @@ shares %>%
   # Lose one observation in 2021 where occupation was 0 - all NAs for occupation code "33-9093" - "transportation security screeners"
   filter(round(occ_share) == 1)
 
-shares %>% ggplot(aes(x = year, y = occ_share, color = occ_code)) + geom_line() + facet_wrap(~naics_title) + theme(legend.position = "none")
+shares %>% ggplot(aes(x = year, y = occ_share, color = occ_code)) + 
+  geom_line() + facet_wrap_custom(~naics_title) + common_theme + theme(legend.position = "none")
 
 shares_ma <- function(s_dat, len){
   plot <- s_dat %>% 
@@ -135,11 +142,11 @@ shares_ma <- function(s_dat, len){
     ungroup() %>% 
     ggplot(aes(x = year, y = occ_share_ma, colour = occ_code)) +
     geom_line() +
-    facet_wrap(~ naics_title) +
+    facet_wrap_custom(~ naics_title) +
     labs(y = paste0(as.character(len), "-year moving average of occ_share"),
          title = paste0(as.character(len), "-year moving average of occ_share"),
          x = "Year") +
-    theme_minimal() +
+    common_theme +
     theme(legend.position = "none")
   
   return(plot)
@@ -201,9 +208,7 @@ mean_shares %>%
     name    = "Employment\nshare",
     direction = -1
   ) +
-  
-  # axis text tweaks
-  theme_minimal(base_size = 10) +
+  common_theme + 
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
     panel.grid  = element_blank()
@@ -226,7 +231,7 @@ mean_shares %>%
     x = "Total Occupational Employment represented by Mean Shares",
     y = "Occupation Count (n = 463)",
     title = "Representativeness/Accuracy of Mean Share Calculation (sum of industry share of occupation = 1)") +
-  theme_minimal()
+  common_theme
 
 odd_ones <- mean_shares %>% 
      group_by(occ_code) %>% 
