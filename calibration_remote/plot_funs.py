@@ -920,6 +920,113 @@ def plot_occupation_uer_grid(sim_results, observation, save=False, path=None):
         fig2.savefig(f'{path}occupation_ltuer_grid.png', dpi=300)
     plt.show()
 
+def plot_occupation_uer_grid2(sim_results, observation, soc_labs, save=False, path=None):
+    agg_levels = {
+        'SOC2010_adj': ('uer_soc2010', 'ltuer_soc2010'), 
+        'SOC_broad_adj': ('uer_soc_broad', 'ltuer_soc_broad'),
+        'SOC_minor_adj': ('uer_soc_minor', 'ltuer_soc_minor'), 
+        'SOC_major_adj': ('uer_soc_major', 'ltuer_soc_major')
+    }
+
+    model_names = list(sim_results.keys())
+    num_rows = len(agg_levels)
+    num_cols = len(model_names)
+
+    fig1 = plt.figure(figsize=(5*num_cols, 4*num_rows + 1))
+    gs1 = gridspec.GridSpec(num_rows * 2, num_cols, height_ratios=[4, 0.7]*num_rows)
+    fig1.suptitle("Unemployment Rate (UER): Simulated vs Observed (Sorted by Observed UER)", fontsize=16)
+
+    fig2 = plt.figure(figsize=(5*num_cols, 4*num_rows + 1))
+    gs2 = gridspec.GridSpec(num_rows * 2, num_cols, height_ratios=[4, 0.7]*num_rows)
+    fig2.suptitle("LT Unemployment Rate (LTUER): Simulated vs Observed (Sorted by Observed LTUER)", fontsize=16)
+
+    for col_idx, (model_name, sims) in enumerate(sim_results.items()):
+        for row_idx, (name_k, (k_uer, k_ltuer)) in enumerate(agg_levels.items()):
+
+            temp_codes = observation.loc[:, ['acs_occ_code', name_k, k_uer, k_ltuer]]
+            occ_data = sims.loc[:, ['Time Step', 'Occupation', 'acs_occ_code', 'Workers', 'Unemployment', 'LT Unemployed Persons']]
+            occ_data = occ_data.merge(temp_codes, on='acs_occ_code', how='left')
+
+            occ_data = occ_data.groupby([name_k, 'Time Step']).sum().reset_index()
+            occ_data['UER'] = occ_data['Unemployment'] / occ_data['Workers']
+            occ_data['LTUE Rate'] = occ_data['LT Unemployed Persons'] / occ_data['Unemployment']
+
+            mean_occ_data = occ_data.groupby(name_k)[['UER', 'LTUE Rate']].mean().reset_index()
+            obs_values = observation[[name_k, k_uer, k_ltuer]].drop_duplicates(subset=[name_k])
+            merged = mean_occ_data.merge(obs_values, on=name_k, how='left')
+
+            if name_k == "SOC_major_adj":
+                merged[name_k] = merged[name_k].astype(str)
+                soc_labs["soc_code"] = soc_labs["soc_code"].astype(str)
+                merged = merged.merge(soc_labs, left_on=name_k, right_on="soc_code", how="left")
+                merged[name_k + "_label"] = merged["label"]
+            else:
+                merged[name_k + "_label"] = merged[name_k].astype(str)
+
+            sorted_codes_uer = merged.sort_values(by=k_uer)[name_k].tolist()
+            sim_vals = merged.set_index(name_k).reindex(sorted_codes_uer)['UER'].tolist()
+            obs_vals = merged.set_index(name_k).reindex(sorted_codes_uer)[k_uer].tolist()
+            x_ticks = list(range(len(sorted_codes_uer)))
+            x_labels = merged.set_index(name_k).reindex(sorted_codes_uer)[name_k + "_label"].tolist()
+
+            # PLOT subplot
+            ax1 = fig1.add_subplot(gs1[row_idx * 2, col_idx])
+            ax1.scatter(x_ticks, sim_vals, color='blue', label='Simulated', alpha=0.7)
+            ax1.scatter(x_ticks, obs_vals, color='orange', label='Observed', alpha=0.7, marker='X')
+            ax1.set_title(f"{model_name} - {name_k}")
+            ax1.set_ylim(0, 0.35)
+            ax1.set_xticks([])
+            ax1.set_xticklabels([])
+            if col_idx == 0:
+                ax1.set_ylabel('UER')
+            if row_idx == 0 and col_idx == 0:
+                ax1.legend()
+
+            sorted_codes_ltuer = merged.sort_values(by=k_ltuer)[name_k].tolist()
+            sim_vals_ltuer = merged.set_index(name_k).reindex(sorted_codes_ltuer)['LTUE Rate'].tolist()
+            obs_vals_ltuer = merged.set_index(name_k).reindex(sorted_codes_ltuer)[k_ltuer].tolist()
+            x_ticks_ltuer = list(range(len(sorted_codes_ltuer)))
+            x_labels_ltuer = merged.set_index(name_k).reindex(sorted_codes_ltuer)[name_k + "_label"].tolist()
+
+            # PLOT subplot
+            ax2 = fig2.add_subplot(gs2[row_idx * 2, col_idx])
+            ax2.scatter(x_ticks_ltuer, sim_vals_ltuer, color='blue', label='Simulated', alpha=0.7)
+            ax2.scatter(x_ticks_ltuer, obs_vals_ltuer, color='orange', label='Observed', alpha=0.7, marker='X')
+            ax2.set_title(f"{model_name} - {name_k}")
+            ax2.set_ylim(0, 1)
+            ax2.set_xticks([])
+            ax2.set_xticklabels([])
+            if col_idx == 0:
+                ax2.set_ylabel('LTUER')
+            if row_idx == 0 and col_idx == 0:
+                ax2.legend()
+
+        # LABELS subplot (one per row, after all cols)
+    
+        label_ax1 = fig1.add_subplot(gs1[row_idx * 2 + 1, :])  # spans all columns
+        label_ax1.set_xticks(x_ticks)
+        label_ax1.set_xticklabels(x_labels, rotation=45, ha='right', fontsize=8)
+        label_ax1.set_yticks([])
+        label_ax1.tick_params(axis='x', which='both', length=0)
+        label_ax1.set_frame_on(False)
+        label_ax1.set_xlabel(name_k)
+
+        label_ax2 = fig2.add_subplot(gs2[row_idx * 2 + 1, :])  # spans all columns
+        label_ax2.set_xticks(x_ticks_ltuer)
+        label_ax2.set_xticklabels(x_labels_ltuer, rotation=45, ha='right', fontsize=8)
+        label_ax2.set_yticks([])
+        label_ax2.tick_params(axis='x', which='both', length=0)
+        label_ax2.set_frame_on(False)
+        label_ax2.set_xlabel(name_k)
+
+    fig1.tight_layout(rect=[0, 0, 1, 0.95])
+    fig2.tight_layout(rect=[0, 0, 1, 0.95])
+
+    if save:
+        fig1.savefig(f'{path}occupation_uer_grid.png', dpi=300)
+        fig2.savefig(f'{path}occupation_ltuer_grid.png', dpi=300)
+    plt.show()
+
 def plot_ltuer_difference_heatmap(sim_results_dict, observed_data, difference_type='absolute', abs_value = True, save=False, path=None):
     """
     Creates a heatmap showing differences between simulated and observed LTUER values.
