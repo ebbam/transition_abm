@@ -303,6 +303,8 @@ bea_temp %>%
 #   ggplot() +
 #   geom_violin(aes(x = PRUNEDUR_brackets, y = HEFAMINC, fill = PRUNEDUR_brackets), alpha = 0.5) +
 #   labs(x = "Unemployment Duration", y = "Income Bracket",
+#        title = "Distribution of Family Income by Unemployment Duration")
+
 ```
 
 Below, I display the results of an exploration of the probability of
@@ -354,7 +356,6 @@ Assumptions about the probability distribution of the errors associated with eac
 
 
 ```{r, echo=FALSE, fig.height = 6, fig.width = 10, cache = TRUE}
-#        title = "Distribution of Family Income by Unemployment Duration")
 
 bea_temp <- bea_temp %>% 
   mutate(PEA_fct = case_when(PEA1 == "0" ~ 0,
@@ -591,17 +592,20 @@ p2 <- new_data %>%
     ggplot(aes(x = PRUNEDUR_MO, y = Probability, fill = Category)) +
     geom_area(stat = "identity") +
     scale_fill_brewer(palette = "Set2") +
-    labs(y = "Probability of Sending X Applications (Binned)", x = "Unemployment Duration (Months)", title= paste0("Predicted Probabilities of Apps Sent by Unemployment Duration"))+
-  common_theme
+    labs(y = "Probability of Sending X Applications (Binned)", x = "Unemployment Duration (Months)", title= paste0("Predicted Probabilities of Apps Sent\nby Unemployment Duration"))+
+  common_theme +
+  theme(plot.title = element_text(size = 12, face = "bold"))
 
 
-(p1 | p2) + plot_annotation(title = "Predicted Probabilities of Application Effort by Unemployment Duration",
+p_all <- (p1 | p2) + plot_annotation(title = "Predicted Probabilities of Application Effort by Unemployment Duration",
       subtitle = "N = 5,169\nBureau of Labor Statistics Data reported in 2018 and 2022.\nEstimated using an ordinal logistic regression in which the outcome variables are bins of applications sent.\nUnemployment duration enters quadratically w. sociodemographic controls.\nControls: Education, Age, Gender, Family Income. Race excluded because of lack of statistical significance.\nLink function: Complementary log-log function selected using AIC comparison on 4 alternative link functions.",     theme = theme(
-      plot.title = element_text(size = 18, face = "bold"),
+      plot.title = element_text(size = 16, face = "bold"),
       plot.subtitle = element_text(size = 12)
-    ) +
-  common_theme
-  )
+      )) 
+
+p_all
+
+ggsave(here("data/figures/application_effort.png"))
 
 # new_data %>% 
 #   write.csv(., here("data/behav_params/CPS_BLS_Supplement_18_22/app_probs.csv"))
