@@ -12,6 +12,7 @@ library(here)
 library(lubridate)
 library(gridExtra)
 library(modelsummary)
+source(here('code/formatting/plot_dicts.R'))
 
 integrate = TRUE
 full = TRUE
@@ -620,12 +621,14 @@ for(new in c(FALSE, TRUE)){
     geom_line(aes(y = u_quart_s_rescaled), color = "red", linetype = "dashed") +
     scale_y_continuous(
       name = "% deviation from trend",
-      limits = c(0.2, 0.6),
-      sec.axis = sec_axis(transform = rescale$inverse_transform, name = "u (level)")
+      limits = c(0.1, 0.6),
+      sec.axis = sec_axis(transform = rescale$inverse_transform, name = "Unemployment Rate")
     ) +
     theme_minimal() +
     ggtitle(paste0("Employed as share of jobseekers (lamda*gamma/s) New data: ", new)) +
     theme(plot.background = element_rect(fill = "white", color = NA), legend.position = "bottom")
+  
+  save_for_plotting <- merged_df
   
   #print(p1)
   vars <- append(vars, list(comp_searchers_plot))
@@ -886,4 +889,31 @@ ggplot(plot_data, aes(x = x)) +
 modelsummary(res_list, gof_omit = 'AIC|BIC|Lik|RMSE')
 
 
+# SAVE RELEVANT PLOT
 
+# Plot with independent visual scaling
+comp_searchers_plot_save <- ggplot(save_for_plotting, aes(x = time)) +
+  geom_bar(aes(y = recession1), stat = "identity", fill = "grey80", na.rm = TRUE) +
+  geom_bar(aes(y = recession2), stat = "identity", fill = "grey80", na.rm = TRUE) +
+  geom_line(aes(y = comp_searchers_s), color = "darkorchid", linewidth = 1) +
+  geom_hline(aes(yintercept = 0.32), color = "grey", linetype = "dashed") + 
+  geom_hline(aes(yintercept = 0.48), color = "grey", linetype = "dashed") + 
+  geom_line(aes(y = u_quart_s_rescaled), color = "darkorange", linetype = "dashed", linewidth = 1) +
+  scale_y_continuous(
+    name = "Employed as share of jobseekers - % deviation from trend",
+    limits = c(0.1, 0.6),
+    sec.axis = sec_axis(transform = rescale$inverse_transform, name = "Unemployment Rate")
+  ) +
+  theme_minimal() +
+  ggtitle("Employed as share of jobseekers") +
+  theme(plot.background = element_rect(fill = "white", color = NA), legend.position = "bottom") +
+  common_theme
+
+ggsave(
+  filename = here("data/behav_params/Eeckhout_Replication/comp_searchers_plot.jpg"),     # file name
+  plot = comp_searchers_plot_save,          # ggplot object
+  width = 10,                               # width in inches (adjust as needed)
+  height = 6,                               # height in inches (adjust as needed)
+  dpi = 300,                                # resolution for high quality
+  device = "jpeg"                           # explicitly set format
+)
