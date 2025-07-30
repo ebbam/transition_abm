@@ -120,17 +120,14 @@
 \usepackage[normalem]{ulem}
 \usepackage{makecell}
 \usepackage{xcolor}
-\usepackage{caption}
-\usepackage{anyfontsize}
-\usepackage{tabularray}
-\usepackage[normalem]{ulem}
-\usepackage{graphicx}
-\usepackage{rotating}
-\UseTblrLibrary{booktabs}
-\UseTblrLibrary{siunitx}
-\NewTableCommand{\tinytableDefineColor}[3]{\definecolor{#1}{#2}{#3}}
-\newcommand{\tinytableTabularrayUnderline}[1]{\underline{#1}}
-\newcommand{\tinytableTabularrayStrikeout}[1]{\sout{#1}}
+\usepackage{siunitx}
+
+    \newcolumntype{d}{S[
+      table-align-text-before=false,
+      table-align-text-after=false,
+      input-symbols={-,\*+()}
+    ]}
+  
 \usepackage{bookmark}
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same}
@@ -142,7 +139,7 @@
 
 \title{Data Scoping: Job Search Behaviour}
 \author{Ebba Mark}
-\date{2025-06-30}
+\date{2025-07-30}
 
 \begin{document}
 \maketitle
@@ -171,8 +168,8 @@ We have narrowed the list of behavioural adjustments to the following:\\
 in vacancy targeting by similar workers. This is not yet supported by
 data.
 
-\subsection{\texorpdfstring{\textbf{Relevant
-Analyses}}{Relevant Analyses}}\label{relevant-analyses}
+\section{Calibrating Behavioural
+Mechanisms}\label{calibrating-behavioural-mechanisms}
 
 \textbf{Data we have decided to keep:}
 
@@ -182,10 +179,13 @@ Analyses}}{Relevant Analyses}}\label{relevant-analyses}
   Current Population Survey 2018 \& 2022: Information on applications
   sent by unemployment duration.
 \item
-  Mukoyama et al.~data on the intensive margin of unemployed search
-  effort (in minutes searched) over the business cycle. We have chosen
-  to include this as a validation exercise of our application effort
-  imposition.
+  Displaced Worker Supplement: As part of the Current Population Survey,
+  the US Census Bureau conducts an annual Displaced Worker Supplement in
+  which workers who have lost their job in the last three years are
+  asked additional questions about their unemployment experiences and
+  (if re-employed) their re-employment conditions. From this we draw a
+  reservation wage adjustment rate as a function of unemployment
+  duration.
 \item
   \href{https://www.aeaweb.org/articles?id=10.1257/mac.20180105}{Eeckhout
   et al.~2019 Unemployment Cycles}: We derive the sensitivity of
@@ -195,13 +195,10 @@ Analyses}}{Relevant Analyses}}\label{relevant-analyses}
   decided to abandon using their estimated parameters (search intensity
   for employed workers).
 \item
-  Displaced Worker Supplement: As part of the Current Population Survey,
-  the US Census Bureau conducts an annual Displaced Worker Supplement in
-  which workers who have lost their job in the last three years are
-  asked additional questions about their unemployment experiences and
-  (if re-employed) their re-employment conditions. From this we draw a
-  reservation wage adjustment rate as a function of unemployment
-  duration.
+  (Validation) Mukoyama et al.~data on the intensive margin of
+  unemployed search effort (in minutes searched) over the business
+  cycle. We have chosen to include this as a validation exercise of our
+  application effort imposition.
 \item
   \href{https://www.aeaweb.org/articles?id=10.1257/aer.20190808}{\textbf{Mueller
   et al.~2021: Job Seekers' Perceptions and Employment Prospects:
@@ -212,10 +209,10 @@ Analyses}}{Relevant Analyses}}\label{relevant-analyses}
 inputs due to lack of relevance or poor data quality are in the
 ``Discarded Analyses'' tab.}
 
-\subsubsection{Applications Sent}\label{applications-sent}
+\subsection{Applications Sent}\label{applications-sent}
 
-\paragraph{Current Population Survey - 2018 \& 2020
-Supplement}\label{current-population-survey---2018-2020-supplement}
+\subsubsection{(Calibration) Current Population Survey - 2018 \& 2020
+Supplement}\label{calibration-current-population-survey---2018-2020-supplement}
 
 This 2020
 \href{https://www.bls.gov/opub/btn/volume-9/how-do-jobseekers-search-for-jobs.htm\#_edn5}{``Beyond
@@ -256,6 +253,10 @@ data are found in the next section.
 \end{verbatim}
 
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-1-1.pdf}}
+
+\begin{verbatim}
+## NULL
+\end{verbatim}
 
 It turns out that the 2018 supplement was also run in 2022, giving us
 two sets of years to compare (including pre- and post-Covid). The below
@@ -386,7 +387,7 @@ across all specifications at the 0.1\% level.
 
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-5-1.pdf}}
 
-\paragraph{Validation: Mukoyama et al.~Job Search and the Business
+\subsubsection{(Validation) Mukoyama et al.~Job Search and the Business
 Cycle}\label{validation-mukoyama-et-al.-job-search-and-the-business-cycle}
 
 \href{https://www.aeaweb.org/articles?id=10.1257/mac.20160202}{Mukoyama:
@@ -397,23 +398,22 @@ Job Search Over the Business Cycle}
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-6-3.pdf}}
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-6-4.pdf}}
 
-\subsubsection{Reservation Wage
+\subsection{Reservation Wage
 Adjustment}\label{reservation-wage-adjustment}
 
 As part of the Current Population Survey, the US Census Bureau conducts
-an annual
+an annuaol
 \href{https://cps.ipums.org/cps/dw_sample_notes.shtml}{Displaced Worker
 Supplement} in which workers who have lost their job in the last three
 years are asked additional questions about their unemployment
 experiences and (if re-employed) their re-employment conditions.
 
-From link above: ``The universe for the Displaced Workers Supplement is
-civilians 20 or older. Respondents are further categorized as
-a''displaced worker'' if they meet additional characteristics (see
-DWSTAT). After 1998, displaced workers are those who lost or left a job
-due to layoffs or shutdowns within the past 3 years\ldots were not
-self-employed, and did not expect to be recalled to work within the next
-six months.
+``The universe for the Displaced Workers Supplement is civilians 20 or
+older. Respondents are further categorized as a''displaced worker'' if
+they meet additional characteristics (see DWSTAT). After 1998, displaced
+workers are those who lost or left a job due to layoffs or shutdowns
+within the past 3 years\ldots were not self-employed, and did not expect
+to be recalled to work within the next six months.
 
 The data used below is from annual survey responses between 2000-2025. I
 use the supplement sample weights in all results below. I note where I
@@ -512,9 +512,11 @@ binning and outlier trimming.
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\CommentTok{\# From the original dataset, I include only those that reported having lost a FT job in the last three years}
+\CommentTok{\# From the original dataset, I include only those that reported having lost a }
+\CommentTok{\# FT job in the last three years}
 \NormalTok{df }\OtherTok{\textless{}{-}} \FunctionTok{readRDS}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"data/behav\_params/cps\_displaced\_worker\_supplement/cps\_disp\_filtered.RDS"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%} 
-  \FunctionTok{select}\NormalTok{(hwtfinl, cpsid, wtfinl, age, sex, race, marst, educ, }\CommentTok{\# age, sex, race, marital status, educational attainment}
+  \FunctionTok{select}\NormalTok{(hwtfinl, cpsid, wtfinl, age, sex, race, marst, educ, }
+         \CommentTok{\# age, sex, race, marital status, educational attainment}
 \NormalTok{         dwsuppwt, }\CommentTok{\# Survey weight}
 \NormalTok{         dwyears, }\CommentTok{\# Years worked at lost job}
 \NormalTok{         dwben, }\CommentTok{\# Received unemployment benefits}
@@ -525,10 +527,16 @@ binning and outlier trimming.
 \NormalTok{         dwwagel, }\CommentTok{\# Hourly earnings at lost job}
 \NormalTok{         dwwagec, }\CommentTok{\# Hourly wage at current job}
 \NormalTok{         dwhrswkc, }\CommentTok{\# Hours worked each week at current job}
-\NormalTok{         dwresp, }\CommentTok{\# Eligibility and interview status for Displaced Worker Supplement}
-         \CommentTok{\# Interestingly the unemployment duration is not directly linked to CURRENT job and we cannot see the wage of the start of the next job...thought this feels problematic, it does indicate more accurately the ultimate "recovered" wage...will need to declare as a limitation but also not completely indefensible}
-\NormalTok{         dwwksun) }\SpecialCharTok{\%\textgreater{}\%}  \CommentTok{\# Number of weeks not working between between end of lost or left job and start of next job}
-  \CommentTok{\# I remove anyone who is Not in Universe (99) and declaring greater than 160 weeks unemployed between jobs}
+\NormalTok{         dwresp, }\CommentTok{\# Eligibility and interview status for Displaced Wrkr Supplement}
+         \CommentTok{\# Interestingly the unemployment duration is not directly linked to }
+         \CommentTok{\# CURRENT job and we cannot see the wage of the start of the next job...}
+        \CommentTok{\# thought this feels problematic, it does indicate more accurately the }
+        \CommentTok{\# ultimate "recovered" wage...will need to declare as a limitation }
+        \CommentTok{\# but also not completely indefensible}
+\NormalTok{         dwwksun) }\SpecialCharTok{\%\textgreater{}\%}  \CommentTok{\# Number of weeks not working between between end of lost}
+         \CommentTok{\# or left job and start of next job}
+  \CommentTok{\# I remove anyone who is Not in Universe (99) and declaring greater than 160 }
+  \CommentTok{\# weeks unemployed between jobs}
 \FunctionTok{filter}\NormalTok{(dwhrswkc }\SpecialCharTok{!=} \DecValTok{99} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{160}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
   \CommentTok{\# Replacing NIU values with NA values}
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{dwwagel =} \FunctionTok{ifelse}\NormalTok{(}\FunctionTok{round}\NormalTok{(dwwagel) }\SpecialCharTok{==} \DecValTok{100}\NormalTok{, }\ConstantTok{NA}\NormalTok{, dwwagel),}
@@ -539,31 +547,42 @@ binning and outlier trimming.
          \CommentTok{\# dwweekc = ifelse(round(dwweekc) == 10000, NA, dwweekc),}
          \CommentTok{\# Binning educational categories}
          \AttributeTok{educ\_cat =} \FunctionTok{factor}\NormalTok{(}\FunctionTok{case\_when}\NormalTok{(educ }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\textasciitilde{}} \ConstantTok{NA}\NormalTok{, }\CommentTok{\# (NIU)}
-\NormalTok{                              educ }\SpecialCharTok{\textgreater{}} \DecValTok{1} \SpecialCharTok{\&}\NormalTok{ educ }\SpecialCharTok{\textless{}=} \DecValTok{71} \SpecialCharTok{\textasciitilde{}} \StringTok{"Less than HS"}\NormalTok{, }\CommentTok{\# Includes "None" {-} Grade 12 no diploma (8 subcategories (grade 1{-}11 etc))}
-\NormalTok{                              educ }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{73}\NormalTok{, }\DecValTok{81}\NormalTok{) }\SpecialCharTok{\textasciitilde{}} \StringTok{"HS Diploma"}\NormalTok{, }\CommentTok{\# Includes "High school Diploma or equivalent" and "some college, but no degree"}
-\NormalTok{                              educ }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{91}\NormalTok{, }\DecValTok{92}\NormalTok{) }\SpecialCharTok{\textasciitilde{}} \StringTok{"Associate\textquotesingle{}s"}\NormalTok{, }\CommentTok{\# Include "[Associate\textquotesingle{}s degree, occupational/vocational program]" and "Associate\textquotesingle{}s         [Associate\textquotesingle{}s degree, academic program]"}
-\NormalTok{                              educ }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{111}\NormalTok{) }\SpecialCharTok{\textasciitilde{}} \StringTok{"Bachelor\textquotesingle{}s"}\NormalTok{, }\CommentTok{\# Bachelor\textquotesingle{}s degree}
-\NormalTok{                              educ }\SpecialCharTok{\textgreater{}} \DecValTok{111} \SpecialCharTok{\textasciitilde{}} \StringTok{"Postgraduate Degree"} \CommentTok{\# Includes Master\textquotesingle{}s, Professional School, and Doctorate degree}
-\NormalTok{                              ), , }\AttributeTok{levels =} \FunctionTok{c}\NormalTok{(}\StringTok{"Less than HS"}\NormalTok{, }\StringTok{"HS Diploma"}\NormalTok{, }\StringTok{"Associate\textquotesingle{}s"}\NormalTok{, }\StringTok{"Bachelor\textquotesingle{}s"}\NormalTok{, }\StringTok{"Postgraduate Degree"}\NormalTok{)),}
+\NormalTok{                              educ }\SpecialCharTok{\textgreater{}} \DecValTok{1} \SpecialCharTok{\&}\NormalTok{ educ }\SpecialCharTok{\textless{}=} \DecValTok{71} \SpecialCharTok{\textasciitilde{}} \StringTok{"Less than HS"}\NormalTok{, }\CommentTok{\# Includes }
+                                  \CommentTok{\# "None" {-} Grade 12 no diploma }
+                                  \CommentTok{\# (8 subcategories (grade 1{-}11 etc))}
+\NormalTok{                              educ }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{73}\NormalTok{, }\DecValTok{81}\NormalTok{) }\SpecialCharTok{\textasciitilde{}} \StringTok{"HS Diploma"}\NormalTok{, }\CommentTok{\# Includes }
+                                  \CommentTok{\# "High school Diploma or equivalent" and }
+                                  \CommentTok{\# "some college, but no degree"}
+\NormalTok{                              educ }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{91}\NormalTok{, }\DecValTok{92}\NormalTok{) }\SpecialCharTok{\textasciitilde{}} \StringTok{"Associate\textquotesingle{}s"}\NormalTok{, }\CommentTok{\# Include }
+                                  \CommentTok{\# "[Associate\textquotesingle{}s degree, occupational/vocational }
+                                  \CommentTok{\# program]" and "Associate\textquotesingle{}s }
+                                  \CommentTok{\# [Associate\textquotesingle{}s degree, academic program]"}
+\NormalTok{                              educ }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{111}\NormalTok{) }\SpecialCharTok{\textasciitilde{}} \StringTok{"Bachelor\textquotesingle{}s"}\NormalTok{,}\CommentTok{\#Bachelor\textquotesingle{}s degree}
+\NormalTok{                              educ }\SpecialCharTok{\textgreater{}} \DecValTok{111} \SpecialCharTok{\textasciitilde{}} \StringTok{"Postgraduate Degree"} \CommentTok{\# Includes }
+                                  \CommentTok{\# Master\textquotesingle{}s, Professional School \& Doctorate}
+\NormalTok{                              ), , }\AttributeTok{levels =} \FunctionTok{c}\NormalTok{(}\StringTok{"Less than HS"}\NormalTok{, }\StringTok{"HS Diploma"}\NormalTok{, }
+                                              \StringTok{"Associate\textquotesingle{}s"}\NormalTok{, }\StringTok{"Bachelor\textquotesingle{}s"}\NormalTok{, }
+                                              \StringTok{"Postgraduate Degree"}\NormalTok{)),}
          \CommentTok{\# Marital status to binary indicator}
          \AttributeTok{marst =} \FunctionTok{case\_when}\NormalTok{(marst }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{, }\CommentTok{\# Married with a present spouse}
                            \CommentTok{\# Might consider dividing this differently}
-                           \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \DecValTok{0}\NormalTok{), }\CommentTok{\# Married with absent spouse, separated, divorced, widowed, never married/single}
-         \CommentTok{\# gender to 0,1 values}
-         \AttributeTok{female =}\NormalTok{ sex }\SpecialCharTok{==} \DecValTok{2}\NormalTok{,}
-         \CommentTok{\# race to higher{-}level categories w binary values}
-         \AttributeTok{white =}\NormalTok{ race }\SpecialCharTok{==} \DecValTok{100}\NormalTok{,}
+                           \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \DecValTok{0}\NormalTok{), }\CommentTok{\# Married with absent spouse, separated, }
+                          \CommentTok{\# divorced, widowed, never married/single}
+         
+         \AttributeTok{female =}\NormalTok{ sex }\SpecialCharTok{==} \DecValTok{2}\NormalTok{, }\CommentTok{\# gender to 0,1 values}
+         \AttributeTok{white =}\NormalTok{ race }\SpecialCharTok{==} \DecValTok{100}\NormalTok{, }\CommentTok{\# race to higher{-}level categories w binary values}
          \AttributeTok{black =}\NormalTok{ race }\SpecialCharTok{==} \DecValTok{200}\NormalTok{,}
-         \AttributeTok{mixed =}\NormalTok{ race }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{801}\NormalTok{, }\DecValTok{802}\NormalTok{, }\DecValTok{803}\NormalTok{, }\DecValTok{804}\NormalTok{, }\DecValTok{805}\NormalTok{, }\DecValTok{806}\NormalTok{, }\DecValTok{810}\NormalTok{, }\DecValTok{812}\NormalTok{, }\DecValTok{813}\NormalTok{, }\DecValTok{820}\NormalTok{, }\DecValTok{830}\NormalTok{),}
+         \AttributeTok{mixed =}\NormalTok{ race }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{801}\NormalTok{, }\DecValTok{802}\NormalTok{, }\DecValTok{803}\NormalTok{, }\DecValTok{804}\NormalTok{, }\DecValTok{805}\NormalTok{, }
+                             \DecValTok{806}\NormalTok{, }\DecValTok{810}\NormalTok{, }\DecValTok{812}\NormalTok{, }\DecValTok{813}\NormalTok{, }\DecValTok{820}\NormalTok{, }\DecValTok{830}\NormalTok{),}
          \AttributeTok{aapi =}\NormalTok{ race }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{650}\NormalTok{, }\DecValTok{651}\NormalTok{, }\DecValTok{652}\NormalTok{, }\DecValTok{808}\NormalTok{, }\DecValTok{809}\NormalTok{),}
          \AttributeTok{native =}\NormalTok{ race }\SpecialCharTok{==} \DecValTok{300}
-         \CommentTok{\# age is a continuous variable which seems fine for now...binning likely unnecessary}
+         \CommentTok{\# age is continuous which seems fine...binning likely unnecessary}
 \NormalTok{         ) }\SpecialCharTok{\%\textgreater{}\%} 
-        \CommentTok{\# Ratio of hourly wage of current job to lost job}
-  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{ratio\_wage =}\NormalTok{ dwwagec}\SpecialCharTok{/}\NormalTok{dwwagel,}
-         \CommentTok{\# Ratio of weekly wage of current job to lost job}
-         \AttributeTok{ratio\_weekly =}\NormalTok{ dwweekc}\SpecialCharTok{/}\NormalTok{dwweekl,}
-         \CommentTok{\# Reconciling missing reporting between weekly and hourly wage. Take either the min, max or mean value. }
+
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{ratio\_wage =}\NormalTok{ dwwagec}\SpecialCharTok{/}\NormalTok{dwwagel, }\CommentTok{\# Ratio of hourly wage current:lost job}
+         \AttributeTok{ratio\_weekly =}\NormalTok{ dwweekc}\SpecialCharTok{/}\NormalTok{dwweekl, }\CommentTok{\# Ratio of wkly wage of current:lost job}
+         \CommentTok{\# Reconciling missing reporting between weekly and hourly wage. }
+         \CommentTok{\# Take either the min, max or mean value. }
          \AttributeTok{ratio\_reconciled\_min =} \FunctionTok{case\_when}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(ratio\_wage) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ratio\_weekly, }
                                           \FunctionTok{is.na}\NormalTok{(ratio\_weekly) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ratio\_wage, }
                                           \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \FunctionTok{pmin}\NormalTok{(ratio\_weekly, ratio\_wage)), }
@@ -572,17 +591,20 @@ binning and outlier trimming.
                                           \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \FunctionTok{pmax}\NormalTok{(ratio\_weekly, ratio\_wage)), }
          \AttributeTok{ratio\_reconciled\_mean =} \FunctionTok{case\_when}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(ratio\_wage) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ratio\_weekly, }
                                           \FunctionTok{is.na}\NormalTok{(ratio\_weekly) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ratio\_wage, }
-                                          \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \FunctionTok{rowMeans}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{c}\NormalTok{(ratio\_wage, ratio\_weekly)), }\AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)), }
+                                          \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \FunctionTok{rowMeans}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{c}\NormalTok{(ratio\_wage, }
+\NormalTok{                                                                   ratio\_weekly)), }
+                                                          \AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)), }
          \CommentTok{\# Create monthly unemployment duration for continuous}
          \AttributeTok{dwmosun =} \FunctionTok{floor}\NormalTok{(dwwksun}\SpecialCharTok{/}\DecValTok{4}\NormalTok{),}
          \AttributeTok{dwmosun2 =}\NormalTok{ dwmosun}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{,}
          \AttributeTok{dwmosun3 =}\NormalTok{ dwmosun}\SpecialCharTok{\^{}}\DecValTok{3}\NormalTok{,}
-         \CommentTok{\# Unemployment duration (reported as time between lost job and start of next job)}
+         \CommentTok{\# Unemployment duration:}
+                  \CommentTok{\# (reported as time between lost job and start of next job)}
          \CommentTok{\# I bin in...}
-         \CommentTok{\# monthly intervals (4 weeks) from 1{-}6 months}
-         \CommentTok{\# quarterly intervals (12 weeks) from 7 mos{-}1 year}
-         \CommentTok{\# half{-}year interval from 1{-}2.5 years}
-         \CommentTok{\# single bin for anyone about 120 weeks}
+           \CommentTok{\# monthly intervals (4 weeks) from 1{-}6 months}
+           \CommentTok{\# quarterly intervals (12 weeks) from 7 mos{-}1 year}
+           \CommentTok{\# half{-}year interval from 1{-}2.5 years}
+           \CommentTok{\# single bin for anyone about 120 weeks}
          \AttributeTok{dwwksun\_bin =} \FunctionTok{case\_when}\NormalTok{(}
            \CommentTok{\# Monthly intervals (4 weeks) from 1{-}6 months}
 \NormalTok{           dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{4} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{, }\CommentTok{\#"Less than 4 weeks",}
@@ -591,39 +613,47 @@ binning and outlier trimming.
 \NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{12} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{16} \SpecialCharTok{\textasciitilde{}} \DecValTok{4}\NormalTok{, }
 \NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{16} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{20} \SpecialCharTok{\textasciitilde{}} \DecValTok{5}\NormalTok{,}
 \NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{20} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{24} \SpecialCharTok{\textasciitilde{}} \DecValTok{6}\NormalTok{,}
-                                 \CommentTok{\# Quarterly Intervals (12 weeks) from 6+ mos {-} 1 year}
+                                 \CommentTok{\# Quarterly Intervals (12 wks) from 6+ mos{-}1 yr}
 \NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{24} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{36} \SpecialCharTok{\textasciitilde{}} \DecValTok{7}\NormalTok{,}
 \NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{36} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{48} \SpecialCharTok{\textasciitilde{}} \DecValTok{8}\NormalTok{, }
-                                 \CommentTok{\# Half{-}year Intervals (24 weeks) from 1{-}2.5 years}
+                                 \CommentTok{\# Half{-}year Intervals (24 weeks) from 1{-}2.5 yrs}
 \NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{48} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{72} \SpecialCharTok{\textasciitilde{}} \DecValTok{9}\NormalTok{, }
 \NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{72} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{96} \SpecialCharTok{\textasciitilde{}} \DecValTok{10}\NormalTok{, }
 \NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{96} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{120} \SpecialCharTok{\textasciitilde{}} \DecValTok{11}\NormalTok{, }
-                                 \CommentTok{\# Anyone above {-} recall this is capped at 160 weeks as per filter above}
+                                 \CommentTok{\# Anyone above{-}recall this is capped at 160 wks }
+                                  \CommentTok{\# as per filter above}
 \NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{120} \SpecialCharTok{\textasciitilde{}} \DecValTok{12}\NormalTok{),}
          \CommentTok{\# Bin labels}
-         \AttributeTok{dwwksun\_bin\_labs =} \FunctionTok{case\_when}\NormalTok{(dwwksun\_bin }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \StringTok{"\textless{}= 1 mo."}\NormalTok{, }\CommentTok{\#"Less than 4 weeks",}
+         \AttributeTok{dwwksun\_bin\_labs =} \FunctionTok{case\_when}\NormalTok{(dwwksun\_bin }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \StringTok{"\textless{}= 1 mo."}\NormalTok{, }\CommentTok{\#"\textless{} 4 wks",}
 \NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \StringTok{"1{-}2 mos."}\NormalTok{,}
 \NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{3} \SpecialCharTok{\textasciitilde{}} \StringTok{"2{-}3 mos."}\NormalTok{,}
 \NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{4} \SpecialCharTok{\textasciitilde{}} \StringTok{"3{-}4 mos."}\NormalTok{, }
 \NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{5} \SpecialCharTok{\textasciitilde{}} \StringTok{"4{-}5 mos."}\NormalTok{,}
 \NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{6} \SpecialCharTok{\textasciitilde{}} \StringTok{"5{-}6 mos."}\NormalTok{,}
-                                 \CommentTok{\# Quarterly Intervals (12 weeks) from 6+ mos {-} 1 year}
+                                 \CommentTok{\# Quarterly Intervals (12 wks) from 6+ mos{-}1 yr}
 \NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{7} \SpecialCharTok{\textasciitilde{}} \StringTok{"6{-}9 mos."}\NormalTok{,}
 \NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{8} \SpecialCharTok{\textasciitilde{}} \StringTok{"9{-}12 mos."}\NormalTok{, }
-                                 \CommentTok{\# Half{-}year Intervals (24 weeks) from 1{-}2.5 years}
+                                 \CommentTok{\# Half{-}year Intervals (24 wks) from 1{-}2.5 years}
 \NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{9} \SpecialCharTok{\textasciitilde{}} \StringTok{"12{-}18 mos."}\NormalTok{, }
 \NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{10} \SpecialCharTok{\textasciitilde{}} \StringTok{"18{-}24 mos."}\NormalTok{, }
 \NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{11} \SpecialCharTok{\textasciitilde{}} \StringTok{"24{-}30 mos."}\NormalTok{, }
-                                 \CommentTok{\# Anyone above {-} recall this is capped at 160 weeks as per filter above}
+                                 \CommentTok{\# Anyone above{-}recall this is capped at 160 wks}
+                                 \CommentTok{\# as per filter above}
 \NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{12} \SpecialCharTok{\textasciitilde{}} \StringTok{"30+ mos."}\NormalTok{),}
          \AttributeTok{log\_ratio\_wage =} \FunctionTok{log}\NormalTok{(ratio\_wage),}
          \AttributeTok{log\_ratio\_weekly =} \FunctionTok{log}\NormalTok{(ratio\_weekly),}
-         \CommentTok{\# I clip the sample to an accepted wage ratio between [0.5, 2] and less than 96 weeks of unemployment}
-         \AttributeTok{clipped\_sample\_hwage =}\NormalTok{ ratio\_wage }\SpecialCharTok{\textgreater{}=} \FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_wage }\SpecialCharTok{\textless{}=} \DecValTok{2} \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin }\SpecialCharTok{\textless{}} \DecValTok{11}\NormalTok{,}
-         \AttributeTok{clipped\_sample\_wwage =}\NormalTok{ ratio\_weekly }\SpecialCharTok{\textgreater{}=} \FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_weekly }\SpecialCharTok{\textless{}=} \DecValTok{2}  \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin }\SpecialCharTok{\textless{}} \DecValTok{11}\NormalTok{,}
-         \AttributeTok{clipped\_sample\_rec\_min =}\NormalTok{ ratio\_reconciled\_min }\SpecialCharTok{\textgreater{}=} \FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_reconciled\_min }\SpecialCharTok{\textless{}=} \DecValTok{2} \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin }\SpecialCharTok{\textless{}} \DecValTok{11}\NormalTok{,}
-         \AttributeTok{clipped\_sample\_rec\_max =}\NormalTok{ ratio\_reconciled\_max }\SpecialCharTok{\textgreater{}=} \FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_reconciled\_max }\SpecialCharTok{\textless{}=} \DecValTok{2} \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin }\SpecialCharTok{\textless{}} \DecValTok{11}\NormalTok{,}
-         \AttributeTok{clipped\_sample\_rec\_mean =}\NormalTok{ ratio\_reconciled\_mean }\SpecialCharTok{\textgreater{}=} \FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_reconciled\_mean }\SpecialCharTok{\textless{}=} \DecValTok{2} \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin }\SpecialCharTok{\textless{}} \DecValTok{11}\NormalTok{)}
+         \CommentTok{\# I clip the sample to an accepted wage ratio between [0.5, 2] }
+         \CommentTok{\# and less than 96 weeks of unemployment}
+         \AttributeTok{clipped\_sample\_hwage =} 
+\NormalTok{           ratio\_wage }\SpecialCharTok{\textgreater{}=} \FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_wage }\SpecialCharTok{\textless{}=} \DecValTok{2} \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin }\SpecialCharTok{\textless{}} \DecValTok{11}\NormalTok{,}
+         \AttributeTok{clipped\_sample\_wwage =} 
+\NormalTok{           ratio\_weekly }\SpecialCharTok{\textgreater{}=} \FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_weekly }\SpecialCharTok{\textless{}=} \DecValTok{2}  \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin }\SpecialCharTok{\textless{}} \DecValTok{11}\NormalTok{,}
+         \AttributeTok{clipped\_sample\_rec\_min =} 
+\NormalTok{           ratio\_reconciled\_min}\SpecialCharTok{\textgreater{}=}\FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_reconciled\_min}\SpecialCharTok{\textless{}=}\DecValTok{2} \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin}\SpecialCharTok{\textless{}}\DecValTok{11}\NormalTok{,}
+         \AttributeTok{clipped\_sample\_rec\_max =} 
+\NormalTok{           ratio\_reconciled\_max}\SpecialCharTok{\textgreater{}=}\FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_reconciled\_max}\SpecialCharTok{\textless{}=}\DecValTok{2} \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin}\SpecialCharTok{\textless{}}\DecValTok{11}\NormalTok{,}
+         \AttributeTok{clipped\_sample\_rec\_mean =} 
+\NormalTok{           ratio\_reconciled\_mean}\SpecialCharTok{\textgreater{}=}\FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_reconciled\_mean}\SpecialCharTok{\textless{}=}\DecValTok{2} \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin}\SpecialCharTok{\textless{}}\DecValTok{11}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -646,13 +676,17 @@ wage ratio to unemployment duration before using the regression.
 Indicates decline in the wage ratio with unemployment duration that has
 a potentially non-linear fit.
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-24-1.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-24-2.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-24-3.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-24-4.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-24-5.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-24-1} \end{center}
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-25-1.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-24-2} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-24-3} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-24-4} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-24-5} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-25-1} \end{center}
 
 \section{Regressions (non-uniform
 sample)}\label{regressions-non-uniform-sample}
@@ -719,7 +753,7 @@ performs fairly well across various diagnostic tests.
 ## [1] "Continuous U Duration. w. UI Control w. demographic controls (clipped sample)"
 \end{verbatim}
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-28-1.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-28-1} \end{center}
 
 \subsection{Continuous UE Duration}\label{continuous-ue-duration}
 
@@ -727,110 +761,108 @@ Continuous UE duration treatment is reported in monthly values. A
 one-unit increase in the treatment variable = 1 additional month of
 unemployment.
 
-\subsubsection{W.O. Wage Level Control}\label{w.o.-wage-level-control}
-
-\begin{table}[t]
-\caption{\label{tab:unnamed-chunk-29}Continuous UE Duration w.o Wage Level Control} 
-\fontsize{12.0pt}{14.4pt}\selectfont
-\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lcccccccccccccccccccccccc}
+\begin{table}
+\centering\centering
+\caption{\label{tab:unnamed-chunk-29}Continuous UE Duration w.o Wage Level Control}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccccccccccccccccccccc}
 \toprule
-  & Cont. & Cont. (clipped) & Cont. w. UI & Cont. w. UI (clipped) & Cont. w. exhausted UI & Cont. w. exhausted UI (clipped) & Cont. Sq & Cont. Sq (clipped) & Cont. Sq w. UI & Cont. Sq w. UI (clipped) & Cont. Sq w. exhausted UI & Cont. Sq w. exhausted UI (clipped) & Cont. w. controls & Cont. w. controls (clipped) & Cont. w. UI w. controls & Cont. w. UI w. controls (clipped) & Cont. w. exhausted UI w. controls & Cont. w. exhausted UI w. controls (clipped) & Cont. Sq w. controls & Cont. Sq w. controls (clipped) & Cont. Sq w. UI w. controls & Cont. Sq w. UI w. controls (clipped) & Cont. Sq w. exhausted UI w. controls & Cont. Sq w. exhausted UI w. controls (clipped) \\ 
-\midrule\addlinespace[2.5pt]
-Intercept & 1.053*** & 1.045*** & 1.053*** & 1.045*** & 1.006*** & 1.006*** & 1.055*** & 1.046*** & 1.055*** & 1.046*** & 1.002*** & 1.001*** & 1.180*** & 1.163*** & 1.180*** & 1.163*** & 1.119*** & 1.113*** & 1.180*** & 1.163*** & 1.180*** & 1.163*** & 1.116*** & 1.108*** \\ 
- & (0.006) & (0.004) & (0.006) & (0.004) & (0.010) & (0.007) & (0.007) & (0.005) & (0.007) & (0.005) & (0.011) & (0.008) & (0.031) & (0.021) & (0.031) & (0.021) & (0.033) & (0.023) & (0.031) & (0.021) & (0.031) & (0.021) & (0.033) & (0.023) \\ 
-{\cellcolor[HTML]{ADD8E6}{Unemployment Duration (Months)}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.005***}} & {\cellcolor[HTML]{ADD8E6}{-0.004***}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.007**}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.007**}} & {\cellcolor[HTML]{ADD8E6}{-0.003}} & {\cellcolor[HTML]{ADD8E6}{-0.001}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.004***}} & {\cellcolor[HTML]{ADD8E6}{-0.004***}} & {\cellcolor[HTML]{ADD8E6}{-0.008**}} & {\cellcolor[HTML]{ADD8E6}{-0.006**}} & {\cellcolor[HTML]{ADD8E6}{-0.008**}} & {\cellcolor[HTML]{ADD8E6}{-0.006**}} & {\cellcolor[HTML]{ADD8E6}{-0.003}} & {\cellcolor[HTML]{ADD8E6}{-0.001}} \\ 
- & (0.001) & (0.001) & (0.001) & (0.001) & (0.001) & (0.001) & (0.002) & (0.002) & (0.002) & (0.002) & (0.003) & (0.002) & (0.001) & (0.001) & (0.001) & (0.001) & (0.001) & (0.001) & (0.002) & (0.002) & (0.002) & (0.002) & (0.003) & (0.002) \\ 
-Received Unemployment Compensation &  &  & -0.000 & 0.000 &  &  &  &  & -0.000 & 0.000 &  &  &  &  & 0.000 & 0.000 &  &  &  &  & 0.000 & 0.000 &  &  \\ 
- &  &  & (0.001) & (0.001) &  &  &  &  & (0.001) & (0.001) &  &  &  &  & (0.001) & (0.001) &  &  &  &  & (0.001) & (0.001) &  &  \\ 
-Exhausted Unemployment Compensation &  &  &  &  & 0.001*** & 0.001*** &  &  &  &  & 0.001*** & 0.001*** &  &  &  &  & 0.001*** & 0.000*** &  &  &  &  & 0.001*** & 0.001*** \\ 
- &  &  &  &  & (0.000) & (0.000) &  &  &  &  & (0.000) & (0.000) &  &  &  &  & (0.000) & (0.000) &  &  &  &  & (0.000) & (0.000) \\ 
-dwmosun2 &  &  &  &  &  &  & 0.000 & 0.000 & 0.000 & 0.000 & -0.000 & -0.000 &  &  &  &  &  &  & 0.000 & 0.000 & 0.000 & 0.000 & -0.000 & -0.000 \\ 
- &  &  &  &  &  &  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) &  &  &  &  &  &  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
-Female &  &  &  &  &  &  &  &  &  &  &  &  & 0.003 & -0.003 & 0.003 & -0.003 & 0.003 & -0.003 & 0.003 & -0.003 & 0.003 & -0.003 & 0.003 & -0.003 \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) \\ 
-Age &  &  &  &  &  &  &  &  &  &  &  &  & -0.003*** & -0.002*** & -0.003*** & -0.002*** & -0.003*** & -0.002*** & -0.003*** & -0.002*** & -0.003*** & -0.002*** & -0.003*** & -0.002*** \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
-White &  &  &  &  &  &  &  &  &  &  &  &  & -0.035 & -0.052** & -0.035 & -0.052** & -0.033 & -0.051** & -0.035 & -0.052** & -0.035 & -0.052** & -0.033 & -0.051** \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.023) & (0.016) & (0.023) & (0.016) & (0.023) & (0.016) & (0.023) & (0.016) & (0.023) & (0.016) & (0.023) & (0.016) \\ 
-Black &  &  &  &  &  &  &  &  &  &  &  &  & -0.048+ & -0.057** & -0.048+ & -0.057** & -0.045+ & -0.055** & -0.048+ & -0.057** & -0.048+ & -0.057** & -0.045+ & -0.056** \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.026) & (0.018) & (0.026) & (0.018) & (0.026) & (0.018) & (0.026) & (0.018) & (0.026) & (0.018) & (0.026) & (0.018) \\ 
-Mixed &  &  &  &  &  &  &  &  &  &  &  &  & 0.014 & -0.070** & 0.014 & -0.070* & 0.017 & -0.068* & 0.014 & -0.070** & 0.014 & -0.070* & 0.016 & -0.068* \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.040) & (0.027) & (0.040) & (0.027) & (0.040) & (0.027) & (0.040) & (0.027) & (0.040) & (0.027) & (0.040) & (0.027) \\ 
-Married &  &  &  &  &  &  &  &  &  &  &  &  & 0.005 & 0.011 & 0.005 & 0.011 & 0.005 & 0.012+ & 0.005 & 0.011 & 0.005 & 0.011 & 0.005 & 0.012+ \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) \\ 
-High School &  &  &  &  &  &  &  &  &  &  &  &  & 0.005 & 0.001 & 0.005 & 0.001 & 0.011 & 0.005 & 0.006 & 0.001 & 0.006 & 0.001 & 0.011 & 0.005 \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.016) & (0.011) & (0.016) & (0.011) & (0.016) & (0.011) & (0.016) & (0.011) & (0.016) & (0.011) & (0.016) & (0.011) \\ 
-educ\_catAssociate's &  &  &  &  &  &  &  &  &  &  &  &  & 0.032 & -0.009 & 0.032 & -0.009 & 0.038+ & -0.005 & 0.032 & -0.009 & 0.032 & -0.009 & 0.037+ & -0.005 \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.021) & (0.014) & (0.021) & (0.014) & (0.021) & (0.014) & (0.021) & (0.014) & (0.021) & (0.014) & (0.021) & (0.014) \\ 
-Bachelor's Degree &  &  &  &  &  &  &  &  &  &  &  &  & 0.079*** & 0.066*** & 0.079*** & 0.066*** & 0.085*** & 0.070*** & 0.080*** & 0.066*** & 0.080*** & 0.066*** & 0.084*** & 0.070*** \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.021) & (0.015) & (0.021) & (0.015) & (0.021) & (0.015) & (0.021) & (0.015) & (0.021) & (0.015) & (0.021) & (0.015) \\ 
-Postgraduate Degree &  &  &  &  &  &  &  &  &  &  &  &  & 0.114* & 0.030 & 0.114* & 0.030 & 0.122** & 0.037 & 0.115* & 0.030 & 0.115* & 0.030 & 0.122** & 0.037 \\ 
-{} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {(0.045)} & {(0.031)} & {(0.045)} & {(0.031)} & {(0.045)} & {(0.031)} & {(0.045)} & {(0.031)} & {(0.045)} & {(0.031)} & {(0.045)} & {(0.031)} \\ 
-Num.Obs. & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 \\ 
-R2 & 0.009 & 0.012 & 0.009 & 0.012 & 0.017 & 0.022 & 0.010 & 0.012 & 0.010 & 0.012 & 0.017 & 0.023 & 0.025 & 0.032 & 0.025 & 0.032 & 0.030 & 0.040 & 0.025 & 0.032 & 0.025 & 0.032 & 0.030 & 0.040 \\ 
-R2 Adj. & 0.009 & 0.012 & 0.009 & 0.011 & 0.016 & 0.022 & 0.009 & 0.011 & 0.009 & 0.011 & 0.016 & 0.022 & 0.022 & 0.029 & 0.022 & 0.029 & 0.028 & 0.037 & 0.022 & 0.029 & 0.022 & 0.029 & 0.027 & 0.038 \\ 
-F & 46.344 &  & 23.169 &  & 41.487 &  & 23.546 &  & 15.694 &  & 27.802 &  & 11.151 &  & 10.220 &  & 12.521 &  & 10.252 &  & 9.462 &  & 11.589 &  \\ 
-RMSE & 0.38 & 0.24 & 0.38 & 0.24 & 0.37 & 0.24 & 0.38 & 0.24 & 0.38 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 \\ 
+  & Cont. & Cont. (clipped) & Cont. w. UI & Cont. w. UI (clipped) & Cont. w. exhausted UI & Cont. w. exhausted UI (clipped) & Cont. Sq & Cont. Sq (clipped) & Cont. Sq w. UI & Cont. Sq w. UI (clipped) & Cont. Sq w. exhausted UI & Cont. Sq w. exhausted UI (clipped) & Cont. w. controls & Cont. w. controls (clipped) & Cont. w. UI w. controls & Cont. w. UI w. controls (clipped) & Cont. w. exhausted UI w. controls & Cont. w. exhausted UI w. controls (clipped) & Cont. Sq w. controls & Cont. Sq w. controls (clipped) & Cont. Sq w. UI w. controls & Cont. Sq w. UI w. controls (clipped) & Cont. Sq w. exhausted UI w. controls & Cont. Sq w. exhausted UI w. controls (clipped)\\
+\midrule
+Intercept & \num{1.053}*** & \num{1.045}*** & \num{1.053}*** & \num{1.045}*** & \num{1.006}*** & \num{1.006}*** & \num{1.055}*** & \num{1.046}*** & \num{1.055}*** & \num{1.046}*** & \num{1.002}*** & \num{1.001}*** & \num{1.180}*** & \num{1.163}*** & \num{1.180}*** & \num{1.163}*** & \num{1.119}*** & \num{1.113}*** & \num{1.180}*** & \num{1.163}*** & \num{1.180}*** & \num{1.163}*** & \num{1.116}*** & \num{1.108}***\\
+ & (\num{0.006}) & (\num{0.004}) & (\num{0.006}) & (\num{0.004}) & (\num{0.010}) & (\num{0.007}) & (\num{0.007}) & (\num{0.005}) & (\num{0.007}) & (\num{0.005}) & (\num{0.011}) & (\num{0.008}) & (\num{0.031}) & (\num{0.021}) & (\num{0.031}) & (\num{0.021}) & (\num{0.033}) & (\num{0.023}) & (\num{0.031}) & (\num{0.021}) & (\num{0.031}) & (\num{0.021}) & (\num{0.033}) & (\num{0.023})\\
+\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.003}} & \cellcolor{yellow!20}{\num{-0.001}} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.008}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.008}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.003}} & \cellcolor{yellow!20}{\num{-0.001}}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003}) & (\num{0.002}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003}) & (\num{0.002})\\
+Received Unemployment Compensation &  &  & \num{-0.000} & \num{0.000} &  &  &  &  & \num{-0.000} & \num{0.000} &  &  &  &  & \num{0.000} & \num{0.000} &  &  &  &  & \num{0.000} & \num{0.000} &  & \\
+ &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  & \\
+Exhausted Unemployment Compensation &  &  &  &  & \num{0.001}*** & \num{0.001}*** &  &  &  &  & \num{0.001}*** & \num{0.001}*** &  &  &  &  & \num{0.001}*** & \num{0.000}*** &  &  &  &  & \num{0.001}*** & \num{0.001}***\\
+ &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000})\\
+dwmosun2 &  &  &  &  &  &  & \num{0.000} & \num{0.000} & \num{0.000} & \num{0.000} & \num{-0.000} & \num{-0.000} &  &  &  &  &  &  & \num{0.000} & \num{0.000} & \num{0.000} & \num{0.000} & \num{-0.000} & \num{-0.000}\\
+ &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+Female &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.003} & \num{-0.003} & \num{0.003} & \num{-0.003} & \num{0.003} & \num{-0.003} & \num{0.003} & \num{-0.003} & \num{0.003} & \num{-0.003} & \num{0.003} & \num{-0.003}\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & \vphantom{1} (\num{0.007})\\
+Age &  &  &  &  &  &  &  &  &  &  &  &  & \num{-0.003}*** & \num{-0.002}*** & \num{-0.003}*** & \num{-0.002}*** & \num{-0.003}*** & \num{-0.002}*** & \num{-0.003}*** & \num{-0.002}*** & \num{-0.003}*** & \num{-0.002}*** & \num{-0.003}*** & \num{-0.002}***\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  &  &  &  &  &  &  &  &  &  & \num{-0.035} & \num{-0.052}** & \num{-0.035} & \num{-0.052}** & \num{-0.033} & \num{-0.051}** & \num{-0.035} & \num{-0.052}** & \num{-0.035} & \num{-0.052}** & \num{-0.033} & \num{-0.051}**\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016})\\
+Black &  &  &  &  &  &  &  &  &  &  &  &  & \num{-0.048}+ & \num{-0.057}** & \num{-0.048}+ & \num{-0.057}** & \num{-0.045}+ & \num{-0.055}** & \num{-0.048}+ & \num{-0.057}** & \num{-0.048}+ & \num{-0.057}** & \num{-0.045}+ & \num{-0.056}**\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018})\\
+Mixed &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.014} & \num{-0.070}** & \num{0.014} & \num{-0.070}* & \num{0.017} & \num{-0.068}* & \num{0.014} & \num{-0.070}** & \num{0.014} & \num{-0.070}* & \num{0.016} & \num{-0.068}*\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.040}) & (\num{0.027}) & (\num{0.040}) & (\num{0.027}) & (\num{0.040}) & (\num{0.027}) & (\num{0.040}) & (\num{0.027}) & (\num{0.040}) & (\num{0.027}) & (\num{0.040}) & (\num{0.027})\\
+Married &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.005} & \num{0.011} & \num{0.005} & \num{0.011} & \num{0.005} & \num{0.012}+ & \num{0.005} & \num{0.011} & \num{0.005} & \num{0.011} & \num{0.005} & \num{0.012}+\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007})\\
+High School &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.005} & \num{0.001} & \num{0.005} & \num{0.001} & \num{0.011} & \num{0.005} & \num{0.006} & \num{0.001} & \num{0.006} & \num{0.001} & \num{0.011} & \num{0.005}\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.016}) & (\num{0.011}) & (\num{0.016}) & (\num{0.011}) & (\num{0.016}) & (\num{0.011}) & (\num{0.016}) & (\num{0.011}) & (\num{0.016}) & (\num{0.011}) & (\num{0.016}) & (\num{0.011})\\
+educ\_catAssociate's &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.032} & \num{-0.009} & \num{0.032} & \num{-0.009} & \num{0.038}+ & \num{-0.005} & \num{0.032} & \num{-0.009} & \num{0.032} & \num{-0.009} & \num{0.037}+ & \num{-0.005}\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014})\\
+Bachelor's Degree &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.079}*** & \num{0.066}*** & \num{0.079}*** & \num{0.066}*** & \num{0.085}*** & \num{0.070}*** & \num{0.080}*** & \num{0.066}*** & \num{0.080}*** & \num{0.066}*** & \num{0.084}*** & \num{0.070}***\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.021}) & (\num{0.015}) & (\num{0.021}) & (\num{0.015}) & (\num{0.021}) & (\num{0.015}) & (\num{0.021}) & (\num{0.015}) & (\num{0.021}) & (\num{0.015}) & (\num{0.021}) & (\num{0.015})\\
+Postgraduate Degree &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.114}* & \num{0.030} & \num{0.114}* & \num{0.030} & \num{0.122}** & \num{0.037} & \num{0.115}* & \num{0.030} & \num{0.115}* & \num{0.030} & \num{0.122}** & \num{0.037}\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031})\\
+\midrule
+Num.Obs. & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644}\\
+R2 & \num{0.009} & \num{0.012} & \num{0.009} & \num{0.012} & \num{0.017} & \num{0.022} & \num{0.010} & \num{0.012} & \num{0.010} & \num{0.012} & \num{0.017} & \num{0.023} & \num{0.025} & \num{0.032} & \num{0.025} & \num{0.032} & \num{0.030} & \num{0.040} & \num{0.025} & \num{0.032} & \num{0.025} & \num{0.032} & \num{0.030} & \num{0.040}\\
+R2 Adj. & \num{0.009} & \num{0.012} & \num{0.009} & \num{0.011} & \num{0.016} & \num{0.022} & \num{0.009} & \num{0.011} & \num{0.009} & \num{0.011} & \num{0.016} & \num{0.022} & \num{0.022} & \num{0.029} & \num{0.022} & \num{0.029} & \num{0.028} & \num{0.037} & \num{0.022} & \num{0.029} & \num{0.022} & \num{0.029} & \num{0.027} & \num{0.038}\\
+F & \num{46.344} &  & \num{23.169} &  & \num{41.487} &  & \num{23.546} &  & \num{15.694} &  & \num{27.802} &  & \num{11.151} &  & \num{10.220} &  & \num{12.521} &  & \num{10.252} &  & \num{9.462} &  & \num{11.589} & \\
+RMSE & \num{0.38} & \num{0.24} & \num{0.38} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.38} & \num{0.24} & \num{0.38} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24}\\
 \bottomrule
-\end{tabular*}
-\begin{minipage}{\linewidth}
-+ p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001\\
-\end{minipage}
+\multicolumn{25}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
 \end{table}
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-29-1.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-30-1} \end{center}
 
-\subsubsection{W. Wage Level Control}\label{w.-wage-level-control}
-
-\begin{table}[t]
-\caption{\label{tab:unnamed-chunk-30}Continuous UE Duration w. Wage Level Control} 
-\fontsize{12.0pt}{14.4pt}\selectfont
-\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lcccccccccccccccccccccccc}
+\begin{table}
+\centering\centering
+\caption{\label{tab:unnamed-chunk-31}Continuous UE Duration w. Wage Level Control}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccccccccccccccccccccc}
 \toprule
-  & Cont. & Cont. (clipped) & Cont. w. UI & Cont. w. UI (clipped) & Cont. w. exhausted UI & Cont. w. exhausted UI (clipped) & Cont. Sq & Cont. Sq (clipped) & Cont. Sq w. UI & Cont. Sq w. UI (clipped) & Cont. Sq w. exhausted UI & Cont. Sq w. exhausted UI (clipped) & Cont. w. controls & Cont. w. controls (clipped) & Cont. w. UI w. controls & Cont. w. UI w. controls (clipped) & Cont. w. exhausted UI w. controls & Cont. w. exhausted UI w. controls (clipped) & Cont. Sq w. controls & Cont. Sq w. controls (clipped) & Cont. Sq w. UI w. controls & Cont. Sq w. UI w. controls (clipped) & Cont. Sq w. exhausted UI w. controls & Cont. Sq w. exhausted UI w. controls (clipped) \\ 
-\midrule\addlinespace[2.5pt]
-Intercept & 1.185*** & 1.131*** & 1.186*** & 1.130*** & 1.145*** & 1.094*** & 1.186*** & 1.131*** & 1.187*** & 1.131*** & 1.141*** & 1.090*** & 1.263*** & 1.217*** & 1.263*** & 1.217*** & 1.213*** & 1.173*** & 1.263*** & 1.217*** & 1.263*** & 1.217*** & 1.210*** & 1.169*** \\ 
- & (0.011) & (0.008) & (0.011) & (0.008) & (0.014) & (0.010) & (0.012) & (0.008) & (0.012) & (0.008) & (0.015) & (0.011) & (0.031) & (0.021) & (0.031) & (0.021) & (0.033) & (0.022) & (0.031) & (0.021) & (0.031) & (0.021) & (0.033) & (0.023) \\ 
-{\cellcolor[HTML]{ADD8E6}{Hourly Wage of Lost Job}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.011***}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} & {\cellcolor[HTML]{ADD8E6}{-0.011***}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} & {\cellcolor[HTML]{ADD8E6}{-0.011***}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} & {\cellcolor[HTML]{ADD8E6}{-0.011***}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} & {\cellcolor[HTML]{ADD8E6}{-0.011***}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} & {\cellcolor[HTML]{ADD8E6}{-0.011***}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} \\ 
- & (0.001) & (0.000) & (0.001) & (0.000) & (0.001) & (0.000) & (0.001) & (0.000) & (0.001) & (0.000) & (0.001) & (0.000) & (0.001) & (0.000) & (0.001) & (0.000) & (0.001) & (0.000) & (0.001) & (0.000) & (0.001) & (0.000) & (0.001) & (0.000) \\ 
-{\cellcolor[HTML]{ADD8E6}{Unemployment Duration (Months)}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.005***}} & {\cellcolor[HTML]{ADD8E6}{-0.004***}} & {\cellcolor[HTML]{ADD8E6}{-0.007**}} & {\cellcolor[HTML]{ADD8E6}{-0.006**}} & {\cellcolor[HTML]{ADD8E6}{-0.007**}} & {\cellcolor[HTML]{ADD8E6}{-0.006**}} & {\cellcolor[HTML]{ADD8E6}{-0.003}} & {\cellcolor[HTML]{ADD8E6}{-0.002}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.005***}} & {\cellcolor[HTML]{ADD8E6}{-0.004***}} & {\cellcolor[HTML]{ADD8E6}{-0.007**}} & {\cellcolor[HTML]{ADD8E6}{-0.006**}} & {\cellcolor[HTML]{ADD8E6}{-0.007**}} & {\cellcolor[HTML]{ADD8E6}{-0.006**}} & {\cellcolor[HTML]{ADD8E6}{-0.003}} & {\cellcolor[HTML]{ADD8E6}{-0.002}} \\ 
- & (0.001) & (0.001) & (0.001) & (0.001) & (0.001) & (0.001) & (0.002) & (0.002) & (0.002) & (0.002) & (0.003) & (0.002) & (0.001) & (0.001) & (0.001) & (0.001) & (0.001) & (0.001) & (0.002) & (0.002) & (0.002) & (0.002) & (0.003) & (0.002) \\ 
-Received Unemployment Compensation &  &  & -0.000 & 0.000 &  &  &  &  & -0.000 & 0.000 &  &  &  &  & -0.000 & 0.000 &  &  &  &  & -0.000 & 0.000 &  &  \\ 
- &  &  & (0.001) & (0.001) &  &  &  &  & (0.001) & (0.001) &  &  &  &  & (0.001) & (0.001) &  &  &  &  & (0.001) & (0.001) &  &  \\ 
-Exhausted Unemployment Compensation &  &  &  &  & 0.001*** & 0.000*** &  &  &  &  & 0.001*** & 0.000*** &  &  &  &  & 0.000*** & 0.000*** &  &  &  &  & 0.000*** & 0.000*** \\ 
- &  &  &  &  & (0.000) & (0.000) &  &  &  &  & (0.000) & (0.000) &  &  &  &  & (0.000) & (0.000) &  &  &  &  & (0.000) & (0.000) \\ 
-dwmosun2 &  &  &  &  &  &  & 0.000 & 0.000 & 0.000 & 0.000 & -0.000 & -0.000 &  &  &  &  &  &  & 0.000 & 0.000 & 0.000 & 0.000 & -0.000 & -0.000 \\ 
- &  &  &  &  &  &  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) &  &  &  &  &  &  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
-Female &  &  &  &  &  &  &  &  &  &  &  &  & -0.028** & -0.023** & -0.028** & -0.023** & -0.028** & -0.023** & -0.028** & -0.023** & -0.028** & -0.023** & -0.028** & -0.023** \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) \\ 
-Age &  &  &  &  &  &  &  &  &  &  &  &  & -0.002*** & -0.001*** & -0.002*** & -0.001*** & -0.001*** & -0.001*** & -0.002*** & -0.001*** & -0.002*** & -0.001*** & -0.001*** & -0.001*** \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
-White &  &  &  &  &  &  &  &  &  &  &  &  & -0.034 & -0.050** & -0.034 & -0.050** & -0.032 & -0.049** & -0.034 & -0.050** & -0.034 & -0.050** & -0.032 & -0.050** \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.023) & (0.016) & (0.023) & (0.016) & (0.023) & (0.016) & (0.023) & (0.016) & (0.023) & (0.016) & (0.023) & (0.016) \\ 
-Black &  &  &  &  &  &  &  &  &  &  &  &  & -0.058* & -0.061*** & -0.058* & -0.061*** & -0.055* & -0.060*** & -0.057* & -0.061*** & -0.057* & -0.061*** & -0.055* & -0.060*** \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.026) & (0.018) & (0.026) & (0.018) & (0.026) & (0.018) & (0.026) & (0.018) & (0.026) & (0.018) & (0.026) & (0.018) \\ 
-Mixed &  &  &  &  &  &  &  &  &  &  &  &  & 0.016 & -0.067* & 0.016 & -0.067* & 0.019 & -0.065* & 0.016 & -0.067* & 0.016 & -0.067* & 0.018 & -0.066* \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.039) & (0.027) & (0.039) & (0.027) & (0.039) & (0.026) & (0.039) & (0.027) & (0.039) & (0.027) & (0.039) & (0.026) \\ 
-Married &  &  &  &  &  &  &  &  &  &  &  &  & 0.013 & 0.018* & 0.013 & 0.018* & 0.013 & 0.018* & 0.013 & 0.018* & 0.013 & 0.018* & 0.014 & 0.018* \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.010) & (0.007) & (0.010) & (0.007) & (0.010) & (0.007) & (0.010) & (0.007) & (0.010) & (0.007) & (0.010) & (0.007) \\ 
-High School &  &  &  &  &  &  &  &  &  &  &  &  & 0.033* & 0.019+ & 0.033* & 0.019+ & 0.037* & 0.022* & 0.033* & 0.019+ & 0.033* & 0.019+ & 0.037* & 0.022* \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.015) & (0.011) & (0.015) & (0.011) & (0.015) & (0.011) & (0.015) & (0.011) & (0.015) & (0.011) & (0.015) & (0.011) \\ 
-educ\_catAssociate's &  &  &  &  &  &  &  &  &  &  &  &  & 0.084*** & 0.027+ & 0.084*** & 0.027+ & 0.088*** & 0.029* & 0.084*** & 0.027+ & 0.084*** & 0.027+ & 0.087*** & 0.030* \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.021) & (0.014) & (0.021) & (0.014) & (0.021) & (0.014) & (0.021) & (0.014) & (0.021) & (0.014) & (0.021) & (0.014) \\ 
-Bachelor's Degree &  &  &  &  &  &  &  &  &  &  &  &  & 0.161*** & 0.121*** & 0.161*** & 0.121*** & 0.164*** & 0.123*** & 0.161*** & 0.121*** & 0.161*** & 0.121*** & 0.163*** & 0.123*** \\ 
- &  &  &  &  &  &  &  &  &  &  &  &  & (0.022) & (0.015) & (0.022) & (0.015) & (0.022) & (0.015) & (0.022) & (0.015) & (0.022) & (0.015) & (0.022) & (0.015) \\ 
-Postgraduate Degree &  &  &  &  &  &  &  &  &  &  &  &  & 0.244*** & 0.120*** & 0.244*** & 0.120*** & 0.248*** & 0.123*** & 0.245*** & 0.120*** & 0.245*** & 0.120*** & 0.248*** & 0.123*** \\ 
-{} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {} & {(0.045)} & {(0.031)} & {(0.045)} & {(0.031)} & {(0.045)} & {(0.031)} & {(0.045)} & {(0.031)} & {(0.045)} & {(0.031)} & {(0.045)} & {(0.031)} \\ 
-Num.Obs. & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 \\ 
-R2 & 0.048 & 0.046 & 0.048 & 0.046 & 0.052 & 0.053 & 0.048 & 0.046 & 0.048 & 0.046 & 0.052 & 0.053 & 0.069 & 0.073 & 0.069 & 0.073 & 0.073 & 0.079 & 0.069 & 0.073 & 0.069 & 0.073 & 0.073 & 0.079 \\ 
-R2 Adj. & 0.047 & 0.046 & 0.047 & 0.046 & 0.051 & 0.053 & 0.047 & 0.046 & 0.047 & 0.045 & 0.051 & 0.053 & 0.067 & 0.071 & 0.067 & 0.071 & 0.070 & 0.077 & 0.067 & 0.071 & 0.067 & 0.071 & 0.070 & 0.077 \\ 
-F & 121.551 &  & 81.034 &  & 88.352 &  & 81.047 &  & 60.784 &  & 66.451 &  & 30.216 &  & 27.890 &  & 29.347 &  & 27.893 &  & 25.899 &  & 27.287 &  \\ 
-RMSE & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.23 & 0.37 & 0.23 & 0.37 & 0.23 & 0.37 & 0.23 & 0.37 & 0.23 & 0.37 & 0.23 \\ 
+  & Cont. & Cont. (clipped) & Cont. w. UI & Cont. w. UI (clipped) & Cont. w. exhausted UI & Cont. w. exhausted UI (clipped) & Cont. Sq & Cont. Sq (clipped) & Cont. Sq w. UI & Cont. Sq w. UI (clipped) & Cont. Sq w. exhausted UI & Cont. Sq w. exhausted UI (clipped) & Cont. w. controls & Cont. w. controls (clipped) & Cont. w. UI w. controls & Cont. w. UI w. controls (clipped) & Cont. w. exhausted UI w. controls & Cont. w. exhausted UI w. controls (clipped) & Cont. Sq w. controls & Cont. Sq w. controls (clipped) & Cont. Sq w. UI w. controls & Cont. Sq w. UI w. controls (clipped) & Cont. Sq w. exhausted UI w. controls & Cont. Sq w. exhausted UI w. controls (clipped)\\
+\midrule
+Intercept & \num{1.185}*** & \num{1.131}*** & \num{1.186}*** & \num{1.130}*** & \num{1.145}*** & \num{1.094}*** & \num{1.186}*** & \num{1.131}*** & \num{1.187}*** & \num{1.131}*** & \num{1.141}*** & \num{1.090}*** & \num{1.263}*** & \num{1.217}*** & \num{1.263}*** & \num{1.217}*** & \num{1.213}*** & \num{1.173}*** & \num{1.263}*** & \num{1.217}*** & \num{1.263}*** & \num{1.217}*** & \num{1.210}*** & \num{1.169}***\\
+ & (\num{0.011}) & (\num{0.008}) & (\num{0.011}) & (\num{0.008}) & (\num{0.014}) & (\num{0.010}) & (\num{0.012}) & (\num{0.008}) & (\num{0.012}) & (\num{0.008}) & (\num{0.015}) & (\num{0.011}) & (\num{0.031}) & (\num{0.021}) & (\num{0.031}) & (\num{0.021}) & (\num{0.033}) & (\num{0.022}) & (\num{0.031}) & (\num{0.021}) & (\num{0.031}) & (\num{0.021}) & (\num{0.033}) & (\num{0.023})\\
+\cellcolor{yellow!20}{Hourly Wage of Lost Job} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
+ & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000})\\
+\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.003}} & \cellcolor{yellow!20}{\num{-0.002}} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.003}} & \cellcolor{yellow!20}{\num{-0.002}}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003}) & (\num{0.002}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003}) & (\num{0.002})\\
+Received Unemployment Compensation &  &  & \num{-0.000} & \num{0.000} &  &  &  &  & \num{-0.000} & \num{0.000} &  &  &  &  & \num{-0.000} & \num{0.000} &  &  &  &  & \num{-0.000} & \num{0.000} &  & \\
+ &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  & \\
+Exhausted Unemployment Compensation &  &  &  &  & \num{0.001}*** & \num{0.000}*** &  &  &  &  & \num{0.001}*** & \num{0.000}*** &  &  &  &  & \num{0.000}*** & \num{0.000}*** &  &  &  &  & \num{0.000}*** & \num{0.000}***\\
+ &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000})\\
+dwmosun2 &  &  &  &  &  &  & \num{0.000} & \num{0.000} & \num{0.000} & \num{0.000} & \num{-0.000} & \num{-0.000} &  &  &  &  &  &  & \num{0.000} & \num{0.000} & \num{0.000} & \num{0.000} & \num{-0.000} & \num{-0.000}\\
+ &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+Female &  &  &  &  &  &  &  &  &  &  &  &  & \num{-0.028}** & \num{-0.023}** & \num{-0.028}** & \num{-0.023}** & \num{-0.028}** & \num{-0.023}** & \num{-0.028}** & \num{-0.023}** & \num{-0.028}** & \num{-0.023}** & \num{-0.028}** & \num{-0.023}**\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007})\\
+Age &  &  &  &  &  &  &  &  &  &  &  &  & \num{-0.002}*** & \num{-0.001}*** & \num{-0.002}*** & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}*** & \num{-0.002}*** & \num{-0.001}*** & \num{-0.002}*** & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}***\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  &  &  &  &  &  &  &  &  &  & \num{-0.034} & \num{-0.050}** & \num{-0.034} & \num{-0.050}** & \num{-0.032} & \num{-0.049}** & \num{-0.034} & \num{-0.050}** & \num{-0.034} & \num{-0.050}** & \num{-0.032} & \num{-0.050}**\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016})\\
+Black &  &  &  &  &  &  &  &  &  &  &  &  & \num{-0.058}* & \num{-0.061}*** & \num{-0.058}* & \num{-0.061}*** & \num{-0.055}* & \num{-0.060}*** & \num{-0.057}* & \num{-0.061}*** & \num{-0.057}* & \num{-0.061}*** & \num{-0.055}* & \num{-0.060}***\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018})\\
+Mixed &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.016} & \num{-0.067}* & \num{0.016} & \num{-0.067}* & \num{0.019} & \num{-0.065}* & \num{0.016} & \num{-0.067}* & \num{0.016} & \num{-0.067}* & \num{0.018} & \num{-0.066}*\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.039}) & (\num{0.027}) & (\num{0.039}) & (\num{0.027}) & (\num{0.039}) & (\num{0.026}) & (\num{0.039}) & (\num{0.027}) & (\num{0.039}) & (\num{0.027}) & (\num{0.039}) & (\num{0.026})\\
+Married &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.013} & \num{0.018}* & \num{0.013} & \num{0.018}* & \num{0.013} & \num{0.018}* & \num{0.013} & \num{0.018}* & \num{0.013} & \num{0.018}* & \num{0.014} & \num{0.018}*\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.010}) & (\num{0.007}) & (\num{0.010}) & (\num{0.007}) & (\num{0.010}) & (\num{0.007}) & (\num{0.010}) & (\num{0.007}) & (\num{0.010}) & (\num{0.007}) & (\num{0.010}) & (\num{0.007})\\
+High School &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.033}* & \num{0.019}+ & \num{0.033}* & \num{0.019}+ & \num{0.037}* & \num{0.022}* & \num{0.033}* & \num{0.019}+ & \num{0.033}* & \num{0.019}+ & \num{0.037}* & \num{0.022}*\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.015}) & (\num{0.011}) & (\num{0.015}) & (\num{0.011}) & (\num{0.015}) & (\num{0.011}) & (\num{0.015}) & (\num{0.011}) & (\num{0.015}) & (\num{0.011}) & (\num{0.015}) & (\num{0.011})\\
+educ\_catAssociate's &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.084}*** & \num{0.027}+ & \num{0.084}*** & \num{0.027}+ & \num{0.088}*** & \num{0.029}* & \num{0.084}*** & \num{0.027}+ & \num{0.084}*** & \num{0.027}+ & \num{0.087}*** & \num{0.030}*\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014})\\
+Bachelor's Degree &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.161}*** & \num{0.121}*** & \num{0.161}*** & \num{0.121}*** & \num{0.164}*** & \num{0.123}*** & \num{0.161}*** & \num{0.121}*** & \num{0.161}*** & \num{0.121}*** & \num{0.163}*** & \num{0.123}***\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.022}) & (\num{0.015}) & (\num{0.022}) & (\num{0.015}) & (\num{0.022}) & (\num{0.015}) & (\num{0.022}) & (\num{0.015}) & (\num{0.022}) & (\num{0.015}) & (\num{0.022}) & (\num{0.015})\\
+Postgraduate Degree &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.244}*** & \num{0.120}*** & \num{0.244}*** & \num{0.120}*** & \num{0.248}*** & \num{0.123}*** & \num{0.245}*** & \num{0.120}*** & \num{0.245}*** & \num{0.120}*** & \num{0.248}*** & \num{0.123}***\\
+ &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031})\\
+\midrule
+Num.Obs. & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644}\\
+R2 & \num{0.048} & \num{0.046} & \num{0.048} & \num{0.046} & \num{0.052} & \num{0.053} & \num{0.048} & \num{0.046} & \num{0.048} & \num{0.046} & \num{0.052} & \num{0.053} & \num{0.069} & \num{0.073} & \num{0.069} & \num{0.073} & \num{0.073} & \num{0.079} & \num{0.069} & \num{0.073} & \num{0.069} & \num{0.073} & \num{0.073} & \num{0.079}\\
+R2 Adj. & \num{0.047} & \num{0.046} & \num{0.047} & \num{0.046} & \num{0.051} & \num{0.053} & \num{0.047} & \num{0.046} & \num{0.047} & \num{0.045} & \num{0.051} & \num{0.053} & \num{0.067} & \num{0.071} & \num{0.067} & \num{0.071} & \num{0.070} & \num{0.077} & \num{0.067} & \num{0.071} & \num{0.067} & \num{0.071} & \num{0.070} & \num{0.077}\\
+F & \num{121.551} &  & \num{81.034} &  & \num{88.352} &  & \num{81.047} &  & \num{60.784} &  & \num{66.451} &  & \num{30.216} &  & \num{27.890} &  & \num{29.347} &  & \num{27.893} &  & \num{25.899} &  & \num{27.287} & \\
+RMSE & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.23} & \num{0.37} & \num{0.23} & \num{0.37} & \num{0.23} & \num{0.37} & \num{0.23} & \num{0.37} & \num{0.23} & \num{0.37} & \num{0.23}\\
 \bottomrule
-\end{tabular*}
-\begin{minipage}{\linewidth}
-+ p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001\\
-\end{minipage}
+\multicolumn{25}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
 \end{table}
 
 \subsection{Binned UE Duration}\label{binned-ue-duration}
@@ -838,104 +870,102 @@ RMSE & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.3
 Binned UE duration treatment is reported in bins as indicated in the box
 plots and code cleaning above.
 
-\subsubsection{W.O. Wage Level Control}\label{w.o.-wage-level-control-1}
-
-\begin{table}[t]
-\caption{\label{tab:unnamed-chunk-31}Binned UE Duration w.o Wage Level Control} 
-\fontsize{12.0pt}{14.4pt}\selectfont
-\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lcccccccccccc}
+\begin{table}
+\centering\centering
+\caption{\label{tab:unnamed-chunk-32}Binned UE Duration w.o Wage Level Control}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccccccccc}
 \toprule
-  & Disc. & Disc. (clipped) & Disc. w. UI & Disc. w. UI (clipped) & Disc. w. exhausted UI & Disc. w. exhausted UI (clipped) & Disc. w. controls & Disc. w. controls (clipped) & Disc. w. UI w. controls & Disc. w. UI w. controls (clipped) & Disc. w. exhausted UI w. controls & Disc. w. exhausted UI w. controls (clipped) \\ 
-\midrule\addlinespace[2.5pt]
-Intercept & 1.069*** & 1.055*** & 1.069*** & 1.055*** & 1.016*** & 1.010*** & 1.190*** & 1.170*** & 1.190*** & 1.170*** & 1.127*** & 1.116*** \\ 
- & (0.008) & (0.005) & (0.008) & (0.005) & (0.012) & (0.008) & (0.031) & (0.021) & (0.031) & (0.021) & (0.034) & (0.023) \\ 
-{\cellcolor[HTML]{ADD8E6}{Unemployment Duration (Binned)}} & {\cellcolor[HTML]{ADD8E6}{-0.013***}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.013***}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.008***}} & {\cellcolor[HTML]{ADD8E6}{-0.005***}} & {\cellcolor[HTML]{ADD8E6}{-0.011***}} & {\cellcolor[HTML]{ADD8E6}{-0.008***}} & {\cellcolor[HTML]{ADD8E6}{-0.011***}} & {\cellcolor[HTML]{ADD8E6}{-0.008***}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} & {\cellcolor[HTML]{ADD8E6}{-0.005***}} \\ 
- & (0.002) & (0.001) & (0.002) & (0.001) & (0.002) & (0.001) & (0.002) & (0.001) & (0.002) & (0.001) & (0.002) & (0.001) \\ 
-Received Unemployment Compensation &  &  & -0.000 & 0.000 &  &  &  &  & 0.000 & 0.000 &  &  \\ 
- &  &  & (0.001) & (0.001) &  &  &  &  & (0.001) & (0.001) &  &  \\ 
-Exhausted Unemployment Compensation &  &  &  &  & 0.001*** & 0.001*** &  &  &  &  & 0.001*** & 0.001*** \\ 
- &  &  &  &  & (0.000) & (0.000) &  &  &  &  & (0.000) & (0.000) \\ 
-Female &  &  &  &  &  &  & 0.003 & -0.003 & 0.003 & -0.003 & 0.003 & -0.003 \\ 
- &  &  &  &  &  &  & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) \\ 
-Age &  &  &  &  &  &  & -0.003*** & -0.002*** & -0.003*** & -0.002*** & -0.003*** & -0.002*** \\ 
- &  &  &  &  &  &  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
-White &  &  &  &  &  &  & -0.035 & -0.052** & -0.035 & -0.052** & -0.033 & -0.050** \\ 
- &  &  &  &  &  &  & (0.023) & (0.016) & (0.023) & (0.016) & (0.023) & (0.016) \\ 
-Black &  &  &  &  &  &  & -0.047+ & -0.056** & -0.047+ & -0.056** & -0.045+ & -0.055** \\ 
- &  &  &  &  &  &  & (0.026) & (0.018) & (0.026) & (0.018) & (0.026) & (0.018) \\ 
-Mixed &  &  &  &  &  &  & 0.014 & -0.070** & 0.014 & -0.070* & 0.017 & -0.068* \\ 
- &  &  &  &  &  &  & (0.040) & (0.027) & (0.040) & (0.027) & (0.040) & (0.027) \\ 
-Married &  &  &  &  &  &  & 0.004 & 0.011 & 0.004 & 0.011 & 0.005 & 0.012 \\ 
- &  &  &  &  &  &  & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) \\ 
-High School &  &  &  &  &  &  & 0.006 & 0.001 & 0.006 & 0.001 & 0.012 & 0.005 \\ 
- &  &  &  &  &  &  & (0.016) & (0.011) & (0.016) & (0.011) & (0.016) & (0.011) \\ 
-educ\_catAssociate's &  &  &  &  &  &  & 0.033 & -0.009 & 0.033 & -0.009 & 0.038+ & -0.005 \\ 
- &  &  &  &  &  &  & (0.021) & (0.014) & (0.021) & (0.014) & (0.021) & (0.014) \\ 
-Bachelor's Degree &  &  &  &  &  &  & 0.082*** & 0.067*** & 0.082*** & 0.067*** & 0.087*** & 0.071*** \\ 
- &  &  &  &  &  &  & (0.021) & (0.015) & (0.021) & (0.015) & (0.021) & (0.015) \\ 
-Postgraduate Degree &  &  &  &  &  &  & 0.116** & 0.030 & 0.116** & 0.030 & 0.124** & 0.038 \\ 
-{} & {} & {} & {} & {} & {} & {} & {(0.045)} & {(0.031)} & {(0.045)} & {(0.031)} & {(0.045)} & {(0.031)} \\ 
-Num.Obs. & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 \\ 
-R2 & 0.010 & 0.011 & 0.010 & 0.011 & 0.016 & 0.021 & 0.025 & 0.031 & 0.025 & 0.031 & 0.030 & 0.039 \\ 
-R2 Adj. & 0.009 & 0.011 & 0.009 & 0.010 & 0.016 & 0.021 & 0.022 & 0.028 & 0.022 & 0.028 & 0.027 & 0.036 \\ 
-F & 47.638 &  & 23.816 &  & 40.199 &  & 11.165 &  & 10.232 &  & 12.314 &  \\ 
-RMSE & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 \\ 
+  & Disc. & Disc. (clipped) & Disc. w. UI & Disc. w. UI (clipped) & Disc. w. exhausted UI & Disc. w. exhausted UI (clipped) & Disc. w. controls & Disc. w. controls (clipped) & Disc. w. UI w. controls & Disc. w. UI w. controls (clipped) & Disc. w. exhausted UI w. controls & Disc. w. exhausted UI w. controls (clipped)\\
+\midrule
+Intercept & \num{1.069}*** & \num{1.055}*** & \num{1.069}*** & \num{1.055}*** & \num{1.016}*** & \num{1.010}*** & \num{1.190}*** & \num{1.170}*** & \num{1.190}*** & \num{1.170}*** & \num{1.127}*** & \num{1.116}***\\
+ & (\num{0.008}) & (\num{0.005}) & (\num{0.008}) & (\num{0.005}) & (\num{0.012}) & (\num{0.008}) & (\num{0.031}) & (\num{0.021}) & (\num{0.031}) & (\num{0.021}) & (\num{0.034}) & (\num{0.023})\\
+\cellcolor{yellow!20}{Unemployment Duration (Binned)} & \cellcolor{yellow!20}{\num{-0.013}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.013}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.005}***}\\
+ & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001})\\
+Received Unemployment Compensation &  &  & \num{-0.000} & \num{0.000} &  &  &  &  & \num{0.000} & \num{0.000} &  & \\
+ &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  & \\
+Exhausted Unemployment Compensation &  &  &  &  & \num{0.001}*** & \num{0.001}*** &  &  &  &  & \num{0.001}*** & \num{0.001}***\\
+ &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000})\\
+Female &  &  &  &  &  &  & \num{0.003} & \num{-0.003} & \num{0.003} & \num{-0.003} & \num{0.003} & \num{-0.003}\\
+ &  &  &  &  &  &  & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & \vphantom{1} (\num{0.007})\\
+Age &  &  &  &  &  &  & \num{-0.003}*** & \num{-0.002}*** & \num{-0.003}*** & \num{-0.002}*** & \num{-0.003}*** & \num{-0.002}***\\
+ &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  &  &  &  & \num{-0.035} & \num{-0.052}** & \num{-0.035} & \num{-0.052}** & \num{-0.033} & \num{-0.050}**\\
+ &  &  &  &  &  &  & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016})\\
+Black &  &  &  &  &  &  & \num{-0.047}+ & \num{-0.056}** & \num{-0.047}+ & \num{-0.056}** & \num{-0.045}+ & \num{-0.055}**\\
+ &  &  &  &  &  &  & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018})\\
+Mixed &  &  &  &  &  &  & \num{0.014} & \num{-0.070}** & \num{0.014} & \num{-0.070}* & \num{0.017} & \num{-0.068}*\\
+ &  &  &  &  &  &  & (\num{0.040}) & (\num{0.027}) & (\num{0.040}) & (\num{0.027}) & (\num{0.040}) & (\num{0.027})\\
+Married &  &  &  &  &  &  & \num{0.004} & \num{0.011} & \num{0.004} & \num{0.011} & \num{0.005} & \num{0.012}\\
+ &  &  &  &  &  &  & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007})\\
+High School &  &  &  &  &  &  & \num{0.006} & \num{0.001} & \num{0.006} & \num{0.001} & \num{0.012} & \num{0.005}\\
+ &  &  &  &  &  &  & (\num{0.016}) & (\num{0.011}) & (\num{0.016}) & (\num{0.011}) & (\num{0.016}) & (\num{0.011})\\
+educ\_catAssociate's &  &  &  &  &  &  & \num{0.033} & \num{-0.009} & \num{0.033} & \num{-0.009} & \num{0.038}+ & \num{-0.005}\\
+ &  &  &  &  &  &  & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014})\\
+Bachelor's Degree &  &  &  &  &  &  & \num{0.082}*** & \num{0.067}*** & \num{0.082}*** & \num{0.067}*** & \num{0.087}*** & \num{0.071}***\\
+ &  &  &  &  &  &  & (\num{0.021}) & (\num{0.015}) & (\num{0.021}) & (\num{0.015}) & (\num{0.021}) & (\num{0.015})\\
+Postgraduate Degree &  &  &  &  &  &  & \num{0.116}** & \num{0.030} & \num{0.116}** & \num{0.030} & \num{0.124}** & \num{0.038}\\
+ &  &  &  &  &  &  & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031})\\
+\midrule
+Num.Obs. & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644}\\
+R2 & \num{0.010} & \num{0.011} & \num{0.010} & \num{0.011} & \num{0.016} & \num{0.021} & \num{0.025} & \num{0.031} & \num{0.025} & \num{0.031} & \num{0.030} & \num{0.039}\\
+R2 Adj. & \num{0.009} & \num{0.011} & \num{0.009} & \num{0.010} & \num{0.016} & \num{0.021} & \num{0.022} & \num{0.028} & \num{0.022} & \num{0.028} & \num{0.027} & \num{0.036}\\
+F & \num{47.638} &  & \num{23.816} &  & \num{40.199} &  & \num{11.165} &  & \num{10.232} &  & \num{12.314} & \\
+RMSE & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24}\\
 \bottomrule
-\end{tabular*}
-\begin{minipage}{\linewidth}
-+ p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001\\
-\end{minipage}
+\multicolumn{13}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
 \end{table}
 
-\subsubsection{W. Wage Level Control}\label{w.-wage-level-control-1}
-
-\begin{table}[t]
-\caption{\label{tab:unnamed-chunk-32}Binned UE Duration w. Wage Level Control} 
-\fontsize{12.0pt}{14.4pt}\selectfont
-\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lcccccccccccc}
+\begin{table}
+\centering\centering
+\caption{\label{tab:unnamed-chunk-33}Binned UE Duration w. Wage Level Control}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccccccccc}
 \toprule
-  & Disc. & Disc. (clipped) & Disc. w. UI & Disc. w. UI (clipped) & Disc. w. exhausted UI & Disc. w. exhausted UI (clipped) & Disc. w. controls & Disc. w. controls (clipped) & Disc. w. UI w. controls & Disc. w. UI w. controls (clipped) & Disc. w. exhausted UI w. controls & Disc. w. exhausted UI w. controls (clipped) \\ 
-\midrule\addlinespace[2.5pt]
-Intercept & 1.198*** & 1.139*** & 1.199*** & 1.139*** & 1.154*** & 1.098*** & 1.272*** & 1.224*** & 1.272*** & 1.224*** & 1.220*** & 1.176*** \\ 
- & (0.012) & (0.008) & (0.012) & (0.008) & (0.016) & (0.011) & (0.031) & (0.021) & (0.031) & (0.021) & (0.034) & (0.023) \\ 
-{\cellcolor[HTML]{ADD8E6}{Hourly Wage of Lost Job}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.011***}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} & {\cellcolor[HTML]{ADD8E6}{-0.011***}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} & {\cellcolor[HTML]{ADD8E6}{-0.011***}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} \\ 
- & (0.001) & (0.000) & (0.001) & (0.000) & (0.001) & (0.000) & (0.001) & (0.000) & (0.001) & (0.000) & (0.001) & (0.000) \\ 
-{\cellcolor[HTML]{ADD8E6}{Unemployment Duration (Binned)}} & {\cellcolor[HTML]{ADD8E6}{-0.011***}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.011***}} & {\cellcolor[HTML]{ADD8E6}{-0.009***}} & {\cellcolor[HTML]{ADD8E6}{-0.008***}} & {\cellcolor[HTML]{ADD8E6}{-0.005***}} & {\cellcolor[HTML]{ADD8E6}{-0.011***}} & {\cellcolor[HTML]{ADD8E6}{-0.008***}} & {\cellcolor[HTML]{ADD8E6}{-0.010***}} & {\cellcolor[HTML]{ADD8E6}{-0.008***}} & {\cellcolor[HTML]{ADD8E6}{-0.007***}} & {\cellcolor[HTML]{ADD8E6}{-0.005***}} \\ 
- & (0.002) & (0.001) & (0.002) & (0.001) & (0.002) & (0.001) & (0.002) & (0.001) & (0.002) & (0.001) & (0.002) & (0.001) \\ 
-Received Unemployment Compensation &  &  & -0.000 & 0.000 &  &  &  &  & -0.000 & -0.000 &  &  \\ 
- &  &  & (0.001) & (0.001) &  &  &  &  & (0.001) & (0.001) &  &  \\ 
-Exhausted Unemployment Compensation &  &  &  &  & 0.000*** & 0.000*** &  &  &  &  & 0.000*** & 0.000*** \\ 
- &  &  &  &  & (0.000) & (0.000) &  &  &  &  & (0.000) & (0.000) \\ 
-Female &  &  &  &  &  &  & -0.028** & -0.023** & -0.028** & -0.023** & -0.028** & -0.023** \\ 
- &  &  &  &  &  &  & (0.011) & (0.007) & (0.011) & (0.007) & (0.011) & (0.007) \\ 
-Age &  &  &  &  &  &  & -0.002*** & -0.001*** & -0.002*** & -0.001*** & -0.001*** & -0.001*** \\ 
- &  &  &  &  &  &  & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) & (0.000) \\ 
-White &  &  &  &  &  &  & -0.034 & -0.050** & -0.034 & -0.050** & -0.032 & -0.049** \\ 
- &  &  &  &  &  &  & (0.023) & (0.016) & (0.023) & (0.016) & (0.023) & (0.016) \\ 
-Black &  &  &  &  &  &  & -0.057* & -0.061*** & -0.057* & -0.061*** & -0.054* & -0.059*** \\ 
- &  &  &  &  &  &  & (0.026) & (0.018) & (0.026) & (0.018) & (0.026) & (0.018) \\ 
-Mixed &  &  &  &  &  &  & 0.017 & -0.067* & 0.017 & -0.067* & 0.019 & -0.065* \\ 
- &  &  &  &  &  &  & (0.039) & (0.027) & (0.039) & (0.027) & (0.039) & (0.026) \\ 
-Married &  &  &  &  &  &  & 0.013 & 0.017* & 0.013 & 0.017* & 0.013 & 0.018* \\ 
- &  &  &  &  &  &  & (0.010) & (0.007) & (0.010) & (0.007) & (0.010) & (0.007) \\ 
-High School &  &  &  &  &  &  & 0.034* & 0.019+ & 0.034* & 0.019+ & 0.038* & 0.022* \\ 
- &  &  &  &  &  &  & (0.015) & (0.011) & (0.015) & (0.011) & (0.015) & (0.011) \\ 
-educ\_catAssociate's &  &  &  &  &  &  & 0.085*** & 0.027+ & 0.085*** & 0.027+ & 0.088*** & 0.030* \\ 
- &  &  &  &  &  &  & (0.021) & (0.014) & (0.021) & (0.014) & (0.021) & (0.014) \\ 
-Bachelor's Degree &  &  &  &  &  &  & 0.163*** & 0.122*** & 0.163*** & 0.122*** & 0.166*** & 0.124*** \\ 
- &  &  &  &  &  &  & (0.022) & (0.015) & (0.022) & (0.015) & (0.022) & (0.015) \\ 
-Postgraduate Degree &  &  &  &  &  &  & 0.246*** & 0.120*** & 0.246*** & 0.120*** & 0.250*** & 0.124*** \\ 
-{} & {} & {} & {} & {} & {} & {} & {(0.045)} & {(0.031)} & {(0.045)} & {(0.031)} & {(0.045)} & {(0.031)} \\ 
-Num.Obs. & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 & 4870 & 4644 \\ 
-R2 & 0.047 & 0.045 & 0.047 & 0.045 & 0.051 & 0.052 & 0.069 & 0.072 & 0.069 & 0.072 & 0.072 & 0.078 \\ 
-R2 Adj. & 0.047 & 0.045 & 0.047 & 0.045 & 0.050 & 0.051 & 0.067 & 0.070 & 0.067 & 0.070 & 0.070 & 0.076 \\ 
-F & 120.632 &  & 80.422 &  & 86.995 &  & 30.090 &  & 27.774 &  & 29.084 &  \\ 
-RMSE & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.24 & 0.37 & 0.23 & 0.37 & 0.23 & 0.37 & 0.23 \\ 
+  & Disc. & Disc. (clipped) & Disc. w. UI & Disc. w. UI (clipped) & Disc. w. exhausted UI & Disc. w. exhausted UI (clipped) & Disc. w. controls & Disc. w. controls (clipped) & Disc. w. UI w. controls & Disc. w. UI w. controls (clipped) & Disc. w. exhausted UI w. controls & Disc. w. exhausted UI w. controls (clipped)\\
+\midrule
+Intercept & \num{1.198}*** & \num{1.139}*** & \num{1.199}*** & \num{1.139}*** & \num{1.154}*** & \num{1.098}*** & \num{1.272}*** & \num{1.224}*** & \num{1.272}*** & \num{1.224}*** & \num{1.220}*** & \num{1.176}***\\
+ & (\num{0.012}) & (\num{0.008}) & (\num{0.012}) & (\num{0.008}) & (\num{0.016}) & (\num{0.011}) & (\num{0.031}) & (\num{0.021}) & (\num{0.031}) & (\num{0.021}) & (\num{0.034}) & (\num{0.023})\\
+\cellcolor{yellow!20}{Hourly Wage of Lost Job} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
+ & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000})\\
+\cellcolor{yellow!20}{Unemployment Duration (Binned)} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.010}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.005}***}\\
+ & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001})\\
+Received Unemployment Compensation &  &  & \num{-0.000} & \num{0.000} &  &  &  &  & \num{-0.000} & \num{-0.000} &  & \\
+ &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  & \\
+Exhausted Unemployment Compensation &  &  &  &  & \num{0.000}*** & \num{0.000}*** &  &  &  &  & \num{0.000}*** & \num{0.000}***\\
+ &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000})\\
+Female &  &  &  &  &  &  & \num{-0.028}** & \num{-0.023}** & \num{-0.028}** & \num{-0.023}** & \num{-0.028}** & \num{-0.023}**\\
+ &  &  &  &  &  &  & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007})\\
+Age &  &  &  &  &  &  & \num{-0.002}*** & \num{-0.001}*** & \num{-0.002}*** & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}***\\
+ &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  &  &  &  & \num{-0.034} & \num{-0.050}** & \num{-0.034} & \num{-0.050}** & \num{-0.032} & \num{-0.049}**\\
+ &  &  &  &  &  &  & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016})\\
+Black &  &  &  &  &  &  & \num{-0.057}* & \num{-0.061}*** & \num{-0.057}* & \num{-0.061}*** & \num{-0.054}* & \num{-0.059}***\\
+ &  &  &  &  &  &  & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018})\\
+Mixed &  &  &  &  &  &  & \num{0.017} & \num{-0.067}* & \num{0.017} & \num{-0.067}* & \num{0.019} & \num{-0.065}*\\
+ &  &  &  &  &  &  & (\num{0.039}) & (\num{0.027}) & (\num{0.039}) & (\num{0.027}) & (\num{0.039}) & (\num{0.026})\\
+Married &  &  &  &  &  &  & \num{0.013} & \num{0.017}* & \num{0.013} & \num{0.017}* & \num{0.013} & \num{0.018}*\\
+ &  &  &  &  &  &  & (\num{0.010}) & (\num{0.007}) & (\num{0.010}) & (\num{0.007}) & (\num{0.010}) & (\num{0.007})\\
+High School &  &  &  &  &  &  & \num{0.034}* & \num{0.019}+ & \num{0.034}* & \num{0.019}+ & \num{0.038}* & \num{0.022}*\\
+ &  &  &  &  &  &  & (\num{0.015}) & (\num{0.011}) & (\num{0.015}) & (\num{0.011}) & (\num{0.015}) & (\num{0.011})\\
+educ\_catAssociate's &  &  &  &  &  &  & \num{0.085}*** & \num{0.027}+ & \num{0.085}*** & \num{0.027}+ & \num{0.088}*** & \num{0.030}*\\
+ &  &  &  &  &  &  & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014})\\
+Bachelor's Degree &  &  &  &  &  &  & \num{0.163}*** & \num{0.122}*** & \num{0.163}*** & \num{0.122}*** & \num{0.166}*** & \num{0.124}***\\
+ &  &  &  &  &  &  & (\num{0.022}) & (\num{0.015}) & (\num{0.022}) & (\num{0.015}) & (\num{0.022}) & (\num{0.015})\\
+Postgraduate Degree &  &  &  &  &  &  & \num{0.246}*** & \num{0.120}*** & \num{0.246}*** & \num{0.120}*** & \num{0.250}*** & \num{0.124}***\\
+ &  &  &  &  &  &  & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031})\\
+\midrule
+Num.Obs. & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644}\\
+R2 & \num{0.047} & \num{0.045} & \num{0.047} & \num{0.045} & \num{0.051} & \num{0.052} & \num{0.069} & \num{0.072} & \num{0.069} & \num{0.072} & \num{0.072} & \num{0.078}\\
+R2 Adj. & \num{0.047} & \num{0.045} & \num{0.047} & \num{0.045} & \num{0.050} & \num{0.051} & \num{0.067} & \num{0.070} & \num{0.067} & \num{0.070} & \num{0.070} & \num{0.076}\\
+F & \num{120.632} &  & \num{80.422} &  & \num{86.995} &  & \num{30.090} &  & \num{27.774} &  & \num{29.084} & \\
+RMSE & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.23} & \num{0.37} & \num{0.23} & \num{0.37} & \num{0.23}\\
 \bottomrule
-\end{tabular*}
-\begin{minipage}{\linewidth}
-+ p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001\\
-\end{minipage}
+\multicolumn{13}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
 \end{table}
 
 \subsection{Additional Considerations}\label{additional-considerations}
@@ -986,224 +1016,34 @@ stable.
 Entropy balancing simply reweights observations to ensure population
 matching across the key dependent variable.
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# Apply entropy balancing using dwsuppwt sample weights}
-\CommentTok{\# Reweight according to observable characteristics using "ebalance" }
-\NormalTok{eb }\OtherTok{\textless{}{-}} \FunctionTok{weightit}\NormalTok{(}
-  \AttributeTok{formula =}\NormalTok{ dwmosun }\SpecialCharTok{\textasciitilde{}}\NormalTok{ female }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ white }\SpecialCharTok{+}\NormalTok{ black }\SpecialCharTok{+}\NormalTok{ mixed }\SpecialCharTok{+}\NormalTok{ marst }\SpecialCharTok{+}\NormalTok{ educ\_cat,}
-  \AttributeTok{data =}\NormalTok{ df,}
-  \AttributeTok{method =} \StringTok{"ebalance"}\NormalTok{,}
-  \AttributeTok{s.weights =}\NormalTok{ df}\SpecialCharTok{$}\NormalTok{dwsuppwt}
-\NormalTok{)}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-34-1} \end{center}
 
-\CommentTok{\# All covariates are balanced at the mean with tight threshold}
-\FunctionTok{bal.tab}\NormalTok{(eb, }\AttributeTok{stats =} \FunctionTok{c}\NormalTok{(}\StringTok{"m"}\NormalTok{, }\StringTok{"v"}\NormalTok{), }\AttributeTok{thresholds =} \FunctionTok{c}\NormalTok{(}\AttributeTok{m =}\NormalTok{ .}\DecValTok{001}\NormalTok{))}
-\end{Highlighting}
-\end{Shaded}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-35-1} \end{center}
 
-\begin{verbatim}
-## Balance Measures
-##                                 Type Diff.Target.Adj      M.Threshold
-## female                        Binary          0.0000 Balanced, <0.001
-## age                          Contin.         -0.0000 Balanced, <0.001
-## white                         Binary         -0.0000 Balanced, <0.001
-## black                         Binary         -0.0000 Balanced, <0.001
-## mixed                         Binary          0.0001 Balanced, <0.001
-## marst                         Binary         -0.0000 Balanced, <0.001
-## educ_cat_Less than HS         Binary         -0.0000 Balanced, <0.001
-## educ_cat_HS Diploma           Binary         -0.0000 Balanced, <0.001
-## educ_cat_Associate's          Binary         -0.0000 Balanced, <0.001
-## educ_cat_Bachelor's           Binary         -0.0000 Balanced, <0.001
-## educ_cat_Postgraduate Degree  Binary          0.0001 Balanced, <0.001
-## 
-## Balance tally for target mean differences
-##                      count
-## Balanced, <0.001        11
-## Not Balanced, >0.001     0
-## 
-## Variable with the greatest target mean difference
-##  Variable Diff.Target.Adj      M.Threshold
-##     mixed          0.0001 Balanced, <0.001
-## 
-## Effective sample sizes
-##              Total
-## Unadjusted 4747.86
-## Adjusted   4634.14
-\end{verbatim}
+\subparagraph{Diagnostic Tests for Entropy-balanced Reweighted
+Sample}\label{diagnostic-tests-for-entropy-balanced-reweighted-sample}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# Add the new weights to the dataframe}
-\NormalTok{df}\SpecialCharTok{$}\NormalTok{eb\_weight }\OtherTok{\textless{}{-}}\NormalTok{ eb}\SpecialCharTok{$}\NormalTok{weights}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-36-1} \end{center}
 
-\CommentTok{\# Run weighted linear regression using entropy{-}balanced weights}
-\NormalTok{mod\_eb\_reweight }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(}
-  \AttributeTok{formula =}\NormalTok{ ratio\_wage }\SpecialCharTok{\textasciitilde{}}\NormalTok{ dwmosun }\SpecialCharTok{+}\NormalTok{ female }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ white }\SpecialCharTok{+}\NormalTok{ black }\SpecialCharTok{+}\NormalTok{ mixed }\SpecialCharTok{+}\NormalTok{ marst }\SpecialCharTok{+}\NormalTok{ educ\_cat,}
-  \AttributeTok{data =}\NormalTok{ df,}
-  \AttributeTok{weights =}\NormalTok{ eb\_weight}
-\NormalTok{)}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-37-1} \end{center}
 
-\NormalTok{mod\_eb\_reweight2 }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(}
-  \AttributeTok{formula =}\NormalTok{ ratio\_wage }\SpecialCharTok{\textasciitilde{}}\NormalTok{ dwmosun }\SpecialCharTok{+}\NormalTok{ dwmosun2 }\SpecialCharTok{+}\NormalTok{ female }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ white }\SpecialCharTok{+}\NormalTok{ black }\SpecialCharTok{+}\NormalTok{ mixed }\SpecialCharTok{+}\NormalTok{ marst }\SpecialCharTok{+}\NormalTok{ educ\_cat,}
-  \AttributeTok{data =}\NormalTok{ df,}
-  \AttributeTok{weights =}\NormalTok{ eb\_weight}
-\NormalTok{)}
-
-\NormalTok{mod\_eb\_reweight3 }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(}
-  \AttributeTok{formula =}\NormalTok{ ratio\_wage }\SpecialCharTok{\textasciitilde{}}\NormalTok{ dwmosun }\SpecialCharTok{+}\NormalTok{ dwmosun2 }\SpecialCharTok{+}\NormalTok{ dwmosun3 }\SpecialCharTok{+}\NormalTok{ female }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ white }\SpecialCharTok{+}\NormalTok{ black }\SpecialCharTok{+}\NormalTok{ mixed }\SpecialCharTok{+}\NormalTok{ marst }\SpecialCharTok{+}\NormalTok{ educ\_cat,}
-  \AttributeTok{data =}\NormalTok{ df,}
-  \AttributeTok{weights =}\NormalTok{ eb\_weight}
-\NormalTok{)}
-
-
-\CommentTok{\# Extract prediction intervals as data frames}
-\NormalTok{eb\_preds  }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{predict}\NormalTok{(mod\_eb\_reweight,  }\AttributeTok{newdata =}\NormalTok{ newdata, }\AttributeTok{interval =} \StringTok{"confidence"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{rename\_with}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\FunctionTok{paste0}\NormalTok{(}\StringTok{"eb\_preds\_"}\NormalTok{,.))}
-\NormalTok{eb\_preds2 }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{predict}\NormalTok{(mod\_eb\_reweight2, }\AttributeTok{newdata =}\NormalTok{ newdata, }\AttributeTok{interval =} \StringTok{"confidence"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{rename\_with}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\FunctionTok{paste0}\NormalTok{(}\StringTok{"eb\_preds2\_"}\NormalTok{,.))}
-\NormalTok{eb\_preds3 }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{predict}\NormalTok{(mod\_eb\_reweight3, }\AttributeTok{newdata =}\NormalTok{ newdata, }\AttributeTok{interval =} \StringTok{"confidence"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{rename\_with}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\FunctionTok{paste0}\NormalTok{(}\StringTok{"eb\_preds3\_"}\NormalTok{,.))}
-
-\NormalTok{eb\_full }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(eb\_preds, eb\_preds2, eb\_preds3)}
-
-\NormalTok{eb\_full }\SpecialCharTok{\%\textgreater{}\%} 
-  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \DecValTok{0}\SpecialCharTok{:}\NormalTok{(}\FunctionTok{nrow}\NormalTok{(eb\_full)}\SpecialCharTok{{-}}\DecValTok{1}\NormalTok{))) }\SpecialCharTok{+}
-    \CommentTok{\# Model 1}
-    \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ eb\_preds\_fit), }\AttributeTok{color =} \StringTok{"blue"}\NormalTok{, }\AttributeTok{linewidth =} \DecValTok{1}\NormalTok{) }\SpecialCharTok{+}
-    \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ eb\_preds\_lwr, }\AttributeTok{ymax =}\NormalTok{ eb\_preds\_upr), }\AttributeTok{fill =} \StringTok{"blue"}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.2}\NormalTok{) }\SpecialCharTok{+}
-  
-    \CommentTok{\# Model 2}
-    \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ eb\_preds2\_fit), }\AttributeTok{color =} \StringTok{"darkgreen"}\NormalTok{, }\AttributeTok{linewidth =} \DecValTok{1}\NormalTok{) }\SpecialCharTok{+}
-    \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ eb\_preds2\_lwr, }\AttributeTok{ymax =}\NormalTok{ eb\_preds2\_upr), }\AttributeTok{fill =} \StringTok{"darkgreen"}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.2}\NormalTok{) }\SpecialCharTok{+}
-  
-    \CommentTok{\# Model 3}
-    \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ eb\_preds3\_fit), }\AttributeTok{color =} \StringTok{"firebrick"}\NormalTok{, }\AttributeTok{linewidth =} \DecValTok{1}\NormalTok{) }\SpecialCharTok{+}
-    \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ eb\_preds3\_lwr, }\AttributeTok{ymax =}\NormalTok{ eb\_preds3\_upr), }\AttributeTok{fill =} \StringTok{"firebrick"}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.2}\NormalTok{) }\SpecialCharTok{+}
-  
-    \FunctionTok{labs}\NormalTok{(}
-      \AttributeTok{title =} \StringTok{"Predicted Wage Ratios by Unemployment Duration"}\NormalTok{,}
-      \AttributeTok{subtitle =} \StringTok{"From EB{-}weighted regressions: linear, quadratic, and cubic specifications"}\NormalTok{,}
-      \AttributeTok{x =} \StringTok{"Unemployment Duration (months)"}\NormalTok{,}
-      \AttributeTok{y =} \StringTok{"Predicted Wage Ratio"}
-\NormalTok{    ) }\SpecialCharTok{+}
-    \FunctionTok{theme\_minimal}\NormalTok{()}
-\end{Highlighting}
-\end{Shaded}
-
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-33-1.pdf}}
-
-\begin{verbatim}
-## [1] "Diagnostic Tests for Entropy-balanced Reweighted Sample"
-\end{verbatim}
-
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-34-1.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-34-2.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-34-3.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-38-1} \end{center}
 
 \paragraph{Propensity Score Weighting with GLM
 Estimator}\label{propensity-score-weighting-with-glm-estimator}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# More conventional propensity scoring with a GLM estimator}
-\NormalTok{glm }\OtherTok{\textless{}{-}} \FunctionTok{weightit}\NormalTok{(}
-  \AttributeTok{formula =}\NormalTok{ dwmosun }\SpecialCharTok{\textasciitilde{}}\NormalTok{ female }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ white }\SpecialCharTok{+}\NormalTok{ black }\SpecialCharTok{+}\NormalTok{ mixed }\SpecialCharTok{+}\NormalTok{ marst }\SpecialCharTok{+}\NormalTok{ educ\_cat,}
-  \AttributeTok{data =}\NormalTok{ df,}
-  \AttributeTok{method =} \StringTok{"glm"}\NormalTok{,}
-  \AttributeTok{s.weights =}\NormalTok{ df}\SpecialCharTok{$}\NormalTok{dwsuppwt}
-\NormalTok{)}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-39-1} \end{center}
 
-\CommentTok{\# All covariates are balanced at the mean with less tight threshold (0.001, very few variables pass with glm esimator)}
-\FunctionTok{bal.tab}\NormalTok{(glm, }\AttributeTok{stats =} \FunctionTok{c}\NormalTok{(}\StringTok{"m"}\NormalTok{, }\StringTok{"v"}\NormalTok{), }\AttributeTok{thresholds =} \FunctionTok{c}\NormalTok{(}\AttributeTok{m =}\NormalTok{ .}\DecValTok{01}\NormalTok{))}
-\end{Highlighting}
-\end{Shaded}
+\subparagraph{Diagnostic Tests for Propensity Score Matching (GLM)
+Reweighted
+Sample}\label{diagnostic-tests-for-propensity-score-matching-glm-reweighted-sample}
 
-\begin{verbatim}
-## Balance Measures
-##                                 Type Diff.Target.Adj     M.Threshold
-## female                        Binary         -0.0032 Balanced, <0.01
-## age                          Contin.         -0.0057 Balanced, <0.01
-## white                         Binary          0.0022 Balanced, <0.01
-## black                         Binary         -0.0005 Balanced, <0.01
-## mixed                         Binary         -0.0041 Balanced, <0.01
-## marst                         Binary          0.0041 Balanced, <0.01
-## educ_cat_Less than HS         Binary         -0.0042 Balanced, <0.01
-## educ_cat_HS Diploma           Binary         -0.0003 Balanced, <0.01
-## educ_cat_Associate's          Binary          0.0032 Balanced, <0.01
-## educ_cat_Bachelor's           Binary          0.0023 Balanced, <0.01
-## educ_cat_Postgraduate Degree  Binary         -0.0017 Balanced, <0.01
-## 
-## Balance tally for target mean differences
-##                     count
-## Balanced, <0.01        11
-## Not Balanced, >0.01     0
-## 
-## Variable with the greatest target mean difference
-##  Variable Diff.Target.Adj     M.Threshold
-##       age         -0.0057 Balanced, <0.01
-## 
-## Effective sample sizes
-##              Total
-## Unadjusted 4747.86
-## Adjusted   4637.07
-\end{verbatim}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-40-1} \end{center}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{df}\SpecialCharTok{$}\NormalTok{glm\_weight }\OtherTok{\textless{}{-}}\NormalTok{ glm}\SpecialCharTok{$}\NormalTok{weights}
+\subparagraph{Predicted Reservation Wage using GLM Reweighted
+Sample}\label{predicted-reservation-wage-using-glm-reweighted-sample}
 
-\NormalTok{mod\_glm\_reweight }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(}
-  \AttributeTok{formula =}\NormalTok{ ratio\_wage }\SpecialCharTok{\textasciitilde{}}\NormalTok{ dwmosun }\SpecialCharTok{+}\NormalTok{ female }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ white }\SpecialCharTok{+}\NormalTok{ black }\SpecialCharTok{+}\NormalTok{ mixed }\SpecialCharTok{+}\NormalTok{ marst }\SpecialCharTok{+}\NormalTok{ educ\_cat,}
-  \AttributeTok{data =}\NormalTok{ df,}
-  \AttributeTok{weights =}\NormalTok{ glm\_weight}
-\NormalTok{)}
-\NormalTok{mod\_glm\_reweight2 }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(}
-  \AttributeTok{formula =}\NormalTok{ ratio\_wage }\SpecialCharTok{\textasciitilde{}}\NormalTok{ dwmosun }\SpecialCharTok{+}\NormalTok{ dwmosun2 }\SpecialCharTok{+}\NormalTok{ female }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ white }\SpecialCharTok{+}\NormalTok{ black }\SpecialCharTok{+}\NormalTok{ mixed }\SpecialCharTok{+}\NormalTok{ marst }\SpecialCharTok{+}\NormalTok{ educ\_cat,}
-  \AttributeTok{data =}\NormalTok{ df,}
-  \AttributeTok{weights =}\NormalTok{ glm\_weight}
-\NormalTok{)}
-\NormalTok{mod\_glm\_reweight3 }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(}
-  \AttributeTok{formula =}\NormalTok{ ratio\_wage }\SpecialCharTok{\textasciitilde{}}\NormalTok{ dwmosun }\SpecialCharTok{+}\NormalTok{ dwmosun2 }\SpecialCharTok{+}\NormalTok{ dwmosun3 }\SpecialCharTok{+}\NormalTok{ female }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ white }\SpecialCharTok{+}\NormalTok{ black }\SpecialCharTok{+}\NormalTok{ mixed }\SpecialCharTok{+}\NormalTok{ marst }\SpecialCharTok{+}\NormalTok{ educ\_cat,}
-  \AttributeTok{data =}\NormalTok{ df,}
-  \AttributeTok{weights =}\NormalTok{ glm\_weight}
-\NormalTok{)}
-
-\CommentTok{\# Extract prediction intervals as data frames}
-\NormalTok{glm\_preds  }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{predict}\NormalTok{(mod\_glm\_reweight,  }\AttributeTok{newdata =}\NormalTok{ newdata, }\AttributeTok{interval =} \StringTok{"confidence"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{rename\_with}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\FunctionTok{paste0}\NormalTok{(}\StringTok{"glm\_preds\_"}\NormalTok{,.))}
-\NormalTok{glm\_preds2 }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{predict}\NormalTok{(mod\_glm\_reweight2, }\AttributeTok{newdata =}\NormalTok{ newdata, }\AttributeTok{interval =} \StringTok{"confidence"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{rename\_with}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\FunctionTok{paste0}\NormalTok{(}\StringTok{"glm\_preds2\_"}\NormalTok{,.))}
-\NormalTok{glm\_preds3 }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(}\FunctionTok{predict}\NormalTok{(mod\_glm\_reweight3, }\AttributeTok{newdata =}\NormalTok{ newdata, }\AttributeTok{interval =} \StringTok{"confidence"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{rename\_with}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\FunctionTok{paste0}\NormalTok{(}\StringTok{"glm\_preds3\_"}\NormalTok{,.))}
-
-\NormalTok{glm\_full }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(glm\_preds, glm\_preds2, glm\_preds3)}
-
-\NormalTok{glm\_full }\SpecialCharTok{\%\textgreater{}\%} 
-  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =} \DecValTok{0}\SpecialCharTok{:}\DecValTok{36}\NormalTok{)) }\SpecialCharTok{+}
-    \CommentTok{\# Model 1}
-    \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ glm\_preds\_fit), }\AttributeTok{color =} \StringTok{"blue"}\NormalTok{, }\AttributeTok{linewidth =} \DecValTok{1}\NormalTok{) }\SpecialCharTok{+}
-    \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ glm\_preds\_lwr, }\AttributeTok{ymax =}\NormalTok{ glm\_preds\_upr), }\AttributeTok{fill =} \StringTok{"blue"}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.2}\NormalTok{) }\SpecialCharTok{+}
-  
-    \CommentTok{\# Model 2}
-    \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ glm\_preds2\_fit), }\AttributeTok{color =} \StringTok{"darkgreen"}\NormalTok{, }\AttributeTok{linewidth =} \DecValTok{1}\NormalTok{) }\SpecialCharTok{+}
-    \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ glm\_preds2\_lwr, }\AttributeTok{ymax =}\NormalTok{ glm\_preds2\_upr), }\AttributeTok{fill =} \StringTok{"darkgreen"}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.2}\NormalTok{) }\SpecialCharTok{+}
-  
-    \CommentTok{\# Model 3}
-    \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ glm\_preds3\_fit), }\AttributeTok{color =} \StringTok{"firebrick"}\NormalTok{, }\AttributeTok{linewidth =} \DecValTok{1}\NormalTok{) }\SpecialCharTok{+}
-    \FunctionTok{geom\_ribbon}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{ymin =}\NormalTok{ glm\_preds3\_lwr, }\AttributeTok{ymax =}\NormalTok{ glm\_preds3\_upr), }\AttributeTok{fill =} \StringTok{"firebrick"}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.2}\NormalTok{) }\SpecialCharTok{+}
-  
-    \FunctionTok{labs}\NormalTok{(}
-      \AttributeTok{title =} \StringTok{"Predicted Wage Ratios by Unemployment Duration"}\NormalTok{,}
-      \AttributeTok{subtitle =} \StringTok{"From GLM{-}weighted regressions: linear, quadratic, and cubic specifications"}\NormalTok{,}
-      \AttributeTok{x =} \StringTok{"Unemployment Duration (months)"}\NormalTok{,}
-      \AttributeTok{y =} \StringTok{"Predicted Wage Ratio"}
-\NormalTok{    ) }\SpecialCharTok{+}
-    \FunctionTok{theme\_minimal}\NormalTok{()}
-\end{Highlighting}
-\end{Shaded}
-
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-35-1.pdf}}
-
-\begin{verbatim}
-## [1] "Diagnostic Tests for Propensity Score Matching (GLM) Reweighted Sample"
-\end{verbatim}
-
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-36-1.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-41-1} \end{center}
 
 \paragraph{Heckman Selection}\label{heckman-selection}
 
@@ -1211,117 +1051,60 @@ Another option is a Heckman Selection correction though I do not think
 this addresses the particular selection concern we have where there are
 simply less observations in longer unemployment durations.
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# Create selection indicator (1 if ratio\_wage is observed)}
-\NormalTok{df}\SpecialCharTok{$}\NormalTok{observe\_wage }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(df}\SpecialCharTok{$}\NormalTok{ratio\_wage))}
-
-\CommentTok{\# Define selection and outcome equations}
-\NormalTok{selection\_eq }\OtherTok{\textless{}{-}}\NormalTok{ observe\_wage }\SpecialCharTok{\textasciitilde{}}\NormalTok{ female }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ white }\SpecialCharTok{+}\NormalTok{ black }\SpecialCharTok{+}\NormalTok{ mixed }\SpecialCharTok{+}\NormalTok{ marst }\SpecialCharTok{+}\NormalTok{ educ\_cat}
-\NormalTok{outcome\_eq  }\OtherTok{\textless{}{-}}\NormalTok{ ratio\_wage }\SpecialCharTok{\textasciitilde{}}\NormalTok{ dwmosun }\SpecialCharTok{+}\NormalTok{ female }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ white }\SpecialCharTok{+}\NormalTok{ black }\SpecialCharTok{+}\NormalTok{ mixed }\SpecialCharTok{+}\NormalTok{ marst }\SpecialCharTok{+}\NormalTok{ educ\_cat}
-\NormalTok{outcome\_eq2 }\OtherTok{\textless{}{-}}\NormalTok{ ratio\_wage }\SpecialCharTok{\textasciitilde{}}\NormalTok{ dwmosun }\SpecialCharTok{+}\NormalTok{ dwmosun2 }\SpecialCharTok{+}\NormalTok{ female }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ white }\SpecialCharTok{+}\NormalTok{ black }\SpecialCharTok{+}\NormalTok{ mixed }\SpecialCharTok{+}\NormalTok{ marst }\SpecialCharTok{+}\NormalTok{ educ\_cat}
-\NormalTok{outcome\_eq3 }\OtherTok{\textless{}{-}}\NormalTok{ ratio\_wage }\SpecialCharTok{\textasciitilde{}}\NormalTok{ dwmosun }\SpecialCharTok{+}\NormalTok{ dwmosun2 }\SpecialCharTok{+}\NormalTok{ dwmosun3 }\SpecialCharTok{+}\NormalTok{ female }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ white }\SpecialCharTok{+}\NormalTok{ black }\SpecialCharTok{+}\NormalTok{ mixed }\SpecialCharTok{+}\NormalTok{ marst }\SpecialCharTok{+}\NormalTok{ educ\_cat }
-
-\CommentTok{\# Run Heckman }
-\NormalTok{heckman\_model }\OtherTok{\textless{}{-}} \FunctionTok{selection}\NormalTok{(}
-  \AttributeTok{selection =}\NormalTok{ selection\_eq,}
-  \AttributeTok{outcome =}\NormalTok{ outcome\_eq,}
-  \AttributeTok{data =}\NormalTok{ df,}
-  \AttributeTok{method =} \StringTok{"2step"}\NormalTok{,       }
-  \AttributeTok{weights =}\NormalTok{ df}\SpecialCharTok{$}\NormalTok{dwsuppwt   }\CommentTok{\# Include weights from CPS}
-\NormalTok{)}
-
-\CommentTok{\# Run Heckman }
-\NormalTok{heckman\_model2 }\OtherTok{\textless{}{-}} \FunctionTok{selection}\NormalTok{(}
-  \AttributeTok{selection =}\NormalTok{ selection\_eq,}
-  \AttributeTok{outcome =}\NormalTok{ outcome\_eq2,}
-  \AttributeTok{data =}\NormalTok{ df,}
-  \AttributeTok{method =} \StringTok{"2step"}\NormalTok{,       }
-  \AttributeTok{weights =}\NormalTok{ df}\SpecialCharTok{$}\NormalTok{dwsuppwt   }\CommentTok{\# Include weights from CPS}
-\NormalTok{)}
-
-\CommentTok{\# Run Heckman }
-\NormalTok{heckman\_model3 }\OtherTok{\textless{}{-}} \FunctionTok{selection}\NormalTok{(}
-  \AttributeTok{selection =}\NormalTok{ selection\_eq,}
-  \AttributeTok{outcome =}\NormalTok{ outcome\_eq3,}
-  \AttributeTok{data =}\NormalTok{ df,}
-  \AttributeTok{method =} \StringTok{"2step"}\NormalTok{,       }
-  \AttributeTok{weights =}\NormalTok{ df}\SpecialCharTok{$}\NormalTok{dwsuppwt   }\CommentTok{\# Include weights from CPS}
-\NormalTok{)}
-
-\CommentTok{\# Predict ratio\_wage (corrected for selection)}
-\NormalTok{preds }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(heckman\_model, }\AttributeTok{newdata =}\NormalTok{ newdata, }\AttributeTok{part =} \StringTok{"outcome"}\NormalTok{, }\AttributeTok{type =} \StringTok{"unconditional"}\NormalTok{)}
-\NormalTok{preds2 }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(heckman\_model2, }\AttributeTok{newdata =}\NormalTok{ newdata, }\AttributeTok{part =} \StringTok{"outcome"}\NormalTok{, }\AttributeTok{type =} \StringTok{"unconditional"}\NormalTok{)}
-\NormalTok{preds3 }\OtherTok{\textless{}{-}} \FunctionTok{predict}\NormalTok{(heckman\_model3, }\AttributeTok{newdata =}\NormalTok{ newdata, }\AttributeTok{part =} \StringTok{"outcome"}\NormalTok{, }\AttributeTok{type =} \StringTok{"unconditional"}\NormalTok{)}
-
-
-\CommentTok{\# Combine with original durations for plotting or inspection}
-\NormalTok{newdata}\SpecialCharTok{$}\NormalTok{predicted\_ratio }\OtherTok{\textless{}{-}}\NormalTok{ preds}
-\NormalTok{newdata}\SpecialCharTok{$}\NormalTok{predicted\_ratio2 }\OtherTok{\textless{}{-}}\NormalTok{ preds2}
-\NormalTok{newdata}\SpecialCharTok{$}\NormalTok{predicted\_ratio3 }\OtherTok{\textless{}{-}}\NormalTok{ preds3}
-
-\FunctionTok{ggplot}\NormalTok{(newdata, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ dwmosun)) }\SpecialCharTok{+}
-  \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ predicted\_ratio)) }\SpecialCharTok{+}
-  \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ predicted\_ratio2)) }\SpecialCharTok{+}
-  \FunctionTok{geom\_line}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y =}\NormalTok{ predicted\_ratio3)) }\SpecialCharTok{+}
-  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Unemployment Duration (months)"}\NormalTok{, }\AttributeTok{y =} \StringTok{"Predicted Wage Ratio"}\NormalTok{, }\AttributeTok{title =} \StringTok{"Predicted Wage Ratio vs. Unemployment Duration"}\NormalTok{) }\SpecialCharTok{+}
-  \FunctionTok{theme\_minimal}\NormalTok{()}
-\end{Highlighting}
-\end{Shaded}
-
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-37-1.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-42-1} \end{center}
 
 \paragraph{Regression Results with Sample
 Reweighting}\label{regression-results-with-sample-reweighting}
 
-\begin{table}[t]
-\fontsize{12.0pt}{14.4pt}\selectfont
-\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}}lccc}
+\begin{table}
+\centering\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lccc}
 \toprule
-  & Heckman Correction & Entropy Balanced Reweight & GLM Reweight \\ 
-\midrule\addlinespace[2.5pt]
-Intercept & 1.131*** & 1.147*** & 1.143*** \\ 
- & (0.041) & (0.033) & (0.033) \\ 
-{\cellcolor[HTML]{ADD8E6}{Unemployment Duration (Months)}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} & {\cellcolor[HTML]{ADD8E6}{-0.006***}} \\ 
- & (0.001) & (0.001) & (0.001) \\ 
-Female & 0.018 & 0.001 & 0.001 \\ 
- & (0.014) & (0.011) & (0.011) \\ 
-Age & -0.007*** & -0.002*** & -0.002*** \\ 
- & (0.002) & (0.000) & (0.000) \\ 
-White & -0.162* & -0.027 & -0.023 \\ 
- & (0.074) & (0.025) & (0.025) \\ 
-Black & -0.125* & -0.040 & -0.036 \\ 
- & (0.050) & (0.030) & (0.030) \\ 
-Mixed & -0.054 & 0.003 & 0.007 \\ 
- & (0.055) & (0.044) & (0.044) \\ 
-Married & 0.003 & 0.005 & 0.004 \\ 
- & (0.011) & (0.011) & (0.011) \\ 
-High School & -0.014 & -0.014 & -0.014 \\ 
- & (0.019) & (0.017) & (0.017) \\ 
-XOeduc\_catAssociate's & -0.078 &  &  \\ 
- & (0.064) &  &  \\ 
-Bachelor's Degree & -0.217 & 0.054* & 0.054* \\ 
- & (0.165) & (0.023) & (0.023) \\ 
-Postgraduate Degree & -0.479 & 0.083+ & 0.086+ \\ 
- & (0.330) & (0.048) & (0.047) \\ 
-Inverse Mills Ratio & 0.870+ &  &  \\ 
- & (0.479) &  &  \\ 
-educ\_catAssociate's &  & 0.007 & 0.006 \\ 
-{} & {} & {(0.022)} & {(0.022)} \\ 
-Num.Obs. & 4870 & 4870 & 4870 \\ 
-R2 & 0.893 & 0.014 & 0.015 \\ 
-R2 Adj. & 0.893 & 0.012 & 0.013 \\ 
-F &  & 6.487 & 6.798 \\ 
-RMSE & 0.37 & 0.37 & 0.37 \\ 
+  & Heckman Correction & Entropy Balanced Reweight & GLM Reweight\\
+\midrule
+Intercept & \num{1.131}*** & \num{1.147}*** & \num{1.143}***\\
+ & (\num{0.041}) & (\num{0.033}) & (\num{0.033})\\
+\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
+Female & \num{0.018} & \num{0.001} & \num{0.001}\\
+ & (\num{0.014}) & (\num{0.011}) & (\num{0.011})\\
+Age & \num{-0.007}*** & \num{-0.002}*** & \num{-0.002}***\\
+ & (\num{0.002}) & (\num{0.000}) & (\num{0.000})\\
+White & \num{-0.162}* & \num{-0.027} & \num{-0.023}\\
+ & (\num{0.074}) & (\num{0.025}) & (\num{0.025})\\
+Black & \num{-0.125}* & \num{-0.040} & \num{-0.036}\\
+ & (\num{0.050}) & (\num{0.030}) & (\num{0.030})\\
+Mixed & \num{-0.054} & \num{0.003} & \num{0.007}\\
+ & (\num{0.055}) & (\num{0.044}) & (\num{0.044})\\
+Married & \num{0.003} & \num{0.005} & \num{0.004}\\
+ & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+High School & \num{-0.014} & \num{-0.014} & \num{-0.014}\\
+ & (\num{0.019}) & (\num{0.017}) & (\num{0.017})\\
+XOeduc\_catAssociate's & \num{-0.078} &  & \\
+ & (\num{0.064}) &  & \\
+Bachelor's Degree & \num{-0.217} & \num{0.054}* & \num{0.054}*\\
+ & (\num{0.165}) & (\num{0.023}) & (\num{0.023})\\
+Postgraduate Degree & \num{-0.479} & \num{0.083}+ & \num{0.086}+\\
+ & (\num{0.330}) & (\num{0.048}) & (\num{0.047})\\
+Inverse Mills Ratio & \num{0.870}+ &  & \\
+ & (\num{0.479}) &  & \\
+educ\_catAssociate's &  & \num{0.007} & \num{0.006}\\
+ &  & (\num{0.022}) & (\num{0.022})\\
+\midrule
+Num.Obs. & \num{4870} & \num{4870} & \num{4870}\\
+R2 & \num{0.893} & \num{0.014} & \num{0.015}\\
+R2 Adj. & \num{0.893} & \num{0.012} & \num{0.013}\\
+F &  & \num{6.487} & \num{6.798}\\
+RMSE & \num{0.37} & \num{0.37} & \num{0.37}\\
 \bottomrule
-\end{tabular*}
-\begin{minipage}{\linewidth}
-+ p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001\\
-\end{minipage}
+\multicolumn{4}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
 \end{table}
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-39-1.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-39-2.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-44-1} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-44-2} \end{center}
 
 \subsubsection{Job Tenure}\label{job-tenure}
 
@@ -1330,7 +1113,7 @@ impact the result. This could speak to the ``adaptability'' of
 individuals. Wage ratio seems to decrease (although not sure if
 meaningfully) with tenure at previous job.
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-40-1.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-45-1} \end{center}
 
 \subsubsection{Representation}\label{representation}
 
@@ -1350,11 +1133,11 @@ concern and confirm a skewed sample in that sense).
 If we wish to pursue this data, I could improve on the below but it will
 have to do for now.
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-41-1.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-46-1} \end{center}
 
-\subsubsection{OTJ Search}\label{otj-search}
+\subsection{OTJ Search}\label{otj-search}
 
-\paragraph{Eeckhout et al.~2019 Unemployment
+\subsubsection{Eeckhout et al.~2019 Unemployment
 Cycles}\label{eeckhout-et-al.-2019-unemployment-cycles}
 
 \href{https://www.aeaweb.org/articles?id=10.1257/mac.20180105}{Source}
@@ -1374,10 +1157,13 @@ Cycles}\label{eeckhout-et-al.-2019-unemployment-cycles}
 ## [15] 0.6421053 0.6736842 0.7052632 0.7368421 0.7684211 0.8000000
 \end{verbatim}
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-8-1.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-8-2.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-8-3.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-8-4.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-8-1} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-8-2} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-8-3} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-8-4} \end{center}
 
 \begin{verbatim}
 ## 
@@ -1439,11 +1225,11 @@ Cycles}\label{eeckhout-et-al.-2019-unemployment-cycles}
 ## F-statistic: 36.59 on 1 and 93 DF,  p-value: 3.018e-08
 \end{verbatim}
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-8-5.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-8-5} \end{center}
 
-\subsubsection{Learning Rate}\label{learning-rate}
+\subsection{Learning Rate}\label{learning-rate}
 
-\paragraph{Mueller et al.~Job Seekers' Perceptions and Employment
+\subsubsection{Mueller et al.~Job Seekers' Perceptions and Employment
 Prospects: Heterogeneity, Duration Dependence and
 Bias}\label{mueller-et-al.-job-seekers-perceptions-and-employment-prospects-heterogeneity-duration-dependence-and-bias}
 
@@ -1460,7 +1246,10 @@ the negative duration dependence (rather than pure, true duration
 dependence).}
 
 \emph{Findings: Results are remarkably consistent even when including
-additional data from 2019-2024.}
+additional data from 2019-2024.} The below results replicate the
+findings in Mueller et al and extend the analysis to include a longer
+time series. Plot and regression table titles have been maintained for
+easy comparison.
 
 We aim to include this information in our theoretical model of the job
 search effort as a learning rate (ie. individuals learn about their
@@ -1490,8 +1279,9 @@ re-employment probability with repeated failures in the job search).
 ## ---------------------------------------------------------------
 \end{verbatim}
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-9-1.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-9-2.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-1} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-2} \end{center}
 
 \begin{verbatim}
 ## [1] "Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE)"
@@ -1613,8 +1403,9 @@ re-employment probability with repeated failures in the job search).
 ## Note:                                      *p<0.1; **p<0.05; ***p<0.01
 \end{verbatim}
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-9-3.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-9-4.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-3} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-4} \end{center}
 
 \begin{verbatim}
 ## [1] "Table 4—Linear Regressions of Elicited Job-Finding Probabilities on Duration of Unemployment"
@@ -1656,11 +1447,13 @@ re-employment probability with repeated failures in the job search).
 ## Table: Table 4 - Panel A: Linear Regressions of Elicited Job-Finding Probabilities on Duration of Unemployment (SCE)
 \end{verbatim}
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-9-5.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-9-6.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-9-7.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-5} \end{center}
 
-\subsection{Discarded Analyses}\label{discarded-analyses}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-6} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-7} \end{center}
+
+\subsection{Additional Analyses}\label{additional-analyses}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -1710,202 +1503,176 @@ difficult. However, in a cross-sectional setting we are able to deduce
 some weak relationships between Unemployment Duration and Absolute
 Reservation Wages and Wage Expectations.}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{source}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"data/behav\_params/SCE Labour Market Survey/sce\_res\_wage\_analysis.R"}\NormalTok{))}
-\end{Highlighting}
-\end{Shaded}
+{[}1{]} ``Plots of RESERVATION WAGE versus latest, current wage''
 
-\begin{verbatim}
-## [1] "Plots of RESERVATION WAGE versus latest, current wage"
-\end{verbatim}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-10-1} \end{center}
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-10-1.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-10-2.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-10-2} \end{center}
 
-\begin{verbatim}
-## [1] "Plots of EXPECTED OFFER versus latest, current, reservation wage"
-\end{verbatim}
+{[}1{]} ``Plots of EXPECTED OFFER versus latest, current, reservation
+wage''
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-10-3.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-10-3} \end{center}
 
-\begin{verbatim}
-## [1] "Plots of ACCEPTED SALARY versus latest, current, reservation wage"
-\end{verbatim}
+{[}1{]} ``Plots of ACCEPTED SALARY versus latest, current, reservation
+wage''
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-10-4.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-10-5.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-10-4} \end{center}
 
-\begin{verbatim}
-## 
-## +-------------+--------------+---------------+---------------+-----------------------+------------------+--------------------------+
-## |             | Accpt:Latest | AccptWage w.c | Accpt:ResWage | AccptWage:ResWage w.c | Accpt:EffResWage | AccptWage:EffResWage w.c |
-## +=============+==============+===============+===============+=======================+==================+==========================+
-## | (Intercept) | 0.826***     | 1.743***      | 0.933***      | 1.199***              | 0.826***         | 1.002***                 |
-## +-------------+--------------+---------------+---------------+-----------------------+------------------+--------------------------+
-## |             | (0.108)      | (0.260)       | (0.045)       | (0.141)               | (0.051)          | (0.177)                  |
-## +-------------+--------------+---------------+---------------+-----------------------+------------------+--------------------------+
-## | udur_bins   | 0.050        | -0.005        | -0.048*       | -0.053**              | 0.008            | -0.001                   |
-## +-------------+--------------+---------------+---------------+-----------------------+------------------+--------------------------+
-## |             | (0.045)      | (0.048)       | (0.019)       | (0.020)               | (0.023)          | (0.024)                  |
-## +-------------+--------------+---------------+---------------+-----------------------+------------------+--------------------------+
-## | Num.Obs.    | 56           | 56            | 160           | 159                   | 184              | 183                      |
-## +-------------+--------------+---------------+---------------+-----------------------+------------------+--------------------------+
-## | R2          | 0.022        | 0.430         | 0.040         | 0.118                 | 0.001            | 0.042                    |
-## +-------------+--------------+---------------+---------------+-----------------------+------------------+--------------------------+
-## | RMSE        | 0.40         | 0.35          | 0.30          | 0.30                  | 0.34             | 0.34                     |
-## +=============+==============+===============+===============+=======================+==================+==========================+
-## | + p < 0.1, * p < 0.05, ** p < 0.01, *** p < 0.001                                                                                |
-## +=============+==============+===============+===============+=======================+==================+==========================+
-## Table: Accepted Wages and Unemployment Duration
-\end{verbatim}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-10-5} \end{center}
 
-\begin{verbatim}
-## \begin{table}
-## \centering
-## \begin{talltblr}[         %% tabularray outer open
-## caption={Reservation Wages and Unemployment Duration},
-## note{}={+ p \num{< 0.1}, * p \num{< 0.05}, ** p \num{< 0.01}, *** p \num{< 0.001}},
-## ]                     %% tabularray outer close
-## {                     %% tabularray inner open
-## colspec={Q[]Q[]Q[]Q[]Q[]},
-## column{2,3,4,5}={}{halign=c,},
-## column{1}={}{halign=l,},
-## hline{26}={1,2,3,4,5}{solid, black, 0.05em},
-## }                     %% tabularray inner close
-## \toprule
-## & ResWage & ResWage w.c & ResWage/LastWage & ResWage/LastWage w.c \\ \midrule %% TinyTableHeader
-## (Intercept) & \num{10.173}*** & \num{9.945}*** & \num{0.825}*** & \num{0.750}*** \\
-## & (\num{0.044}) & (\num{0.071}) & (\num{0.022}) & (\num{0.040}) \\
-## udur\_bins & \num{0.107}*** & \num{0.083}*** & \num{0.027}*** & \num{0.023}*** \\
-## & (\num{0.012}) & (\num{0.011}) & (\num{0.006}) & (\num{0.006}) \\
-## female &  & \num{-0.275}*** &  & \num{0.009} \\
-## &  & (\num{0.022}) &  & (\num{0.012}) \\
-## age &  & \num{0.005}*** &  & \num{0.001}* \\
-## &  & (\num{0.001}) &  & (\num{0.000}) \\
-## hhinc\_2 &  & \num{0.230}*** &  & \num{-0.008} \\
-## &  & (\num{0.026}) &  & (\num{0.014}) \\
-## hhinc\_3 &  & \num{0.427}*** &  & \num{-0.017} \\
-## &  & (\num{0.030}) &  & (\num{0.017}) \\
-## hhinc\_4 &  & \num{0.759}*** &  & \num{-0.008} \\
-## &  & (\num{0.033}) &  & (\num{0.019}) \\
-## education\_2 &  & \num{-0.247}*** &  & \num{0.050}+ \\
-## &  & (\num{0.045}) &  & (\num{0.026}) \\
-## education\_3 &  & \num{-0.122}** &  & \num{0.007} \\
-## &  & (\num{0.047}) &  & (\num{0.027}) \\
-## education\_4 &  & \num{-0.046} &  & \num{0.052}+ \\
-## &  & (\num{0.051}) &  & (\num{0.029}) \\
-## education\_5 &  & \num{0.027} &  & \num{0.008} \\
-## &  & (\num{0.049}) &  & (\num{0.028}) \\
-## education\_6 &  & \num{0.111}* &  & \num{0.054}+ \\
-## &  & (\num{0.054}) &  & (\num{0.031}) \\
-## Num.Obs. & \num{7937} & \num{7824} & \num{6294} & \num{6224} \\
-## R2 & \num{0.010} & \num{0.169} & \num{0.003} & \num{0.007} \\
-## R2 Adj. & \num{0.010} & \num{0.168} & \num{0.003} & \num{0.005} \\
-## AIC & \num{191435.4} & \num{187281.4} & \num{9054.4} & \num{8961.7} \\
-## BIC & \num{191456.4} & \num{187372.0} & \num{9074.6} & \num{9049.3} \\
-## Log.Lik. & \num{-11923.451} & \num{-11075.843} & \num{-4524.195} & \num{-4467.857} \\
-## RMSE & \num{0.98} & \num{0.90} & \num{0.44} & \num{0.44} \\
-## \bottomrule
-## \end{talltblr}
-## \end{table} 
-## \begin{table}
-## \centering
-## \begin{talltblr}[         %% tabularray outer open
-## caption={Accepted Wages and Unemployment Duration},
-## note{}={+ p \num{< 0.1}, * p \num{< 0.05}, ** p \num{< 0.01}, *** p \num{< 0.001}},
-## ]                     %% tabularray outer close
-## {                     %% tabularray inner open
-## colspec={Q[]Q[]Q[]Q[]Q[]},
-## column{2,3,4,5}={}{halign=c,},
-## column{1}={}{halign=l,},
-## hline{26}={1,2,3,4,5}{solid, black, 0.05em},
-## }                     %% tabularray inner close
-## \toprule
-## & AccptWage & AccptWage w.c & AccptWage/ResWage & AccptWage/ResWage w.c \\ \midrule %% TinyTableHeader
-## (Intercept) & \num{10.568}*** & \num{11.705}*** & \num{0.924}*** & \num{1.303}*** \\
-## & (\num{0.106}) & (\num{0.255}) & (\num{0.048}) & (\num{0.132}) \\
-## udur\_bins & \num{-0.006} & \num{-0.037} & \num{-0.031}+ & \num{-0.036}+ \\
-## & (\num{0.040}) & (\num{0.037}) & (\num{0.018}) & (\num{0.018}) \\
-## female &  & \num{-0.164} &  & \num{-0.073} \\
-## &  & (\num{0.102}) &  & (\num{0.050}) \\
-## age &  & \num{-0.008}* &  & \num{-0.005}** \\
-## &  & (\num{0.004}) &  & (\num{0.002}) \\
-## hhinc\_2 &  & \num{0.260}+ &  & \num{0.043} \\
-## &  & (\num{0.139}) &  & (\num{0.067}) \\
-## hhinc\_3 &  & \num{0.272}+ &  & \num{0.042} \\
-## &  & (\num{0.138}) &  & (\num{0.069}) \\
-## hhinc\_4 &  & \num{0.377}* &  & \num{-0.052} \\
-## &  & (\num{0.150}) &  & (\num{0.075}) \\
-## education\_2 &  & \num{-0.996}*** &  & \num{-0.043} \\
-## &  & (\num{0.224}) &  & (\num{0.122}) \\
-## education\_3 &  & \num{-0.940}*** &  & \num{-0.128} \\
-## &  & (\num{0.223}) &  & (\num{0.122}) \\
-## education\_4 &  & \num{-1.036}*** &  & \num{-0.176} \\
-## &  & (\num{0.226}) &  & (\num{0.123}) \\
-## education\_5 &  & \num{-0.827}*** &  & \num{-0.141} \\
-## &  & (\num{0.224}) &  & (\num{0.124}) \\
-## education\_6 &  & \num{-0.551}* &  & \num{-0.095} \\
-## &  & (\num{0.228}) &  & (\num{0.127}) \\
-## Num.Obs. & \num{127} & \num{126} & \num{164} & \num{163} \\
-## R2 & \num{0.000} & \num{0.299} & \num{0.017} & \num{0.133} \\
-## R2 Adj. & \num{-0.008} & \num{0.232} & \num{0.011} & \num{0.070} \\
-## AIC & \num{2933.2} & \num{2884.9} & \num{110.6} & \num{109.9} \\
-## BIC & \num{2941.7} & \num{2921.7} & \num{119.9} & \num{150.1} \\
-## Log.Lik. & \num{-123.204} & \num{-99.911} & \num{-52.283} & \num{-41.957} \\
-## RMSE & \num{0.58} & \num{0.53} & \num{0.32} & \num{0.32} \\
-## \bottomrule
-## \end{talltblr}
-## \end{table} 
-## \begin{table}
-## \centering
-## \begin{talltblr}[         %% tabularray outer open
-## caption={Expected Wages and Unemployment Duration},
-## note{}={+ p \num{< 0.1}, * p \num{< 0.05}, ** p \num{< 0.01}, *** p \num{< 0.001}},
-## ]                     %% tabularray outer close
-## {                     %% tabularray inner open
-## colspec={Q[]Q[]Q[]Q[]Q[]},
-## column{2,3,4,5}={}{halign=c,},
-## column{1}={}{halign=l,},
-## hline{26}={1,2,3,4,5}{solid, black, 0.05em},
-## }                     %% tabularray inner close
-## \toprule
-## & ExpWage/ResWage & ExpWage/ResWage w.c & ExpWage/LastWage & ExpWage/LastWage w.c \\ \midrule %% TinyTableHeader
-## (Intercept) & \num{1.057}*** & \num{1.226}*** & \num{1.087}*** & \num{1.257}*** \\
-## & (\num{0.020}) & (\num{0.040}) & (\num{0.029}) & (\num{0.059}) \\
-## udur\_bins & \num{-0.022}*** & \num{-0.009} & \num{-0.024}** & \num{-0.008} \\
-## & (\num{0.006}) & (\num{0.006}) & (\num{0.008}) & (\num{0.009}) \\
-## female &  & \num{-0.022}+ &  & \num{0.064}*** \\
-## &  & (\num{0.013}) &  & (\num{0.019}) \\
-## age &  & \num{-0.003}*** &  & \num{-0.004}*** \\
-## &  & (\num{0.000}) &  & (\num{0.001}) \\
-## hhinc\_2 &  & \num{0.004} &  & \num{-0.038} \\
-## &  & (\num{0.016}) &  & (\num{0.023}) \\
-## hhinc\_3 &  & \num{0.004} &  & \num{-0.001} \\
-## &  & (\num{0.018}) &  & (\num{0.026}) \\
-## hhinc\_4 &  & \num{0.000} &  & \num{-0.005} \\
-## &  & (\num{0.019}) &  & (\num{0.027}) \\
-## education\_2 &  & \num{-0.035} &  & \num{-0.032} \\
-## &  & (\num{0.027}) &  & (\num{0.040}) \\
-## education\_3 &  & \num{-0.008} &  & \num{-0.056} \\
-## &  & (\num{0.028}) &  & (\num{0.041}) \\
-## education\_4 &  & \num{0.004} &  & \num{-0.031} \\
-## &  & (\num{0.030}) &  & (\num{0.044}) \\
-## education\_5 &  & \num{0.011} &  & \num{-0.090}* \\
-## &  & (\num{0.029}) &  & (\num{0.042}) \\
-## education\_6 &  & \num{0.021} &  & \num{0.002} \\
-## &  & (\num{0.032}) &  & (\num{0.046}) \\
-## Num.Obs. & \num{3114} & \num{3070} & \num{2721} & \num{2690} \\
-## R2 & \num{0.005} & \num{0.028} & \num{0.003} & \num{0.029} \\
-## R2 Adj. & \num{0.005} & \num{0.024} & \num{0.003} & \num{0.025} \\
-## AIC & \num{2803.9} & \num{2733.2} & \num{4079.4} & \num{3986.5} \\
-## BIC & \num{2822.1} & \num{2811.6} & \num{4097.2} & \num{4063.1} \\
-## Log.Lik. & \num{-1398.968} & \num{-1353.588} & \num{-2036.722} & \num{-1980.241} \\
-## RMSE & \num{0.34} & \num{0.34} & \num{0.46} & \num{0.45} \\
-## \bottomrule
-## \end{talltblr}
-## \end{table}
-\end{verbatim}
+\begin{table}
+\centering
+\caption{\label{tab:unnamed-chunk-10}Accepted Wages and Unemployment Duration}
+\centering
+\begin{tabular}[t]{lcccccc}
+\toprule
+  & Accpt:Latest & AccptWage w.c & Accpt:ResWage & AccptWage:ResWage w.c & Accpt:EffResWage & AccptWage:EffResWage w.c\\
+\midrule
+(Intercept) & \num{0.826}*** & \num{1.743}*** & \num{0.933}*** & \num{1.199}*** & \num{0.826}*** & \num{1.002}***\\
+ & (\num{0.108}) & (\num{0.260}) & (\num{0.045}) & (\num{0.141}) & (\num{0.051}) & (\num{0.177})\\
+udur\_bins & \num{0.050} & \num{-0.005} & \num{-0.048}* & \num{-0.053}** & \num{0.008} & \num{-0.001}\\
+ & (\num{0.045}) & (\num{0.048}) & (\num{0.019}) & (\num{0.020}) & (\num{0.023}) & (\num{0.024})\\
+\midrule
+Num.Obs. & \num{56} & \num{56} & \num{160} & \num{159} & \num{184} & \num{183}\\
+R2 & \num{0.022} & \num{0.430} & \num{0.040} & \num{0.118} & \num{0.001} & \num{0.042}\\
+RMSE & \num{0.40} & \num{0.35} & \num{0.30} & \num{0.30} & \num{0.34} & \num{0.34}\\
+\bottomrule
+\multicolumn{7}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}
+\end{table}
+\begin{table}
+\centering
+\caption{\label{tab:unnamed-chunk-10}Reservation Wages and Unemployment Duration}
+\centering
+\begin{tabular}[t]{lcccc}
+\toprule
+  & ResWage & ResWage w.c & ResWage/LastWage & ResWage/LastWage w.c\\
+\midrule
+(Intercept) & \num{10.173}*** & \num{9.945}*** & \num{0.825}*** & \num{0.750}***\\
+ & (\num{0.044}) & (\num{0.071}) & (\num{0.022}) & (\num{0.040})\\
+udur\_bins & \num{0.107}*** & \num{0.083}*** & \num{0.027}*** & \num{0.023}***\\
+ & (\num{0.012}) & (\num{0.011}) & (\num{0.006}) & (\num{0.006})\\
+female &  & \num{-0.275}*** &  & \num{0.009}\\
+ &  & (\num{0.022}) &  & (\num{0.012})\\
+age &  & \num{0.005}*** &  & \num{0.001}*\\
+ &  & (\num{0.001}) &  & (\num{0.000})\\
+hhinc\_2 &  & \num{0.230}*** &  & \num{-0.008}\\
+ &  & (\num{0.026}) &  & (\num{0.014})\\
+hhinc\_3 &  & \num{0.427}*** &  & \num{-0.017}\\
+ &  & (\num{0.030}) &  & (\num{0.017})\\
+hhinc\_4 &  & \num{0.759}*** &  & \num{-0.008}\\
+ &  & (\num{0.033}) &  & (\num{0.019})\\
+education\_2 &  & \num{-0.247}*** &  & \num{0.050}+\\
+ &  & (\num{0.045}) &  & (\num{0.026})\\
+education\_3 &  & \num{-0.122}** &  & \num{0.007}\\
+ &  & (\num{0.047}) &  & (\num{0.027})\\
+education\_4 &  & \num{-0.046} &  & \num{0.052}+\\
+ &  & (\num{0.051}) &  & (\num{0.029})\\
+education\_5 &  & \num{0.027} &  & \num{0.008}\\
+ &  & (\num{0.049}) &  & (\num{0.028})\\
+education\_6 &  & \num{0.111}* &  & \num{0.054}+\\
+ &  & (\num{0.054}) &  & (\num{0.031})\\
+\midrule
+Num.Obs. & \num{7937} & \num{7824} & \num{6294} & \num{6224}\\
+R2 & \num{0.010} & \num{0.169} & \num{0.003} & \num{0.007}\\
+R2 Adj. & \num{0.010} & \num{0.168} & \num{0.003} & \num{0.005}\\
+AIC & \num{191435.4} & \num{187281.4} & \num{9054.4} & \num{8961.7}\\
+BIC & \num{191456.4} & \num{187372.0} & \num{9074.6} & \num{9049.3}\\
+Log.Lik. & \num{-11923.451} & \num{-11075.843} & \num{-4524.195} & \num{-4467.857}\\
+RMSE & \num{0.98} & \num{0.90} & \num{0.44} & \num{0.44}\\
+\bottomrule
+\multicolumn{5}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}
+\end{table}
+\begin{table}
+\centering
+\caption{\label{tab:unnamed-chunk-10}Accepted Wages and Unemployment Duration}
+\centering
+\begin{tabular}[t]{lcccc}
+\toprule
+  & AccptWage & AccptWage w.c & AccptWage/ResWage & AccptWage/ResWage w.c\\
+\midrule
+(Intercept) & \num{10.568}*** & \num{11.705}*** & \num{0.924}*** & \num{1.303}***\\
+ & (\num{0.106}) & (\num{0.255}) & (\num{0.048}) & (\num{0.132})\\
+udur\_bins & \num{-0.006} & \num{-0.037} & \num{-0.031}+ & \num{-0.036}+\\
+ & (\num{0.040}) & (\num{0.037}) & (\num{0.018}) & (\num{0.018})\\
+female &  & \num{-0.164} &  & \num{-0.073}\\
+ &  & (\num{0.102}) &  & (\num{0.050})\\
+age &  & \num{-0.008}* &  & \num{-0.005}**\\
+ &  & (\num{0.004}) &  & (\num{0.002})\\
+hhinc\_2 &  & \num{0.260}+ &  & \num{0.043}\\
+ &  & (\num{0.139}) &  & (\num{0.067})\\
+hhinc\_3 &  & \num{0.272}+ &  & \num{0.042}\\
+ &  & (\num{0.138}) &  & (\num{0.069})\\
+hhinc\_4 &  & \num{0.377}* &  & \num{-0.052}\\
+ &  & (\num{0.150}) &  & (\num{0.075})\\
+education\_2 &  & \num{-0.996}*** &  & \num{-0.043}\\
+ &  & (\num{0.224}) &  & (\num{0.122})\\
+education\_3 &  & \num{-0.940}*** &  & \num{-0.128}\\
+ &  & (\num{0.223}) &  & (\num{0.122})\\
+education\_4 &  & \num{-1.036}*** &  & \num{-0.176}\\
+ &  & (\num{0.226}) &  & (\num{0.123})\\
+education\_5 &  & \num{-0.827}*** &  & \num{-0.141}\\
+ &  & (\num{0.224}) &  & (\num{0.124})\\
+education\_6 &  & \num{-0.551}* &  & \num{-0.095}\\
+ &  & (\num{0.228}) &  & (\num{0.127})\\
+\midrule
+Num.Obs. & \num{127} & \num{126} & \num{164} & \num{163}\\
+R2 & \num{0.000} & \num{0.299} & \num{0.017} & \num{0.133}\\
+R2 Adj. & \num{-0.008} & \num{0.232} & \num{0.011} & \num{0.070}\\
+AIC & \num{2933.2} & \num{2884.9} & \num{110.6} & \num{109.9}\\
+BIC & \num{2941.7} & \num{2921.7} & \num{119.9} & \num{150.1}\\
+Log.Lik. & \num{-123.204} & \num{-99.911} & \num{-52.283} & \num{-41.957}\\
+RMSE & \num{0.58} & \num{0.53} & \num{0.32} & \num{0.32}\\
+\bottomrule
+\multicolumn{5}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}
+\end{table}
+\begin{table}
+\centering
+\caption{\label{tab:unnamed-chunk-10}Expected Wages and Unemployment Duration}
+\centering
+\begin{tabular}[t]{lcccc}
+\toprule
+  & ExpWage/ResWage & ExpWage/ResWage w.c & ExpWage/LastWage & ExpWage/LastWage w.c\\
+\midrule
+(Intercept) & \num{1.057}*** & \num{1.226}*** & \num{1.087}*** & \num{1.257}***\\
+ & (\num{0.020}) & (\num{0.040}) & (\num{0.029}) & (\num{0.059})\\
+udur\_bins & \num{-0.022}*** & \num{-0.009} & \num{-0.024}** & \num{-0.008}\\
+ & (\num{0.006}) & (\num{0.006}) & (\num{0.008}) & (\num{0.009})\\
+female &  & \num{-0.022}+ &  & \num{0.064}***\\
+ &  & (\num{0.013}) &  & (\num{0.019})\\
+age &  & \num{-0.003}*** &  & \num{-0.004}***\\
+ &  & (\num{0.000}) &  & (\num{0.001})\\
+hhinc\_2 &  & \num{0.004} &  & \num{-0.038}\\
+ &  & (\num{0.016}) &  & (\num{0.023})\\
+hhinc\_3 &  & \num{0.004} &  & \num{-0.001}\\
+ &  & (\num{0.018}) &  & (\num{0.026})\\
+hhinc\_4 &  & \num{0.000} &  & \num{-0.005}\\
+ &  & (\num{0.019}) &  & (\num{0.027})\\
+education\_2 &  & \num{-0.035} &  & \num{-0.032}\\
+ &  & (\num{0.027}) &  & (\num{0.040})\\
+education\_3 &  & \num{-0.008} &  & \num{-0.056}\\
+ &  & (\num{0.028}) &  & (\num{0.041})\\
+education\_4 &  & \num{0.004} &  & \num{-0.031}\\
+ &  & (\num{0.030}) &  & (\num{0.044})\\
+education\_5 &  & \num{0.011} &  & \num{-0.090}*\\
+ &  & (\num{0.029}) &  & (\num{0.042})\\
+education\_6 &  & \num{0.021} &  & \num{0.002}\\
+ &  & (\num{0.032}) &  & (\num{0.046})\\
+\midrule
+Num.Obs. & \num{3114} & \num{3070} & \num{2721} & \num{2690}\\
+R2 & \num{0.005} & \num{0.028} & \num{0.003} & \num{0.029}\\
+R2 Adj. & \num{0.005} & \num{0.024} & \num{0.003} & \num{0.025}\\
+AIC & \num{2803.9} & \num{2733.2} & \num{4079.4} & \num{3986.5}\\
+BIC & \num{2822.1} & \num{2811.6} & \num{4097.2} & \num{4063.1}\\
+Log.Lik. & \num{-1398.968} & \num{-1353.588} & \num{-2036.722} & \num{-1980.241}\\
+RMSE & \num{0.34} & \num{0.34} & \num{0.46} & \num{0.45}\\
+\bottomrule
+\multicolumn{5}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}
+\end{table}
 
 \subsubsection{Survey on Consumer Expectations - Job Search
 Supplement}\label{survey-on-consumer-expectations---job-search-supplement}
@@ -1939,35 +1706,12 @@ Year & N Unemployed & N Unemp \& Searching \\
 2021 & 330 & 50 \\
 \end{longtable}
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-12-1.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-12-2.pdf}}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-12-1} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-12-2} \end{center}
 
 \subsubsection{On the job search}\label{on-the-job-search}
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-13-1.pdf}}
-
-\subsubsection{(TBD) American Time Use
-Survey}\label{tbd-american-time-use-survey}
-
-The American Time Use Survey gives no indication of time spent in
-unemployment. It shows how much time is spent searching but does not
-link to time spent in unemployment. Therefore, I prioritised the
-datasets above.
-\href{https://www.sciencedirect.com/science/article/abs/pii/S0047272709001625}{Krueger
-\& Mueller 2010} impute duration spent unemployed from the ATUS in the
-following way which could be worth considering.
-
-``Unfortunately, the ATUS interview does not collect information on
-unemployment duration. Consequently, we derive unemployment duration by
-taking the unemployment duration reported in the last CPS interview and
-adding the number of weeks that elapsed between the CPS interview and
-the ATUS interview. Eighty-six percent of the ATUS interviews were
-conducted within 3 months of the last CPS interview. For those who were
-not unemployed at the time of the CPS interview, we impute duration of
-unemployment by taking half the number of weeks between the CPS and the
-ATUS interviews. We do not show the weekly LOWESS plot for 13 weeks or
-less, but simply report the average time allocated to search, as the
-imputed unemployment duration are quite noisy for those who become
-unemployed after their last CPS interview.''
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-13-1} \end{center}
 
 \end{document}

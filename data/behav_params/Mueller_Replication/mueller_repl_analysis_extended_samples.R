@@ -21,7 +21,6 @@ library(broom) # For extracting model coefficients
 library(modelsummary)
 library(flextable)
 
-
 # Define base directory (replace this with the correct path later)
 base <- here("data/behav_params/Mueller_Replication/")
 
@@ -162,7 +161,7 @@ for(i in seq_along(df_list)){
 
 stargazer(
   tab1_input,
-  type = "text",
+  type = "latex",
   summary = FALSE,
   rownames = FALSE,
   title = "Descriptive Statistics (SCE)",
@@ -225,10 +224,6 @@ combined_plot1 <- wrap_plots(plots, ncol = 3)
 
 # Print the combined plot
 #print(combined_plot1)
-
-library(patchwork)
-library(ggplot2)
-library(dplyr)
 
 prod_fig1 <- function(df_list) {
   # Combine all dataframes into one long dataframe with a new 'Source' column
@@ -449,11 +444,10 @@ mods <- list(#"modelA_1" = modelA_1,
 
 tab2_data <-lapply(df_list, prod_tab2_data)
 
-print("Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE)")
 for(panel in c("A", "B")){
   if(panel == "A"){
-    print("Panel A. Contemporaneous elicitations")
-  }else{print("Panel B. Lagged elicitations")}
+    ttl = "Contemporaneous elicitations"
+  }else{ttl = "Lagged elicitations"}
   
   
   for(model in mods[grep(panel, names(mods))]){
@@ -463,17 +457,16 @@ for(panel in c("A", "B")){
       res_list[i] <- list(model(df))
       i = i+1
     }
-    stargazer(res_list, type = "text",
+    stargazer(res_list, type = "latex",
               star.cutoffs = c(0.1, 0.05, 0.01),
               digits = 3,
               column.labels = names(tab2_data), 
               dep.var.labels = "T+3 UE Transitions (3-Months)",
-              #title = paste0()
+              title = paste0("Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): ", ttl),
               #covariate.labels = c("Current Job-Finding Probability", "Lagged Job-Finding Probability"), # Switched order of these labels...still not quite sure about the lagging here
               omit = controls) 
     }
 }
-
 
 
 ############################################################################################
@@ -1015,12 +1008,11 @@ tab_4_fun <- function(data){
 tab4_all <- lapply(df_list, tab_4_fun) 
 names(tab4_all) <- names(df_list)
 
-print("Table 4—Linear Regressions of Elicited Job-Finding Probabilities on Duration of Unemployment")
 tab4_all %>% 
   modelsummary(.,
     shape = "rbind",
     #list(summary(model1), summary(model2), summary(model3), summary(model4)),
-    output = "markdown",
+    output = "latex",
     title = "Table 4 - Panel A: Linear Regressions of Elicited Job-Finding Probabilities on Duration of Unemployment (SCE)",
     #dep.var.labels.include = FALSE,
     #column.labels = c("(1)", "(2)", "(3)", "(4)"),
@@ -1030,8 +1022,7 @@ tab4_all %>%
     gof_map = c("nobs", "r.squared"),
     coef_map = c("udur"= "Unemployment Duration (Months)"),
     fmt = 4
-  ) %>% print(.)
-#%>% modelsummary(., shape = "rbind")
+  )
 
 
 ##################################################################################################

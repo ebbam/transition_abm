@@ -188,7 +188,9 @@ final <- tibble(temp) %>%
   pivot_longer(contains('_Q'), names_to = "date", values_to = "real_VA") %>% 
   mutate(date = as.yearqtr(gsub("_", " ", date), format = "%Y Q%q"),
          real_VA = as.numeric(real_VA)) %>% 
-  filter(!is.na(real_VA))
+  filter(!is.na(real_VA)) %>% 
+  mutate(date = date(date),
+         log_real_VA = log(real_VA))
 
 final %>% 
   filter(label_0 == "Private industries" & !is.na(label_2)) %>% 
@@ -205,3 +207,28 @@ final %>%
 
 print(p1)
 cat("\n")
+
+
+ggplot() + 
+  geom_line(data = ind_va_for_abm, aes(x = date, y = log_real_VA, group = industry), color = "red") +
+  geom_line(data = filter(final, tolower(industry) %in% tolower(names(rel_inds))), aes(x = date, y = log_real_VA, group = industry)) +
+  facet_wrap_custom(~industry, scales = "free") +
+  common_theme
+
+q_ind_va_for_abm <- final %>% 
+  filter(tolower(industry) %in% tolower(names(rel_inds)))
+
+ind_va_for_abm_full <- ind_va_for_abm %>% 
+  filter(!(date %in% q_ind_va_for_abm$date)) %>% 
+  rbind(q_ind_va_for_abm)
+
+ind_va_for_abm_full %>% 
+  ggplot() +
+  geom_line(aes(x = date, y = log_real_VA, group = industry)) +
+              facet_wrap_custom(~industry, scales = "free") +
+              common_theme
+
+
+
+
+

@@ -62,17 +62,14 @@ conflicts_prefer(patchwork::area)
 
 ```
 
-## **Relevant Analyses** {.tabset}
+# Calibrating Behavioural Mechanisms
 
 **Data we have decided to keep:**
 
 1.  Current Population Survey 2018 & 2022: Information on applications
     sent by unemployment duration.             
     
-2.  Mukoyama et al. data on the intensive margin of unemployed search
-    effort (in minutes searched) over the business cycle. We have chosen
-    to include this as a validation exercise of our application effort
-    imposition.               
+2.  Displaced Worker Supplement: As part of the Current Population Survey, the US Census Bureau conducts an annual Displaced Worker Supplement in which workers who have lost their job in the last three years are asked additional questions about their unemployment experiences and (if re-employed) their re-employment conditions. From this we draw a reservation wage adjustment rate as a function of unemployment duration.           
 
 3.  [Eeckhout et al. 2019 Unemployment
     Cycles](https://www.aeaweb.org/articles?id=10.1257/mac.20180105): We
@@ -82,7 +79,10 @@ conflicts_prefer(patchwork::area)
     analysis, we decided to abandon using their estimated parameters
     (search intensity for employed workers).               
     
-4.   Displaced Worker Supplement: As part of the Current Population Survey, the US Census Bureau conducts an annual Displaced Worker Supplement in which workers who have lost their job in the last three years are asked additional questions about their unemployment experiences and (if re-employed) their re-employment conditions. From this we draw a reservation wage adjustment rate as a function of unemployment duration.                  
+4.  (Validation) Mukoyama et al. data on the intensive margin of unemployed search
+    effort (in minutes searched) over the business cycle. We have chosen
+    to include this as a validation exercise of our application effort
+    imposition.                  
 
 5.   [**Mueller et al. 2021: Job Seekers' Perceptions and Employment
     Prospects: Heterogeneity, Duration Dependence and
@@ -92,9 +92,9 @@ conflicts_prefer(patchwork::area)
 to lack of relevance or poor data quality are in the "Discarded
 Analyses" tab.**
 
-### Applications Sent {.tabset}
+## Applications Sent {.tabset}
 
-#### Current Population Survey - 2018 & 2020 Supplement
+### (Calibration) Current Population Survey - 2018 & 2020 Supplement
 
 This 2020 ["Beyond the Numbers"
 issue](https://www.bls.gov/opub/btn/volume-9/how-do-jobseekers-search-for-jobs.htm#_edn5)
@@ -611,7 +611,7 @@ p2 <- new_data %>%
 
 ```
 
-#### Validation: Mukoyama et al. Job Search and the Business Cycle
+### (Validation) Mukoyama et al. Job Search and the Business Cycle
 
 [Mukoyama: Job Search Over the Business
 Cycle](https://www.aeaweb.org/articles?id=10.1257/mac.20160202)
@@ -622,14 +622,15 @@ source(here("data/behav_params/Mukoyama_Replication/mukoyama_replication_analysi
 
 ```
 
-### Reservation Wage Adjustment {.tabset}
+
+## Reservation Wage Adjustment
 
 ```{r, child = "cps_displaced_worker_supplement/cps_disc_worker_vignette.Rmd"}
 ```
 
-### OTJ Search {.tabset}
+## OTJ Search
 
-#### Eeckhout et al. 2019 Unemployment Cycles
+### Eeckhout et al. 2019 Unemployment Cycles
 
 [Source](https://www.aeaweb.org/articles?id=10.1257/mac.20180105)
 
@@ -642,9 +643,9 @@ source(here('data/behav_params/Eeckhout_Replication/eeckhout_extended_replicatio
 
 ```
 
-### Learning Rate {.tabset}
+## Learning Rate {.tabset}
 
-#### Mueller et al. Job Seekers' Perceptions and Employment Prospects: Heterogeneity, Duration Dependence and Bias
+### Mueller et al. Job Seekers' Perceptions and Employment Prospects: Heterogeneity, Duration Dependence and Bias
 
 [Mueller et al: Job Seekers' Perceptions and Employment
 Prospects](https://www.aeaweb.org/articles?id=10.1257/aer.20190808)
@@ -658,7 +659,7 @@ they find that dynamic selection selection explains most of the negative
 duration dependence (rather than pure, true duration dependence).*
 
 *Findings: Results are remarkably consistent even when including
-additional data from 2019-2024.*
+additional data from 2019-2024.* The below results replicate the findings in Mueller et al and extend the analysis to include a longer time series. Plot and regression table titles have been maintained for easy comparison.
 
 We aim to include this information in our theoretical model of the job
 search effort as a learning rate (ie. individuals learn about their
@@ -670,7 +671,7 @@ source(here("data/behav_params/Mueller_Replication/mueller_repl_analysis_extende
 
 ```
 
-## Discarded Analyses {.tabset}
+## Additional Analyses {.tabset}
 
 <!-- I first focus on replicating and extending the empirical analysis that speaks to the three determinants above (dynamic selection, duration dependence, search effort) -->
 
@@ -715,7 +716,7 @@ cross-sectional setting we are able to deduce some weak relationships
 between Unemployment Duration and Absolute Reservation Wages and Wage
 Expectations.*
 
-```{r, fig.height = 8, fig.width = 10}
+```{r, fig.height = 8, fig.width = 10, results = 'asis'}
 
 source(here("data/behav_params/SCE Labour Market Survey/sce_res_wage_analysis.R"))
 
@@ -817,6 +818,7 @@ sce_job_search_free %>%
   geom_histogram(aes(x = value, fill = name)) +
   facet_wrap(~name, scales = "free_x", ncol = 1, labeller = labeller(name = rename_fun)) +
   #scale_x_break(c(3000, 15000)) +
+  common_theme +
   theme(legend.position = "none") +
   labs(title = "Histogram of time spent searching and out of work.", x = "Time (days or months)", y = "Count", caption = "N = 366")
 
@@ -826,7 +828,6 @@ sce_job_search_free %>%
   ggplot(aes(x = log(l8_days_no_work), y = log(l7_days_spent_searching))) +
   geom_jitter(aes(color = as.factor(year))) +
   geom_abline(intercept = 0, slope = 1, size = 0.5, linetype = "dashed", color = "darkgrey") +
-  #stat_lm() +
   labs(x = "Total time out of work (log days)", y = "Total time spent searching (log days)", title = "Time dedicated to searching versus time spent unemployed",
        subtitle = "Blue line indicates best fit line. Grey dashed line indicates 45 degree line. N = 366") +
   common_theme
@@ -846,28 +847,28 @@ sce_job_search_emp %>%
 
 ```
 
-### (TBD) American Time Use Survey
+<!-- ### (TBD) American Time Use Survey -->
 
-The American Time Use Survey gives no indication of time spent in
-unemployment. It shows how much time is spent searching but does not
-link to time spent in unemployment. Therefore, I prioritised the
-datasets above. [Krueger & Mueller
-2010](https://www.sciencedirect.com/science/article/abs/pii/S0047272709001625)
-impute duration spent unemployed from the ATUS in the following way
-which could be worth considering.
+<!-- The American Time Use Survey gives no indication of time spent in -->
+<!-- unemployment. It shows how much time is spent searching but does not -->
+<!-- link to time spent in unemployment. Therefore, I prioritised the -->
+<!-- datasets above. [Krueger & Mueller -->
+<!-- 2010](https://www.sciencedirect.com/science/article/abs/pii/S0047272709001625) -->
+<!-- impute duration spent unemployed from the ATUS in the following way -->
+<!-- which could be worth considering. -->
 
-"Unfortunately, the ATUS interview does not collect information on
-unemployment duration. Consequently, we derive unemployment duration by
-taking the unemployment duration reported in the last CPS interview and
-adding the number of weeks that elapsed between the CPS interview and
-the ATUS interview. Eighty-six percent of the ATUS interviews were
-conducted within 3 months of the last CPS interview. For those who were
-not unemployed at the time of the CPS interview, we impute duration of
-unemployment by taking half the number of weeks between the CPS and the
-ATUS interviews. We do not show the weekly LOWESS plot for 13 weeks or
-less, but simply report the average time allocated to search, as the
-imputed unemployment duration are quite noisy for those who become
-unemployed after their last CPS interview."
+<!-- "Unfortunately, the ATUS interview does not collect information on -->
+<!-- unemployment duration. Consequently, we derive unemployment duration by -->
+<!-- taking the unemployment duration reported in the last CPS interview and -->
+<!-- adding the number of weeks that elapsed between the CPS interview and -->
+<!-- the ATUS interview. Eighty-six percent of the ATUS interviews were -->
+<!-- conducted within 3 months of the last CPS interview. For those who were -->
+<!-- not unemployed at the time of the CPS interview, we impute duration of -->
+<!-- unemployment by taking half the number of weeks between the CPS and the -->
+<!-- ATUS interviews. We do not show the weekly LOWESS plot for 13 weeks or -->
+<!-- less, but simply report the average time allocated to search, as the -->
+<!-- imputed unemployment duration are quite noisy for those who become -->
+<!-- unemployed after their last CPS interview." -->
 
 <!-- ### Occupational Restructuring -->
 
