@@ -10,7 +10,7 @@ import math as math
 ####################
 # Model Run ########
 ####################
-def run_single_local( #behav_spec, 
+def run_single_local(#behav_spec, 
                     d_u, 
                     #d_v,
                     gamma_u,
@@ -25,6 +25,7 @@ def run_single_local( #behav_spec,
                     time_steps, # set equal to length of gdp_data
                     delay,
                     gdp_data,
+                    occ_shocks_data,
                     bus_confidence_dat,
                     app_effort_dat,
                     vac_data,
@@ -63,8 +64,13 @@ def run_single_local( #behav_spec,
             ue_bc = 1
             vr_t = 0.03
         if t > delay:
-            curr_bus_cy = gdp_data[t-delay]
-            bus_conf = bus_confidence_dat[t-delay]
+            if occ_shocks_data is not None:
+                curr_bus_cy = np.take(occ_shocks_data, indices=t-delay, axis=1)
+                bus_conf = curr_bus_cy
+            else:
+                curr_bus_cy = gdp_data[t-delay]
+                bus_conf = bus_confidence_dat[t-delay]
+
             ue_bc = curr_bus_cy
             vr_t = vac_data[t-delay]
         if not cyc_ue:
@@ -78,6 +84,14 @@ def run_single_local( #behav_spec,
         #u_searchers = 0
         
         for occ in net:
+            if occ_shocks_data is not None and t > delay:
+                occ_shock = curr_bus_cy[occ.occupation_id]
+            else:
+                occ_shock = curr_bus_cy
+
+            if occ_shock < 0.75 or occ_shock > 1.1:
+                print(occ.occupation_id)
+                print(occ_shock)
             # Exit and entry
             # Remove the top 2% of earners in an occupation's employed list
             occ.entry_and_exit(0.02)
@@ -101,7 +115,7 @@ def run_single_local( #behav_spec,
                 # For both models, a mean of 40% of employed workers are searching for new jobs
                 # This fluctuates with the business cycle in the behavioural model in line with gdp
                 if cyc_otj:
-                    search_scaling = curr_bus_cy*0.07
+                    search_scaling = occ_shock*0.07
                 # Static mean in the non-behavioural model
                 else:
                     search_scaling = 0.07
@@ -114,7 +128,7 @@ def run_single_local( #behav_spec,
 
             ### SEPARATIONS
             try:
-                occ.separate_workers(d_u, gamma_u, curr_bus_cy)
+                occ.separate_workers(d_u, gamma_u, occ_shock)
             except Exception as e:
                 return np.inf
                     
@@ -151,6 +165,10 @@ def run_single_local( #behav_spec,
         # Update vacancies after all shifts have taken place
         # Could consider making this a function of the class itself?
         for occ in net:
+            if occ_shocks_data is not None and t > delay:
+                occ_shock = curr_bus_cy[occ.occupation_id]
+            else:
+                occ_shock = curr_bus_cy
             u_rel_wage = sum(wrkr.ue_rel_wage for wrkr in occ.list_of_employed if wrkr.hired and wrkr.ue_rel_wage is not None)
             e_rel_wage = sum(wrkr.ee_rel_wage for wrkr in occ.list_of_employed if wrkr.hired and wrkr.ee_rel_wage is not None)
             ue = len([w for w in occ.list_of_employed if w.hired and w.ue_rel_wage is not None])
@@ -177,14 +195,14 @@ def run_single_local( #behav_spec,
                 empl += len(occ.list_of_employed) 
                 unemp += len(occ.list_of_unemployed)
                 n_ltue += sum(wrkr.longterm_unemp for wrkr in occ.list_of_unemployed)
-                t_demand += occ.target_demand*bus_conf
+                t_demand += occ.target_demand*occ_shock
             
             else:
                 empl = len(occ.list_of_employed) 
                 unemp = len(occ.list_of_unemployed)
                 n_ltue = sum(wrkr.longterm_unemp for wrkr in occ.list_of_unemployed)
                 curr_demand = occ.current_demand
-                t_demand = occ.target_demand*bus_conf
+                t_demand = occ.target_demand*occ_shock
                 vacs_occ = len([v for v in vacs_temp if v.occupation_id == occ.occupation_id])
                 wages_occ = sum(wrkr.wage for wrkr in occ.list_of_employed)
                 # Calculate average relative wage for unemployed and employed workers

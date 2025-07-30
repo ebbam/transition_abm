@@ -585,7 +585,7 @@ mod3b <- lm(data = filter(data_cleaned,!is.na(salary_prop_effreswage) & salary_p
 modelsummary(list(
   "Accpt:Latest" =mod1a, "AccptWage w.c" =mod1b,
   "Accpt:ResWage" =mod2a, "AccptWage:ResWage w.c" =mod2b,
-  "Accpt:EffResWage" =mod3a, "AccptWage:EffResWage w.c" =mod3b), output = "markdown",
+  "Accpt:EffResWage" =mod3a, "AccptWage:EffResWage w.c" =mod3b), output = "latex",
   stars = TRUE, coef_omit = c(3:12), gof_omit = c("AIC|BIC|Log.Lik.|R2 Adj.|F"), title = "Accepted Wages and Unemployment Duration") %>% print(.)
 
 # ####### REGRESSIONS ##########

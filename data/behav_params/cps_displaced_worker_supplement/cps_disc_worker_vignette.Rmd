@@ -2,15 +2,18 @@
 title: "CPS Displaced Worker Supplement"
 author: "Ebba Mark"
 date: "`r Sys.Date()`"
-output: html_document
+output: 
+  pdf_document:
+header-includes:
+  - \usepackage[table]{xcolor}
 editor_options: 
   markdown: 
     wrap: sentence
 ---
 
-As part of the Current Population Survey, the US Census Bureau conducts an annual [Displaced Worker Supplement](https://cps.ipums.org/cps/dw_sample_notes.shtml) in which workers who have lost their job in the last three years are asked additional questions about their unemployment experiences and (if re-employed) their re-employment conditions.
+As part of the Current Population Survey, the US Census Bureau conducts an annuaol [Displaced Worker Supplement](https://cps.ipums.org/cps/dw_sample_notes.shtml) in which workers who have lost their job in the last three years are asked additional questions about their unemployment experiences and (if re-employed) their re-employment conditions.
 
-From link above: "The universe for the Displaced Workers Supplement is civilians 20 or older. Respondents are further categorized as a"displaced worker" if they meet additional characteristics (see DWSTAT). After 1998, displaced workers are those who lost or left a job due to layoffs or shutdowns within the past 3 years...were not self-employed, and did not expect to be recalled to work within the next six months.
+"The universe for the Displaced Workers Supplement is civilians 20 or older. Respondents are further categorized as a"displaced worker" if they meet additional characteristics (see DWSTAT). After 1998, displaced workers are those who lost or left a job due to layoffs or shutdowns within the past 3 years...were not self-employed, and did not expect to be recalled to work within the next six months.
 
 The data used below is from annual survey responses between 2000-2025.
 I use the supplement sample weights in all results below.
@@ -37,9 +40,15 @@ If we fit this model with a quadratic fit this could inform our reservation wage
 2.  **The reported 'current wage' is not necessarily the the realised wage post-re-employment.** Individuals report the wage at the lost job, the amount of time unemployed until they were re-employed, and the wage they hold at their current job. However, it is not indicated whether the current job is the same job as the first they were re-employed at. Given various comments in the literature about finding "stop-gap" employment, this might not be a problem in the sense that the "current wage" would more accurately indicate the wage an individual has "landed" at post-unemployment spell. But curious what you think about the defensibility of this.
 3.  **Outcome variable:** How do we feel about the outcome variable as the ratio of current to latest held job? Might we want to take the log or consider simply the (log) level regressed on the previous wage. Wondering if a ratio-based outcome variable might muddle interpretation. Curious for your reactions.
 
-```{r, include=FALSE}
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
 
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+  fig.align = 'center',
+  fig.width = 5.5,
+  fig.height = 4,
+  out.width = '0.9\\linewidth',
+  echo = FALSE
+)
 library(patchwork)
 library(ipumsr)
 library(tidyverse)
@@ -48,6 +57,7 @@ library(here)
 library(janitor)
 library(modelsummary)
 library(broom)
+library(knitr)
 library(performance)
 library(WeightIt)
 library(survey)
@@ -63,11 +73,13 @@ source(here('code/formatting/plot_dicts.R'))
 Feel free to ignore this code chunk immediately below - included for now for transparency in case you spot issues. 
 I include it for your info on binning and outlier trimming.
 
-```{r, warning = FALSE}
+```{r, warning = FALSE, echo = TRUE}
 
-# From the original dataset, I include only those that reported having lost a FT job in the last three years
+# From the original dataset, I include only those that reported having lost a 
+# FT job in the last three years
 df <- readRDS(here("data/behav_params/cps_displaced_worker_supplement/cps_disp_filtered.RDS")) %>% 
-  select(hwtfinl, cpsid, wtfinl, age, sex, race, marst, educ, # age, sex, race, marital status, educational attainment
+  select(hwtfinl, cpsid, wtfinl, age, sex, race, marst, educ, 
+         # age, sex, race, marital status, educational attainment
          dwsuppwt, # Survey weight
          dwyears, # Years worked at lost job
          dwben, # Received unemployment benefits
@@ -78,10 +90,16 @@ df <- readRDS(here("data/behav_params/cps_displaced_worker_supplement/cps_disp_f
          dwwagel, # Hourly earnings at lost job
          dwwagec, # Hourly wage at current job
          dwhrswkc, # Hours worked each week at current job
-         dwresp, # Eligibility and interview status for Displaced Worker Supplement
-         # Interestingly the unemployment duration is not directly linked to CURRENT job and we cannot see the wage of the start of the next job...thought this feels problematic, it does indicate more accurately the ultimate "recovered" wage...will need to declare as a limitation but also not completely indefensible
-         dwwksun) %>%  # Number of weeks not working between between end of lost or left job and start of next job
-  # I remove anyone who is Not in Universe (99) and declaring greater than 160 weeks unemployed between jobs
+         dwresp, # Eligibility and interview status for Displaced Wrkr Supplement
+         # Interestingly the unemployment duration is not directly linked to 
+         # CURRENT job and we cannot see the wage of the start of the next job...
+        # thought this feels problematic, it does indicate more accurately the 
+        # ultimate "recovered" wage...will need to declare as a limitation 
+        # but also not completely indefensible
+         dwwksun) %>%  # Number of weeks not working between between end of lost
+         # or left job and start of next job
+  # I remove anyone who is Not in Universe (99) and declaring greater than 160 
+  # weeks unemployed between jobs
 filter(dwhrswkc != 99 & dwwksun <= 160) %>% 
   # Replacing NIU values with NA values
   mutate(dwwagel = ifelse(round(dwwagel) == 100, NA, dwwagel),
@@ -92,31 +110,42 @@ filter(dwhrswkc != 99 & dwwksun <= 160) %>%
          # dwweekc = ifelse(round(dwweekc) == 10000, NA, dwweekc),
          # Binning educational categories
          educ_cat = factor(case_when(educ %in% c(1) ~ NA, # (NIU)
-                              educ > 1 & educ <= 71 ~ "Less than HS", # Includes "None" - Grade 12 no diploma (8 subcategories (grade 1-11 etc))
-                              educ %in% c(73, 81) ~ "HS Diploma", # Includes "High school Diploma or equivalent" and "some college, but no degree"
-                              educ %in% c(91, 92) ~ "Associate's", # Include "[Associate's degree, occupational/vocational program]" and "Associate's         [Associate's degree, academic program]"
-                              educ %in% c(111) ~ "Bachelor's", # Bachelor's degree
-                              educ > 111 ~ "Postgraduate Degree" # Includes Master's, Professional School, and Doctorate degree
-                              ), , levels = c("Less than HS", "HS Diploma", "Associate's", "Bachelor's", "Postgraduate Degree")),
+                              educ > 1 & educ <= 71 ~ "Less than HS", # Includes 
+                                  # "None" - Grade 12 no diploma 
+                                  # (8 subcategories (grade 1-11 etc))
+                              educ %in% c(73, 81) ~ "HS Diploma", # Includes 
+                                  # "High school Diploma or equivalent" and 
+                                  # "some college, but no degree"
+                              educ %in% c(91, 92) ~ "Associate's", # Include 
+                                  # "[Associate's degree, occupational/vocational 
+                                  # program]" and "Associate's 
+                                  # [Associate's degree, academic program]"
+                              educ %in% c(111) ~ "Bachelor's",#Bachelor's degree
+                              educ > 111 ~ "Postgraduate Degree" # Includes 
+                                  # Master's, Professional School & Doctorate
+                              ), , levels = c("Less than HS", "HS Diploma", 
+                                              "Associate's", "Bachelor's", 
+                                              "Postgraduate Degree")),
          # Marital status to binary indicator
          marst = case_when(marst == 1 ~ 1, # Married with a present spouse
                            # Might consider dividing this differently
-                           TRUE ~ 0), # Married with absent spouse, separated, divorced, widowed, never married/single
-         # gender to 0,1 values
-         female = sex == 2,
-         # race to higher-level categories w binary values
-         white = race == 100,
+                           TRUE ~ 0), # Married with absent spouse, separated, 
+                          # divorced, widowed, never married/single
+         
+         female = sex == 2, # gender to 0,1 values
+         white = race == 100, # race to higher-level categories w binary values
          black = race == 200,
-         mixed = race %in% c(801, 802, 803, 804, 805, 806, 810, 812, 813, 820, 830),
+         mixed = race %in% c(801, 802, 803, 804, 805, 
+                             806, 810, 812, 813, 820, 830),
          aapi = race %in% c(650, 651, 652, 808, 809),
          native = race == 300
-         # age is a continuous variable which seems fine for now...binning likely unnecessary
+         # age is continuous which seems fine...binning likely unnecessary
          ) %>% 
-        # Ratio of hourly wage of current job to lost job
-  mutate(ratio_wage = dwwagec/dwwagel,
-         # Ratio of weekly wage of current job to lost job
-         ratio_weekly = dwweekc/dwweekl,
-         # Reconciling missing reporting between weekly and hourly wage. Take either the min, max or mean value. 
+
+  mutate(ratio_wage = dwwagec/dwwagel, # Ratio of hourly wage current:lost job
+         ratio_weekly = dwweekc/dwweekl, # Ratio of wkly wage of current:lost job
+         # Reconciling missing reporting between weekly and hourly wage. 
+         # Take either the min, max or mean value. 
          ratio_reconciled_min = case_when(is.na(ratio_wage) ~ ratio_weekly, 
                                           is.na(ratio_weekly) ~ ratio_wage, 
                                           TRUE ~ pmin(ratio_weekly, ratio_wage)), 
@@ -125,17 +154,20 @@ filter(dwhrswkc != 99 & dwwksun <= 160) %>%
                                           TRUE ~ pmax(ratio_weekly, ratio_wage)), 
          ratio_reconciled_mean = case_when(is.na(ratio_wage) ~ ratio_weekly, 
                                           is.na(ratio_weekly) ~ ratio_wage, 
-                                          TRUE ~ rowMeans(across(c(ratio_wage, ratio_weekly)), na.rm = TRUE)), 
+                                          TRUE ~ rowMeans(across(c(ratio_wage, 
+                                                                   ratio_weekly)), 
+                                                          na.rm = TRUE)), 
          # Create monthly unemployment duration for continuous
          dwmosun = floor(dwwksun/4),
          dwmosun2 = dwmosun^2,
          dwmosun3 = dwmosun^3,
-         # Unemployment duration (reported as time between lost job and start of next job)
+         # Unemployment duration:
+                  # (reported as time between lost job and start of next job)
          # I bin in...
-         # monthly intervals (4 weeks) from 1-6 months
-         # quarterly intervals (12 weeks) from 7 mos-1 year
-         # half-year interval from 1-2.5 years
-         # single bin for anyone about 120 weeks
+           # monthly intervals (4 weeks) from 1-6 months
+           # quarterly intervals (12 weeks) from 7 mos-1 year
+           # half-year interval from 1-2.5 years
+           # single bin for anyone about 120 weeks
          dwwksun_bin = case_when(
            # Monthly intervals (4 weeks) from 1-6 months
            dwwksun <= 4 ~ 1, #"Less than 4 weeks",
@@ -144,39 +176,47 @@ filter(dwhrswkc != 99 & dwwksun <= 160) %>%
                                  dwwksun > 12 & dwwksun <= 16 ~ 4, 
                                  dwwksun > 16 & dwwksun <= 20 ~ 5,
                                  dwwksun > 20 & dwwksun <= 24 ~ 6,
-                                 # Quarterly Intervals (12 weeks) from 6+ mos - 1 year
+                                 # Quarterly Intervals (12 wks) from 6+ mos-1 yr
                                  dwwksun > 24 & dwwksun <= 36 ~ 7,
                                  dwwksun > 36 & dwwksun <= 48 ~ 8, 
-                                 # Half-year Intervals (24 weeks) from 1-2.5 years
+                                 # Half-year Intervals (24 weeks) from 1-2.5 yrs
                                  dwwksun > 48 & dwwksun <= 72 ~ 9, 
                                  dwwksun > 72 & dwwksun <= 96 ~ 10, 
                                  dwwksun > 96 & dwwksun <= 120 ~ 11, 
-                                 # Anyone above - recall this is capped at 160 weeks as per filter above
+                                 # Anyone above-recall this is capped at 160 wks 
+                                  # as per filter above
                                  dwwksun > 120 ~ 12),
          # Bin labels
-         dwwksun_bin_labs = case_when(dwwksun_bin == 1 ~ "<= 1 mo.", #"Less than 4 weeks",
+         dwwksun_bin_labs = case_when(dwwksun_bin == 1 ~ "<= 1 mo.", #"< 4 wks",
                                  dwwksun_bin == 2 ~ "1-2 mos.",
                                  dwwksun_bin == 3 ~ "2-3 mos.",
                                  dwwksun_bin == 4 ~ "3-4 mos.", 
                                  dwwksun_bin == 5 ~ "4-5 mos.",
                                  dwwksun_bin == 6 ~ "5-6 mos.",
-                                 # Quarterly Intervals (12 weeks) from 6+ mos - 1 year
+                                 # Quarterly Intervals (12 wks) from 6+ mos-1 yr
                                  dwwksun_bin == 7 ~ "6-9 mos.",
                                  dwwksun_bin == 8 ~ "9-12 mos.", 
-                                 # Half-year Intervals (24 weeks) from 1-2.5 years
+                                 # Half-year Intervals (24 wks) from 1-2.5 years
                                  dwwksun_bin == 9 ~ "12-18 mos.", 
                                  dwwksun_bin == 10 ~ "18-24 mos.", 
                                  dwwksun_bin == 11 ~ "24-30 mos.", 
-                                 # Anyone above - recall this is capped at 160 weeks as per filter above
+                                 # Anyone above-recall this is capped at 160 wks
+                                 # as per filter above
                                  dwwksun_bin == 12 ~ "30+ mos."),
          log_ratio_wage = log(ratio_wage),
          log_ratio_weekly = log(ratio_weekly),
-         # I clip the sample to an accepted wage ratio between [0.5, 2] and less than 96 weeks of unemployment
-         clipped_sample_hwage = ratio_wage >= 0.5 & ratio_wage <= 2 & dwwksun_bin < 11,
-         clipped_sample_wwage = ratio_weekly >= 0.5 & ratio_weekly <= 2  & dwwksun_bin < 11,
-         clipped_sample_rec_min = ratio_reconciled_min >= 0.5 & ratio_reconciled_min <= 2 & dwwksun_bin < 11,
-         clipped_sample_rec_max = ratio_reconciled_max >= 0.5 & ratio_reconciled_max <= 2 & dwwksun_bin < 11,
-         clipped_sample_rec_mean = ratio_reconciled_mean >= 0.5 & ratio_reconciled_mean <= 2 & dwwksun_bin < 11)
+         # I clip the sample to an accepted wage ratio between [0.5, 2] 
+         # and less than 96 weeks of unemployment
+         clipped_sample_hwage = 
+           ratio_wage >= 0.5 & ratio_wage <= 2 & dwwksun_bin < 11,
+         clipped_sample_wwage = 
+           ratio_weekly >= 0.5 & ratio_weekly <= 2  & dwwksun_bin < 11,
+         clipped_sample_rec_min = 
+           ratio_reconciled_min>=0.5 & ratio_reconciled_min<=2 & dwwksun_bin<11,
+         clipped_sample_rec_max = 
+           ratio_reconciled_max>=0.5 & ratio_reconciled_max<=2 & dwwksun_bin<11,
+         clipped_sample_rec_mean = 
+           ratio_reconciled_mean>=0.5 & ratio_reconciled_mean<=2 & dwwksun_bin<11)
 
 
 ```
@@ -228,10 +268,11 @@ bp1 <- df %>%
   ggplot(aes(x = as.factor(dwwksun_bin), y = ratio_wage)) +
   geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwwksun_bin)), alpha = 0.3)+
   geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
-  labs(title = "Hourly Wage Ratio") +
+  labs(title = "Hourly Wage Ratio",
+       x = "Unemployment Duration (binned)",
+       y = "Hourly Wage at Current Job:Hourly Wage at Lost Job") +
   theme_minimal() +
   ylim(0,2.5) +
-  theme(plot.title=element_text(hjust=0.5)) +
   scale_x_discrete(labels = labels) +
   common_theme +
   theme(legend.position = "none")
@@ -241,7 +282,9 @@ bp2 <- df %>%
   ggplot(aes(x = as.factor(dwwksun_bin), y = ratio_weekly)) +
   geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwwksun_bin)), alpha = 0.3)+
   geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
-  labs(title = "Weekly Wage Ratio") +
+  labs(title = "Weekly Wage Ratio",
+       x = "Unemployment Duration (binned)",
+       y = "Weekly Wage at Current Job:Weekly Wage at Lost Job") +
   common_theme +
   ylim(0,2.5) +
   theme(plot.title=element_text(hjust=0.5)) +
@@ -253,40 +296,36 @@ bp3 <- df %>%
   ggplot(aes(x = as.factor(dwwksun_bin), y = ratio_reconciled_min)) +
   geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwwksun_bin)), alpha = 0.3)+
   geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
-  labs(title = "Wage Ratio", y = "Accepted:Lost Wage Ratio", x = "Unemployment Duration") +
+  labs(title = "Wage Ratio - Reconciled with min", y = "Accepted:Lost Wage Ratio", x = "Unemployment Duration (binned)") +
   common_theme +
   ylim(0,2.5) +
-  theme(plot.title=element_text(hjust=0.5),
-        axis.text.x = element_text(size = 14),
-        axis.text.y = element_text(size = 14),
-        axis.title.x = element_text(size = 16),
-        axis.title.y = element_text(size = 16)) +
   scale_x_discrete(labels = labels)+
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45))
 
 bp4 <- df %>%
   filter(clipped_sample_rec_max) %>%
   ggplot(aes(x = as.factor(dwwksun_bin), y = ratio_reconciled_max)) +
   geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwwksun_bin)), alpha = 0.3)+
   geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
-  labs(title = "Wage Ratio - Reconciled with max") +
+  labs(title = "Wage Ratio - Reconciled with max", y = "", x = "Unemployment Duration (binned)") +
   common_theme + 
   ylim(0,2.5) +
-  theme(plot.title=element_text(hjust=0.5)) +
   scale_x_discrete(labels = labels)+
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45))
 
 bp5 <- df %>%
   filter(clipped_sample_rec_mean) %>%
   ggplot(aes(x = as.factor(dwwksun_bin), y = ratio_reconciled_mean)) +
   geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwwksun_bin)), alpha = 0.3)+
   geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
-  labs(title = "Wage Ratio - Reconciled with mean") +
+  labs(title = "Wage Ratio - Reconciled with mean", y = "", x = "Unemployment Duration (binned)") +
   common_theme + 
   ylim(0,2.5) +
-  theme(plot.title=element_text(hjust=0.5)) +
   scale_x_discrete(labels = labels)+
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        axis.text.x = element_text(angle = 45))
 
 bp_cont <- df %>%
   filter(clipped_sample_rec_min) %>%
@@ -294,23 +333,26 @@ bp_cont <- df %>%
   ggplot(aes(x = as.factor(dwmosun_2mo), y = ratio_reconciled_min)) +
   geom_boxplot(aes(weight = dwsuppwt, fill = as.factor(dwmosun_2mo)), alpha = 0.3)+
   geom_hline(yintercept = 1, color = "darkblue", linetype = "dashed") +
-  labs(title = "Wage Ratio - Reconciled with mean") +
+  labs(title = "Wage Ratio - Reconciled with min", 
+       x = "Unemployment Duration (binned 2-month intervals)",
+       y = "Wage Ratio - reconciled with min") +
   common_theme + 
   ylim(0,2.5) +
   theme(plot.title=element_text(hjust=0.5)) +
   theme(legend.position = "none")
 
-(bp1 / bp2) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+(bp1 / bp2) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights.\nAnnual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
 
-(bp3 + bp4 + bp5) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 14)))
+(bp3 + bp4 + bp5) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights.\nAnnual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.\nIn many cases, only hourly OR weekly wages are reported.\nTo be able to combine information on all workers to one value,we select the present statistic for those missing one and \n retain either the minimum, maximum, or mean of the hourly versus weekly wage for those reporting both.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 14)))
 
 (bp3) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 14)))
 
-bp_cont + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+bp_cont + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights.\nAnnual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
 
 ```
 
 ```{r, echo=FALSE, warning = FALSE, fig.height = 8, fig.width = 10, message = FALSE}
+
 lin <- df %>% 
   filter(clipped_sample_hwage) %>% 
   ggplot(aes(x = dwmosun, y = ratio_wage, weight = dwsuppwt))+
@@ -331,7 +373,7 @@ spline <- df %>%
 
 ```
 
-# Regressions (non-uniform sample) {.tabset}
+# Regressions (non-uniform sample)
 
 Next, (ignoring for now the non-uniformity of the sample ie. that there are less observations present for higher unemployment durations) I run the following regression (with various modifications to sample and control variables).
 $W_{i} = \alpha_{i} + \beta_{1} d_{i} + \beta_{2}UI_{i} + \beta_{3}X_{i} + \epsilon_{i}$
@@ -361,7 +403,8 @@ There are 48 models present with all combinations of the following:
 I include the full set of coefficients (again, apologies for verbose output) in case you find the coefficients on the controls interesting (I think the coefficient on age and holding a Bachelor's degree particularly interesting).
 But I highlight in blue our main interest in $\beta_{1}$.
 
-```{r, echo=FALSE, warning = FALSE}
+
+```{r, echo=FALSE, warning = FALSE, out.width="75%"}
 
 controls <- " + female + age + white + black + mixed + marst + educ_cat"
 reg_forms <- c("Cont." = "dwmosun",
@@ -398,16 +441,25 @@ for(rf in names(reg_forms_full)){
   #   lm(data = ., as.formula(paste0("ratio_weekly ~ dwweekl + ", reg_forms_full[rf])), weights = dwsuppwt)
 }
 
-output_pretty <- function(mods, highlightrows = FALSE, title = NULL){
-  modelsummary(mods, gof_omit = c("Log.Lik.|BIC|AIC"), stars = TRUE, coef_rename = coef_labs,
-               output = "gt", title = title) %>%
-  tab_style(
-    style = list(cell_fill(color = "lightblue")),
-    locations = cells_body(rows = c(highlightrows))  # Highlight 2nd row
+# output_pretty <- function(mods, highlightrows = FALSE, title = NULL){
+#   modelsummary(mods, gof_omit = c("Log.Lik.|BIC|AIC"), stars = TRUE, coef_rename = coef_labs,
+#                output = "kableExtra", title = title) %>%
+#     kableExtra::row_spec(row = highlightrows, background = "lightblue") %>% 
+#     kable(format = "latex")
+# }
+options(modelsummary_factory_latex = "kableExtra")
+output_pretty <- function(mods, highlightrows = NULL, title = NULL) {
+  modelsummary(
+    mods,
+    gof_omit = c("Log.Lik.|BIC|AIC"),
+    stars = TRUE,
+    coef_rename = coef_labs,
+    output = "latex",
+    title = title,
+    escape = TRUE
   ) %>%
-    tab_options(latex.table.width = "\\linewidth") %>%
-    as_latex() %>%
-    asis_output()
+    kableExtra::row_spec(row = highlightrows, background = "yellow!20") %>%
+    kableExtra::kable_styling(latex_options = "scale_down")
 }
 
 coef_labs = c("dwben" = "Received Unemployment Compensation",
@@ -509,17 +561,19 @@ mod_list2[['Cont. w. UI w. controls (clipped)']] %>%
 
 ```
 
-## Continuous UE Duration {.tabset}
+## Continuous UE Duration 
 
 Continuous UE duration treatment is reported in monthly values.
 A one-unit increase in the treatment variable = 1 additional month of unemployment.
 
-### W.O. Wage Level Control
-
-```{r, echo = FALSE}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 
 output_pretty(mod_list[grepl("Cont", names(mod_list))], highlightrows = 3, title = "Continuous UE Duration w.o Wage Level Control")
 
+```
+
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 lm1 <- lm(ratio_wage ~ dwmosun + female + age + white + black + mixed + marst + educ_cat, data = df, weights = dwsuppwt)
 lm2 <- lm(ratio_wage ~ dwmosun + dwmosun2 + female + age + white + black + mixed + marst + educ_cat, data = df, weights = dwsuppwt)
 lm3 <- lm(ratio_wage ~ dwmosun + dwmosun2 + dwmosun3 + female + age + white + black + mixed + marst + educ_cat, data = df, weights = dwsuppwt)
@@ -533,28 +587,34 @@ lm_full <- cbind(lm_preds, lm_preds2, lm_preds3)
 lm_full %>% 
   ggplot(aes(x = 0:(nrow(lm_full)-1))) +
     # Model 1
-    geom_line(aes(y = lm_preds_fit), color = "blue", linewidth = 1) +
-    geom_ribbon(aes(ymin = lm_preds_lwr, ymax = lm_preds_upr), fill = "blue", alpha = 0.2) +
+    geom_line(aes(y = lm_preds_fit, color = "Linear"), linewidth = 1) +
+    geom_ribbon(aes(ymin = lm_preds_lwr, ymax = lm_preds_upr, fill = "Linear"), alpha = 0.2) +
   
     # Model 2
-    geom_line(aes(y = lm_preds2_fit), color = "darkgreen", linewidth = 1) +
-    geom_ribbon(aes(ymin = lm_preds2_lwr, ymax = lm_preds2_upr), fill = "darkgreen", alpha = 0.2) +
+    geom_line(aes(y = lm_preds2_fit, color = "Quadratic"),  linewidth = 1) +
+    geom_ribbon(aes(ymin = lm_preds2_lwr, ymax = lm_preds2_upr, fill = "Quadratic"),  alpha = 0.2) +
   
     # Model 3
-    geom_line(aes(y = lm_preds3_fit), color = "firebrick", linewidth = 1) +
-    geom_ribbon(aes(ymin = lm_preds3_lwr, ymax = lm_preds3_upr), fill = "firebrick", alpha = 0.2) +
-  
+    geom_line(aes(y = lm_preds3_fit, color = "Cubic"), linewidth = 1) +
+    geom_ribbon(aes(ymin = lm_preds3_lwr, ymax = lm_preds3_upr, fill = "Cubic"), alpha = 0.2) +
+  scale_color_manual(
+    name = "Model", 
+    values = c("Linear" = "darkorchid", "Quadratic" = "orange", "Cubic" = "darkturquoise")
+  ) +
+  scale_fill_manual(
+    name = "Model", 
+    values = c("Linear" = "darkorchid", "Quadratic" = "orange", "Cubic" = "darkturquoise")
+  ) +
     labs(
       title = "Predicted Wage Ratios by Unemployment Duration",
       subtitle = "From non-reweighted regressions: linear, quadratic, and cubic specifications",
       x = "Unemployment Duration (months)",
       y = "Predicted Wage Ratio"
     ) +
-    common_theme
+    common_theme +
+  ylim(0.3, 1.1)
 
 ```
-
-### W. Wage Level Control
 
 ```{r, echo = FALSE}
 
@@ -562,11 +622,9 @@ output_pretty(mod_list2[grepl("Cont", names(mod_list))], highlightrows = c(3,5),
 
 ```
 
-## Binned UE Duration {.tabset}
+## Binned UE Duration 
 
 Binned UE duration treatment is reported in bins as indicated in the box plots and code cleaning above.
-
-### W.O. Wage Level Control
 
 ```{r, echo = FALSE}
 
@@ -574,15 +632,13 @@ output_pretty(mod_list[grepl("Disc", names(mod_list))], highlightrows = 3, title
 
 ```
 
-### W. Wage Level Control
-
 ```{r, echo = FALSE}
 
 output_pretty(mod_list2[grepl("Disc", names(mod_list))], highlightrows = c(3,5), title = "Binned UE Duration w. Wage Level Control")
 
 ```
 
-## Additional Considerations {.tabset}
+## Additional Considerations 
 
 Below I:
 
@@ -590,7 +646,7 @@ Below I:
 2.  Histogram of an additional explanatory variable that might be interesting - the tenure of the lost job. How long (in years) did the individual hold the job they lost.
 3.  Additionally, I show some rough graphs/figures about the sample population (age, education, gender, wage distributions). I am still working on an occupational distribution graph to understand the "skills"/occupational distribution of the sample.
 
-### Selection Issues with Non-Random Sample {.tabset}
+### Selection Issues with Non-Random Sample 
 
 NOTE: Skip ahead to "Regression Results with Sample Reweighting for Regression Results if you don't wish to look at the reweighting details below.
 
@@ -605,7 +661,7 @@ Open to suggestions and corrections :)
 
 Entropy balancing simply reweights observations to ensure population matching across the key dependent variable.
 
-```{r, warning = FALSE}
+```{r, warning = FALSE, fig.height = 4, fig.width = 4}
 # Apply entropy balancing using dwsuppwt sample weights
 # Reweight according to observable characteristics using "ebalance" 
 eb <- weightit(
@@ -616,7 +672,10 @@ eb <- weightit(
 )
 
 # All covariates are balanced at the mean with tight threshold
-bal.tab(eb, stats = c("m", "v"), thresholds = c(m = .001))
+#bal.tab(eb, stats = c("m", "v"), thresholds = c(m = .001))
+love.plot(eb, thresholds = .001) + 
+  labs(subtitle = "Love plot of adjusted and unadjusted covariates including relevant mean threshold 0.01 using entropy balancing reweighting. All covariates are balanced at the mean with a threshold of 0.001.") +
+  common_theme
 
 # Add the new weights to the dataframe
 df$eb_weight <- eb$weights
@@ -647,43 +706,72 @@ eb_preds2 <- as.data.frame(predict(mod_eb_reweight2, newdata = newdata, interval
 eb_preds3 <- as.data.frame(predict(mod_eb_reweight3, newdata = newdata, interval = "confidence")) %>% rename_with(~paste0("eb_preds3_",.))
 
 eb_full <- cbind(eb_preds, eb_preds2, eb_preds3)
+```
+
+
+```{r, warning = FALSE}
 
 eb_full %>% 
   ggplot(aes(x = 0:(nrow(eb_full)-1))) +
     # Model 1
-    geom_line(aes(y = eb_preds_fit), color = "blue", linewidth = 1) +
-    geom_ribbon(aes(ymin = eb_preds_lwr, ymax = eb_preds_upr), fill = "blue", alpha = 0.2) +
+    geom_line(aes(y = eb_preds_fit, color = "Linear"), linewidth = 1) +
+    geom_ribbon(aes(ymin = eb_preds_lwr, ymax = eb_preds_upr, fill = "Linear"), alpha = 0.2) +
   
     # Model 2
-    geom_line(aes(y = eb_preds2_fit), color = "darkgreen", linewidth = 1) +
-    geom_ribbon(aes(ymin = eb_preds2_lwr, ymax = eb_preds2_upr), fill = "darkgreen", alpha = 0.2) +
+    geom_line(aes(y = eb_preds2_fit, color = "Quadratic"), linewidth = 1) +
+    geom_ribbon(aes(ymin = eb_preds2_lwr, ymax = eb_preds2_upr, fill = "Quadratic"), alpha = 0.2) +
   
     # Model 3
-    geom_line(aes(y = eb_preds3_fit), color = "firebrick", linewidth = 1) +
-    geom_ribbon(aes(ymin = eb_preds3_lwr, ymax = eb_preds3_upr), fill = "firebrick", alpha = 0.2) +
-  
+    geom_line(aes(y = eb_preds3_fit, color = "Cubic"), linewidth = 1) +
+    geom_ribbon(aes(ymin = eb_preds3_lwr, ymax = eb_preds3_upr, fill = "Cubic"), alpha = 0.2) +
+    scale_color_manual(
+      name = "Model", 
+      values = c("Linear" = "darkorchid", "Quadratic" = "orange", "Cubic" = "darkturquoise")
+    ) +
+    scale_fill_manual(
+      name = "Model", 
+      values = c("Linear" = "darkorchid", "Quadratic" = "orange", "Cubic" = "darkturquoise")
+    ) +
     labs(
-      title = "Predicted Wage Ratios by Unemployment Duration",
+      title = "Predicted Wage Ratios by Unemployment Duration (Entropy Balancing)",
       subtitle = "From EB-weighted regressions: linear, quadratic, and cubic specifications",
       x = "Unemployment Duration (months)",
       y = "Predicted Wage Ratio"
     ) +
-    common_theme
+    common_theme +
+  ylim(0.3, 1.1)
     
 ```
 
+##### Diagnostic Tests for Entropy-balanced Reweighted Sample
+
+
 ```{r, echo = FALSE, warning = FALSE}
 
-print("Diagnostic Tests for Entropy-balanced Reweighted Sample")
 mod_eb_reweight %>% check_model()
+
+```
+
+
+
+```{r, echo = FALSE, warning = FALSE}
+
 mod_eb_reweight2 %>% check_model()
+
+```
+
+
+
+```{r, echo = FALSE, warning = FALSE}
+
 mod_eb_reweight3 %>% check_model()
 
 ```
 
 #### Propensity Score Weighting with GLM Estimator
 
-```{r, warning = FALSE}
+
+```{r, warning = FALSE, fig.height = 4, fig.width = 4}
 
 # More conventional propensity scoring with a GLM estimator
 glm <- weightit(
@@ -694,7 +782,18 @@ glm <- weightit(
 )
 
 # All covariates are balanced at the mean with less tight threshold (0.001, very few variables pass with glm esimator)
-bal.tab(glm, stats = c("m", "v"), thresholds = c(m = .01))
+#bal.tab(glm, stats = c("m", "v"), thresholds = c(m = .01)) 
+love.plot(glm, thresholds = .01) + 
+  labs(subtitle = "Love plot of adjusted and unadjusted covariates including relevant mean threshold 0.01 using a GLM estimator. All covariates are balanced at the mean with a threshold of 0.01 whereas very few variables pass at a tighter threshold 0.001 with the GLM estimator.") +
+  common_theme
+
+```
+
+
+##### Diagnostic Tests for Propensity Score Matching (GLM) Reweighted Sample
+
+
+```{r, echo = FALSE}
 
 df$glm_weight <- glm$weights
 
@@ -714,6 +813,13 @@ mod_glm_reweight3 <- lm(
   weights = glm_weight
 )
 
+mod_glm_reweight %>% check_model()
+
+```
+
+##### Predicted Reservation Wage using GLM Reweighted Sample
+
+```{r, echo = FALSE}
 # Extract prediction intervals as data frames
 glm_preds  <- as.data.frame(predict(mod_glm_reweight,  newdata = newdata, interval = "confidence")) %>% rename_with(~paste0("glm_preds_",.))
 glm_preds2 <- as.data.frame(predict(mod_glm_reweight2, newdata = newdata, interval = "confidence")) %>% rename_with(~paste0("glm_preds2_",.))
@@ -724,38 +830,38 @@ glm_full <- cbind(glm_preds, glm_preds2, glm_preds3)
 glm_full %>% 
   ggplot(aes(x = 0:36)) +
     # Model 1
-    geom_line(aes(y = glm_preds_fit), color = "blue", linewidth = 1) +
-    geom_ribbon(aes(ymin = glm_preds_lwr, ymax = glm_preds_upr), fill = "blue", alpha = 0.2) +
+    geom_line(aes(y = glm_preds_fit, color = "Linear"), linewidth = 1) +
+    geom_ribbon(aes(ymin = glm_preds_lwr, ymax = glm_preds_upr, fill = "Linear"), alpha = 0.1) +
   
     # Model 2
-    geom_line(aes(y = glm_preds2_fit), color = "darkgreen", linewidth = 1) +
-    geom_ribbon(aes(ymin = glm_preds2_lwr, ymax = glm_preds2_upr), fill = "darkgreen", alpha = 0.2) +
+    geom_line(aes(y = glm_preds2_fit, color = "Quadratic"), linewidth = 1) +
+    geom_ribbon(aes(ymin = glm_preds2_lwr, ymax = glm_preds2_upr, fill = "Quadratic"), alpha = 0.2) +
   
     # Model 3
-    geom_line(aes(y = glm_preds3_fit), color = "firebrick", linewidth = 1) +
-    geom_ribbon(aes(ymin = glm_preds3_lwr, ymax = glm_preds3_upr), fill = "firebrick", alpha = 0.2) +
-  
+    geom_line(aes(y = glm_preds3_fit, color = "Cubic"), linewidth = 1) +
+    geom_ribbon(aes(ymin = glm_preds3_lwr, ymax = glm_preds3_upr, fill = "Cubic"), alpha = 0.2) +
+    scale_color_manual(
+      name = "Model", 
+      values = c("Linear" = "darkorchid", "Quadratic" = "orange", "Cubic" = "darkturquoise")
+    ) +
+    scale_fill_manual(
+      name = "Model", 
+      values = c("Linear" = "darkorchid", "Quadratic" = "orange", "Cubic" = "darkturquoise")
+    ) +
     labs(
-      title = "Predicted Wage Ratios by Unemployment Duration",
+      title = "Predicted Wage Ratios by Unemployment Duration (GLM)",
       subtitle = "From GLM-weighted regressions: linear, quadratic, and cubic specifications",
       x = "Unemployment Duration (months)",
       y = "Predicted Wage Ratio"
     ) +
-    common_theme
-
-```
-
-```{r, echo = FALSE, warning = FALSE}
-
-print("Diagnostic Tests for Propensity Score Matching (GLM) Reweighted Sample")
-mod_glm_reweight %>% check_model()
-
+    common_theme +
+  ylim(0.3, 1.1)
 
 ```
 
 #### Heckman Selection
 
-Another option is a Heckman Selection correction though I do not think this addresses the particular selection concern we have where there are simply less observations in longer unemployment durations.
+Another option is a Heckman Selection correction though I do not think this addresses the particular selection concern we have where there are simply less observations in longer unemployment durations.              
 
 ```{r, warning = FALSE}
 # Create selection indicator (1 if ratio_wage is observed)
@@ -806,15 +912,26 @@ newdata$predicted_ratio2 <- preds2
 newdata$predicted_ratio3 <- preds3
 
 ggplot(newdata, aes(x = dwmosun)) +
-  geom_line(aes(y = predicted_ratio)) +
-  geom_line(aes(y = predicted_ratio2)) +
-  geom_line(aes(y = predicted_ratio3)) +
-  labs(x = "Unemployment Duration (months)", y = "Predicted Wage Ratio", title = "Predicted Wage Ratio vs. Unemployment Duration") +
+  geom_line(aes(y = predicted_ratio, color = "Linear")) +
+  geom_line(aes(y = predicted_ratio2, color = "Quadratic")) +
+  geom_line(aes(y = predicted_ratio3, color= "Cubic")) +
+  scale_color_manual(
+    name = "Model", 
+    values = c("Linear" = "darkorchid", "Quadratic" = "orange", "Cubic" = "darkturquoise")
+  ) +
+    labs(
+      title = "Predicted Wage Ratios by Unemployment Duration (Heckman Selection Correction)",
+      subtitle = "From Heckman-corrected regressions: linear, quadratic, and cubic specifications",
+      x = "Unemployment Duration (months)",
+      y = "Predicted Wage Ratio"
+    ) +
   common_theme
 
 ```
 
+
 #### Regression Results with Sample Reweighting
+
 
 ```{r, echo = FALSE, warning = FALSE}
 # All correction models together
@@ -823,16 +940,15 @@ list("Heckman Correction" = heckman_model$lm, "Entropy Balanced Reweight" = mod_
 ```
 
 
-
 ```{r, echo = FALSE, warning = FALSE}
 
 ggplot() + 
-  geom_line(data = lm_full, aes(x = 0:36, y = lm_preds_fit), color = "blue") +
-  geom_ribbon(data = lm_full, aes(x = 0:36, ymin = lm_preds_lwr, ymax = lm_preds_upr), fill = "blue", alpha = 0.2) +
-  geom_line(data = glm_full, aes(x = 0:36, y = glm_preds_fit), color = "red") +
-  geom_ribbon(data = glm_full, aes(x = 0:36, ymin = glm_preds_lwr, ymax = glm_preds_upr), fill = "red", alpha = 0.2) +
-  geom_line(data = eb_full, aes(x = 0:36, y = eb_preds_fit), color = "darkgreen") +
-  geom_ribbon(data = eb_full, aes(x = 0:36, ymin = eb_preds_lwr, ymax = eb_preds_upr), fill = "darkgreen", alpha = 0.2) +
+  geom_line(data = lm_full, aes(x = 0:36, y = lm_preds_fit), color = "darkorchid") +
+  geom_ribbon(data = lm_full, aes(x = 0:36, ymin = lm_preds_lwr, ymax = lm_preds_upr), fill = "darkorchid", alpha = 0.2) +
+  geom_line(data = glm_full, aes(x = 0:36, y = glm_preds_fit), color = "darkturquoise") +
+  geom_ribbon(data = glm_full, aes(x = 0:36, ymin = glm_preds_lwr, ymax = glm_preds_upr), fill = "darkturquoise", alpha = 0.2) +
+  geom_line(data = eb_full, aes(x = 0:36, y = eb_preds_fit), color = "orange") +
+  geom_ribbon(data = eb_full, aes(x = 0:36, ymin = eb_preds_lwr, ymax = eb_preds_upr), fill = "orange", alpha = 0.2) +
   geom_line(data = newdata, aes(x = 0:36, y = predicted_ratio)) +
   labs(x = "Unemployment Duration (months)", y = "Predicted Wage Ratio", title = "Predicted Wage Ratio vs. Unemployment Duration") +
   common_theme
@@ -913,7 +1029,7 @@ We have information on the tenure spent at the last job which could impact the r
 This could speak to the "adaptability" of individuals.
 Wage ratio seems to decrease (although not sure if meaningfully) with tenure at previous job.
 
-```{r, echo=FALSE, warning = FALSE}
+```{r, echo=FALSE, warning = FALSE, message = FALSE}
 
 tenure1 <- df %>%
   mutate(dwyears = ifelse(round(dwyears) == 100, NA, dwyears)) %>% 
@@ -930,7 +1046,7 @@ tenure2 <- df %>%
   geom_smooth(method = "lm", color = "forestgreen", fill = "forestgreen") +
   common_theme
 
-tenure1 + tenure2 + plot_annotation(title = "Tenure at Lost Job (years)", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+tenure1 + tenure2 + plot_annotation(title = "Tenure at Lost Job (years)", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 15), plot.subtitle = element_text(hjust = 0.5, size = 10)))
 
 ```
 
@@ -957,18 +1073,45 @@ female_lfpr <- df %>%
   rename(male = `FALSE`, female = `TRUE`) %>% 
   summarise(female/(female + male)) %>% pull(.) %>% round(2)*100
 
-gender <- df %>% 
-  filter(clipped_sample_hwage) %>% 
-  group_by(female) %>% 
-  summarise(tot = sum(dwsuppwt)) %>% 
-  ungroup %>% 
-  mutate(female = ifelse(!female, "Male", "Female")) %>% 
-  ggplot(aes(x = "", y = tot, fill = female), alpha = 0.2) +
-  geom_bar(width = 1, stat = "identity") +
+gender <- df %>%
+  filter(clipped_sample_hwage) %>%
+  group_by(female) %>%
+  summarise(tot = sum(dwsuppwt)) %>%
+  ungroup() %>%
+  mutate(
+    female = ifelse(!female, "Male", "Female"),
+    perc = (tot / sum(tot))*100,                        # [ADDED] Compute % share for optional labeling
+    label = paste0(female, ": ", scales::comma(perc), "%")  # [ADDED] Create label with total count
+  ) %>%
+  ggplot(aes(x = "", y = tot, fill = female)) +
+  geom_bar(width = 1, stat = "identity", color = "white") +  # [CHANGED] Added color = "white" to clean slice edges
   coord_polar("y", start = 0) +
-  labs(title = "Gender Share of Sample", subtitle = paste0("Female representation (ie. Female LFPR) as calculated in the sample is ", female_lfpr, "%\n whereas female LFPR in the US is ~57% and their unemployment rates are roughly equal.")) +
+  geom_text(                                        # [ADDED] Labels inside the pie slices
+    aes(label = label),
+    position = position_stack(vjust = 0.5),         # [ADDED] Vertically center labels
+    size = 4,
+    color = "black"
+  ) +
   scale_fill_brewer(palette = "Set2", name = "Sex") +
-  common_theme
+  labs(
+    title = "Gender Share of Sample",
+    subtitle = paste0(
+      "Female representation (ie. Female LFPR) as calculated in the sample is ", 
+      female_lfpr, "%\n",
+      "whereas female LFPR in the US is ~57% and their unemployment rates are roughly equal."
+    )
+  ) +
+common_theme+                              
+  theme(
+    legend.position = "none",
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.title.x = element_blank(),   
+    axis.title.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.ticks = element_blank(),  
+    axis.text.y = element_blank()
+  )
 
 # Wage representation 
 mean_wage <- df %>% 
@@ -978,22 +1121,22 @@ mean_wage <- df %>%
 wage <- df %>% 
   filter(clipped_sample_hwage) %>% 
   ggplot() +
-  geom_histogram(aes(x = dwwagec), fill = "blue", alpha = 0.7) +
-  geom_vline(aes(xintercept = mean_wage), color = "blue") + 
+  geom_histogram(aes(x = dwwagec), fill = "darkorchid", alpha = 0.7) +
+  geom_vline(aes(xintercept = mean_wage), color = "darkorchid") + 
   annotate("text",
     x = mean_wage, y = 900, label = "Mean Reported Hourly Wage",
     angle = 90,
     vjust = 1.25,
     size = 4,
-    color = "blue"
+    color = "darkorchid"
   ) +
-  geom_vline(aes(xintercept = 36), color = "red")+
+  geom_vline(aes(xintercept = 36), color = "orange")+
   annotate("text",
     x = 36, y = 750, label = "Mean Hourly Wage (BLS Reported - 2024)",
     angle = 90,
     vjust = -0.5,
     size = 4,
-    color = "red"
+    color = "orange"
   ) +
   labs(x = "Reported Hourly Wage", y = "Count") +
   common_theme

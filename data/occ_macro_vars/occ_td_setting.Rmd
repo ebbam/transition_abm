@@ -62,12 +62,12 @@ source(here("data/occ_macro_vars/OEWS/occ_emp_industry_oews.R"))
 ## Bringing them together
 
 ```{r, echo = FALSE, message = FALSE}
-inds <- ind_va_for_abm %>% 
+inds <- ind_va_for_abm_full %>% 
   pull(industry) %>% unique
 
 # trend_tibble <- tibble()
 # for(k in inds){
-#   trend <- ind_va_for_abm %>% 
+#   trend <- ind_va_for_abm_full %>% 
 #     filter(grepl(k, industry)) %>% 
 #     pull(log_real_VA) %>% 
 #     hpfilter(.,freq = 129600, type=c("lambda")) 
@@ -75,7 +75,7 @@ inds <- ind_va_for_abm %>%
 #   trend_tibble <- trend$cycle %>% 
 #     tibble %>% 
 #     rename(trend = '.') %>% 
-#     mutate(date = ind_va_for_abm$date[1:28], 
+#     mutate(date = ind_va_for_abm_full$date[1:28], 
 #            industry = k) %>% 
 #     rbind(trend_tibble, .)
 # 
@@ -85,7 +85,7 @@ inds <- ind_va_for_abm %>%
 
 ```{r, echo = FALSE, message = FALSE}
 # Detrend and normalize each industry's GDP
-gdp_processed <- ind_va_for_abm %>%
+gdp_processed <- ind_va_for_abm_full %>%
   group_by(industry) %>%
   arrange(date) %>%
   mutate(

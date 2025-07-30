@@ -156,7 +156,9 @@ gdp_growth["GDP_GROWTH"] = gdp_growth['GDPC1_PC1']
 
 #################################################################################################
 ####################### INPUT SERIES FOR MODEL ##################################################
-##################################################################################################realgdp = macro_observations[["DATE", "REALGDP"]].dropna(subset=["REALGDP"]).reset_index()
+##################################################################################################
+
+realgdp = macro_observations[["DATE", "REALGDP"]].dropna(subset=["REALGDP"]).reset_index()
 realgdp['log_REALGDP'] = np.log2(realgdp['REALGDP'])
 
 # GDP Filter
@@ -356,3 +358,49 @@ plt.ylabel('log_Cycle')
 plt.title('Calibration Window')
 plt.legend()
 plt.show()
+
+##################################################################################################
+####################### OCCUPATION-SPECIFIC SHOCKS ###############################################
+##################################################################################################
+
+occ_shocks = pd.read_csv(path+"data/occupational_va_shocks.csv", index_col = 0).drop('X', axis = 'columns')
+df_quarterly = occ_shocks.transpose() + 1  # now rows are dates, columns are occupations
+# Convert index to datetime
+df_quarterly.index = pd.to_datetime(df_quarterly.index)
+
+# Reindex to monthly frequency
+monthly_index = pd.date_range(start=df_quarterly.index.min(), end=df_quarterly.index.max(), freq='MS')  # Month start frequency
+df_monthly = df_quarterly.reindex(monthly_index)
+
+# Linearly interpolate missing monthly values
+df_monthly = df_monthly.interpolate(method='linear')
+
+for col in df_monthly.columns:
+    # Segment 1: Before calibration window
+    plt.plot(df_monthly.loc[df_monthly.index < calib_date[0]].index,
+             df_monthly.loc[df_monthly.index < calib_date[0], col],
+             color='lavender', linewidth=0.5, alpha=0.2)
+
+    # Segment 2: During calibration window
+    plt.plot(df_monthly.loc[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1])].index,
+             df_monthly.loc[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1]), col],
+             color='orchid', linewidth=0.5, alpha = 0.5)
+
+    # Segment 3: After calibration window
+    plt.plot(df_monthly.loc[df_monthly.index > calib_date[1]].index,
+             df_monthly.loc[df_monthly.index > calib_date[1], col],
+             color='lavender', linewidth=0.5, alpha=0.2)
+
+# Vertical lines for calibration boundaries
+for cal_date in calib_date:
+    plt.axvline(x=pd.to_datetime(cal_date), color='steelblue', linestyle='--', alpha=0.6)
+
+plt.plot(monthly_dates, gdp_dat, color='rebeccapurple', label='HP Filtered GDP')
+
+plt.xlabel("Date")
+plt.ylabel("Value")
+plt.title("Occupation-Specific Shocks Over Time")
+plt.xticks(rotation=45)
+plt.grid()
+
+occ_shocks_dat = np.array(df_monthly[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1])].transpose())
