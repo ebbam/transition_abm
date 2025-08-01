@@ -19,7 +19,7 @@ def test_fun():
 ## Defining functions
 # Ranking utility/decision-making function
 def util(w_current, w_offered, skill_sim):
-    return w_offered - w_current
+    return skill_sim*(w_offered - w_current)
     #return 1/(1+(math.exp(-((w_offered - w_current)/10000))))
 
 # Simple quadratic for now in which a worker increases search effort for a period of 6 time steps (ie. months) 
@@ -188,7 +188,7 @@ class worker:
 class occupation:
     def __init__(occ, occupation_id, list_of_employed, list_of_unemployed, 
                  list_of_neigh_bool, list_of_neigh_weights, current_demand, 
-                 target_demand, wage):
+                 target_demand, wage, separated, hired):
         occ.occupation_id = occupation_id
         occ.list_of_employed = list_of_employed
         occ.list_of_unemployed = list_of_unemployed
@@ -197,14 +197,18 @@ class occupation:
         occ.current_demand = current_demand
         occ.target_demand = target_demand
         occ.wage = wage
-    
+        occ.separated = separated
+        occ.hired = hired
+
     def separate_workers(occ, delta_u, gam, bus_cy):
         if(len(occ.list_of_employed) != 0):
             sep_prob = delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
             w = np.random.binomial(len(occ.list_of_employed), sep_prob)
+            occ.separated = w
             separated_workers = random.sample(occ.list_of_employed, w)
             occ.list_of_unemployed = occ.list_of_unemployed + separated_workers
             occ.list_of_employed = list(set(occ.list_of_employed) - set(separated_workers))
+
     
     def update_workers(occ):
         # Possible for loop to replace
@@ -276,6 +280,7 @@ class vac:
                 a.ue_rel_wage = v.wage/a.wage   
             except ValueError:
                 print("Indexing failed - worker not found in either employed or unemployed list")
+        net[v.occupation_id].hired += 1
         a.occupation_id = v.occupation_id
         a.time_unemployed = 0
         # Their new wage is now the vacancy's wage - the relative wage will be updated in the update_workers function
@@ -324,7 +329,7 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
             
         occ = occupation(i, [], [], list(A[i] > 0), list(A[i]),
                          (employment[i,0] + vacancies[i,0]), 
-                         demand_target[i,0], wages[i,0])
+                         demand_target[i,0], wages[i,0], 0, 0)
         # creating the workers of occupation i and attaching to occupation
         ## adding employed workers
         g_share = gend_share[i,0]

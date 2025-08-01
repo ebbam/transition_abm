@@ -571,8 +571,8 @@ def plot_ltuer_dist(net_dict, names,
             ax.axvline(np.mean(m_time_unemp), ls='--', lw=1, color=colors[1])
 
             ax.set_title(name)
-            ax.set_xlabel("Time Unemployed (sim months)")
-            ax.set_ylabel("Number of Workers (Ks)")
+            ax.set_xlabel("Time Unemployed (months)")
+            ax.set_ylabel("Number of Workers")
             ax.legend()
 
         # hide unused subplots
@@ -608,18 +608,18 @@ def plot_ltuer_dist(net_dict, names,
                          label=names[idx], color=color)
             ax_full.axvline(np.mean(total_unemp), ls='--', lw=1, color=color)
 
-            # zoomed histogram (0–36 weeks)
+            # zoomed histogram (0–36 mos)
             ax_zoom.hist(total_unemp, bins=n_bins, range=(0, 36), alpha=0.5,
                          label=names[idx], color=color)
             ax_zoom.axvline(np.mean(total_unemp), ls='--', lw=1, color=color)
 
         # labels and titles
-        ax_full.set_xlabel("Time Unemployed (weeks)")
-        ax_zoom.set_xlabel("Time Unemployed (weeks, zoom ≤ 36)")
+        ax_full.set_xlabel("Time Unemployed (months)")
+        ax_zoom.set_xlabel("Time Unemployed (≤ 36 months)")
         ax_full.set_ylabel("Number of Workers")
         ax_full.set_title("Full distribution")
-        ax_zoom.set_title("Zoom ≤ 12 weeks")
-        ax_zoom.set_xlim(0, 12)
+        ax_zoom.set_title("Zoom ≤ 3 years")
+        ax_zoom.set_xlim(0, 36)
 
         # one legend for both panels
         ax_full.legend(loc="upper right")
@@ -920,6 +920,7 @@ def plot_occupation_uer_grid(sim_results, observation, save=False, path=None):
         fig2.savefig(f'{path}occupation_ltuer_grid.png', dpi=300)
     plt.show()
 
+import matplotlib.gridspec as gridspec
 def plot_occupation_uer_grid2(sim_results, observation, soc_labs, save=False, path=None):
     agg_levels = {
         'SOC2010_adj': ('uer_soc2010', 'ltuer_soc2010'), 

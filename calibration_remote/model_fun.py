@@ -84,6 +84,8 @@ def run_single_local(#behav_spec,
         #u_searchers = 0
         
         for occ in net:
+            occ.separated = 0
+            occ.hired = 0
             if occ_shocks_data is not None and t > delay:
                 occ_shock = curr_bus_cy[occ.occupation_id]
             else:
@@ -205,13 +207,12 @@ def run_single_local(#behav_spec,
                 t_demand = occ.target_demand*occ_shock
                 vacs_occ = len([v for v in vacs_temp if v.occupation_id == occ.occupation_id])
                 wages_occ = sum(wrkr.wage for wrkr in occ.list_of_employed)
+                seps = occ.separated
+                hires = occ.hired
                 # Calculate average relative wage for unemployed and employed workers
 
                 ### UPDATE INDICATOR RECORD
-                record.append([t+1, occ.occupation_id, empl, unemp, empl + unemp, vacs_occ, n_ltue, curr_demand, t_demand, emp_seekers, unemp_seekers, wages_occ, u_rel_wage, e_rel_wage, ue, ee])
-                # record = np.append(record, 
-                #                         np.array([[t+1, occ.occupation_id, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, curr_demand, t_demand, emp_seekers, unemp_seekers]]), 
-                #                         axis = 0)
+                record.append([t+1, occ.occupation_id, empl, unemp, empl + unemp, vacs_occ, n_ltue, curr_demand, t_demand, emp_seekers, unemp_seekers, wages_occ, u_rel_wage, e_rel_wage, ue, ee, seps, hires])
 
 
         if simple_res:
@@ -220,7 +221,7 @@ def run_single_local(#behav_spec,
                         np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand]]), axis=0)
 
         else:
-            record_temp_df = pd.DataFrame(record, columns=['Time Step', 'Occupation', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Current_Demand', 'Target_Demand', 'Employed Seekers', 'Unemployed Seekers', 'Total_Wages', 'U_Rel_Wage', 'E_Rel_Wage', 'UE_Transitions', 'EE_Transitions'])
+            record_temp_df = pd.DataFrame(record, columns=['Time Step', 'Occupation', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Current_Demand', 'Target_Demand', 'Employed Seekers', 'Unemployed Seekers', 'Total_Wages', 'U_Rel_Wage', 'E_Rel_Wage', 'UE_Transitions', 'EE_Transitions', "Separations", "Hires"])
             record_df = record_temp_df[record_temp_df['Time Step'] > delay]
             grouped = record_df.groupby('Time Step').sum().reset_index()
 
@@ -230,6 +231,8 @@ def run_single_local(#behav_spec,
             grouped['UE_Trans_Rate'] = grouped['UE_Transitions'] / grouped['Workers']
             grouped['EE_Trans_Rate'] = grouped['EE_Transitions'] / grouped['Workers']
             grouped['VACRATE'] = grouped['Vacancies'] / (grouped['Vacancies'] + grouped['Employment'])
+            grouped['Hires Rate'] = grouped['Hires'] / grouped['Employment']
+            grouped['Separations Rate'] = grouped['Separations'] / grouped['Employment']
 
             data = {'UER': grouped['UER'], 'VACRATE': grouped['VACRATE']}
 
