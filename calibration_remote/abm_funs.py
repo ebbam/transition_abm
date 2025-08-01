@@ -210,8 +210,11 @@ class occupation:
         # Possible for loop to replace
         for w in occ.list_of_unemployed:
             w.time_unemployed += 1
-            # Chosen 12 months - can be modified
-            w.longterm_unemp = True if w.time_unemployed >= 6 else False
+            # Chosen 6 months - can be modified - 27 weeks (~ 6 mos) according to BLS.
+            # We call update_workers before we tally LTUE people so time spent unemployed will be 1 greater than actual time spent "applying"
+            # Given unemployed individuals are given one time period of unemployment from the moment they are fired (ie. they have not navigated the market as unemployed yet)
+            # we set the threshold for LTUER at 7 (not 6)
+            w.longterm_unemp = True if w.time_unemployed >= 7 else False
             w.ue_rel_wage = None
             w.ee_rel_wage = None
             w.hired = False
