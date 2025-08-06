@@ -22,16 +22,6 @@ def util(w_current, w_offered, skill_sim):
     return skill_sim*(w_offered - w_current)
     #return 1/(1+(math.exp(-((w_offered - w_current)/10000))))
 
-# Simple quadratic for now in which a worker increases search effort for a period of 6 time steps (ie. months) 
-# unemployed after which a worker begins to become discouraged. 
-# This follows definition from the US BLS and Pew Research Centre
-# def search_effort(t_unemp, bus_cy):
-#     #apps = max(0, round(10 - 100*(1-bus_cy)))
-#     apps = round(10 + 100*(1-bus_cy))
-#     # if discouraged:
-#     #     apps = round(a_stable/((t_unemp)**2 + 1)) + 1
-#     return apps
-
 #### Dynamic Search Effort ######
 # Load the data
 
@@ -113,6 +103,36 @@ def search_effort_ts(t_unemp, se):
     apps = max(0, round(10 - 100*(1-se)))
     return apps
 
+#### Reservation Wage Adjustment Rate ######
+# Load the data
+res_wage_dat = pd.read_csv(path + "res_wage_dists.csv")
+
+# Main function: given duration and bin probabilities, return application count
+def reservation_wage(duration_months,
+                             res_wage_data,
+                             expectation=False,
+                             # Either lm (no sample balancing), glm, eb (entropy balancing)
+                             balancing_method='lm'):
+    """
+    If expectation=True return the expected value (float);
+    otherwise return a random draw (int).
+    """
+    if duration_months not in res_wage_data['dur_unemp'].values:
+        #raise ValueError(f"No probability distribution for duration {duration_months}")
+        res_wage = np.random.normal(loc=0.75, scale=np.max(res_wage_data[f'{balancing_method}_se']), size=1)[0]
+        if expectation:
+            res_wage = 0.75
+    else:
+        mean_val = res_wage_data[f'{balancing_method}_preds_fit'][res_wage_data['dur_unemp'] == duration_months]
+        se_val = res_wage_data[f'{balancing_method}_se'][res_wage_data['dur_unemp'] == duration_months]
+
+        if expectation:
+            res_wage = mean_val.iloc[0]  # Extract scalar from Series
+        else:
+            res_wage = np.random.normal(loc=mean_val.iloc[0], scale=se_val.iloc[0], size=1)[0]
+    
+    return(res_wage)
+
 ## Defining classes
 # Potentially redundant use of IDs in the below classes...to check
 class worker:
@@ -149,6 +169,7 @@ class worker:
         # Select different random sample of "relevant" vacancies found by each worker
         found_vacs = random.sample(vac_list, min(len(vac_list), 30))
         if disc:
+            #res_wage = wrkr.wage * reservation_wage(wrkr.time_unemployed, res_wage_dat, expectation = False, balancing_method = 'lm')
             if wrkr.time_unemployed > 3:
                 res_wage = wrkr.wage * (1-(0.1*(wrkr.time_unemployed-3)))
             else:

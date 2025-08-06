@@ -277,6 +277,46 @@ def plot_rel_wages(mod_results_dict, names, save=False, path=None, freq = 'Y'):
         plt.savefig(f'{path}relative_wages.jpg', dpi=300)
     
     plt.show()
+
+def hires_seps_rate(mod_results_dict, jolts, save=False, path=None):
+    # Step 1: Separate models
+    model_groups = {
+        "Non-behavioral": {k: v for k, v in mod_results_dict.items() if "nonbehav" in k.lower()},
+        "Behavioral/Other": {k: v for k, v in mod_results_dict.items() if "nonbehav" not in k.lower()}
+    }
+
+    # Step 2: Setup grid: rows = model groups, cols = [Hires Rate, Separations Rate]
+    fig, axes = plt.subplots(2, 2, figsize=(18, 12), sharex=True)
+    rate_types = [("Hires Rate", "HIRESRATE"), ("Separations Rate", "SEPSRATE")]
+
+    # Step 3: Loop through rows (model groups) and columns (rate types)
+    for row_idx, (group_name, group_models) in enumerate(model_groups.items()):
+        for col_idx, (rate_col_sim, rate_col_obs) in enumerate(rate_types):
+            ax = axes[row_idx, col_idx]
+
+            # Plot observed JOLTS rate
+            ax.plot(jolts['DATE'], jolts[rate_col_obs],
+                    label=f'Observed ({rate_col_obs})', color='black', linestyle='--')
+
+            # Plot each model in the group
+            for model_name, df in group_models.items():
+                ax.plot(df['DATE'], df[rate_col_sim], label=model_name)
+
+            # Titles and labels
+            title = f"{rate_col_sim} ({group_name} Models)"
+            ax.set_title(title, fontweight='bold')
+            ax.set_ylabel(rate_col_sim)
+            if row_idx == 1:
+                ax.set_xlabel('Date')
+            ax.grid(True)
+            ax.legend()
+
+    plt.tight_layout()
+
+    if save:
+        plt.savefig(f'{path}hires_seps_rate_grid.jpg', dpi=300)
+    plt.show()
+
     
 
 ####################################################

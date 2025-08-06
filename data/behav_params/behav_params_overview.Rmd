@@ -605,7 +605,7 @@ p_all <- (p1 | p2) + plot_annotation(title = "Predicted Probabilities of Applica
 
 p_all
 
-ggsave(here("data/figures/application_effort.png"))
+# ggsave(here("data/figures/application_effort.png"))
 
 # new_data %>% 
 #   write.csv(., here("data/behav_params/CPS_BLS_Supplement_18_22/app_probs.csv"))

@@ -1016,7 +1016,9 @@ ggplot(sim_all, aes(x = factor(dur_unemp), y = sim_val, fill = model)) +
   scale_fill_brewer(palette = 'Dark2')
 
 res_wage_input %>% 
-  write.csv(here('data/behav_params/cps_displaced_worker_supplement/res_wage_dists.csv'))
+  select(dur_unemp, contains("_fit"), contains("_se")) %>% 
+  write.csv(here('calibration_remote/data/res_wage_dists.csv'))
+  #write.csv(here('data/behav_params/cps_displaced_worker_supplement/res_wage_dists.csv'))
 #ggsave(here('data/behav_params/cps_displaced_worker_supplement/res_wage_dists.jpg'), dpi = 300, width = 11, height = 8)
 
 
