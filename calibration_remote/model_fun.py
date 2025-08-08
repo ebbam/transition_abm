@@ -67,9 +67,9 @@ def run_single_local(#behav_spec,
             if occ_shocks_data is not None:
                 curr_bus_cy = np.take(occ_shocks_data, indices=t-delay, axis=1)
                 bus_conf = curr_bus_cy
-            else:
-                curr_bus_cy = gdp_data[t-delay]
-                bus_conf = bus_confidence_dat[t-delay]
+            # else:
+            #     curr_bus_cy = gdp_data[t-delay]
+            #     bus_conf = bus_confidence_dat[t-delay]
 
             ue_bc = curr_bus_cy
             vr_t = vac_data[t-delay]
@@ -77,12 +77,15 @@ def run_single_local(#behav_spec,
             ue_bc = 1
         # search_eff_curr = search_eff_ts[t]
         # Ensure number of workers in economy has not changed
-        #tic = time.process_time()
         emp_seekers = 0
         unemp_seekers = 0
         u_apps = 0
         #u_searchers = 0
         
+        vacancies_by_occ = defaultdict(list)
+        for v in vacs_temp:
+            vacancies_by_occ[v.occupation_id].append(v)
+
         for occ in net:
             occ.separated = 0
             occ.hired = 0
@@ -91,9 +94,9 @@ def run_single_local(#behav_spec,
             else:
                 occ_shock = curr_bus_cy
 
-            if occ_shock < 0.75 or occ_shock > 1.1:
-                print(occ.occupation_id)
-                print(occ_shock)
+            #if occ_shock < 0.75 or occ_shock > 1.1:
+                # print(occ.occupation_id)
+                # print(occ_shock)
             # Exit and entry
             # Remove the top 2% of earners in an occupation's employed list
             occ.entry_and_exit(0.02)
@@ -104,7 +107,8 @@ def run_single_local(#behav_spec,
             # - CAN be rejected and apply in the same time step - no protected attribute
             # isolate list of vacancies in economy that are relevant to the occupation
             # - avoids selecting in each search_and_apply application
-            r_vacs = [vac for vac in vacs_temp if occ.list_of_neigh_bool[vac.occupation_id]]          
+            #r_vacs = [vac for vac in vacs_temp if occ.list_of_neigh_bool[vac.occupation_id]] 
+            r_vacs = vacancies_by_occ         
     
             for u in occ.list_of_unemployed:
                 unemp_seekers += 1

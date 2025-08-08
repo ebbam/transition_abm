@@ -362,8 +362,8 @@ def plot_uer_vac(res_dict, macro_obs, recessions=None, sep_strings=None, sep=Fal
     colors = ["skyblue", "lightcoral", "purple", "green", "orange", "brown", "pink"]
     def plot_group(ax, models, title):
         for i, (name, res) in enumerate(models.items()):
-            ax.plot(res['DATE'], res['VACRATE'], label= 'Sim. Vac Rate', color=colors[i])
-            ax.plot(res['DATE'], res['UER'], label = "Sim. UER", color=colors[i+1])
+            ax.plot(res['DATE'], res['VACRATE'], label= f'Sim. Vac Rate: {name}', color=colors[i])
+            ax.plot(res['DATE'], res['UER'], label = f'Sim. UER: {name}', color=colors[i+1])
 
         # Observed data
         ax.plot(macro_obs['DATE'], macro_obs['VACRATE'], color="red", linestyle="dotted", label="Obs. VR")

@@ -19,7 +19,7 @@ def test_fun():
 ## Defining functions
 # Ranking utility/decision-making function
 def util(w_current, w_offered, skill_sim):
-    return skill_sim*(w_offered - w_current)
+    return (w_offered - w_current)*skill_sim
     #return 1/(1+(math.exp(-((w_offered - w_current)/10000))))
 
 #### Dynamic Search Effort ######
@@ -68,7 +68,7 @@ def applications_sent(duration_months,
     bin_labels     = list(bin_probs.keys())
     probabilities  = list(bin_probs.values())
     chosen_bin     = random.choices(bin_labels, weights=probabilities, k=1)[0]
-    return sample_within_bin(chosen_bin, expectation=False)
+    return max(1, sample_within_bin(chosen_bin, expectation=False))
 
 # Convert duration to int (you can round or floor as needed)
 app_effort["PRUNEDUR_MO"] = app_effort["PRUNEDUR_MO"].round().astype(int)
@@ -140,7 +140,7 @@ class worker:
                  # employed, 
                  longterm_unemp, 
                  # time_employed,
-                 time_unemployed, wage, hired, female, risk_av_score, ee_rel_wage, ue_rel_wage, applicants_sent):
+                 time_unemployed, wage, hired, female, age, risk_av_score, ee_rel_wage, ue_rel_wage, applicants_sent):
         # State-specific attributes:
         # Occupation id
         wrkr.occupation_id = occupation_id
@@ -156,6 +156,7 @@ class worker:
         wrkr.hired = hired
         # Binary for whether the worker is female
         wrkr.female = female
+        wrkr.age = age
         # Risk aversion: Stefi suggested to use number of 
         # occupations previously held as proxy ie. len(emp_history)
         # Currently takes a value 0-9 indicating at which index of utility ranked vacancies to start sampling/slicing
@@ -163,39 +164,177 @@ class worker:
         wrkr.ee_rel_wage = ee_rel_wage
         wrkr.ue_rel_wage = ue_rel_wage
         wrkr.apps_sent = applicants_sent
-    
-    def search_and_apply(wrkr, net, vac_list, disc, bus_cy, alpha, app_effort):
-        # A sample of relevant vacancies are found that are in neighboring occupations
-        # Select different random sample of "relevant" vacancies found by each worker
-        found_vacs = random.sample(vac_list, min(len(vac_list), 30))
+
+
+    def search_and_apply(wrkr, net, vacancies_by_occ, disc, bus_cy, alpha, app_effort):
+        MAX_VACS = 30
+        wrkr_occ = wrkr.occupation_id
+        neigh_probs = net[wrkr_occ].list_of_neigh_weights  # Already normalized
+        occ_ids = list(range(len(neigh_probs)))
+
+        # Step 1: Build a flat list of vacancies and their weights
+        all_vacs = []
+        weights = []
+
+        for occ_id, occ_prob in zip(occ_ids, neigh_probs):
+            vacs = vacancies_by_occ.get(occ_id, [])
+            for v in vacs:
+                all_vacs.append(v)
+                weights.append(occ_prob)
+
+        if not all_vacs:
+            wrkr.apps_sent = 0
+            return
+
+        # Step 2: Sample up to MAX_VACS vacancies directly
+        found_vacs = random.choices(all_vacs, weights=weights, k=min(MAX_VACS, len(all_vacs)))
+
+        vsent = 0
+
         if disc:
-            #res_wage = wrkr.wage * reservation_wage(wrkr.time_unemployed, res_wage_dat, expectation = False, balancing_method = 'lm')
+            # Step 3: Apply reservation wage filter
             if wrkr.time_unemployed > 3:
-                res_wage = wrkr.wage * (1-(0.1*(wrkr.time_unemployed-3)))
+                res_wage = wrkr.wage * (1 - 0.1 * (wrkr.time_unemployed - 3))
             else:
                 res_wage = wrkr.wage
+
             found_vacs = [v for v in found_vacs if v.wage >= res_wage]
-        vsent = 0
-        if disc or bus_cy != 1:
-            # Sort found relevant vacancies by utility-function defined above and apply to amount dictated by impatience
-            for v in sorted(found_vacs, key = lambda v: util(wrkr.wage, v.wage, net[wrkr.occupation_id].list_of_neigh_weights[v.occupation_id]), 
-                            reverse = True)[slice(wrkr.risk_aversion, wrkr.risk_aversion + applications_sent(wrkr.time_unemployed, app_effort, expectation = False))]:
-                # Introduce randomness here...?
-                vsent += 1
+
+            # Step 4: Rank by utility
+            sorted_vacs = sorted(
+                found_vacs,
+                key=lambda v: util(
+                    wrkr.wage, v.wage,
+                    net[wrkr_occ].list_of_neigh_weights[v.occupation_id]
+                ),
+                reverse=True
+            )
+
+            n_apps = applications_sent(wrkr.time_unemployed, app_effort, expectation=False)
+            chosen_vacs = sorted_vacs[wrkr.risk_aversion: wrkr.risk_aversion + n_apps]
+
+            for v in chosen_vacs:
                 v.applicants.append(wrkr)
-        else:
-            vs = random.sample(found_vacs, min(len(found_vacs), 10))
-            for r in vs:
                 vsent += 1
-                r.applicants.append(wrkr)
+        else:
+            for v in random.sample(found_vacs, min(len(found_vacs), 10)):
+                v.applicants.append(wrkr)
+                vsent += 1
+
         wrkr.apps_sent = vsent
+
+    # def search_and_apply(wrkr, net, vacancies_by_occ, disc, bus_cy, alpha, app_effort):
+    #     MAX_VACS = 30
+    #     wrkr_occ = wrkr.occupation_id
+    #     neigh_probs = net[wrkr_occ].list_of_neigh_weights
+    #     occ_ids = list(range(len(neigh_probs)))
+
+    #     found_vacs = []
+    #     seen_occ_ids = set()
+
+    #     while len(found_vacs) < MAX_VACS:
+    #         sampled_occ = random.choices(occ_ids, weights=neigh_probs, k=1)[0]
+    #         if sampled_occ in seen_occ_ids:
+    #             continue
+
+    #         occ_vacs = vacancies_by_occ.get(sampled_occ, [])
+    #         random.shuffle(occ_vacs)
+
+    #         for v in occ_vacs:
+    #             found_vacs.append(v)
+    #             if len(found_vacs) >= MAX_VACS:
+    #                 break
+
+    #         seen_occ_ids.add(sampled_occ)
+
+    #     found_vacs = found_vacs[:MAX_VACS]
+    #     vsent = 0
+
+    #     if disc:
+    #         if wrkr.time_unemployed > 3:
+    #             res_wage = wrkr.wage * (1 - 0.1 * (wrkr.time_unemployed - 3))
+    #         else:
+    #             res_wage = wrkr.wage
+
+    #         found_vacs = [v for v in found_vacs if v.wage >= res_wage]
+
+    #         sorted_vacs = sorted(
+    #             found_vacs,
+    #             key=lambda v: util(
+    #                 wrkr.wage, v.wage,
+    #                 net[wrkr_occ].list_of_neigh_weights[v.occupation_id]
+    #             ),
+    #             reverse=True
+    #         )
+
+    #         n_apps = applications_sent(wrkr.time_unemployed, app_effort, expectation=False)
+    #         chosen_vacs = sorted_vacs[wrkr.risk_aversion: wrkr.risk_aversion + n_apps]
+
+    #         for v in chosen_vacs:
+    #             v.applicants.append(wrkr)
+    #             vsent += 1
+    #     else:
+    #         for v in random.sample(found_vacs, min(len(found_vacs), 10)):
+    #             v.applicants.append(wrkr)
+    #             vsent += 1
+
+    #     wrkr.apps_sent = vsent
     
+    # def search_and_apply(wrkr, net, vac_list, disc, bus_cy, alpha, app_effort):
+    #     # A sample of relevant vacancies are found that are in neighboring occupations
+    #     # Select different random sample of "relevant" vacancies found by each worker
+    #     found_vacs = random.sample(vac_list, min(len(vac_list), 30))
+    #     vsent = 0
+    #     if disc:
+    #         # res_wage = wrkr.wage * reservation_wage(wrkr.time_unemployed, res_wage_dat, expectation = False, balancing_method = 'lm')
+    #         if wrkr.time_unemployed > 3:
+    #             res_wage = wrkr.wage * (1-(0.1*(wrkr.time_unemployed-3)))
+    #         else:
+    #             res_wage = wrkr.wage
+
+    #         found_vacs = [v for v in found_vacs if v.wage >= res_wage]
+    #         # Sort found relevant vacancies by utility-function defined above and apply to amount dictated by impatience
+    #         for v in sorted(found_vacs, key = lambda v: util(wrkr.wage, v.wage, net[wrkr.occupation_id].list_of_neigh_weights[v.occupation_id]), 
+    #                         reverse = True)[slice(wrkr.risk_aversion, wrkr.risk_aversion + applications_sent(wrkr.time_unemployed, app_effort, expectation = False))]:
+    #             # Introduce randomness here...?
+    #             vsent += 1
+    #             v.applicants.append(wrkr)
+    #     else:
+    #         vs = random.sample(found_vacs, min(len(found_vacs), 10))
+    #         for r in vs:
+    #             vsent += 1
+    #             r.applicants.append(wrkr)
+    #     wrkr.apps_sent = vsent
+    #     #print(f'Applications sent: {vsent}')
+
     def emp_search_and_apply(wrkr, net, vac_list, disc):
         # A sample of relevant vacancies are found that are in neighboring occupations
         # Will need to add a qualifier in case sample is greater than available relevant vacancies
         # ^^ have added qualifier...bad form to reassign list?
         # Select different random sample of "relevant" vacancies found by each worker
-        found_vacs = random.sample(vac_list, min(len(vac_list), 30))
+        # found_vacs = random.sample(vac_list, min(len(vac_list), 30))
+        MAX_VACS = 30
+        wrkr_occ = wrkr.occupation_id
+        neigh_probs = net[wrkr_occ].list_of_neigh_weights  # Already normalized
+        occ_ids = list(range(len(neigh_probs)))
+
+        # Step 1: Build a flat list of vacancies and their weights
+        all_vacs = []
+        weights = []
+
+        for occ_id, occ_prob in zip(occ_ids, neigh_probs):
+            vacs = vac_list.get(occ_id, [])
+            for v in vacs:
+                all_vacs.append(v)
+                weights.append(occ_prob)
+
+        if not all_vacs:
+            wrkr.apps_sent = 0
+            return
+
+        # Step 2: Sample up to MAX_VACS vacancies directly
+        found_vacs = random.choices(all_vacs, weights=weights, k=min(MAX_VACS, len(all_vacs)))
+
         if disc:
             found_vacs = [v for v in found_vacs if v.wage >= wrkr.wage*1.05]
         # Filter found_vacs to keep only elements where util(el) > 0
@@ -227,6 +366,7 @@ class occupation:
             w = np.random.binomial(len(occ.list_of_employed), sep_prob)
             occ.separated = w
             separated_workers = random.sample(occ.list_of_employed, w)
+            #print(f'Separated workers: {len(separated_workers)}')
             occ.list_of_unemployed = occ.list_of_unemployed + separated_workers
             occ.list_of_employed = list(set(occ.list_of_employed) - set(separated_workers))
 
@@ -244,13 +384,41 @@ class occupation:
             w.ee_rel_wage = None
             w.hired = False
             w.apps_sent = 0
+            w.age += 0.25
         for e in occ.list_of_employed:
             e.hired = False
             e.time_unemployed = 0
             e.ue_rel_wage = None
             e.ee_rel_wage = None
             e.apps_sent = 0
+            e.age += 0.25
     
+    def entry_and_exit_fixed(occ, rate):
+        """ Function to handle entry and exit of workers in the economy """
+        # Take the top 2% of earners and assume they are new entrants
+        # Remove them from list_of_employed and move them to list_of_unemployed in the same occupation with the lowest wage in that occupation
+        occ.list_of_employed.sort(key=lambda x: x.wage, reverse=True)
+        emp_no = len(occ.list_of_employed)
+        if emp_no == 0:
+            new_wage = occ.wage
+        else:
+            bottom_10 = max(1, int(emp_no * 0.05))
+            new_wage = np.mean([wrkr.wage for wrkr in occ.list_of_employed[-bottom_10:]])
+        n_new = int(emp_no * rate)
+        new_workers = occ.list_of_employed[:n_new]
+        occ.list_of_employed = occ.list_of_employed[n_new:]
+
+        # Add new workers to the unemployed list with a wage of 0 and time unemployed of 0
+        for nw in new_workers:
+            nw.longterm_unemp = False
+            nw.time_unemployed = 0
+            nw.wage = new_wage
+            nw.hired = False
+            nw.ue_rel_wage = None
+            nw.ee_rel_wage = None
+            nw.apps_sent = 0
+            occ.list_of_unemployed.append(nw)
+
     def entry_and_exit(occ, rate):
         """ Function to handle entry and exit of workers in the economy """
         # Take the top 2% of earners and assume they are new entrants
@@ -276,6 +444,7 @@ class occupation:
             nw.ee_rel_wage = None
             nw.apps_sent = 0
             occ.list_of_unemployed.append(nw)
+
 
 class vac:
     def __init__(v, occupation_id, applicants, wage, filled, time_open):
@@ -357,314 +526,27 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
         for e in range(round(employment[i,0])):
             # Assume they have all at least 1 t.s. of employment
             if np.random.rand() <= g_share:
-                occ.list_of_employed.append(worker(occ.occupation_id, False, 1, wages[i,0], False, True,
+                occ.list_of_employed.append(worker(occ.occupation_id, False, 1, wages[i,0], False, True, 18,
                                                abs(int(np.random.normal(7,2))), 1, 1,0))
             else:
-                occ.list_of_employed.append(worker(occ.occupation_id, False, 1, wages[i,0], False, False,
+                occ.list_of_employed.append(worker(occ.occupation_id, False, 1, wages[i,0], False, False, 18,
                                                abs(int(np.random.normal(3,2))), 1, 1,0))
             ## adding unemployed workers
         for u in range(round(unemployment[i,0])):
             if np.random.rand() <= g_share:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
-                                                     np.random.normal(wages[i,0], 0.05* wages[i,0]), False, True, abs(int(np.random.normal(fem_ra,0.1))), 1, 1, 1))
+                                                     np.random.normal(wages[i,0], 0.05* wages[i,0]), False, True, 18, abs(int(np.random.normal(fem_ra,0.1))), 1, 1, 1))
             else:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
-                                                     np.random.normal(wages[i,0], 0.05* wages[i,0]), False, False, abs(int(np.random.normal(male_ra,0.1))), 1, 1, 1))
+                                                     np.random.normal(wages[i,0], 0.05* wages[i,0]), False, False, 18, abs(int(np.random.normal(male_ra,0.1))), 1, 1, 1))
 
 
         occs.append(occ)
         ids += 1
     return occs, vac_list
 
-
-# ####################
-# # Model Run ########
-# ####################
-# def run_single_local(mod_data, 
-#                net_temp, 
-#                vacs, 
-#                behav_spec, 
-#                time_steps, # set equal to length of gdp_data
-#                d_u, 
-#                d_v,
-#                gamma_u,
-#                gamma_v,
-#                delay,
-#                gdp_data,
-#                simple_res,
-#                search_eff_ts = None):
-#     #net_temp, vacs = initialise(len(mod_data['A']), mod_data['employment'].to_numpy(), mod_data['unemployment'].to_numpy(), mod_data['vacancies'].to_numpy(), mod_data['demand_target'].to_numpy(), mod_data['A'], mod_data['wages'].to_numpy(), mod_data['gend_share'].to_numpy())
-#     #behav_spec = False
-#     #time_steps = 30
-#     #gamma = 0.1
-#     #d_v = 0.009
-    
-#     """ Runs the model once
-#     Argsuments:
-#        behav_spec: whether or not to run the behavioural model
-#        data: data required of initialise function  
-#        time_steps: Number of time steps for single model run
-#        d_u: parameter input to separation probability
-#        d_v: parameter input to vacancy opening probability
-
-#     Returns:
-#        dataframe of model run results
-#     """
-#     # Records variables of interest for plotting
-#     # Initialise deepcopy occupational mobility network
-#     print(behav_spec)
-#     record = [np.sum(np.concatenate((np.zeros((464, 1)), 
-#                                     mod_data['employment'].to_numpy(), 
-#                                     mod_data['unemployment'].to_numpy(), 
-#                                     mod_data['employment'].to_numpy() + mod_data['unemployment'].to_numpy(),
-#                                     mod_data['vacancies'].to_numpy(), 
-#                                     np.zeros((464, 1)),
-#                                     mod_data['demand_target'].to_numpy(),
-#                                     mod_data['demand_target'].to_numpy(),
-#                                     np.zeros((464, 1))), axis = 1), 
-#                                     axis = 0)]
-    
-#     #print(parameter['vacs'])
-#     vacs_temp = deepcopy(vacs)
-#     net = deepcopy(net_temp)
-#     for t in range(time_steps):
-#         if t == 1:
-#             print(behav_spec)
-#         curr_bus_cy = gdp_data[t]
-#         if search_eff_ts is not None:
-#             search_eff_curr = search_eff_ts[t]
-#         # Ensure number of workers in economy has not changed
-#         #tic = time.process_time()
-#         for occ in net:
-#             ### APPLICATIONS
-#             # Questions to verify:
-#             # - CANNOT be fired and apply in same time step ie. time_unemployed > 0
-#             # - CAN be rejected and apply in the same time step - no protected attribute
-#             # isolate list of vacancies in economy that are relevant to the occupation
-#             # - avoids selecting in each search_and_apply application
-#             r_vacs = [vac for vac in vacs_temp if occ.list_of_neigh_bool[vac.occupation_id]]          
-    
-#             for u in occ.list_of_unemployed:
-#                 # this one if only using simple scaling factor for the search effort
-#                 if search_eff_ts is None:
-#                     u.search_and_apply(net, r_vacs, behav_spec, curr_bus_cy)
-#                 elif search_eff_ts is not None:
-#                     u.search_and_apply(net, r_vacs, behav_spec, search_eff_curr)
-#                 # use the following if we wish to incorporate the entire TS of search effort
-
-            
-#             # for e in random.sample(occ.list_of_employed, int(0.4*len(occ.list_of_employed))):
-#             #    e.emp_search_and_apply(net, r_vacs, )
-
-#             ### SEPARATIONS
-#             try:
-#                 occ.separate_workers(d_u, gamma_u, curr_bus_cy)
-#             except Exception as e:
-#                 return np.inf
-
-#         ### HIRING
-#         # Ordering of hiring randomised to ensure list order does not matter in filling vacancies...
-#         # Possibly still introduces some bias...this seems to be where the "multiple offer" challenge Maria mentioned comes from
-#         # ....might be better to do this using an unordered set?
-#         for v_open in sorted(vacs_temp,key=lambda _: random.random()):
-#             # Removes any applicants that have already been hired in another vacancy
-#             v_open.applicants[:] = [app for app in v_open.applicants if not(app.hired)]
-#             v_open.time_open += 1
-#             if len(v_open.applicants) > 0:
-#                 v_open.hire(net)
-#                 v_open.filled = True
-#                 #vacs.remove(v_open)
-#                 assert(len(v_open.applicants) == 0)
-#             else:
-#                 pass
-
-#         vacs_temp = [v for v in vacs_temp if not(v.filled) and v.time_open <= 1] 
-
-#         # Reset counters for record in time t
-#         empl = 0 
-#         unemp = 0
-#         n_ltue = 0
-#         curr_demand = 0
-#         t_demand = 0
-#         vacs_created = 0
-
-#         ### OPEN VACANCIES
-#         # Update vacancies after all shifts have taken place
-#         # Could consider making this a function of the class itself?
-#         for occ in net:
-#             # Update time_unemployed and long-term unemployed status of unemployed workers
-#             # Remove protected "hired" attribute of employed workers
-#             occ.update_workers()
-#             emp = len(occ.list_of_employed)
-#             occ.current_demand = (len([v_open for v_open in vacs_temp if v_open.occupation_id == occ.occupation_id]) + emp)
-#             #occ.current_demand = bus_cycle_demand(len([v_open for v_open in vacs_temp if v_open.occupation_id == occ.occupation_id]) + emp, t, bus_amp, bus_cycle_len)
-#             vac_prob = d_v + ((gamma_v * max(0, occ.target_demand*(curr_bus_cy) - occ.current_demand)) / (emp + 1))
-#             #vac_prob = d_v + ((1 - d_v) * (gamma_v * max(0, occ.target_demand - occ.current_demand))) / (emp + 1)
-#             vacs_create = emp*int(vac_prob) + int(np.random.binomial(emp, vac_prob%1))
-#             vacs_created += vacs_create
-#             for v in range(vacs_create):
-#                 vacs_temp.append(vac(occ.occupation_id, [], occ.wage, False, 0))
-
-#             empl += len(occ.list_of_employed) 
-#             unemp += len(occ.list_of_unemployed)
-#             n_ltue += sum(wrkr.longterm_unemp for wrkr in occ.list_of_unemployed)
-#             curr_demand += occ.current_demand
-#             t_demand += occ.target_demand*curr_bus_cy
-
-#         ### UPDATE INDICATOR RECORD
-#         record = np.append(record, 
-#                                np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, curr_demand, t_demand, vacs_created]]), 
-#                                axis = 0)
-
-
-#     # clean_record = pd.DataFrame(record[delay:])
-#     # clean_record.columns =['Time Step', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Target_Demand']
-#     # clean_record['UER'] = clean_record['Unemployment']/clean_record['Workers']
-#     # clean_record['VACRATE'] = clean_record['Vacancies']/clean_record['Target_Demand']
-#     #data = clean_record[['Time Step', 'UER', 'VACRATE']]
-#     data = {'UER': record[delay:,2]/record[delay:,3], 
-#             'VACRATE': record[delay:,4]/record[delay:,7]}
-
-#     #ltuer = (clean_record['LT Unemployed Persons']/clean_record['Workers']).mean(axis = 0)
-#     #vac_rate = (clean_record['Vacancies']/clean_record['Target_Demand']).mean(axis = 0)
-#     if simple_res:
-#         return data
-#     else:
-#         return record[1:,:], net, data
-
-# #########################################
-# # Wrapper for pyabc ########
-# #########################################
-# def pyabc_run_single(parameter):     
-#     res = run_single_local(**parameter)
-#     return res 
-    
-    
-# # #########################################
-# # Model Run with Simulation Spec ########
-# #########################################
-# def run_sim(mod_data, 
-# net_temp, 
-# vacs, 
-# behav_spec, 
-# time_steps, 
-# runs, 
-# d_u, 
-# d_v, 
-# gamma_u,
-# gamma_v, 
-# delay,
-# gdp_data):
-#     """ Runs the model through designated time_steps "runs" times
-#     Argsuments:
-#        behav_spec: whether or not to run the behavioural model
-#        data: data required of initialise function  
-#        time_steps: Number of time steps for single model run
-#        runs: Number of simulation runs ie. how many times to run the model
-#        d_u: parameter input to separation probability
-#        d_v: parameter input to vacancy opening probability
-
-#     Returns:
-#        dataframe of model run results
-#     """
-#     # Records variables of interest for plotting
-#     #record_all = np.empty(shape=(0,8))
-#     record_single = np.concatenate((np.zeros((464, 1)), 
-#                                  np.zeros((464, 1)), 
-#                                  mod_data['employment'].to_numpy(), 
-#                                  mod_data['unemployment'].to_numpy(), 
-#                                  mod_data['employment'].to_numpy() + mod_data['unemployment'].to_numpy(),
-#                                  mod_data['vacancies'].to_numpy(), 
-#                                  np.zeros((464, 1)),
-#                                  mod_data['demand_target'].to_numpy()), axis = 1)
-#     for run in range(runs):
-#         # Initialise deepcopy occupational mobility network
-#         vacs_temp = deepcopy(vacs)
-#         record = deepcopy(record_single)
-#         net = deepcopy(net_temp)
-#         for t in range(time_steps):
-#             #print("Time: ", t)
-# #             # Shock incorporation....to be changed to dynamic from past applications
-# #             if t == 400 and shock:
-# #                 print("initiatied shock!")
-# #                 net_temp[0].target_demand += 25
-# #                 net_temp[1].target_demand += 50
-# #                 net_temp[2].target_demand += 50
-# #                 net_temp[3].target_demand += 50
-# #                 net_temp[4].target_demand = 100
-
-#             # Ensure number of workers in economy has not changed
-#             #tic = time.process_time()
-#             for occ in net:
-#                 ### APPLICATIONS
-#                 # Questions to verify:
-#                 # - CANNOT be fired and apply in same time step ie. time_unemployed > 0
-#                 # - CAN be rejected and apply in the same time step - no protected attribute
-#                 # isolate list of vacancies in economy that are relevant to the occupation
-#                 # - avoids selecting in each search_and_apply application
-#                 r_vacs = [vac for vac in vacs_temp if occ.list_of_neigh_bool[vac.occupation_id]]                
-#                 for u in occ.list_of_unemployed:
-#                     u.search_and_apply(net, r_vacs, behav_spec)
-                
-#                 ### SEPARATIONS
-#                 occ.separate_workers(d_u, gamma_u)
-        
-#             ### HIRING
-#             # Ordering of hiring randomised to ensure list order does not matter in filling vacancies...
-#             # Possibly still introduces some bias...this seems to be where the "multiple offer" challenge Maria mentioned comes from
-#             # ....might be better to do this using an unordered set?
-#             for v_open in sorted(vacs_temp,key=lambda _: random.random()):
-#                 # Removes any applicants that have already been hired in another vacancy
-#                 v_open.applicants[:] = [app for app in v_open.applicants if not(app.hired)]
-#                 if len(v_open.applicants) > 0:
-#                     v_open.hire(net)
-#                     v_open.filled = True
-#                     #vacs.remove(v_open)
-#                     assert(len(v_open.applicants) == 0)
-#                 else:
-#                     pass
-                
-#             vacs = [v for v in vacs_temp if not(v.filled)] 
-
-#             # Reset counters for record in time t
-#             empl = 0 
-#             unemp = 0
-#             n_ltue = 0
-#             t_demand = 0
-            
-#             ### OPEN VACANCIES
-#             # Update vacancies after all shifts have taken place
-#             # Could consider making this a function of the class itself?
-#             for occ in net:
-#                 # Update time_unemployed and long-term unemployed status of unemployed workers
-#                 # Remove protected "hired" attribute of employed workers
-#                 occ.update_workers()
-#                 emp = len(occ.list_of_employed)
-#                 occ.current_demand = (len([v_open for v_open in vacs_temp if v_open.occupation_id == occ.occupation_id]) + emp)*(1-gdp_data[t])
-#                 vac_prob = d_v + ((1 - d_v) * (gamma_v * max(0, occ.target_demand - occ.current_demand))) / (emp + 1)
-#                 vacs_create = emp*int(vac_prob) + int(np.random.binomial(emp, vac_prob%1))
-#                 for v in range(vacs_create):
-#                     vacs.append(vac(occ.occupation_id, [], occ.wage, False))
-                    
-#                 empl += len(occ.list_of_employed) 
-#                 unemp += len(occ.list_of_unemployed)
-#                 n_ltue += sum(wrkr.longterm_unemp for wrkr in occ.list_of_unemployed)
-#                 t_demand += occ.target_demand
-            
-#             ### UPDATE INDICATOR RECORD
-#             record = np.append(record, 
-#                                 np.array([[run, t+1, empl, unemp, empl + unemp, len(vacs), n_ltue, t_demand]]), 
-#                                 axis = 0)
-#         if run == 0:
-#             record_all = record
-#             net_list = [net]
-#         else:
-#             record_all = np.dstack((record_all, record))
-#             net_list.append(net)
-        
-#     return record_all, net, net_list
 
 
     

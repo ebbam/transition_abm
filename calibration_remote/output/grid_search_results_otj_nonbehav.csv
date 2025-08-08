@@ -1,0 +1,22 @@
+d_u,gamma_u,distance,otj,cyc_otj,cyc_ue,disc,timestamp,model_cat
+0.001,0.01,46.718001145778096,True,False,False,False,2025-08-06 17:31:25,otj_nonbehav
+0.001,0.255,9.76923479746889,True,False,False,False,2025-08-06 17:31:35,otj_nonbehav
+0.001,0.5,6.562371445890535,True,False,False,False,2025-08-06 17:31:45,otj_nonbehav
+0.025500000000000002,0.01,298.30516339835316,True,False,False,False,2025-08-06 17:32:02,otj_nonbehav
+0.025500000000000002,0.255,373.8069202675258,True,False,False,False,2025-08-06 17:32:20,otj_nonbehav
+0.025500000000000002,0.5,381.86570239378125,True,False,False,False,2025-08-06 17:32:40,otj_nonbehav
+0.05,0.01,689.7969955787673,True,False,False,False,2025-08-06 17:32:58,otj_nonbehav
+0.05,0.255,693.946934213556,True,False,False,False,2025-08-06 17:33:17,otj_nonbehav
+0.05,0.5,693.8410522888062,True,False,False,False,2025-08-06 17:33:36,otj_nonbehav
+1e-05,1e-05,49.579844437138824,True,False,False,False,2025-08-07 22:47:39,otj_nonbehav
+1e-05,0.015005,42.3429053568462,True,False,False,False,2025-08-07 22:47:59,otj_nonbehav
+1e-05,0.03,34.509515047871545,True,False,False,False,2025-08-07 22:48:20,otj_nonbehav
+0.015005,1e-05,27.73290906080524,True,False,False,False,2025-08-07 22:48:50,otj_nonbehav
+0.015005,0.015005,63.837636945099305,True,False,False,False,2025-08-07 22:49:29,otj_nonbehav
+0.015005,0.03,100.08620175620574,True,False,False,False,2025-08-07 22:50:15,otj_nonbehav
+0.03,1e-05,413.8453667951243,True,False,False,False,2025-08-07 22:51:53,otj_nonbehav
+0.03,0.015005,435.0455395342867,True,False,False,False,2025-08-07 22:53:32,otj_nonbehav
+0.03,0.03,431.35287205579914,True,False,False,False,2025-08-07 22:55:12,otj_nonbehav
+0.0001,0.1,17.0805611015187,True,False,False,False,2025-08-07 23:24:53,otj_nonbehav
+0.0001,0.4,6.563776091336018,True,False,False,False,2025-08-07 23:25:21,otj_nonbehav
+0.0001,0.7,4.406073554610449,True,False,False,False,2025-08-07 23:25:51,otj_nonbehav
