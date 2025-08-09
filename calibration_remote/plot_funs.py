@@ -356,27 +356,29 @@ def hires_seps_rate(mod_results_dict, jolts, save=False, path=None):
 #         plt.savefig(f'{path}uer_vac.jpg', dpi = 300)
 #     plt.show()
 
-
-
 def plot_uer_vac(res_dict, macro_obs, recessions=None, sep_strings=None, sep=False, save=False, path=None):
-    colors = ["skyblue", "lightcoral", "purple", "green", "orange", "brown", "pink"]
-    def plot_group(ax, models, title):
+    colors = ["skyblue", "orange",]# "brown", "pink"]
+    def plot_uer(ax, models, title):
         for i, (name, res) in enumerate(models.items()):
-            ax.plot(res['DATE'], res['VACRATE'], label= f'Sim. Vac Rate: {name}', color=colors[i])
-            ax.plot(res['DATE'], res['UER'], label = f'Sim. UER: {name}', color=colors[i+1])
-
-        # Observed data
-        ax.plot(macro_obs['DATE'], macro_obs['VACRATE'], color="red", linestyle="dotted", label="Obs. VR")
-        ax.plot(macro_obs['DATE'], macro_obs['UER'], color="blue", linestyle="dotted", label="Obs. UER")
-
-        # Recessions shaded area (if provided)
+            ax.plot(res['DATE'], res['UER'], label=f'Sim. UER: {name}', color=colors[i % len(colors)])
+        ax.plot(macro_obs['DATE'], macro_obs['UER'], color="grey", linestyle="dotted", label="Obs. UER")
         if recessions is not None:
             for _, row in recessions.iterrows():
                 ax.axvspan(row['start'], row['end'], color='grey', alpha=0.2)
-
         ax.set_title(title)
         ax.set_xlabel("DATE")
-        ax.set_ylabel("Rate")
+        ax.set_ylabel("Unemployment Rate")
+        ax.legend()
+
+    def plot_vac(ax, models, title):
+        for i, (name, res) in enumerate(models.items()):
+            ax.plot(res['DATE'], res['VACRATE'], label=f'Sim. Vac Rate: {name}', color=colors[i % len(colors)])
+        ax.plot(macro_obs['DATE'], macro_obs['VACRATE'], color="grey", linestyle="dotted", label="Obs. VR")
+        if recessions is not None:
+            for _, row in recessions.iterrows():
+                ax.axvspan(row['start'], row['end'], color='grey', alpha=0.2)
+        ax.set_xlabel("DATE")
+        ax.set_ylabel("Vacancy Rate")
         ax.legend()
 
     if sep and sep_strings:
@@ -401,35 +403,103 @@ def plot_uer_vac(res_dict, macro_obs, recessions=None, sep_strings=None, sep=Fal
             titles["__unmatched__"] = "Other Models"
 
         num_plots = len(categorized)
-        fig, axes = plt.subplots(1, num_plots, figsize=(6 * num_plots, 5), sharey=True)
-
+        fig, axes = plt.subplots(2, num_plots, figsize=(6 * num_plots, 8), sharex='col')
         if num_plots == 1:
-            axes = [axes]
+            axes = np.array(axes).reshape(2, 1)
 
         for i, (match_str, models) in enumerate(categorized.items()):
-            plot_group(axes[i], models, titles[match_str])
+            plot_uer(axes[0, i], models, titles[match_str])
+            plot_vac(axes[1, i], models, titles[match_str])
 
         plt.tight_layout()
 
     else:
         # All in separate plots (grid layout)
         n = len(res_dict)
-        max_cols = 3
-        cols = min(n, max_cols)
-        rows = math.ceil(n / cols)
-
-        fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 4 * rows), squeeze=False)
-        axes = axes.flatten()
+        fig, axes = plt.subplots(2, n, figsize=(6 * n, 8), sharex='col')
+        if n == 1:
+            axes = np.array(axes).reshape(2, 1)
 
         for i, (name, res) in enumerate(res_dict.items()):
-            ax = axes[i]
-            plot_group(ax, {name: res}, name)
-
-        for j in range(i + 1, len(axes)):
-            fig.delaxes(axes[j])
+            plot_uer(axes[0, i], {name: res}, name)
+            plot_vac(axes[1, i], {name: res}, name)
 
         plt.tight_layout()
 
+    # Save or show
+    if save:
+        plt.savefig(f'{path}uer_vac.jpg', dpi=300)
+    plt.show()
+
+def plot_uer_vac_single_row(res_dict, macro_obs, recessions=None, sep_strings=None, sep=False, save=False, path=None):
+    colors = ["skyblue", "lightcoral", "purple", "green", "orange", "brown", "pink"]
+    def plot_uer(ax, models, title):
+        for i, (name, res) in enumerate(models.items()):
+            ax.plot(res['DATE'], res['UER'], label=f'Sim. UER: {name}', color=colors[i % len(colors)])
+        ax.plot(macro_obs['DATE'], macro_obs['UER'], color="blue", linestyle="dotted", label="Obs. UER")
+        if recessions is not None:
+            for _, row in recessions.iterrows():
+                ax.axvspan(row['start'], row['end'], color='grey', alpha=0.2)
+        ax.set_title(title)
+        ax.set_xlabel("DATE")
+        ax.set_ylabel("Unemployment Rate")
+        ax.legend()
+
+    def plot_vac(ax, models, title):
+        for i, (name, res) in enumerate(models.items()):
+            ax.plot(res['DATE'], res['VACRATE'], label=f'Sim. Vac Rate: {name}', color=colors[i % len(colors)])
+        ax.plot(macro_obs['DATE'], macro_obs['VACRATE'], color="red", linestyle="dotted", label="Obs. VR")
+        if recessions is not None:
+            for _, row in recessions.iterrows():
+                ax.axvspan(row['start'], row['end'], color='grey', alpha=0.2)
+        ax.set_xlabel("DATE")
+        ax.set_ylabel("Vacancy Rate")
+        ax.legend()
+
+    if sep and sep_strings:
+        # Step 1: Categorize
+        categorized = {match: {} for match, _ in sep_strings}
+        titles = {match: title for match, title in sep_strings}
+        unmatched = {}
+
+        for name, res in res_dict.items():
+            matched = False
+            for match_str, _ in sep_strings:
+                if match_str in name:
+                    categorized[match_str][name] = res
+                    matched = True
+                    break
+            if not matched:
+                unmatched[name] = res
+
+        # Add unmatched group
+        if unmatched:
+            categorized["__unmatched__"] = unmatched
+            titles["__unmatched__"] = "Other Models"
+
+        num_plots = len(categorized)
+        fig, axes = plt.subplots(2, num_plots, figsize=(6 * num_plots, 8), sharex='col')
+        if num_plots == 1:
+            axes = np.array(axes).reshape(2, 1)
+
+        for i, (match_str, models) in enumerate(categorized.items()):
+            plot_uer(axes[0, i], models, titles[match_str])
+            plot_vac(axes[1, i], models, titles[match_str])
+
+        plt.tight_layout()
+
+    else:
+        # All in separate plots (grid layout)
+        n = len(res_dict)
+        fig, axes = plt.subplots(2, n, figsize=(6 * n, 8), sharex='col')
+        if n == 1:
+            axes = np.array(axes).reshape(2, 1)
+
+        for i, (name, res) in enumerate(res_dict.items()):
+            plot_uer(axes[0, i], {name: res}, name)
+            plot_vac(axes[1, i], {name: res}, name)
+
+        plt.tight_layout()
 
     # Save or show
     if save:
