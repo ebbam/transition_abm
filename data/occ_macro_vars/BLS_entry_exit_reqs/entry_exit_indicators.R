@@ -1,4 +1,5 @@
 # Information about the education and experience requirements of specific occupations
+# Source : https://www.bls.gov/emp/tables/education-and-training-by-occupation.htm
 library(tidyverse)
 library(here)
 library(readxl)
