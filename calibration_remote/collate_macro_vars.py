@@ -403,7 +403,7 @@ plt.title("Occupation-Specific Shocks Over Time")
 plt.xticks(rotation=45)
 plt.grid()
 
-plt.savefig('output/figures/occ_shocks.png', dpi=300)
+#plt.savefig('output/figures/occ_shocks.png', dpi=300)
 
 
 occ_shocks_dat = np.array(df_monthly[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1])].transpose())
