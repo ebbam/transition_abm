@@ -1093,6 +1093,15 @@ def plot_occupation_uer_grid2(sim_results, observation, soc_labs, save=False, pa
             if row_idx == 0 and col_idx == 0:
                 ax1.legend()
 
+            # --- Best fit line for simulated data (UER) ---
+            # Only fit if there are at least 2 points and not all are nan
+            sim_vals_np = np.array(sim_vals)
+            valid = ~np.isnan(sim_vals_np)
+            if np.sum(valid) > 1:
+                fit = np.polyfit(np.array(x_ticks)[valid], sim_vals_np[valid], 1)
+                fit_line = np.polyval(fit, x_ticks)
+                ax1.plot(x_ticks, fit_line, color='blue', linestyle='--', alpha=0.7, label='Best fit (Sim.)')
+
             sorted_codes_ltuer = merged.sort_values(by=k_ltuer)[name_k].tolist()
             sim_vals_ltuer = merged.set_index(name_k).reindex(sorted_codes_ltuer)['LTUE Rate'].tolist()
             obs_vals_ltuer = merged.set_index(name_k).reindex(sorted_codes_ltuer)[k_ltuer].tolist()
