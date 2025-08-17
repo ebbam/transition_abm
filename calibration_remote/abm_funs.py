@@ -140,7 +140,7 @@ class worker:
                  # employed, 
                  longterm_unemp, 
                  # time_employed,
-                 time_unemployed, wage, hired, female, age, risk_av_score, ee_rel_wage, ue_rel_wage, applicants_sent):
+                 time_unemployed, wage, hired, female, age, risk_av_score, ee_rel_wage, ue_rel_wage, applicants_sent, d_wage_offer):
         # State-specific attributes:
         # Occupation id
         wrkr.occupation_id = occupation_id
@@ -164,6 +164,7 @@ class worker:
         wrkr.ee_rel_wage = ee_rel_wage
         wrkr.ue_rel_wage = ue_rel_wage
         wrkr.apps_sent = applicants_sent
+        wrkr.d_wage_offer = d_wage_offer
 
 
     def search_and_apply(wrkr, net, vacancies_by_occ, disc, bus_cy, alpha, app_effort):
@@ -172,7 +173,7 @@ class worker:
         neigh_probs = net[wrkr_occ].list_of_neigh_weights  # Already normalized
         occ_ids = list(range(len(neigh_probs)))
 
-        # Step 1: Build a flat list of vacancies and their weights
+        # Build a flat list of vacancies and their weights
         all_vacs = []
         weights = []
 
@@ -186,8 +187,9 @@ class worker:
             wrkr.apps_sent = 0
             return
 
-        # Step 2: Sample up to MAX_VACS vacancies directly
+        # Sample up to MAX_VACS vacancies directly
         found_vacs = random.choices(all_vacs, weights=weights, k=min(MAX_VACS, len(all_vacs)))
+        mean_wage = np.mean([v.wage for v in found_vacs]) if found_vacs else 0
 
         vsent = 0
 
@@ -221,6 +223,7 @@ class worker:
                 v.applicants.append(wrkr)
                 vsent += 1
 
+        wrkr.d_wage_offer = mean_wage-res_wage if disc else np.nan
         wrkr.apps_sent = vsent
 
     # def search_and_apply(wrkr, net, vacancies_by_occ, disc, bus_cy, alpha, app_effort):
@@ -334,6 +337,7 @@ class worker:
 
         # Step 2: Sample up to MAX_VACS vacancies directly
         found_vacs = random.choices(all_vacs, weights=weights, k=min(MAX_VACS, len(all_vacs)))
+        mean_wage = np.mean([v.wage for v in found_vacs]) if found_vacs else 0
 
         if disc:
             found_vacs = [v for v in found_vacs if v.wage >= wrkr.wage*1.05]
@@ -344,11 +348,12 @@ class worker:
         for r in vs:
             r.applicants.append(wrkr)
         wrkr.apps_sent = 0
+        wrkr.d_wage_offer = np.nan
             
 class occupation:
     def __init__(occ, occupation_id, list_of_employed, list_of_unemployed, 
                  list_of_neigh_bool, list_of_neigh_weights, current_demand, 
-                 target_demand, wage, separated, hired):
+                 target_demand, wage, separated, hired, entry_level_bool, experience_age):
         occ.occupation_id = occupation_id
         occ.list_of_employed = list_of_employed
         occ.list_of_unemployed = list_of_unemployed
@@ -359,6 +364,8 @@ class occupation:
         occ.wage = wage
         occ.separated = separated
         occ.hired = hired
+        occ.entry_level = entry_level_bool
+        occ.experience_age = experience_age
 
     def separate_workers(occ, delta_u, gam, bus_cy):
         if(len(occ.list_of_employed) != 0):
@@ -384,14 +391,19 @@ class occupation:
             w.ee_rel_wage = None
             w.hired = False
             w.apps_sent = 0
-            w.age += 0.25
+            w.age += 0.083
         for e in occ.list_of_employed:
             e.hired = False
             e.time_unemployed = 0
             e.ue_rel_wage = None
             e.ee_rel_wage = None
             e.apps_sent = 0
-            e.age += 0.25
+            e.age += 0.083
+
+    def retire_workers(occ):
+        """ Function to retire workers over the age of 65 """
+        occ.list_of_unemployed = [w for w in occ.list_of_unemployed if w.age <= 65]
+        occ.list_of_employed = [e for e in occ.list_of_employed if e.age <= 65]
     
     def entry_and_exit_fixed(occ, rate):
         """ Function to handle entry and exit of workers in the economy """
@@ -419,31 +431,27 @@ class occupation:
             nw.apps_sent = 0
             occ.list_of_unemployed.append(nw)
 
-    def entry_and_exit(occ, rate):
-        """ Function to handle entry and exit of workers in the economy """
-        # Take the top 2% of earners and assume they are new entrants
-        # Remove them from list_of_employed and move them to list_of_unemployed in the same occupation with the lowest wage in that occupation
+    def entry(occ, rate):
+        """ Function to handle entry of workers in the economy """
+        # If an entry-level occupation, add new workers to the employed list at a particular rate
         occ.list_of_employed.sort(key=lambda x: x.wage, reverse=True)
-        emp_no = len(occ.list_of_employed)
-        if emp_no == 0:
-            new_wage = occ.wage
-        else:
-            bottom_10 = max(1, int(emp_no * 0.05))
-            new_wage = np.mean([wrkr.wage for wrkr in occ.list_of_employed[-bottom_10:]])
-        n_new = int(emp_no * rate)
-        new_workers = occ.list_of_employed[:n_new]
-        occ.list_of_employed = occ.list_of_employed[n_new:]
+        if occ.entry_level:
+            emp_no = len(occ.list_of_employed)
+            if emp_no == 0:
+                new_wage = occ.wage*0.95
+                fem_share = 0.5
+            else:
+                bottom_10 = max(1, int(emp_no * 0.05))
+                new_wage = np.mean([wrkr.wage for wrkr in occ.list_of_employed[-bottom_10:]])
+                fem_share = np.mean([wrkr.female for wrkr in occ.list_of_employed])
 
-        # Add new workers to the unemployed list with a wage of 0 and time unemployed of 0
-        for nw in new_workers:
-            nw.longterm_unemp = False
-            nw.time_unemployed = 0
-            nw.wage = new_wage
-            nw.hired = False
-            nw.ue_rel_wage = None
-            nw.ee_rel_wage = None
-            nw.apps_sent = 0
-            occ.list_of_unemployed.append(nw)
+            # number of new entrants
+            for i in range(int(emp_no*rate)):
+                occ.list_of_employed.append(worker(occ.occupation_id, False, 0, new_wage, 
+                                                   False, 
+                                                   random.random() < fem_share, 
+                                                   occ.experience_age,
+                                                   abs(int(np.random.normal(7, 2))), 1, 1, 0, 0))
 
 
 class vac:
@@ -494,7 +502,7 @@ def bus_cycle_demand(d_0, time, amp, period):
 
 
 ### Function and condition to initialise network
-def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wages, gend_share, fem_ra, male_ra):
+def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wages, gend_share, fem_ra, male_ra, entry_level, experience_age):
     """ Makes a list of occupations with initial conditions
        Args:
            n_occ: number of occupations initialised (464)
@@ -504,6 +512,8 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
            demand_target: vector with (initial) target_demand for each occupation (never updated)
            A: adjacency matrix of network (not including auto-transition probability)
            wages: vector of wages of each occupation
+           entry_leve: boolean of whether it is an entry-level occupation
+           experience_age: minimum wage of entry (including education and minimum experience)
 
        Returns:
             occupations: list of occupations with above attributes
@@ -519,28 +529,32 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
             
         occ = occupation(i, [], [], list(A[i] > 0), list(A[i]),
                          (employment[i,0] + vacancies[i,0]), 
-                         demand_target[i,0], wages[i,0], 0, 0)
+                         demand_target[i,0], wages[i,0], 0, 0, entry_level[i], experience_age[i])
         # creating the workers of occupation i and attaching to occupation
         ## adding employed workers
         g_share = gend_share[i,0]
         for e in range(round(employment[i,0])):
             # Assume they have all at least 1 t.s. of employment
             if np.random.rand() <= g_share:
-                occ.list_of_employed.append(worker(occ.occupation_id, False, 1, wages[i,0], False, True, 18,
-                                               abs(int(np.random.normal(7,2))), 1, 1,0))
+                occ.list_of_employed.append(worker(occ.occupation_id, False, 1, wages[i,0], False, True, np.random.uniform(low=experience_age[i], high = 65),
+                                               abs(int(np.random.normal(fem_ra,2))), 1, 1,0,0))
             else:
-                occ.list_of_employed.append(worker(occ.occupation_id, False, 1, wages[i,0], False, False, 18,
-                                               abs(int(np.random.normal(3,2))), 1, 1,0))
+                occ.list_of_employed.append(worker(occ.occupation_id, False, 1, wages[i,0], False, False, np.random.uniform(experience_age[i], high = 65),
+                                               abs(int(np.random.normal(male_ra,2))), 1, 1,0,0))
             ## adding unemployed workers
         for u in range(round(unemployment[i,0])):
             if np.random.rand() <= g_share:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
-                                                     np.random.normal(wages[i,0], 0.05* wages[i,0]), False, True, 18, abs(int(np.random.normal(fem_ra,0.1))), 1, 1, 1))
+                                                     np.random.normal(wages[i,0], 0.05* wages[i,0]), False, True, 
+                                                     np.random.uniform(experience_age[i], high = 65), 
+                                                     abs(int(np.random.normal(fem_ra,0.1))), 1, 1, 1, 0))
             else:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
-                                                     np.random.normal(wages[i,0], 0.05* wages[i,0]), False, False, 18, abs(int(np.random.normal(male_ra,0.1))), 1, 1, 1))
+                                                     np.random.normal(wages[i,0], 0.05* wages[i,0]), False, False, 
+                                                     np.random.uniform(experience_age[i], high = 65), 
+                                                     abs(int(np.random.normal(male_ra,0.1))), 1, 1, 1, 0))
 
 
         occs.append(occ)
@@ -548,5 +562,3 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
     return occs, vac_list
 
 
-
-    
