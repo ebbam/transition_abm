@@ -12,10 +12,10 @@ editor_options:
     wrap: 72
 ---
 
-# Overview {.tabset}
+# Overview: Calibrating Behavioural Mechanisms {.tabset}
 
 The following document summarises current progress on identifying data
-sources to inform the job search behaviour in our labour market ABM.
+sources to inform the job search behaviour in our labour market ABM.\textcolor{red}{Once the main text is ready, I will go through and "formalise" the tone of this section and include greater detail about the data and methods.}
 
 **Goals:**
 
@@ -62,7 +62,6 @@ conflicts_prefer(patchwork::area)
 
 ```
 
-# Calibrating Behavioural Mechanisms
 
 **Data we have decided to keep:**
 
@@ -89,12 +88,12 @@ conflicts_prefer(patchwork::area)
     Bias**](https://www.aeaweb.org/articles?id=10.1257/aer.20190808)           
 
 **Additional analyses that we have decided to exclude as data inputs due
-to lack of relevance or poor data quality are in the "Discarded
+to lack of relevance or poor data quality are in the "Additional
 Analyses" tab.**
 
-## Applications Sent {.tabset}
+# Application Effort and Learning Dynamics: Applications Sent {.tabset}
 
-### (Calibration) Current Population Survey - 2018 & 2020 Supplement
+## (Calibration) Current Population Survey - 2018 & 2020 Supplement
 
 This 2020 ["Beyond the Numbers"
 issue](https://www.bls.gov/opub/btn/volume-9/how-do-jobseekers-search-for-jobs.htm#_edn5)
@@ -127,7 +126,7 @@ are found in the next section.
     increase as a function of the number of applications sent, until a
     certain point.
 
-```{r, echo = FALSE, include = TRUE, cache = TRUE}
+```{r, echo = FALSE, include = TRUE, cache = TRUE, echo = FALSE, messages = FALSE, warning=FALSE}
 source(here('data/ATUS/cps_2018_supplement.R'))
 
 names(file_tables) <- table_titles
@@ -311,7 +310,7 @@ Below, I display the results of an exploration of the probability of
 reporting a specific number of applications sent (in the bins as in the
 survey question above) using various specifications of an ordinal
 logistic regression. I test specifications varying three different
-model parameters: 
+model parameters:           
 1. link function                 
 2. linear vs. quadratic unemploymentduration,              
 3. with and without demographic control variables (education,
@@ -319,7 +318,7 @@ gender, age, family income - race excluded because of lack of
 statistical significance though this can be revisited.)              
 
 We estimate an ordinal logistic regression model for reported applications sent
-$Y_i in {0, 1, 2, 3, 4}$ testing four different link
+$Y_i$ in ${0, 1, 2, 3, 4}$ testing four different link
 functions: the complementary log-log (cloglog),
 logistic, log-log, and probit link functions.
 Let $X_i^\top \beta$ denote the predictor variable. The cumulative
@@ -347,10 +346,10 @@ $X_i = \left( \text{Unemp.Dur.}_i, \text{Unemp.Dur.}_i^2 \right)$
 with and without control variables (education, gender, age, family income).
 
 Assumptions about the probability distribution of the errors associated with each link function:              
-- *Logit:* good when the response behavior is symmetric around the middle category.             
-- *Probit:* When you’re assuming a normal latent error distribution or want closer fit to Gaussian processes.             
-- *Complementary log-log:* When the likelihood of being in a higher category increases sharply but asymmetrically, or you expect hazard-like dynamics.             
-- *Log-log:* When early categories are of more importance and need sharper separation.             
+- *Logit:* Useful when responses are evenly distributed across categories.             
+- *Probit:* Useful when latent variable is assumed to be normally distributed.       
+- *Complementary log-log:* Useful when higher categories are more probable.           
+- *Log-log:* When early categories are of more importance or more probable.          
 
 *Preliminary hypothesis:* Best fit will be with a complementary log-log as we care more about distinguishing between lower-level bins and there are few observations in the highest-level bins. 
 
@@ -615,33 +614,52 @@ p_all
 
 ```
 
-### (Validation) Mukoyama et al. Job Search and the Business Cycle
+## (Validation) Mukoyama et al. Job Search and the Business Cycle
 
-[Mukoyama: Job Search Over the Business
-Cycle](https://www.aeaweb.org/articles?id=10.1257/mac.20160202)
+We use evidence from Mukoyama et al regarding the cyclicality of unemployed job search effort to validate the micro behaviour of our agents. I will provide more explanation on this...
 
-```{r, echo = FALSE, fig.height = 8, fig.width = 10, cache = TRUE}
+
+(Replicated with additional data for unemployed jobseekers)
+    [**Mukoyama et al. 2018: Job Search Over the Business
+    Cycle**](https://www.aeaweb.org/articles?id=10.1257/mac.20160202)
+
+*They provide a novel measure of job search effort exploiting the
+American Time Use and Current Population Surveys which can be reduced to
+just the intensive margin (changes in search effort by worker!). At the
+moment, I think this will be the most useful input for our model.*
+
+*Abstract: We examine the cyclicality of search effort using
+time-series, cross-state, and individual variation and find that it is
+countercyclical. We then set up a search and matching model with
+endogenous search effort and show that search effort does not amplify
+labor market fluctuations but rather dampens them. Lastly, we examine
+the role of search effort in driving recent unemployment dynamics and
+show that the unemployment rate would have been 0.5 to 1 percentage
+points higher in the 2008–2014 period had search effort not increased.*
+
+
+```{r, echo = FALSE, fig.height = 8, fig.width = 10, cache = FALSE}
 
 source(here("data/behav_params/Mukoyama_Replication/mukoyama_replication_analysis.R"))
 
 ```
 
 
-## Reservation Wage Adjustment
+# Wage Expectations and Satisficing: Reservation Wage Adjustment 
 
 ```{r, child = "cps_displaced_worker_supplement/cps_disc_worker_vignette.Rmd"}
 ```
 
-## OTJ Search
+# OTJ Search
 
-### Eeckhout et al. 2019 Unemployment Cycles
+## Eeckhout et al. 2019 Unemployment Cycles
 
 [Source](https://www.aeaweb.org/articles?id=10.1257/mac.20180105)
 
 ![Employed Search Effort Fit](Eeckhout_Replication/emp_search_effort.png)
 
 
-```{r, echo = FALSE, fig.height = 8, fig.width = 10, cache = TRUE}
+```{r, echo = FALSE, fig.height = 8, fig.width = 10, cache = FALSE, results = 'asis'}
 
 source(here('data/behav_params/Eeckhout_Replication/eeckhout_extended_replication.R'))
 
@@ -669,7 +687,7 @@ We aim to include this information in our theoretical model of the job
 search effort as a learning rate (ie. individuals learn about their
 re-employment probability with repeated failures in the job search).
 
-```{r, echo = FALSE, fig.height = 8, fig.width = 10, cache = TRUE}
+```{r, echo = FALSE, fig.height = 8, fig.width = 10, cache = FALSE, results = 'asis'}
 
 source(here("data/behav_params/Mueller_Replication/mueller_repl_analysis_extended_samples.R"))
 
@@ -679,37 +697,20 @@ source(here("data/behav_params/Mueller_Replication/mueller_repl_analysis_extende
 
 <!-- I first focus on replicating and extending the empirical analysis that speaks to the three determinants above (dynamic selection, duration dependence, search effort) -->
 
-1.  (Replicated with additional data for unemployed jobseekers)
-    [**Mukoyama et al. 2018: Job Search Over the Business
-    Cycle**](https://www.aeaweb.org/articles?id=10.1257/mac.20160202)
+<!-- 3. (Forthcoming) **[Kroft et al. 2016: Long-Term Unemployment and the Great Recession: The Role of Composition, Duration Dependence, and Nonparticipation](https://www.jstor.org/stable/26588430)** -->
 
-*They provide a novel measure of job search effort exploiting the
-American Time Use and Current Population Surveys which can be reduced to
-just the intensive margin (changes in search effort by worker!). At the
-moment, I think this will be the most useful input for our model.*
+<!-- *Abstract: We explore the role of composition, duration dependence, and labor force nonparticipation in accounting for the sharp increase in the incidence of long-term unemployment (LTU) during the Great Recession. We show that compositional shifts account for very little of the observed increase in LTU. Using panel data from the Current Population Survey for 2002–7, we calibrate a matching model that allows for duration dependence in unemployment and transitions between employment, unemployment, and nonpartici- pation. The calibrated model accounts for almost all of the increase in LTU and much of the observed outward shift in the Beveridge curve between 2008 and 2013.* -->
 
-*Abstract: We examine the cyclicality of search effort using
-time-series, cross-state, and individual variation and find that it is
-countercyclical. We then set up a search and matching model with
-endogenous search effort and show that search effort does not amplify
-labor market fluctuations but rather dampens them. Lastly, we examine
-the role of search effort in driving recent unemployment dynamics and
-show that the unemployment rate would have been 0.5 to 1 percentage
-points higher in the 2008–2014 period had search effort not increased.*
+### SCE Labor Market Survey: Reservation Wages
 
-4.  **Survey of Consumer Expectations Reservation Wages, Accepted Wages,
+
+**Survey of Consumer Expectations Reservation Wages, Accepted Wages,
     and Wage Expectations** The data is unfortunately sparse and linking
     outcomes to reservation wages is difficult. However, in a
     cross-sectional setting we are able to deduce some weak
     relationships between Unemployment Duration and Absolute Reservation
     Wages and Wage Expectations.\*
-
-<!-- 3. (Forthcoming) **[Kroft et al. 2016: Long-Term Unemployment and the Great Recession: The Role of Composition, Duration Dependence, and Nonparticipation](https://www.jstor.org/stable/26588430)** -->
-
-<!-- *Abstract: We explore the role of composition, duration dependence, and labor force nonparticipation in accounting for the sharp increase in the incidence of long-term unemployment (LTU) during the Great Recession. We show that compositional shifts account for very little of the observed increase in LTU. Using panel data from the Current Population Survey for 2002–7, we calibrate a matching model that allows for duration dependence in unemployment and transitions between employment, unemployment, and nonpartici- pation. The calibrated model accounts for almost all of the increase in LTU and much of the observed outward shift in the Beveridge curve between 2008 and 2013.* -->
-
-### Reservation Wages
-
+    
 Exploring the effect of unemployment duration on reservation wages,
 accepted wages, and expected wage offers.
 
@@ -736,7 +737,7 @@ source(here("data/behav_params/SCE Labour Market Survey/sce_res_wage_analysis.R"
 
 <!-- ## Own work on microdata... {.tabset} -->
 
-### Survey on Consumer Expectations - Job Search Supplement
+### SCE Job Search Supplement: 
 
 The Federal Reserve Bank of New York compiles the nationally
 representative Survey on Consumer Expectations annually in October.

@@ -139,15 +139,17 @@
 
 \title{Data Scoping: Job Search Behaviour}
 \author{Ebba Mark}
-\date{2025-07-30}
+\date{2025-08-18}
 
 \begin{document}
 \maketitle
 
-\section{Overview}\label{overview}
+\section{Overview: Calibrating Behavioural
+Mechanisms}\label{overview-calibrating-behavioural-mechanisms}
 
 The following document summarises current progress on identifying data
-sources to inform the job search behaviour in our labour market ABM.
+sources to inform the job search behaviour in our labour market
+ABM.\textcolor{red}{Once the main text is ready, I will go through and "formalise" the tone of this section and include greater detail about the data and methods.}
 
 \textbf{Goals:}
 
@@ -167,9 +169,6 @@ We have narrowed the list of behavioural adjustments to the following:\\
 - \textbf{Risk Aversion}: For now this is randomised to ensure variation
 in vacancy targeting by similar workers. This is not yet supported by
 data.
-
-\section{Calibrating Behavioural
-Mechanisms}\label{calibrating-behavioural-mechanisms}
 
 \textbf{Data we have decided to keep:}
 
@@ -207,11 +206,12 @@ Mechanisms}\label{calibrating-behavioural-mechanisms}
 
 \textbf{Additional analyses that we have decided to exclude as data
 inputs due to lack of relevance or poor data quality are in the
-``Discarded Analyses'' tab.}
+``Additional Analyses'' tab.}
 
-\subsection{Applications Sent}\label{applications-sent}
+\section{Application Effort and Learning Dynamics: Applications
+Sent}\label{application-effort-and-learning-dynamics-applications-sent}
 
-\subsubsection{(Calibration) Current Population Survey - 2018 \& 2020
+\subsection{(Calibration) Current Population Survey - 2018 \& 2020
 Supplement}\label{calibration-current-population-survey---2018-2020-supplement}
 
 This 2020
@@ -292,16 +292,17 @@ Below, I display the results of an exploration of the probability of
 reporting a specific number of applications sent (in the bins as in the
 survey question above) using various specifications of an ordinal
 logistic regression. I test specifications varying three different model
-parameters: 1. link function\\
+parameters:\\
+1. link function\\
 2. linear vs.~quadratic unemploymentduration,\\
 3. with and without demographic control variables (education, gender,
 age, family income - race excluded because of lack of statistical
 significance though this can be revisited.)
 
 We estimate an ordinal logistic regression model for reported
-applications sent \(Y_i in {0, 1, 2, 3, 4}\) testing four different link
-functions: the complementary log-log (cloglog), logistic, log-log, and
-probit link functions. Let \(X_i^\top \beta\) denote the predictor
+applications sent \(Y_i\) in \({0, 1, 2, 3, 4}\) testing four different
+link functions: the complementary log-log (cloglog), logistic, log-log,
+and probit link functions. Let \(X_i^\top \beta\) denote the predictor
 variable. The cumulative probability of observing response category
 \(j\) or below, \(\Pr(Y_i \leq j \mid X_i)\), is modeled as follows for
 each link function:
@@ -329,15 +330,14 @@ income).
 
 Assumptions about the probability distribution of the errors associated
 with each link function:\\
-- \emph{Logit:} good when the response behavior is symmetric around the
-middle category.\\
-- \emph{Probit:} When you're assuming a normal latent error distribution
-or want closer fit to Gaussian processes.\\
-- \emph{Complementary log-log:} When the likelihood of being in a higher
-category increases sharply but asymmetrically, or you expect hazard-like
-dynamics.\\
-- \emph{Log-log:} When early categories are of more importance and need
-sharper separation.
+- \emph{Logit:} Useful when responses are evenly distributed across
+categories.\\
+- \emph{Probit:} Useful when latent variable is assumed to be normally
+distributed.\\
+- \emph{Complementary log-log:} Useful when higher categories are more
+probable.\\
+- \emph{Log-log:} When early categories are of more importance or more
+probable.
 
 \emph{Preliminary hypothesis:} Best fit will be with a complementary
 log-log as we care more about distinguishing between lower-level bins
@@ -387,19 +387,38 @@ across all specifications at the 0.1\% level.
 
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-5-1.pdf}}
 
-\subsubsection{(Validation) Mukoyama et al.~Job Search and the Business
+\subsection{(Validation) Mukoyama et al.~Job Search and the Business
 Cycle}\label{validation-mukoyama-et-al.-job-search-and-the-business-cycle}
 
-\href{https://www.aeaweb.org/articles?id=10.1257/mac.20160202}{Mukoyama:
-Job Search Over the Business Cycle}
+We use evidence from Mukoyama et al regarding the cyclicality of
+unemployed job search effort to validate the micro behaviour of our
+agents. I will provide more explanation on this\ldots{}
+
+(Replicated with additional data for unemployed jobseekers)
+\href{https://www.aeaweb.org/articles?id=10.1257/mac.20160202}{\textbf{Mukoyama
+et al.~2018: Job Search Over the Business Cycle}}
+
+\emph{They provide a novel measure of job search effort exploiting the
+American Time Use and Current Population Surveys which can be reduced to
+just the intensive margin (changes in search effort by worker!). At the
+moment, I think this will be the most useful input for our model.}
+
+\emph{Abstract: We examine the cyclicality of search effort using
+time-series, cross-state, and individual variation and find that it is
+countercyclical. We then set up a search and matching model with
+endogenous search effort and show that search effort does not amplify
+labor market fluctuations but rather dampens them. Lastly, we examine
+the role of search effort in driving recent unemployment dynamics and
+show that the unemployment rate would have been 0.5 to 1 percentage
+points higher in the 2008--2014 period had search effort not increased.}
 
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-6-1.pdf}}
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-6-2.pdf}}
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-6-3.pdf}}
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-6-4.pdf}}
 
-\subsection{Reservation Wage
-Adjustment}\label{reservation-wage-adjustment}
+\section{Wage Expectations and Satisficing: Reservation Wage
+Adjustment}\label{wage-expectations-and-satisficing-reservation-wage-adjustment}
 
 As part of the Current Population Survey, the US Census Bureau conducts
 an annuaol
@@ -1135,9 +1154,9 @@ have to do for now.
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-46-1} \end{center}
 
-\subsection{OTJ Search}\label{otj-search}
+\section{OTJ Search}\label{otj-search}
 
-\subsubsection{Eeckhout et al.~2019 Unemployment
+\subsection{Eeckhout et al.~2019 Unemployment
 Cycles}\label{eeckhout-et-al.-2019-unemployment-cycles}
 
 \href{https://www.aeaweb.org/articles?id=10.1257/mac.20180105}{Source}
@@ -1148,84 +1167,37 @@ Cycles}\label{eeckhout-et-al.-2019-unemployment-cycles}
 \caption{Employed Search Effort Fit}
 \end{figure}
 
-\begin{verbatim}
-##  [1] 0.2000000 0.2315789 0.2631579 0.2947368 0.3263158 0.3578947 0.3894737
-##  [8] 0.4210526 0.4526316 0.4842105 0.5157895 0.5473684 0.5789474 0.6105263
-## [15] 0.6421053 0.6736842 0.7052632 0.7368421 0.7684211 0.8000000
-##  [1] 0.2000000 0.2315789 0.2631579 0.2947368 0.3263158 0.3578947 0.3894737
-##  [8] 0.4210526 0.4526316 0.4842105 0.5157895 0.5473684 0.5789474 0.6105263
-## [15] 0.6421053 0.6736842 0.7052632 0.7368421 0.7684211 0.8000000
-\end{verbatim}
-
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-8-1} \end{center}
+
+\begin{table}
+\centering
+\begin{tabular}[t]{lccc}
+\toprule
+  & Linear & Linear with Trend & HP Filter\\
+\midrule
+(Intercept) & \num{-0.174}*** & \num{-0.053}** & \num{-0.049}***\\
+ & (\num{0.035}) & (\num{0.018}) & (\num{0.008})\\
+x & \num{0.233}*** & \num{0.129}*** & \num{0.049}***\\
+ & (\num{0.035}) & (\num{0.017}) & (\num{0.008})\\
+trend &  & \num{-0.000}*** & \\
+ &  & (\num{0.000}) & \\
+\midrule
+Num.Obs. & \num{95} & \num{95} & \num{95}\\
+R2 & \num{0.323} & \num{0.854} & \num{0.282}\\
+R2 Adj. & \num{0.315} & \num{0.851} & \num{0.275}\\
+AIC & \num{-594.7} & \num{-738.3} & \num{-872.6}\\
+BIC & \num{-587.0} & \num{-728.1} & \num{-865.0}\\
+Log.Lik. & \num{300.334} & \num{373.173} & \num{439.307}\\
+F & \num{44.309} & \num{268.734} & \num{36.593}\\
+RMSE & \num{0.01} & \num{0.00} & \num{0.00}\\
+\bottomrule
+\multicolumn{4}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}
+\end{table}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-8-2} \end{center}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-8-3} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-8-4} \end{center}
-
-\begin{verbatim}
-## 
-## Call:
-## lm(formula = as.formula(forms[which(names(forms) == form)]))
-## 
-## Residuals:
-##       Min        1Q    Median        3Q       Max 
-## -0.014882 -0.006066 -0.003639  0.007309  0.026123 
-## 
-## Coefficients:
-##             Estimate Std. Error t value Pr(>|t|)    
-## (Intercept) -0.17447    0.03519  -4.958 3.19e-06 ***
-## x            0.23294    0.03499   6.656 1.93e-09 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 0.01036 on 93 degrees of freedom
-## Multiple R-squared:  0.3227, Adjusted R-squared:  0.3154 
-## F-statistic: 44.31 on 1 and 93 DF,  p-value: 1.925e-09
-## 
-## 
-## Call:
-## lm(formula = as.formula(forms[which(names(forms) == form)]))
-## 
-## Residuals:
-##        Min         1Q     Median         3Q        Max 
-## -0.0102059 -0.0031620 -0.0001317  0.0039334  0.0079867 
-## 
-## Coefficients:
-##               Estimate Std. Error t value Pr(>|t|)    
-## (Intercept) -5.268e-02  1.773e-02  -2.970  0.00379 ** 
-## x            1.285e-01  1.731e-02   7.423 5.61e-11 ***
-## trend       -3.507e-04  1.918e-05 -18.285  < 2e-16 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 0.004839 on 92 degrees of freedom
-## Multiple R-squared:  0.8538, Adjusted R-squared:  0.8507 
-## F-statistic: 268.7 on 2 and 92 DF,  p-value: < 2.2e-16
-## 
-## 
-## Call:
-## lm(formula = as.formula(forms[which(names(forms) == form)]))
-## 
-## Residuals:
-##        Min         1Q     Median         3Q        Max 
-## -0.0068610 -0.0016116  0.0001739  0.0018603  0.0046844 
-## 
-## Coefficients:
-##              Estimate Std. Error t value Pr(>|t|)    
-## (Intercept) -0.049270   0.008149  -6.046 3.05e-08 ***
-## x            0.049021   0.008104   6.049 3.02e-08 ***
-## ---
-## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-## 
-## Residual standard error: 0.002399 on 93 degrees of freedom
-## Multiple R-squared:  0.2824, Adjusted R-squared:  0.2747 
-## F-statistic: 36.59 on 1 and 93 DF,  p-value: 3.018e-08
-\end{verbatim}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-8-5} \end{center}
 
 \subsection{Learning Rate}\label{learning-rate}
 
@@ -1255,197 +1227,194 @@ We aim to include this information in our theoretical model of the job
 search effort as a learning rate (ie. individuals learn about their
 re-employment probability with repeated failures in the job search).
 
-\begin{verbatim}
-## 
-## Descriptive Statistics (SCE)
-## ===============================================================
-## Variable                          Orig. 2013-19 2013-24 2020-24
-## ---------------------------------------------------------------
-## High-School Degree or Less            44.5       40.6    36.9  
-## Some College Education                32.4       34.9    37.6  
-## College Degree or More                23.1       24.6    25.6  
-## Age 20-34                             25.4       27.2    30.0  
-## Age 35-49                             33.5       33.6    35.3  
-## Age 50-65                             41.1       39.2    34.8  
-## Female                                59.3       61.2    60.8  
-## Black                                 19.1       17.9    16.4  
-## Hispanic                              12.5       13.0    12.6  
-## UE transition rate                    18.7       19.1    18.2  
-## UE transition rate: ST                25.8       26.5    24.3  
-## UE transition rate: LT                12.7       12.7    12.3  
-## # respondents                          948       1,367    433  
-## # respondents w/ at least 2 u obs      534        780     252  
-## # observations                        2,597      3,926   1,347 
-## ---------------------------------------------------------------
-\end{verbatim}
+\% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Aug
+18, 2025 - 10:53:12
+
+\begin{table}[!htbp] \centering 
+  \caption{Descriptive Statistics (SCE)} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}} cccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+Variable & Orig. 2013-19 & 2013-24 & 2020-24 \\ 
+\hline \\[-1.8ex] 
+High-School Degree or Less & $44.5$ & $40.6$ & $36.9$ \\ 
+Some College Education & $32.4$ & $34.9$ & $37.6$ \\ 
+College Degree or More & $23.1$ & $24.6$ & $25.6$ \\ 
+Age 20-34 & $25.4$ & $27.2$ & $30.0$ \\ 
+Age 35-49 & $33.5$ & $33.6$ & $35.3$ \\ 
+Age 50-65 & $41.1$ & $39.2$ & $34.8$ \\ 
+Female & $59.3$ & $61.2$ & $60.8$ \\ 
+Black & $19.1$ & $17.9$ & $16.4$ \\ 
+Hispanic & $12.5$ & $13.0$ & $12.6$ \\ 
+UE transition rate & $18.7$ & $19.1$ & $18.2$ \\ 
+UE transition rate: ST & $25.8$ & $26.5$ & $24.3$ \\ 
+UE transition rate: LT & $12.7$ & $12.7$ & $12.3$ \\ 
+\# respondents & $948$ & $1,367$ & $433$ \\ 
+\# respondents w/ at least 2 u obs & $534$ & $780$ & $252$ \\ 
+\# observations & $2,597$ & $3,926$ & $1,347$ \\ 
+\hline \\[-1.8ex] 
+\end{tabular} 
+\end{table}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-1} \end{center}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-2} \end{center}
 
-\begin{verbatim}
-## [1] "Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE)"
-## [1] "Panel A. Contemporaneous elicitations"
-\end{verbatim}
+\% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Aug
+18, 2025 - 10:53:13
 
-\begin{verbatim}
-## 
-## ========================================================================
-##                                     Dependent variable:                 
-##                     ----------------------------------------------------
-##                                T+3 UE Transitions (3-Months)            
-##                       Orig. 2013-19        2013-24          2020-24     
-##                            (1)               (2)              (3)       
-## ------------------------------------------------------------------------
-## find_job_3mon           0.464***          0.396***          0.265***    
-##                          (0.045)           (0.036)          (0.067)     
-##                                                                         
-## 1 | userid                                                              
-##                                                                         
-##                                                                         
-## Constant                 -0.104            -0.080            -0.136     
-##                          (0.169)           (0.137)          (0.267)     
-##                                                                         
-## ------------------------------------------------------------------------
-## Observations              1,201             1,911             673       
-## R2                        0.218             0.139            0.105      
-## Adjusted R2               0.207             0.132            0.083      
-## Residual Std. Error 0.467 (df = 1184) 0.475 (df = 1894) 0.478 (df = 656)
-## ========================================================================
-## Note:                                        *p<0.1; **p<0.05; ***p<0.01
-\end{verbatim}
+\begin{table}[!htbp] \centering 
+  \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-4} 
+\\[-1.8ex] & \multicolumn{3}{c}{T+3 UE Transitions (3-Months)} \\ 
+ & Orig. 2013-19 & 2013-24 & 2020-24 \\ 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
+\hline \\[-1.8ex] 
+ find\_job\_3mon & 0.464$^{***}$ & 0.396$^{***}$ & 0.265$^{***}$ \\ 
+  & (0.045) & (0.036) & (0.067) \\ 
+  & & & \\ 
+ 1 \textbar  userid &  &  &  \\ 
+  &  &  &  \\ 
+  & & & \\ 
+ Constant & $-$0.104 & $-$0.080 & $-$0.136 \\ 
+  & (0.169) & (0.137) & (0.267) \\ 
+  & & & \\ 
+\hline \\[-1.8ex] 
+Observations & 1,201 & 1,911 & 673 \\ 
+R$^{2}$ & 0.218 & 0.139 & 0.105 \\ 
+Adjusted R$^{2}$ & 0.207 & 0.132 & 0.083 \\ 
+Residual Std. Error & 0.467 (df = 1184) & 0.475 (df = 1894) & 0.478 (df = 656) \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{3}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table}
 
-\begin{verbatim}
-## 
-## ==========================================================================
-##                                       Dependent variable:                 
-##                       ----------------------------------------------------
-##                                  T+3 UE Transitions (3-Months)            
-##                         Orig. 2013-19        2013-24          2020-24     
-##                              (1)               (2)              (3)       
-## --------------------------------------------------------------------------
-## find_job_3mon             0.501***          0.418***          0.391***    
-##                            (0.061)           (0.051)          (0.094)     
-##                                                                           
-## findjob_3mon_longterm     -0.258***         -0.170**         -0.360***    
-##                            (0.088)           (0.071)          (0.133)     
-##                                                                           
-## longterm_unemployed        -0.078           -0.127***          -0.043     
-##                            (0.051)           (0.041)          (0.075)     
-##                                                                           
-## 1 | userid                                                                
-##                                                                           
-##                                                                           
-## Constant                   -0.062            -0.063            -0.402     
-##                            (0.175)           (0.139)          (0.266)     
-##                                                                           
-## --------------------------------------------------------------------------
-## Observations                1,201             1,911             673       
-## R2                          0.259             0.182            0.155      
-## Adjusted R2                 0.248             0.174            0.132      
-## Residual Std. Error   0.455 (df = 1182) 0.464 (df = 1892) 0.465 (df = 654)
-## ==========================================================================
-## Note:                                          *p<0.1; **p<0.05; ***p<0.01
-## [1] "Panel B. Lagged elicitations"
-\end{verbatim}
+\% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Aug
+18, 2025 - 10:53:13
 
-\begin{verbatim}
-## 
-## ======================================================================
-##                                    Dependent variable:                
-##                     --------------------------------------------------
-##                               T+3 UE Transitions (3-Months)           
-##                      Orig. 2013-19       2013-24          2020-24     
-##                           (1)              (2)              (3)       
-## ----------------------------------------------------------------------
-## tplus3_percep_3mon      0.332***         0.241***         0.203**     
-##                         (0.067)          (0.056)          (0.102)     
-##                                                                       
-## 1 | userid                                                            
-##                                                                       
-##                                                                       
-## Constant                 0.304           0.490**           0.451      
-##                         (0.270)          (0.207)          (0.394)     
-##                                                                       
-## ----------------------------------------------------------------------
-## Observations              474              798              300       
-## R2                       0.168            0.090            0.179      
-## Adjusted R2              0.139            0.071            0.132      
-## Residual Std. Error 0.398 (df = 457) 0.436 (df = 781) 0.447 (df = 283)
-## ======================================================================
-## Note:                                      *p<0.1; **p<0.05; ***p<0.01
-\end{verbatim}
+\begin{table}[!htbp] \centering 
+  \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-4} 
+\\[-1.8ex] & \multicolumn{3}{c}{T+3 UE Transitions (3-Months)} \\ 
+ & Orig. 2013-19 & 2013-24 & 2020-24 \\ 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
+\hline \\[-1.8ex] 
+ find\_job\_3mon & 0.501$^{***}$ & 0.418$^{***}$ & 0.391$^{***}$ \\ 
+  & (0.061) & (0.051) & (0.094) \\ 
+  & & & \\ 
+ findjob\_3mon\_longterm & $-$0.258$^{***}$ & $-$0.170$^{**}$ & $-$0.360$^{***}$ \\ 
+  & (0.088) & (0.071) & (0.133) \\ 
+  & & & \\ 
+ longterm\_unemployed & $-$0.078 & $-$0.127$^{***}$ & $-$0.043 \\ 
+  & (0.051) & (0.041) & (0.075) \\ 
+  & & & \\ 
+ 1 \textbar  userid &  &  &  \\ 
+  &  &  &  \\ 
+  & & & \\ 
+ Constant & $-$0.062 & $-$0.063 & $-$0.402 \\ 
+  & (0.175) & (0.139) & (0.266) \\ 
+  & & & \\ 
+\hline \\[-1.8ex] 
+Observations & 1,201 & 1,911 & 673 \\ 
+R$^{2}$ & 0.259 & 0.182 & 0.155 \\ 
+Adjusted R$^{2}$ & 0.248 & 0.174 & 0.132 \\ 
+Residual Std. Error & 0.455 (df = 1182) & 0.464 (df = 1892) & 0.465 (df = 654) \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{3}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table}
 
-\begin{verbatim}
-## 
-## ======================================================================
-##                                    Dependent variable:                
-##                     --------------------------------------------------
-##                               T+3 UE Transitions (3-Months)           
-##                      Orig. 2013-19       2013-24          2020-24     
-##                           (1)              (2)              (3)       
-## ----------------------------------------------------------------------
-## find_job_3mon           0.301***         0.205***          -0.035     
-##                         (0.069)          (0.058)          (0.110)     
-##                                                                       
-## 1 | userid                                                            
-##                                                                       
-##                                                                       
-## Constant                 0.201           0.422**           0.361      
-##                         (0.274)          (0.207)          (0.400)     
-##                                                                       
-## ----------------------------------------------------------------------
-## Observations              474              798              300       
-## R2                       0.159            0.083            0.168      
-## Adjusted R2              0.129            0.064            0.121      
-## Residual Std. Error 0.400 (df = 457) 0.437 (df = 781) 0.450 (df = 283)
-## ======================================================================
-## Note:                                      *p<0.1; **p<0.05; ***p<0.01
-\end{verbatim}
+\% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Aug
+18, 2025 - 10:53:13
+
+\begin{table}[!htbp] \centering 
+  \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-4} 
+\\[-1.8ex] & \multicolumn{3}{c}{T+3 UE Transitions (3-Months)} \\ 
+ & Orig. 2013-19 & 2013-24 & 2020-24 \\ 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
+\hline \\[-1.8ex] 
+ tplus3\_percep\_3mon & 0.332$^{***}$ & 0.241$^{***}$ & 0.203$^{**}$ \\ 
+  & (0.067) & (0.056) & (0.102) \\ 
+  & & & \\ 
+ 1 \textbar  userid &  &  &  \\ 
+  &  &  &  \\ 
+  & & & \\ 
+ Constant & 0.304 & 0.490$^{**}$ & 0.451 \\ 
+  & (0.270) & (0.207) & (0.394) \\ 
+  & & & \\ 
+\hline \\[-1.8ex] 
+Observations & 474 & 798 & 300 \\ 
+R$^{2}$ & 0.168 & 0.090 & 0.179 \\ 
+Adjusted R$^{2}$ & 0.139 & 0.071 & 0.132 \\ 
+Residual Std. Error & 0.398 (df = 457) & 0.436 (df = 781) & 0.447 (df = 283) \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{3}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table}
+
+\% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Aug
+18, 2025 - 10:53:13
+
+\begin{table}[!htbp] \centering 
+  \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
+  \label{} 
+\begin{tabular}{@{\extracolsep{5pt}}lccc} 
+\\[-1.8ex]\hline 
+\hline \\[-1.8ex] 
+ & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
+\cline{2-4} 
+\\[-1.8ex] & \multicolumn{3}{c}{T+3 UE Transitions (3-Months)} \\ 
+ & Orig. 2013-19 & 2013-24 & 2020-24 \\ 
+\\[-1.8ex] & (1) & (2) & (3)\\ 
+\hline \\[-1.8ex] 
+ find\_job\_3mon & 0.301$^{***}$ & 0.205$^{***}$ & $-$0.035 \\ 
+  & (0.069) & (0.058) & (0.110) \\ 
+  & & & \\ 
+ 1 \textbar  userid &  &  &  \\ 
+  &  &  &  \\ 
+  & & & \\ 
+ Constant & 0.201 & 0.422$^{**}$ & 0.361 \\ 
+  & (0.274) & (0.207) & (0.400) \\ 
+  & & & \\ 
+\hline \\[-1.8ex] 
+Observations & 474 & 798 & 300 \\ 
+R$^{2}$ & 0.159 & 0.083 & 0.168 \\ 
+Adjusted R$^{2}$ & 0.129 & 0.064 & 0.121 \\ 
+Residual Std. Error & 0.400 (df = 457) & 0.437 (df = 781) & 0.450 (df = 283) \\ 
+\hline 
+\hline \\[-1.8ex] 
+\textit{Note:}  & \multicolumn{3}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
+\end{tabular} 
+\end{table}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-3} \end{center}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-4} \end{center}
-
-\begin{verbatim}
-## [1] "Table 4—Linear Regressions of Elicited Job-Finding Probabilities on Duration of Unemployment"
-## +--------------------------------+----------+----------+----------+----------+
-## |                                | (1)      | (2)      | (3)      | (4)      |
-## +================================+==========+==========+==========+==========+
-## | Orig. 2013-19                                                              |
-## +--------------------------------+----------+----------+----------+----------+
-## | Unemployment Duration (Months) | -0.0057  | -0.0050  | -0.0043  | 0.0022   |
-## +--------------------------------+----------+----------+----------+----------+
-## |                                | (0.0007) | (0.0007) | (0.0006) | (0.0049) |
-## +--------------------------------+----------+----------+----------+----------+
-## | Num.Obs.                       | 882      | 2281     | 2281     | 2281     |
-## +--------------------------------+----------+----------+----------+----------+
-## | R2                             | 0.110    | 0.090    | 0.155    | 0.824    |
-## +--------------------------------+----------+----------+----------+----------+
-## | 2013-24                                                                    |
-## +--------------------------------+----------+----------+----------+----------+
-## | Unemployment Duration (Months) | -0.0050  | -0.0048  | -0.0042  | -0.0026  |
-## +--------------------------------+----------+----------+----------+----------+
-## |                                | (0.0006) | (0.0006) | (0.0005) | (0.0034) |
-## +--------------------------------+----------+----------+----------+----------+
-## | Num.Obs.                       | 1265     | 3423     | 3399     | 3423     |
-## +--------------------------------+----------+----------+----------+----------+
-## | R2                             | 0.067    | 0.065    | 0.109    | 0.817    |
-## +--------------------------------+----------+----------+----------+----------+
-## | 2020-24                                                                    |
-## +--------------------------------+----------+----------+----------+----------+
-## | Unemployment Duration (Months) | -0.0011  | -0.0035  | -0.0039  | -0.0077  |
-## +--------------------------------+----------+----------+----------+----------+
-## |                                | (0.0013) | (0.0012) | (0.0013) | (0.0036) |
-## +--------------------------------+----------+----------+----------+----------+
-## | Num.Obs.                       | 395      | 1150     | 1140     | 1150     |
-## +--------------------------------+----------+----------+----------+----------+
-## | R2                             | 0.002    | 0.019    | 0.118    | 0.838    |
-## +================================+==========+==========+==========+==========+
-## | Standard errors are clustered at the user or spell level as indicated.     |
-## +================================+==========+==========+==========+==========+
-## Table: Table 4 - Panel A: Linear Regressions of Elicited Job-Finding Probabilities on Duration of Unemployment (SCE)
-\end{verbatim}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-5} \end{center}
 
@@ -1455,43 +1424,15 @@ re-employment probability with repeated failures in the job search).
 
 \subsection{Additional Analyses}\label{additional-analyses}
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  (Replicated with additional data for unemployed jobseekers)
-  \href{https://www.aeaweb.org/articles?id=10.1257/mac.20160202}{\textbf{Mukoyama
-  et al.~2018: Job Search Over the Business Cycle}}
-\end{enumerate}
+\subsubsection{SCE Labor Market Survey: Reservation
+Wages}\label{sce-labor-market-survey-reservation-wages}
 
-\emph{They provide a novel measure of job search effort exploiting the
-American Time Use and Current Population Surveys which can be reduced to
-just the intensive margin (changes in search effort by worker!). At the
-moment, I think this will be the most useful input for our model.}
-
-\emph{Abstract: We examine the cyclicality of search effort using
-time-series, cross-state, and individual variation and find that it is
-countercyclical. We then set up a search and matching model with
-endogenous search effort and show that search effort does not amplify
-labor market fluctuations but rather dampens them. Lastly, we examine
-the role of search effort in driving recent unemployment dynamics and
-show that the unemployment rate would have been 0.5 to 1 percentage
-points higher in the 2008--2014 period had search effort not increased.}
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\setcounter{enumi}{3}
-\tightlist
-\item
-  \textbf{Survey of Consumer Expectations Reservation Wages, Accepted
-  Wages, and Wage Expectations} The data is unfortunately sparse and
-  linking outcomes to reservation wages is difficult. However, in a
-  cross-sectional setting we are able to deduce some weak relationships
-  between Unemployment Duration and Absolute Reservation Wages and Wage
-  Expectations.*
-\end{enumerate}
-
-\subsubsection{Reservation Wages}\label{reservation-wages}
+\textbf{Survey of Consumer Expectations Reservation Wages, Accepted
+Wages, and Wage Expectations} The data is unfortunately sparse and
+linking outcomes to reservation wages is difficult. However, in a
+cross-sectional setting we are able to deduce some weak relationships
+between Unemployment Duration and Absolute Reservation Wages and Wage
+Expectations.*
 
 Exploring the effect of unemployment duration on reservation wages,
 accepted wages, and expected wage offers.
@@ -1674,8 +1615,8 @@ RMSE & \num{0.34} & \num{0.34} & \num{0.46} & \num{0.45}\\
 \end{tabular}
 \end{table}
 
-\subsubsection{Survey on Consumer Expectations - Job Search
-Supplement}\label{survey-on-consumer-expectations---job-search-supplement}
+\subsubsection{SCE Job Search
+Supplement:}\label{sce-job-search-supplement}
 
 The Federal Reserve Bank of New York compiles the nationally
 representative Survey on Consumer Expectations annually in October.
