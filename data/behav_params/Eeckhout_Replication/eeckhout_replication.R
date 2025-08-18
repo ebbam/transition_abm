@@ -310,7 +310,6 @@ for(new in c(FALSE, TRUE)){
   # Define gamma sequence
   sizegamma <- 20
   gamma_values <- seq(0.2, 0.8, length.out = sizegamma)
-  print(gamma_values)
   
   grid2 <- matrix(0, nrow = diff_periods + 1, ncol = sizegamma)
   grid2[1, ] <- gamma_values
@@ -779,10 +778,10 @@ for(new in c(FALSE, TRUE)){
   #print(p2)
   p_list <- append(p_list, list(p2))
 }
-grid.arrange(grobs = p_list, ncol = 4)
-grid.arrange(grobs = p_list[1:4], ncol = 2)
-grid.arrange(grobs = vars, ncol = 4)
-grid.arrange(grobs = vars[5:8], ncol = 2)
+# grid.arrange(grobs = p_list, ncol = 4)
+# grid.arrange(grobs = p_list[1:4], ncol = 2)
+grid.arrange(grobs = vars[1:4], ncol = 2, top = "Outcome Metrics from Eeckhout Replication without new data (1996Q1-2016Q3)")
+grid.arrange(grobs = vars[5:8], ncol = 2, top = "Outcome Metrics from Eeckhout Replication without new data (1996Q1-2024Q4)")
 
 #ggsave(file.path(destinationpath, "Figures", "comp_employed_workers_perc_dev.pdf"), p2, width = 10, height = 6)
 
@@ -844,7 +843,7 @@ for(form in names(forms)){
   }
   # Run a linear regression to estimate the long-run relationship
   reg <- lm(as.formula(forms[which(names(forms) == form)]))
-  print(summary(reg))
+  #print(modelsummary(reg, output = "latex", stars = TRUE, title = form))
   res_list[[form]] <- reg
   
   # Get predictions with confidence intervals
@@ -862,6 +861,8 @@ for(form in names(forms)){
     rbind(plot_data)
   # Plot actual vs predicted with confidence intervals
 }
+
+print(modelsummary(res_list, output = "latex", stars = TRUE))
 
 ggplot(plot_data, aes(x = x)) +
   geom_line(aes(y = actual, color = "Actual"), size = 1, color = "black", linewidth = 0.75, alpha = 0.5) +  # Actual values
@@ -917,3 +918,4 @@ ggsave(
   dpi = 300,                                # resolution for high quality
   device = "jpeg"                           # explicitly set format
 )
+
