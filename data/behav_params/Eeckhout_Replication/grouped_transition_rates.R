@@ -8,6 +8,8 @@ library(zoo)
 library(haven)
 library(assertthat)
 library(patchwork)
+source(here('code/formatting/plot_dicts.R'))
+
 #ddi <- read_ipums_ddi(here("data/behav_params/Eeckhout_Replication/cps_data/cps_00009.xml"))
 ddi <- read_ipums_ddi(here("data/behav_params/Eeckhout_Replication/cps_data/cps_00014.xml"))
 data1 <- read_ipums_micro(ddi) %>% 
@@ -250,21 +252,30 @@ temp <- all_rates %>%
   summarise(EEtotal = sum(EEtotal, na.rm = TRUE),
             Etotal = sum(Etotal, na.rm = TRUE),
             UEtotal = sum(UEtotal, na.rm = TRUE),
-            Utotal = sum(Utotal, na.rm = TRUE)) %>% 
+            Utotal = sum(Utotal, na.rm = TRUE),
+            EUtotal = sum(EUtotal, na.rm = TRUE)) %>% 
   ungroup %>% 
   mutate(ee = EEtotal/Etotal,
-         ue = UEtotal/Utotal) %>% 
+         ue = UEtotal/Utotal,
+         eu = EUtotal/Etotal) %>% 
   mutate(across(!c(year, occ2010), ~ifelse(. == 0, NA, .))) %>% 
   group_by(occ2010) %>%
   arrange(year, .by_group = TRUE) %>%
   mutate(
     ee = if (sum(!is.na(ee)) >= 2) approx(x = year, y = ee, xout = year, rule = 2)$y else ee,
+    eu = if (sum(!is.na(ee)) >= 2) approx(x = year, y = ee, xout = year, rule = 2)$y else ee,
     ue = if (sum(!is.na(ue)) >= 2) approx(x = year, y = ue, xout = year, rule = 2)$y else ue
   ) %>%
   ungroup()
   
 temp %>% filter(nchar(occ2010) == 2) %>% 
   ggplot(aes(x = year, y = ee, group = occ2010, color = occ2010)) + 
+  geom_line() + 
+  theme(legend.position = "none") +
+  ylim(0, 0.05)
+
+temp %>% #filter(nchar(occ2010) == 2) %>% 
+  ggplot(aes(x = year, y = ue, group = occ2010, color = occ2010)) + 
   geom_line() + 
   theme(legend.position = "none") +
   ylim(0, 0.05)
@@ -310,5 +321,60 @@ ggplot(all_rates_new, aes(x = as.Date(date))) +
   labs(title = "EE and EU Flow Rates", y = "Rates", x = "Time", color = "Flow Type") +
   theme_minimal()
 
+#### Occupational separations rate
+
+all_rates %>% 
+  ggplot(aes(x = date, y = eu)) + geom_line()
+
+## Occ codes
+cw <- read.csv(here('data/crosswalk_occ_soc_cps_codes.csv')) %>%
+  tibble %>% 
+  mutate(SOC2010_cleaned = gsub("X", "0", SOC2010)) %>% 
+  mutate(OCC2010_match_cps = as.character(OCC2010_cps))
+
+seps_rates <- all_rates %>% 
+  group_by(occ2010) %>% 
+  summarise(mean_eu = mean(eu, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  left_join(cw, by = c("occ2010" = "OCC2010_match_cps")) %>% 
+  filter(!is.na(acs_occ_code)) %>% 
+  mutate(OCC2010_desc = fct_reorder(OCC2010_desc, mean_eu, .na_rm = TRUE))
+
+p1 <- seps_rates %>% 
+  ggplot(aes(x = OCC2010_desc, y = mean_eu)) +
+  geom_point() +
+  labs(x = "Occupation", y = "Mean Separations Rate (1996–2024)") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  common_theme
 
 
+p2 <- seps_rates %>% 
+  arrange(mean_eu) %>% 
+  slice(1:46) %>% 
+  ggplot(aes(x = OCC2010_desc, y = mean_eu)) +
+  geom_point(color = "forestgreen") +
+  labs(x = "Occupation", y = "Separations Rate (EU Transitions)", title = "Mean Separations Rate (1996–2024)", subtitle = "Bottom 10th Percentile") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  common_theme
+
+p3 <- seps_rates %>% 
+  arrange(mean_eu) %>% 
+  slice(418:464) %>% 
+  ggplot(aes(x = OCC2010_desc, y = mean_eu)) +
+  geom_point(color = "maroon") +
+  labs(x = "Occupation", y = "Separations Rate (EU Transitions)", title = "Mean Separations Rate (1996–2024)", subtitle = "Top 10th Percentile") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  common_theme
+
+(p2 + p3) / p1
+
+read.csv(here("calibration_remote/dRC_Replication/data/ipums_variables.csv")) %>% tibble -> temp
+
+stopifnot(length(setdiff(unique(temp$acs_occ_code), unique(seps_rates$acs_occ_code))) == 0)
+stopifnot(length(setdiff(unique(seps_rates$acs_occ_code), unique(temp$acs_occ_code))) == 0)
+
+seps_rates %>% 
+  select(acs_occ_code, mean_eu) %>% 
+  rename(seps_rate = mean_eu) %>% 
+  left_join(temp, ., by = "acs_occ_code") %>% 
+  write.csv(here("calibration_remote/dRC_Replication/data/ipums_variables_w_seps_rate.csv"))
