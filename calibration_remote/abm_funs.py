@@ -119,9 +119,9 @@ def reservation_wage(duration_months,
     """
     if duration_months not in res_wage_data['dur_unemp'].values:
         #raise ValueError(f"No probability distribution for duration {duration_months}")
-        res_wage = np.random.normal(loc=0.75, scale=np.max(res_wage_data[f'{balancing_method}_se']), size=1)[0]
+        res_wage = np.random.normal(loc=0.5, scale=np.max(res_wage_data[f'{balancing_method}_se']), size=1)[0]
         if expectation:
-            res_wage = 0.75
+            res_wage = 0.5
     else:
         mean_val = res_wage_data[f'{balancing_method}_preds_fit'][res_wage_data['dur_unemp'] == duration_months]
         se_val = res_wage_data[f'{balancing_method}_se'][res_wage_data['dur_unemp'] == duration_months]
@@ -194,7 +194,7 @@ class worker:
         vsent = 0
 
         if disc:
-            # Step 3: Apply reservation wage filter
+            # Apply reservation wage filter
             if wrkr.time_unemployed > 3:
                 res_wage = wrkr.wage * (1 - 0.1 * (wrkr.time_unemployed - 3))
             else:
@@ -202,7 +202,7 @@ class worker:
 
             found_vacs = [v for v in found_vacs if v.wage >= res_wage]
 
-            # Step 4: Rank by utility
+            # Rank by utility
             sorted_vacs = sorted(
                 found_vacs,
                 key=lambda v: util(
@@ -321,7 +321,7 @@ class worker:
         neigh_probs = net[wrkr_occ].list_of_neigh_weights  # Already normalized
         occ_ids = list(range(len(neigh_probs)))
 
-        # Step 1: Build a flat list of vacancies and their weights
+        # Build a flat list of vacancies and their weights
         all_vacs = []
         weights = []
 
@@ -335,7 +335,7 @@ class worker:
             wrkr.apps_sent = 0
             return
 
-        # Step 2: Sample up to MAX_VACS vacancies directly
+        # Sample up to MAX_VACS vacancies directly
         found_vacs = random.choices(all_vacs, weights=weights, k=min(MAX_VACS, len(all_vacs)))
         mean_wage = np.mean([v.wage for v in found_vacs]) if found_vacs else 0
 
@@ -353,7 +353,7 @@ class worker:
 class occupation:
     def __init__(occ, occupation_id, list_of_employed, list_of_unemployed, 
                  list_of_neigh_bool, list_of_neigh_weights, current_demand, 
-                 target_demand, wage, separated, hired, entry_level_bool, experience_age):
+                 target_demand, wage, separated, hired, entry_level_bool, experience_age, seps_rate):
         occ.occupation_id = occupation_id
         occ.list_of_employed = list_of_employed
         occ.list_of_unemployed = list_of_unemployed
@@ -366,10 +366,11 @@ class occupation:
         occ.hired = hired
         occ.entry_level = entry_level_bool
         occ.experience_age = experience_age
+        occ.seps_rate = seps_rate
 
     def separate_workers(occ, delta_u, gam, bus_cy):
         if(len(occ.list_of_employed) != 0):
-            sep_prob = delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
+            sep_prob = delta_u + occ.seps_rate*(1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
             w = np.random.binomial(len(occ.list_of_employed), sep_prob)
             occ.separated = w
             separated_workers = random.sample(occ.list_of_employed, w)
@@ -402,9 +403,12 @@ class occupation:
 
     def retire_workers(occ):
         """ Function to retire workers over the age of 65 """
+        workers_pre = len(occ.list_of_unemployed) + len(occ.list_of_employed)
         occ.list_of_unemployed = [w for w in occ.list_of_unemployed if w.age <= 65]
         occ.list_of_employed = [e for e in occ.list_of_employed if e.age <= 65]
-    
+        workers_sep = workers_pre - (len(occ.list_of_unemployed) + len(occ.list_of_employed))
+        return(workers_sep)
+
     def entry_and_exit_fixed(occ, rate):
         """ Function to handle entry and exit of workers in the economy """
         # Take the top 2% of earners and assume they are new entrants
@@ -443,16 +447,70 @@ class occupation:
             else:
                 bottom_10 = max(1, int(emp_no * 0.05))
                 new_wage = np.mean([wrkr.wage for wrkr in occ.list_of_employed[-bottom_10:]])
-                fem_share = np.mean([wrkr.female for wrkr in occ.list_of_employed])
+                fem = random.random() < np.mean([wrkr.female for wrkr in occ.list_of_employed])
+                ra = 3 if fem else 7
 
-            # number of new entrants
             for i in range(int(emp_no*rate)):
-                occ.list_of_employed.append(worker(occ.occupation_id, False, 0, new_wage, 
-                                                   False, 
-                                                   random.random() < fem_share, 
-                                                   occ.experience_age,
-                                                   abs(int(np.random.normal(7, 2))), 1, 1, 0, 0))
+                                                    # occupation_id,     
+                occ.list_of_employed.append(worker(occ.occupation_id, 
+                                                     # longterm_unemp, 
+                                                     False, 
+                                                    # time_unemployed, 
+                                                     0, 
+                                                    # wage, 
+                                                    new_wage, 
+                                                    # hired, 
+                                                    False, 
+                                                    # female, 
+                                                    fem, 
+                                                    # age, 
+                                                    occ.experience_age,
+                                                    # risk_av_score, 
+                                                    abs(int(np.random.normal(ra, 2))), 
+                                                    # ee_rel_wage, 
+                                                    1, 
+                                                    # ue_rel_wage, 
+                                                    1, 
+                                                    # applicants_sent, 
+                                                    0, 
+                                                    # d_wage_offer)
+                                                    0))
 
+    def entry_prop(occ, entry_tot):
+        """Add exactly `entry_tot` new workers to this occupation (if entry-level)."""
+        if entry_tot <= 0 or not occ.entry_level:
+            return
+
+        occ.list_of_employed.sort(key=lambda x: x.wage, reverse=True)
+        emp_no = len(occ.list_of_employed)
+
+        # Wage offered to new entrants: avg of bottom 5% employed (or 95% of mean wage if empty)
+        if emp_no == 0:
+            new_wage = occ.wage * 0.95
+            fem_prob = 0.5
+        else:
+            bottom_5 = max(1, int(emp_no * 0.05))
+            new_wage = np.mean([wrkr.wage for wrkr in occ.list_of_employed[-bottom_5:]])
+            fem_prob = float(np.mean([wrkr.female for wrkr in occ.list_of_employed]))
+
+        for _ in range(entry_tot):
+            fem = (random.random() < fem_prob)
+            ra = 3 if fem else 7
+
+            occ.list_of_employed.append(worker(
+                occ.occupation_id,         # occupation_id
+                False,                     # longterm_unemp
+                0,                         # time_unemployed
+                new_wage,                  # wage
+                False,                     # hired
+                fem,                       # female
+                occ.experience_age,        # age
+                abs(int(np.random.normal(ra, 2))),  # risk_av_score
+                1,                         # ee_rel_wage
+                1,                         # ue_rel_wage
+                0,                         # applicants_sent
+                0                          # d_wage_offer
+            ))
 
 class vac:
     def __init__(v, occupation_id, applicants, wage, filled, time_open):
@@ -502,7 +560,7 @@ def bus_cycle_demand(d_0, time, amp, period):
 
 
 ### Function and condition to initialise network
-def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wages, gend_share, fem_ra, male_ra, entry_level, experience_age):
+def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wages, gend_share, fem_ra, male_ra, entry_level, experience_age, sep_rates):
     """ Makes a list of occupations with initial conditions
        Args:
            n_occ: number of occupations initialised (464)
@@ -529,7 +587,7 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
             
         occ = occupation(i, [], [], list(A[i] > 0), list(A[i]),
                          (employment[i,0] + vacancies[i,0]), 
-                         demand_target[i,0], wages[i,0], 0, 0, entry_level[i], experience_age[i])
+                         demand_target[i,0], wages[i,0], 0, 0, entry_level[i], experience_age[i], sep_rates[i])
         # creating the workers of occupation i and attaching to occupation
         ## adding employed workers
         g_share = gend_share[i,0]

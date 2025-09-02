@@ -55,6 +55,7 @@ def run_single_local(#behav_spec,
     seekers_rec = []
     time_steps = time_steps + delay
     avg_wage_offer_diff_records = []
+    retired_all = 0
 
     for t in range(time_steps):
         #if t == 1:
@@ -87,6 +88,19 @@ def run_single_local(#behav_spec,
         for v in vacs_temp:
             vacancies_by_occ[v.occupation_id].append(v)
 
+        # allocate new entrants across entry-level occupations exactly - I was originally running into a rounding error
+        entry_occs = [o for o in net if o.entry_level]
+        entry_td = np.sum([o.target_demand for o in entry_occs])
+
+        # Build an allocation dict: occupation_id -> number of new entrants
+        if retired_all > 0 and entry_td > 0 and len(entry_occs) > 0:
+            probs = np.array([o.target_demand for o in entry_occs], dtype=float)
+            probs = probs / probs.sum()  # relative shares
+            draws = np.random.multinomial(retired_all, probs)  # sums exactly to retired_all
+            entry_alloc = {o.occupation_id: n for o, n in zip(entry_occs, draws)}
+        else:
+            entry_alloc = {}
+            
         for occ in net:
             occ.separated = 0
             occ.hired = 0
@@ -98,10 +112,13 @@ def run_single_local(#behav_spec,
             #if occ_shock < 0.75 or occ_shock > 1.1:
                 # print(occ.occupation_id)
                 # print(occ_shock)
-            # Exit and entry
-            # Remove the top 2% of earners in an occupation's employed list
+            # Entry 0.1%
             #occ.entry(0.01)
-            occ.entry_and_exit_fixed(0.02)
+            # Entry by partitioning retired demand according to target demand across entry level occupations
+            if occ.entry_level:
+                occ.entry_prop(entry_alloc.get(occ.occupation_id, 0))
+            # Remove the top 2% of earners in an occupation's employed list
+            #occ.entry_and_exit_fixed(0.02)
 
             ### APPLICATIONS
             # Questions to verify:
@@ -181,6 +198,7 @@ def run_single_local(#behav_spec,
         ### OPEN VACANCIES
         # Update vacancies after all shifts have taken place
         # Could consider making this a function of the class itself?
+        retired_all = 0
         for occ in net:
             if occ_shocks_data is not None and t > delay:
                 occ_shock = curr_bus_cy[occ.occupation_id]
@@ -194,7 +212,8 @@ def run_single_local(#behav_spec,
             # Update time_unemployed and long-term unemployed status of unemployed workers
             # Remove protected "hired" attribute of employed workers
             occ.update_workers()
-            #occ.retire_workers()
+            retired = occ.retire_workers()
+            retired_all += retired
             # Assert that all unemployed people have spent 1 or more time periods unemployed
             assert(sum([worker.time_unemployed <= 0 for worker in occ.list_of_unemployed]) == 0)
             # Assert that all employed people have spent 0 time periods unemployed
@@ -226,7 +245,7 @@ def run_single_local(#behav_spec,
                 vacs_wage = np.mean([v.wage for v in vacs_temp if v.occupation_id == occ.occupation_id]) if vacs_occ > 0 else np.nan
                 wage_occ = np.mean([wrkr.wage for wrkr in occ.list_of_employed]) if emp > 0 else np.nan
                 wages_occ = sum(wrkr.wage for wrkr in occ.list_of_employed)
-                seps = occ.separated
+                seps = occ.separated + retired
                 hires = occ.hired
                 # Calculate average relative wage for unemployed and employed workers
 
