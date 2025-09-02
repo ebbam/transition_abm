@@ -202,7 +202,7 @@ def plot_avg_wages(mod_results_dict, save=False, path=None):
 ####################################################
 ############## RELATIVE WAGES ##########
 ####################################################
-def plot_rel_wages(mod_results_dict, names, save=False, path=None, freq = 'Y'):
+def plot_rel_wages(mod_results_dict, save=False, path=None, freq = 'Y'):
     """
     Creates plots of relative wages with annual smoothing:
     - Left: Unemployed relative wages
@@ -234,7 +234,7 @@ def plot_rel_wages(mod_results_dict, names, save=False, path=None, freq = 'Y'):
         u_wages = annual_data['U_REL_WAGE_MEAN'].values
         #u_wages = np.clip(u_wages, None, 1.7)
         ax1.plot(dates_array, u_wages, 
-                color=colors[i], label=names[i], marker='o', zorder=3)
+                color=colors[i], label=name, marker='o', zorder=3)
         # Add shading
         ax1.fill_between(dates_array, u_wages, 1,
                         color=colors[i], alpha=0.2, zorder=2)
@@ -242,7 +242,7 @@ def plot_rel_wages(mod_results_dict, names, save=False, path=None, freq = 'Y'):
         # Plot employed relative wages (smoothed)
         e_wages = annual_data['E_REL_WAGE_MEAN'].values
         ax2.plot(dates_array, e_wages, 
-                color=colors[i], label=names[i], marker='o', zorder=3)
+                color=colors[i], label=name, marker='o', zorder=3)
         # Add shading
         ax2.fill_between(dates_array, e_wages, 1,
                         color=colors[i], alpha=0.2, zorder=2)
@@ -281,8 +281,8 @@ def plot_rel_wages(mod_results_dict, names, save=False, path=None, freq = 'Y'):
 def hires_seps_rate(mod_results_dict, jolts, save=False, path=None):
     # Step 1: Separate models
     model_groups = {
-        "Non-behavioral": {k: v for k, v in mod_results_dict.items() if "nonbehav" in k.lower()},
-        "Behavioral/Other": {k: v for k, v in mod_results_dict.items() if "nonbehav" not in k.lower()}
+        "Non-behavioral": {k: v for k, v in mod_results_dict.items() if "Non-behavioural" in k},
+        "Behavioral/Other": {k: v for k, v in mod_results_dict.items() if "Non-behavioural" not in k}
     }
 
     # Step 2: Setup grid: rows = model groups, cols = [Hires Rate, Separations Rate]
@@ -564,7 +564,7 @@ def plot_seeker_comp(res_dict, share = False, sep = False, save = False, path = 
 ####################################################
 ############## GENDER WAGE GAPS ####################
 ####################################################
-def plot_gender_gaps(net_dict, names, sep = False, save = False, path = None):
+def plot_gender_gaps(net_dict, sep = False, save = False, path = None):
     """
     Function to plot the gender wage disttribution across models
     """
@@ -842,7 +842,7 @@ def plot_avg_wage_by_occupation(sim_results_dict, save=False, path=None):
 ####################################################
 ############## TRANSITION RATES #####################
 ####################################################
-def plot_trans_rates(mod_results_dict, observation, names, save=False, path=None):
+def plot_trans_rates(mod_results_dict, observation, save=False, path=None):
     """
     Creates a two-column plot showing:
     - Left: Mean transition rates with standard deviation error bars for EE and UE
@@ -892,15 +892,15 @@ def plot_trans_rates(mod_results_dict, observation, names, save=False, path=None
         # Plot means and error bars on left panel
 
         ax1.errorbar(ee_x, ee_mean, yerr=ee_std, 
-                    fmt='o', color=colors[i], label=names[i], 
+                    fmt='o', color=colors[i], label=name, 
                     capsize=5, markersize=10)
         ax1.errorbar(ue_x, ue_mean, yerr=ue_std, 
                     fmt='o', color=colors[i], 
                     capsize=5, markersize=10)
         
         # Plot time series on right panels
-        ax2.plot(res['DATE'], res['UE_Trans_Rate'], color=colors[i], label=names[i])
-        ax3.plot(res['DATE'], res['EE_Trans_Rate'], color=colors[i], label=names[i])
+        ax2.plot(res['DATE'], res['UE_Trans_Rate'], color=colors[i], label=name)
+        ax3.plot(res['DATE'], res['EE_Trans_Rate'], color=colors[i], label=name)
     
     ax1.errorbar(base_positions[0], obs_ee_mean, yerr=obs_ee_std, 
                     fmt='o', color="grey", 
@@ -1233,4 +1233,99 @@ def plot_ltuer_difference_heatmap(sim_results_dict, observed_data, difference_ty
     if save:
         plt.savefig(f'{path}ltuer_difference_heatmap_{difference_type}_absval_{abs_value}.jpg', 
                    dpi=300, bbox_inches='tight')
+    plt.show()
+
+
+def plot_avg_wage_offer_diff_over_time(df, save_path=None):
+    """
+    Plots the average wage offer difference by occupation over time.
+
+    Args:
+        df (pd.DataFrame): DataFrame with columns 'Time Step', 'Occupation', 'Avg_Wage_Offer_Diff'
+        save_path (str, optional): If provided, saves the plot to this path.
+    """
+    pivot_df = df.pivot(index="Time Step", columns="Occupation", values="Avg_Wage_Offer_Diff")
+    plt.figure(figsize=(14, 7))
+    for occ in pivot_df.columns:
+        plt.plot(pivot_df.index, pivot_df[occ])
+    plt.title("Average Wage Offer Difference by Occupation Over Time")
+    plt.xlabel("Time Step")
+    plt.ylabel("Average Wage Offer Difference")
+    plt.legend(title="Occupation", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
+    plt.tight_layout()
+    plt.show()
+
+def plot_vacancy_vs_wage(record_df, save_path=None):
+    """
+    Plots the difference between Mean Vacancy Offer and Mean Occupational Wage by occupation.
+    
+    Args:
+        record_df (pd.DataFrame): DataFrame with columns 'Occupation', 'Mean Vacancy Offer', 'Mean Occupational Wage'.
+        save_path (str, optional): If provided, saves the plot to this path.
+    """
+    occ_means = record_df.groupby('Occupation')[["Mean Vacancy Offer", "Mean Occupational Wage"]].mean().reset_index()
+    occ_means["Difference"] = occ_means["Mean Vacancy Offer"] - occ_means["Mean Occupational Wage"]
+
+    plt.figure(figsize=(10, 6))
+    sns.barplot(
+        data=occ_means.melt(id_vars="Occupation", value_vars=["Mean Vacancy Offer", "Mean Occupational Wage"]),
+        x="Occupation", y="value", hue="variable"
+    )
+    plt.title("Mean Vacancy Offer vs. Mean Occupational Wage by Occupation")
+    plt.ylabel("Wage")
+    plt.xlabel("Occupation")
+    plt.tight_layout()
+
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path)
+    plt.show()
+
+    plt.figure(figsize=(10, 4))
+    sns.barplot(data=occ_means, x="Occupation", y="Difference", color="gray")
+    plt.title("Difference: Mean Vacancy Offer - Mean Occupational Wage")
+    plt.ylabel("Difference")
+    plt.xlabel("Occupation")
+    plt.tight_layout()
+    if save_path:
+        diff_path = save_path.replace(".png", "_difference.png")
+        plt.savefig(diff_path)
+    plt.show()
+
+def plot_vacancy_wage_diff_timeseries(record_df, save_path=None):
+    """
+    Plots the time series of mean vacancy offer, mean occupational wage, and their difference by occupation.
+
+    Args:
+        record_df (pd.DataFrame): DataFrame with columns 'Time Step', 'Occupation', 'Mean Vacancy Offer', 'Mean Occupational Wage'.
+        save_path (str, optional): If provided, saves the plot to this path.
+    """
+    record_df = record_df.copy()
+    record_df["Difference"] = record_df["Mean Vacancy Offer"] - record_df["Mean Occupational Wage"]
+
+    fig, axes = plt.subplots(3, 1, figsize=(14, 12), sharex=True)
+
+    pivot_offer = record_df.pivot(index="Time Step", columns="Occupation", values="Mean Vacancy Offer")
+    for occ in pivot_offer.columns:
+        axes[0].plot(pivot_offer.index, pivot_offer[occ], label=f"Occ {occ}")
+    axes[0].set_title("Mean Vacancy Offer by Occupation")
+    axes[0].set_ylabel("Mean Vacancy Offer")
+
+    pivot_wage = record_df.pivot(index="Time Step", columns="Occupation", values="Mean Occupational Wage")
+    for occ in pivot_wage.columns:
+        axes[1].plot(pivot_wage.index, pivot_wage[occ], label=f"Occ {occ}")
+    axes[1].set_title("Mean Occupational Wage by Occupation")
+    axes[1].set_ylabel("Mean Occupational Wage")
+
+    pivot_diff = record_df.pivot(index="Time Step", columns="Occupation", values="Difference")
+    for occ in pivot_diff.columns:
+        axes[2].plot(pivot_diff.index, pivot_diff[occ], label=f"Occ {occ}")
+    axes[2].set_title("Difference: Mean Vacancy Offer - Mean Occupational Wage")
+    axes[2].set_ylabel("Difference")
+    axes[2].set_xlabel("Time Step")
+
+    plt.tight_layout()
+    if save_path:
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        plt.savefig(save_path)
     plt.show()
