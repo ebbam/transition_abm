@@ -343,7 +343,7 @@ seps_rates <- all_rates %>%
 p1 <- seps_rates %>% 
   ggplot(aes(x = OCC2010_desc, y = mean_eu)) +
   geom_point() +
-  labs(x = "Occupation", y = "Mean Separations Rate (1996–2024)") +
+  labs(x = "Occupation", y = "Separations Rate (EU Transitions)", title = "Mean Separations Rate (1996–2024)", subtitle = "All occupations (n = 464)") +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   common_theme
 
@@ -366,7 +366,13 @@ p3 <- seps_rates %>%
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   common_theme
 
-(p2 + p3) / p1
+p2 / p3
+
+ggsave(here("output/seps_rates_p10s.png"))
+
+p1
+
+ggsave(here("output/seps_rates_total.png"), width = 36, height = 14)
 
 read.csv(here("calibration_remote/dRC_Replication/data/ipums_variables.csv")) %>% tibble -> temp
 
