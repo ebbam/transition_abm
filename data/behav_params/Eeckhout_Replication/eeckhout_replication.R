@@ -894,28 +894,44 @@ modelsummary(res_list, gof_omit = 'AIC|BIC|Lik|RMSE')
 
 # Plot with independent visual scaling
 comp_searchers_plot_save <- ggplot(save_for_plotting, aes(x = time)) +
-  geom_bar(aes(y = recession1), stat = "identity", fill = "grey80", na.rm = TRUE) +
-  geom_bar(aes(y = recession2), stat = "identity", fill = "grey80", na.rm = TRUE) +
-  geom_line(aes(y = comp_searchers_s), color = "darkorchid", linewidth = 1) +
-  geom_hline(aes(yintercept = 0.32), color = "grey", linetype = "dashed") + 
-  geom_hline(aes(yintercept = 0.48), color = "grey", linetype = "dashed") + 
-  geom_line(aes(y = u_quart_s_rescaled), color = "darkorange", linetype = "dashed", linewidth = 1) +
-  scale_y_continuous(
-    name = "Employed as share of jobseekers - % deviation from trend",
+  # recessions (kept out of legend)
+  geom_bar(aes(y = recession1), stat = "identity", fill = "grey80", na.rm = TRUE, show.legend = FALSE) +
+  geom_bar(aes(y = recession2), stat = "identity", fill = "grey80", na.rm = TRUE, show.legend = FALSE) +
+  geom_line(aes(y = comp_searchers_s,
+        color = "Employed / jobseekers",
+        linetype = "Employed / jobseekers"),
+    linewidth = 1) +
+  geom_line(aes(y = u_quart_s_rescaled, color = "UER", linetype = "UER"), linewidth = 1) +
+  geom_hline(aes(yintercept = 0.32), color = "grey", linetype = "dashed", show.legend = FALSE) +
+  geom_hline(aes(yintercept = 0.48), color = "grey", linetype = "dashed", show.legend = FALSE) +
+  scale_y_continuous(name = "Employed as share of jobseekers - % deviation from trend",
     limits = c(0.1, 0.6),
-    sec.axis = sec_axis(transform = rescale$inverse_transform, name = "Unemployment Rate")
+    sec.axis = sec_axis(transform = rescale$inverse_transform, name = "Unemployment Rate")) +
+  scale_color_manual(name = "Series",
+    values = c("Employed / jobseekers" = "darkorchid",
+               "UER"                  = "darkorange")
   ) +
+  scale_linetype_manual(
+    name = "Series",
+    values = c("Employed / jobseekers" = "solid",
+               "UER"                  = "dashed")
+  ) +
+  
   theme_minimal() +
   ggtitle("Employed as share of jobseekers") +
-  theme(plot.background = element_rect(fill = "white", color = NA), legend.position = "bottom") +
+  theme(
+    plot.background = element_rect(fill = "white", color = NA),
+    legend.position = "bottom"
+  ) +
   common_theme
 
 ggsave(
-  filename = here("data/behav_params/Eeckhout_Replication/comp_searchers_plot.jpg"),     # file name
-  plot = comp_searchers_plot_save,          # ggplot object
-  width = 10,                               # width in inches (adjust as needed)
-  height = 6,                               # height in inches (adjust as needed)
-  dpi = 300,                                # resolution for high quality
-  device = "jpeg"                           # explicitly set format
+  filename = here("data/behav_params/Eeckhout_Replication/comp_searchers_plot.jpg"),    
+  plot = comp_searchers_plot_save,         
+  width = 10,                              
+  height = 6,                               
+  dpi = 300,                                
+  device = "jpeg"                          
 )
 
+save_for_plotting %>% select(date, comp_searchers_s) %>% write.csv(here("data/behav_params/Eeckhout_Replication/comp_searchers_s_series_abm_validation.csv"))
