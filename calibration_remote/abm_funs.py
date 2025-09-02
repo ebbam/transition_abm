@@ -226,94 +226,9 @@ class worker:
         wrkr.d_wage_offer = mean_wage-res_wage if disc else np.nan
         wrkr.apps_sent = vsent
 
-    # def search_and_apply(wrkr, net, vacancies_by_occ, disc, bus_cy, alpha, app_effort):
-    #     MAX_VACS = 30
-    #     wrkr_occ = wrkr.occupation_id
-    #     neigh_probs = net[wrkr_occ].list_of_neigh_weights
-    #     occ_ids = list(range(len(neigh_probs)))
-
-    #     found_vacs = []
-    #     seen_occ_ids = set()
-
-    #     while len(found_vacs) < MAX_VACS:
-    #         sampled_occ = random.choices(occ_ids, weights=neigh_probs, k=1)[0]
-    #         if sampled_occ in seen_occ_ids:
-    #             continue
-
-    #         occ_vacs = vacancies_by_occ.get(sampled_occ, [])
-    #         random.shuffle(occ_vacs)
-
-    #         for v in occ_vacs:
-    #             found_vacs.append(v)
-    #             if len(found_vacs) >= MAX_VACS:
-    #                 break
-
-    #         seen_occ_ids.add(sampled_occ)
-
-    #     found_vacs = found_vacs[:MAX_VACS]
-    #     vsent = 0
-
-    #     if disc:
-    #         if wrkr.time_unemployed > 3:
-    #             res_wage = wrkr.wage * (1 - 0.1 * (wrkr.time_unemployed - 3))
-    #         else:
-    #             res_wage = wrkr.wage
-
-    #         found_vacs = [v for v in found_vacs if v.wage >= res_wage]
-
-    #         sorted_vacs = sorted(
-    #             found_vacs,
-    #             key=lambda v: util(
-    #                 wrkr.wage, v.wage,
-    #                 net[wrkr_occ].list_of_neigh_weights[v.occupation_id]
-    #             ),
-    #             reverse=True
-    #         )
-
-    #         n_apps = applications_sent(wrkr.time_unemployed, app_effort, expectation=False)
-    #         chosen_vacs = sorted_vacs[wrkr.risk_aversion: wrkr.risk_aversion + n_apps]
-
-    #         for v in chosen_vacs:
-    #             v.applicants.append(wrkr)
-    #             vsent += 1
-    #     else:
-    #         for v in random.sample(found_vacs, min(len(found_vacs), 10)):
-    #             v.applicants.append(wrkr)
-    #             vsent += 1
-
-    #     wrkr.apps_sent = vsent
-    
-    # def search_and_apply(wrkr, net, vac_list, disc, bus_cy, alpha, app_effort):
-    #     # A sample of relevant vacancies are found that are in neighboring occupations
-    #     # Select different random sample of "relevant" vacancies found by each worker
-    #     found_vacs = random.sample(vac_list, min(len(vac_list), 30))
-    #     vsent = 0
-    #     if disc:
-    #         # res_wage = wrkr.wage * reservation_wage(wrkr.time_unemployed, res_wage_dat, expectation = False, balancing_method = 'lm')
-    #         if wrkr.time_unemployed > 3:
-    #             res_wage = wrkr.wage * (1-(0.1*(wrkr.time_unemployed-3)))
-    #         else:
-    #             res_wage = wrkr.wage
-
-    #         found_vacs = [v for v in found_vacs if v.wage >= res_wage]
-    #         # Sort found relevant vacancies by utility-function defined above and apply to amount dictated by impatience
-    #         for v in sorted(found_vacs, key = lambda v: util(wrkr.wage, v.wage, net[wrkr.occupation_id].list_of_neigh_weights[v.occupation_id]), 
-    #                         reverse = True)[slice(wrkr.risk_aversion, wrkr.risk_aversion + applications_sent(wrkr.time_unemployed, app_effort, expectation = False))]:
-    #             # Introduce randomness here...?
-    #             vsent += 1
-    #             v.applicants.append(wrkr)
-    #     else:
-    #         vs = random.sample(found_vacs, min(len(found_vacs), 10))
-    #         for r in vs:
-    #             vsent += 1
-    #             r.applicants.append(wrkr)
-    #     wrkr.apps_sent = vsent
-    #     #print(f'Applications sent: {vsent}')
 
     def emp_search_and_apply(wrkr, net, vac_list, disc):
         # A sample of relevant vacancies are found that are in neighboring occupations
-        # Will need to add a qualifier in case sample is greater than available relevant vacancies
-        # ^^ have added qualifier...bad form to reassign list?
         # Select different random sample of "relevant" vacancies found by each worker
         # found_vacs = random.sample(vac_list, min(len(vac_list), 30))
         MAX_VACS = 30
@@ -409,74 +324,74 @@ class occupation:
         workers_sep = workers_pre - (len(occ.list_of_unemployed) + len(occ.list_of_employed))
         return(workers_sep)
 
-    def entry_and_exit_fixed(occ, rate):
-        """ Function to handle entry and exit of workers in the economy """
-        # Take the top 2% of earners and assume they are new entrants
-        # Remove them from list_of_employed and move them to list_of_unemployed in the same occupation with the lowest wage in that occupation
-        occ.list_of_employed.sort(key=lambda x: x.wage, reverse=True)
-        emp_no = len(occ.list_of_employed)
-        if emp_no == 0:
-            new_wage = occ.wage
-        else:
-            bottom_10 = max(1, int(emp_no * 0.05))
-            new_wage = np.mean([wrkr.wage for wrkr in occ.list_of_employed[-bottom_10:]])
-        n_new = int(emp_no * rate)
-        new_workers = occ.list_of_employed[:n_new]
-        occ.list_of_employed = occ.list_of_employed[n_new:]
+    # def entry_and_exit_fixed(occ, rate):
+    #     """ Function to handle entry and exit of workers in the economy """
+    #     # Take the top 2% of earners and assume they are new entrants
+    #     # Remove them from list_of_employed and move them to list_of_unemployed in the same occupation with the lowest wage in that occupation
+    #     occ.list_of_employed.sort(key=lambda x: x.wage, reverse=True)
+    #     emp_no = len(occ.list_of_employed)
+    #     if emp_no == 0:
+    #         new_wage = occ.wage
+    #     else:
+    #         bottom_10 = max(1, int(emp_no * 0.05))
+    #         new_wage = np.mean([wrkr.wage for wrkr in occ.list_of_employed[-bottom_10:]])
+    #     n_new = int(emp_no * rate)
+    #     new_workers = occ.list_of_employed[:n_new]
+    #     occ.list_of_employed = occ.list_of_employed[n_new:]
 
-        # Add new workers to the unemployed list with a wage of 0 and time unemployed of 0
-        for nw in new_workers:
-            nw.longterm_unemp = False
-            nw.time_unemployed = 0
-            nw.wage = new_wage
-            nw.hired = False
-            nw.ue_rel_wage = None
-            nw.ee_rel_wage = None
-            nw.apps_sent = 0
-            occ.list_of_unemployed.append(nw)
+    #     # Add new workers to the unemployed list with a wage of 0 and time unemployed of 0
+    #     for nw in new_workers:
+    #         nw.longterm_unemp = False
+    #         nw.time_unemployed = 0
+    #         nw.wage = new_wage
+    #         nw.hired = False
+    #         nw.ue_rel_wage = None
+    #         nw.ee_rel_wage = None
+    #         nw.apps_sent = 0
+    #         occ.list_of_unemployed.append(nw)
 
-    def entry(occ, rate):
-        """ Function to handle entry of workers in the economy """
-        # If an entry-level occupation, add new workers to the employed list at a particular rate
-        occ.list_of_employed.sort(key=lambda x: x.wage, reverse=True)
-        if occ.entry_level:
-            emp_no = len(occ.list_of_employed)
-            if emp_no == 0:
-                new_wage = occ.wage*0.95
-                fem_share = 0.5
-            else:
-                bottom_10 = max(1, int(emp_no * 0.05))
-                new_wage = np.mean([wrkr.wage for wrkr in occ.list_of_employed[-bottom_10:]])
-                fem = random.random() < np.mean([wrkr.female for wrkr in occ.list_of_employed])
-                ra = 3 if fem else 7
+    # def entry_rate(occ, rate):
+    #     """ Function to handle entry of workers in the economy """
+    #     # If an entry-level occupation, add new workers to the employed list at a particular rate
+    #     occ.list_of_employed.sort(key=lambda x: x.wage, reverse=True)
+    #     if occ.entry_level:
+    #         emp_no = len(occ.list_of_employed)
+    #         if emp_no == 0:
+    #             new_wage = occ.wage*0.95
+    #             fem_share = 0.5
+    #         else:
+    #             bottom_10 = max(1, int(emp_no * 0.05))
+    #             new_wage = np.mean([wrkr.wage for wrkr in occ.list_of_employed[-bottom_10:]])
+    #             fem = random.random() < np.mean([wrkr.female for wrkr in occ.list_of_employed])
+    #             ra = 3 if fem else 7
 
-            for i in range(int(emp_no*rate)):
-                                                    # occupation_id,     
-                occ.list_of_employed.append(worker(occ.occupation_id, 
-                                                     # longterm_unemp, 
-                                                     False, 
-                                                    # time_unemployed, 
-                                                     0, 
-                                                    # wage, 
-                                                    new_wage, 
-                                                    # hired, 
-                                                    False, 
-                                                    # female, 
-                                                    fem, 
-                                                    # age, 
-                                                    occ.experience_age,
-                                                    # risk_av_score, 
-                                                    abs(int(np.random.normal(ra, 2))), 
-                                                    # ee_rel_wage, 
-                                                    1, 
-                                                    # ue_rel_wage, 
-                                                    1, 
-                                                    # applicants_sent, 
-                                                    0, 
-                                                    # d_wage_offer)
-                                                    0))
+    #         for i in range(int(emp_no*rate)):
+    #                                                 # occupation_id,     
+    #             occ.list_of_employed.append(worker(occ.occupation_id, 
+    #                                                  # longterm_unemp, 
+    #                                                  False, 
+    #                                                 # time_unemployed, 
+    #                                                  0, 
+    #                                                 # wage, 
+    #                                                 new_wage, 
+    #                                                 # hired, 
+    #                                                 False, 
+    #                                                 # female, 
+    #                                                 fem, 
+    #                                                 # age, 
+    #                                                 occ.experience_age,
+    #                                                 # risk_av_score, 
+    #                                                 abs(int(np.random.normal(ra, 2))), 
+    #                                                 # ee_rel_wage, 
+    #                                                 1, 
+    #                                                 # ue_rel_wage, 
+    #                                                 1, 
+    #                                                 # applicants_sent, 
+    #                                                 0, 
+    #                                                 # d_wage_offer)
+    #                                                 0))
 
-    def entry_prop(occ, entry_tot):
+    def entry(occ, entry_tot):
         """Add exactly `entry_tot` new workers to this occupation (if entry-level)."""
         if entry_tot <= 0 or not occ.entry_level:
             return
@@ -527,8 +442,6 @@ class vac:
         try:
             net[v.occupation_id].list_of_employed.append(net[a.occupation_id].list_of_employed.pop(net[a.occupation_id].list_of_employed.index(a)))
             a.ee_rel_wage = v.wage/a.wage
-            #net[v.occupation_id].list_of_employed.append(a)
-            #net[a.occupation_id].list_of_employed.remove(a)
         except ValueError:
             try:
                 # Second attempt (fallback)
@@ -541,7 +454,6 @@ class vac:
         a.time_unemployed = 0
         # Their new wage is now the vacancy's wage - the relative wage will be updated in the update_workers function
         a.wage = v.wage
-        #a.emp_history.append(v.occupation_id)
         a.hired = True
         v.applicants.clear()
 
