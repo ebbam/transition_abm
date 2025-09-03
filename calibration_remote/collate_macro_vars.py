@@ -325,11 +325,15 @@ plt.show()
 calib_date = ["2000-12-01", "2019-05-01"]
 # calib_date = ["2000-12-01", "2024-05-01"]
 bus_conf_short = bus_conf_index[(bus_conf_index['DATE'] >= calib_date[0]) & (bus_conf_index['DATE'] <= calib_date[1])]
-gdp_dat_pd = realgdp[(realgdp['DATE'] >= calib_date[0]) & (realgdp['DATE'] <= calib_date[1])]
+gdp_dat_pd = realgdp.set_index('DATE').sort_index()
 
 # Interpolate all columns in gdp_dat_pd to monthly frequency
-monthly_dates = pd.date_range(start=gdp_dat_pd['DATE'].min(), end=gdp_dat_pd['DATE'].max(), freq='MS')
-gdp_dat_pd_monthly = gdp_dat_pd.set_index('DATE').reindex(monthly_dates).interpolate(method='time').reset_index().rename(columns={'index': 'DATE'})
+monthly_dates = pd.date_range(start=gdp_dat_pd.index.min(), end=gdp_dat_pd.index.max(), freq='MS')
+gdp_dat_pd_monthly = gdp_dat_pd.reindex(monthly_dates)
+
+# Linearly interpolate missing monthly values
+gdp_dat_pd_monthly = gdp_dat_pd_monthly.interpolate(method='linear')
+gdp_dat_pd_monthly = gdp_dat_pd_monthly[(gdp_dat_pd_monthly.index >= calib_date[0]) & (gdp_dat_pd_monthly.index <= calib_date[1])]
 
 # For backward compatibility with previous code
 gdp_dat = gdp_dat_pd_monthly['log_Cycle'].values + np.random.normal(loc=0, scale=0.001, size=len(gdp_dat_pd_monthly))
@@ -338,20 +342,22 @@ gdp_dat_cf = gdp_dat_pd_monthly['cf_gdp'].values + np.random.normal(loc=0, scale
 gdp_dat_hamilton = gdp_dat_pd_monthly['hamilton_gdp'].values+ np.random.normal(loc=0, scale=0.001, size=len(gdp_dat_pd_monthly)) if 'hamilton_gdp' in gdp_dat_pd_monthly else None
 bus_conf_dat = np.array(bus_conf_short['OBS_VALUE_scaled'])
 
+monthly_dates = gdp_dat_pd_monthly.index
+
 # PLOTTING
 plt.figure(figsize=(12, 6))
 
 # Plot original data
 sns.lineplot(data = realgdp, x = 'DATE', y = 'log_Cycle', color = "purple", label = "Full GDP Time series - UER and VACRATE data available from 2000", linestyle = "dotted")
-sns.lineplot(x=monthly_dates, y=gdp_dat, color='purple', label='HP Filtered GDP')
+sns.lineplot(x = monthly_dates, y=gdp_dat, color='purple', label='HP Filtered GDP')
 sns.lineplot(x=monthly_dates, y=gdp_dat_bk, color='blue', label='BK Filtered GDP', linestyle = 'dashed')
 sns.lineplot(x=monthly_dates, y=gdp_dat_cf, color='orange', label='CF Filtered GDP', linestyle = 'dashed')
 sns.lineplot(x=monthly_dates, y=gdp_dat_hamilton, color='darkgreen', label='Hamilton Filtered GDP', linestyle = 'dashed')
 sns.lineplot(data = bus_conf_short, x='DATE', y='OBS_VALUE_scaled', color='red', label='Business Confidence Index', linestyle = 'dotted')
 
 # Mark original data boundaries
-plt.axvline(x=gdp_dat_pd['DATE'].min(), color='black', linestyle='--', alpha=0.6)
-plt.axvline(x=gdp_dat_pd['DATE'].max(), color='black', linestyle='--', alpha=0.6)
+plt.axvline(x=monthly_dates.min(), color='black', linestyle='--', alpha=0.6)
+plt.axvline(x=monthly_dates.max(), color='black', linestyle='--', alpha=0.6)
 
 plt.xlabel('Date')
 plt.ylabel('log_Cycle')

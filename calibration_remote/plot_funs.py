@@ -18,7 +18,7 @@ def plot_records(sim_res, date_start, date_end, save = False, path = None):
     ue_vac = record1.loc[:,['Workers', 'Unemployment', 'LT Unemployed Persons', 'Current_Demand', 'Vacancies', 'Target_Demand', 'Employed Seekers', 'Unemployed Seekers']]
     ue_vac['UE Rate'] = ue_vac['Unemployment'] / ue_vac['Workers']
     ue_vac['Vac Rate'] = ue_vac['Vacancies'] / ue_vac['Target_Demand']
-    ue_vac['LTUE Rate'] = ue_vac['LT Unemployed Persons'] / ue_vac['Unemployment']
+    ue_vac['LTUER'] = ue_vac['LT Unemployed Persons'] / ue_vac['Unemployment']
     ue_vac['DATE'] = pd.date_range(start=date_start, end= date_end, periods=len(sim_record))
 
     return ue_vac
@@ -30,7 +30,7 @@ def plot_records(sim_res, date_start, date_end, save = False, path = None):
 def plot_ltuer(res_dict, macro_obs, sep_strings=None, sep=False, save=False, path=None):
     def plot_models(ax, models, title, observed):
         for name, res in models.items():
-            ax.plot(res['DATE'], res['LTUE Rate'], label=name)
+            ax.plot(res['DATE'], res['LTUER'], label=name)
         ax.plot(observed['DATE'], observed['LTUER'], color="black", linestyle="dotted", label="Observed")
         ax.set_title(title)
         ax.set_xlabel("DATE")
@@ -511,7 +511,7 @@ def plot_uer_vac_single_row(res_dict, macro_obs, recessions=None, sep_strings=No
 ####################################################
 ############## SEEKER COMPOSITION ##################
 ####################################################
-def plot_seeker_comp(res_dict, share = False, sep = False, save = False, path = None):
+def plot_seeker_comp(res_dict, observation, share = False, sep = False, save = False, path = None):
     n = len(res_dict)
     if sep:
         cols = 2
@@ -541,6 +541,7 @@ def plot_seeker_comp(res_dict, share = False, sep = False, save = False, path = 
             )
 
         # Set individual titles
+        ax.plot(observation['DATE'], observation['Seeker Composition'], color="black", linestyle="dotted", label="Observed")
         ax.set_title(name)
         # Set common axis labels
         # Set common axis labels and title outside the loop
@@ -558,7 +559,22 @@ def plot_seeker_comp(res_dict, share = False, sep = False, save = False, path = 
     if save:
         plt.savefig(f'{path}seeker_composition.png', dpi = 300)
     plt.show()
+def plot_seeker_comp_line(res_dict, observation, save = False, path = None):
+    plt.figure(figsize=(10, 6))
+    for i, (name, res) in enumerate(res_dict.items()):
+        plt.plot(res['DATE'], res["Seeker Composition"], label=name)
 
+        # Set axis label and title
+    plt.plot(observation['DATE'], observation['Seeker Composition'], label='Observed', color='grey', linestyle = "dashed")
+    plt.title("Monthly Composition of Job Seekers", fontsize=14)  # Figure-wide title
+    plt.xlabel("Date")  # Shared x-axis label
+    plt.ylabel("Employed Share of Job Seekers")  # Shared y-axis label
+    plt.legend()
+
+    # Show plot
+    if save:
+        plt.savefig(f'{path}seeker_composition_line.png', dpi = 300)
+    plt.show()
 
 
 ####################################################
@@ -975,10 +991,10 @@ def plot_occupation_uer_grid(sim_results, observation, save=False, path=None):
             # Compute UER and LTUER
             occ_data = occ_data.groupby([name_k, 'Time Step']).sum().reset_index()
             occ_data['UER'] = occ_data['Unemployment'] / occ_data['Workers']
-            occ_data['LTUE Rate'] = occ_data['LT Unemployed Persons'] / occ_data['Unemployment']
+            occ_data['LTUER'] = occ_data['LT Unemployed Persons'] / occ_data['Unemployment']
 
             # Average over time
-            mean_occ_data = occ_data.groupby(name_k)[['UER', 'LTUE Rate']].mean().reset_index()
+            mean_occ_data = occ_data.groupby(name_k)[['UER', 'LTUER']].mean().reset_index()
             obs_values = observation[[name_k, k_uer, k_ltuer]].drop_duplicates(subset=[name_k])
             merged = mean_occ_data.merge(obs_values, on=name_k, how='left')
 
@@ -1004,7 +1020,7 @@ def plot_occupation_uer_grid(sim_results, observation, save=False, path=None):
 
             # ----- SORT OCCUPATION CODES BY OBSERVED LTUER -----
             sorted_codes_ltuer = merged.sort_values(by=k_ltuer)[name_k].tolist()
-            sim_vals_ltuer = merged.set_index(name_k).reindex(sorted_codes_ltuer)['LTUE Rate'].tolist()
+            sim_vals_ltuer = merged.set_index(name_k).reindex(sorted_codes_ltuer)['LTUER'].tolist()
             obs_vals_ltuer = merged.set_index(name_k).reindex(sorted_codes_ltuer)[k_ltuer].tolist()
             x_ticks_ltuer = list(range(len(sorted_codes_ltuer)))
 
@@ -1018,7 +1034,7 @@ def plot_occupation_uer_grid(sim_results, observation, save=False, path=None):
             if row_idx == num_rows - 1:
                 ax2.set_xlabel(name_k)
             if col_idx == 0:
-                ax2.set_ylabel('LTUE Rate')
+                ax2.set_ylabel('LTUER')
 
             if row_idx == 0 and col_idx == 0:
                 ax1.legend()
@@ -1060,9 +1076,9 @@ def plot_occupation_uer_grid2(sim_results, observation, soc_labs, save=False, pa
 
             occ_data = occ_data.groupby([name_k, 'Time Step']).sum().reset_index()
             occ_data['UER'] = occ_data['Unemployment'] / occ_data['Workers']
-            occ_data['LTUE Rate'] = occ_data['LT Unemployed Persons'] / occ_data['Unemployment']
+            occ_data['LTUER'] = occ_data['LT Unemployed Persons'] / occ_data['Unemployment']
 
-            mean_occ_data = occ_data.groupby(name_k)[['UER', 'LTUE Rate']].mean().reset_index()
+            mean_occ_data = occ_data.groupby(name_k)[['UER', 'LTUER']].mean().reset_index()
             obs_values = observation[[name_k, k_uer, k_ltuer]].drop_duplicates(subset=[name_k])
             merged = mean_occ_data.merge(obs_values, on=name_k, how='left')
 
@@ -1103,7 +1119,7 @@ def plot_occupation_uer_grid2(sim_results, observation, soc_labs, save=False, pa
                 ax1.plot(x_ticks, fit_line, color='blue', linestyle='--', alpha=0.7, label='Best fit (Sim.)')
 
             sorted_codes_ltuer = merged.sort_values(by=k_ltuer)[name_k].tolist()
-            sim_vals_ltuer = merged.set_index(name_k).reindex(sorted_codes_ltuer)['LTUE Rate'].tolist()
+            sim_vals_ltuer = merged.set_index(name_k).reindex(sorted_codes_ltuer)['LTUER'].tolist()
             obs_vals_ltuer = merged.set_index(name_k).reindex(sorted_codes_ltuer)[k_ltuer].tolist()
             x_ticks_ltuer = list(range(len(sorted_codes_ltuer)))
             x_labels_ltuer = merged.set_index(name_k).reindex(sorted_codes_ltuer)[name_k + "_label"].tolist()
@@ -1165,8 +1181,8 @@ def plot_ltuer_difference_heatmap(sim_results_dict, observed_data, difference_ty
         occ_data = sim_results.loc[:, ['acs_occ_code', 'Time Step', 'Occupation', 'Workers', 'Unemployment', 'LT Unemployed Persons']]
         occ_data = occ_data.groupby(['acs_occ_code', 'Time Step']).sum().reset_index()
         occ_data['UER'] = occ_data['Unemployment'] / occ_data['Workers']
-        occ_data['LTUE Rate'] = occ_data['LT Unemployed Persons'] / occ_data['Unemployment']
-        mean_uer = occ_data.groupby('acs_occ_code')[['UER', 'LTUE Rate']].mean().reset_index()
+        occ_data['LTUER'] = occ_data['LT Unemployed Persons'] / occ_data['Unemployment']
+        mean_uer = occ_data.groupby('acs_occ_code')[['UER', 'LTUER']].mean().reset_index()
 
         # Merge simulation and observed data
         temp_codes = observed_data.loc[:, ['acs_occ_code', 'SOC2010_adj', 'uer_soc2010', 'ltuer_soc2010']]
@@ -1174,10 +1190,10 @@ def plot_ltuer_difference_heatmap(sim_results_dict, observed_data, difference_ty
         
         if difference_type == 'absolute':
             # Calculate absolute differences
-            diff = mean_occ_data['ltuer_soc2010'] - mean_occ_data['LTUE Rate']
+            diff = mean_occ_data['ltuer_soc2010'] - mean_occ_data['LTUER']
         else:
             # Calculate percentage differences
-            diff = ((mean_occ_data['ltuer_soc2010'] - mean_occ_data['LTUE Rate']) / mean_occ_data['ltuer_soc2010'])*100
+            diff = ((mean_occ_data['ltuer_soc2010'] - mean_occ_data['LTUER']) / mean_occ_data['ltuer_soc2010'])*100
 
         if abs_value:
             diff = np.abs(diff)

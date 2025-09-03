@@ -53,13 +53,13 @@ def run_single_local(d_u,
     avg_wage_offer_diff_records = []
     retired_all = 0
 
-    for t in range(time_steps):
-        if t <= delay:
+    for t in range(time_steps-1):
+        if t < delay:
             curr_bus_cy = 1
             bus_conf = 1
             ue_bc = 1
             vr_t = 0.03
-        if t > delay:
+        if t >= delay:
             if occ_shocks_data is not None:
                 curr_bus_cy = np.take(occ_shocks_data, indices=t-delay, axis=1)
                 bus_conf = curr_bus_cy
@@ -97,7 +97,7 @@ def run_single_local(d_u,
         for occ in net:
             occ.separated = 0
             occ.hired = 0
-            if occ_shocks_data is not None and t > delay:
+            if occ_shocks_data is not None and t >= delay:
                 occ_shock = curr_bus_cy[occ.occupation_id]
             else:
                 occ_shock = curr_bus_cy
@@ -178,7 +178,7 @@ def run_single_local(d_u,
         # Could consider making this a function of the class itself?
         retired_all = 0
         for occ in net:
-            if occ_shocks_data is not None and t > delay:
+            if occ_shocks_data is not None and t >= delay:
                 occ_shock = curr_bus_cy[occ.occupation_id]
             else:
                 occ_shock = curr_bus_cy
@@ -237,7 +237,7 @@ def run_single_local(d_u,
 
         else:
             record_temp_df = pd.DataFrame(record, columns=['Time Step', 'Occupation', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Current_Demand', 'Target_Demand', 'Employed Seekers', 'Unemployed Seekers', 'Total_Wages', 'U_Rel_Wage', 'E_Rel_Wage', 'UE_Transitions', 'EE_Transitions', "Separations", "Hires", "Mean Vacancy Offer", "Mean Occupational Wage"])
-            record_df = record_temp_df[record_temp_df['Time Step'] > delay]
+            record_df = record_temp_df[record_temp_df['Time Step'] >= delay]
             grouped = record_df.groupby('Time Step').sum().reset_index()
 
             grouped['UER'] = grouped['Unemployment'] / grouped['Workers']
@@ -260,7 +260,7 @@ def run_single_local(d_u,
     else:
 
         seekers_rec = pd.DataFrame(seekers_rec, columns=['Time Step', 'Unemployed Seekers', 'Applications Sent'])
-        seekers_rec = seekers_rec[seekers_rec['Time Step'] > delay]
+        seekers_rec = seekers_rec[seekers_rec['Time Step'] >= delay]
         return record_df, grouped, net, data, seekers_rec, avg_wage_offer_diff_df
 
 #########################################
