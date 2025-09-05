@@ -140,7 +140,7 @@ class worker:
                  # employed, 
                  longterm_unemp, 
                  # time_employed,
-                 time_unemployed, wage, hired, female, age, risk_av_score, ee_rel_wage, ue_rel_wage, applicants_sent, d_wage_offer):
+                 time_unemployed, wage, hired, female, age, risk_av_score, ee_rel_wage, ue_rel_wage, applicants_sent, d_wage_offer, last_ue_duration):
         # State-specific attributes:
         # Occupation id
         wrkr.occupation_id = occupation_id
@@ -165,6 +165,7 @@ class worker:
         wrkr.ue_rel_wage = ue_rel_wage
         wrkr.apps_sent = applicants_sent
         wrkr.d_wage_offer = d_wage_offer
+        wrkr.last_ue_duration = last_ue_duration
 
 
     def search_and_apply(wrkr, net, vacancies_by_occ, disc, bus_cy, alpha, app_effort):
@@ -188,6 +189,8 @@ class worker:
             return
 
         # Sample up to MAX_VACS vacancies directly
+        # if len(all_vacs) == 0:
+        #     print(f'No relevant vacancies found for occupation {wrkr_occ}')
         found_vacs = random.choices(all_vacs, weights=weights, k=min(MAX_VACS, len(all_vacs)))
         mean_wage = np.mean([v.wage for v in found_vacs]) if found_vacs else 0
 
@@ -200,11 +203,15 @@ class worker:
             else:
                 res_wage = wrkr.wage
 
-            found_vacs = [v for v in found_vacs if v.wage >= res_wage]
+            found_vacs_res = [v for v in found_vacs if v.wage >= res_wage]
+            #if len(found_vacs_res) == 0 & wrkr.time_unemployed > 5:
+            #    found_vacs_res = [max(found_vacs, key=lambda v: v.wage)]
+            #    print(f"applied to max wage vacancy absent vacancies about res wage {wrkr_occ} with wage diff: {found_vacs_res[0].wage/res_wage}")
+
 
             # Rank by utility
             sorted_vacs = sorted(
-                found_vacs,
+                found_vacs_res,
                 key=lambda v: util(
                     wrkr.wage, v.wage,
                     net[wrkr_occ].list_of_neigh_weights[v.occupation_id]
@@ -219,7 +226,7 @@ class worker:
                 v.applicants.append(wrkr)
                 vsent += 1
         else:
-            for v in random.sample(found_vacs, min(len(found_vacs), 10)):
+            for v in random.sample(found_vacs, min(len(found_vacs), 7)):
                 v.applicants.append(wrkr)
                 vsent += 1
 
@@ -285,8 +292,10 @@ class occupation:
 
     def separate_workers(occ, delta_u, gam, bus_cy):
         if(len(occ.list_of_employed) != 0):
-            sep_prob = delta_u + occ.seps_rate*(1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
-            w = np.random.binomial(len(occ.list_of_employed), sep_prob)
+            sep_prob_base = delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
+            sep_prob_gamma = delta_u + occ.seps_rate*(1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
+            sep_prob_delta = occ.seps_rate*delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
+            w = np.random.binomial(len(occ.list_of_employed), sep_prob_delta)
             occ.separated = w
             separated_workers = random.sample(occ.list_of_employed, w)
             #print(f'Separated workers: {len(separated_workers)}')
@@ -424,7 +433,8 @@ class occupation:
                 1,                         # ee_rel_wage
                 1,                         # ue_rel_wage
                 0,                         # applicants_sent
-                0                          # d_wage_offer
+                0,                         # d_wage_offer
+                None                       # last_ue_duration
             ))
 
 class vac:
@@ -435,27 +445,72 @@ class vac:
         v.filled = filled
         v.time_open = time_open
         
-    # Function to hire a worker from pool of vacancies    
+    # # Function to hire a worker from pool of vacancies    
+    # def hire(v, net):
+    #     a = random.choice(v.applicants)
+    #     assert(not(a.hired))
+    #     try:
+    #         net[v.occupation_id].list_of_employed.append(net[a.occupation_id].list_of_employed.pop(net[a.occupation_id].list_of_employed.index(a)))
+    #         a.ee_rel_wage = v.wage/a.wage
+    #     except ValueError:
+    #         try:
+    #             # Second attempt (fallback)
+    #             net[v.occupation_id].list_of_employed.append(net[a.occupation_id].list_of_unemployed.pop(net[a.occupation_id].list_of_unemployed.index(a)))
+    #             a.ue_rel_wage = v.wage/a.wage   
+    #         except ValueError:
+    #             print("Indexing failed - worker not found in either employed or unemployed list")
+    #     net[v.occupation_id].hired += 1
+    #     a.occupation_id = v.occupation_id
+    #     a.last_ue_duration = a.time_unemployed
+    #     a.time_unemployed = 0
+    #     # Their new wage is now the vacancy's wage - the relative wage will be updated in the update_workers function
+    #     a.wage = v.wage
+    #     a.hired = True
+    #     v.applicants.clear()
+
+        # Function to hire a worker from pool of vacancies    
     def hire(v, net):
         a = random.choice(v.applicants)
-        assert(not(a.hired))
+        assert not a.hired
+
+        origin_occ = None
+        ue_dur = None
+
         try:
-            net[v.occupation_id].list_of_employed.append(net[a.occupation_id].list_of_employed.pop(net[a.occupation_id].list_of_employed.index(a)))
-            a.ee_rel_wage = v.wage/a.wage
+            # EE → E (no unemployment spell)
+            net[v.occupation_id].list_of_employed.append(
+                net[a.occupation_id].list_of_employed.pop(
+                    net[a.occupation_id].list_of_employed.index(a)
+                )
+            )
+            a.ee_rel_wage = v.wage / a.wage
+
         except ValueError:
             try:
-                # Second attempt (fallback)
-                net[v.occupation_id].list_of_employed.append(net[a.occupation_id].list_of_unemployed.pop(net[a.occupation_id].list_of_unemployed.index(a)))
-                a.ue_rel_wage = v.wage/a.wage   
+                # UE → E (capture origin + unemployment duration BEFORE moving)
+                src_list = net[a.occupation_id].list_of_unemployed
+                idx = src_list.index(a)
+
+                origin_occ = a.occupation_id
+                ue_dur = src_list[idx].time_unemployed  # spell length right now
+
+                net[v.occupation_id].list_of_employed.append(src_list.pop(idx))
+                a.ue_rel_wage = v.wage / a.wage
+
             except ValueError:
                 print("Indexing failed - worker not found in either employed or unemployed list")
+
         net[v.occupation_id].hired += 1
         a.occupation_id = v.occupation_id
-        a.time_unemployed = 0
-        # Their new wage is now the vacancy's wage - the relative wage will be updated in the update_workers function
+        a.time_unemployed = 0          # reset after hire
         a.wage = v.wage
         a.hired = True
         v.applicants.clear()
+
+        # Return origin & spell length only for UE→E hires; EE→E returns None
+        if origin_occ is not None and ue_dur is not None:
+            return (origin_occ, a.occupation_id, int(ue_dur))
+        return None
 
         
 def bus_cycle_demand(d_0, time, amp, period):
@@ -507,10 +562,10 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
             # Assume they have all at least 1 t.s. of employment
             if np.random.rand() <= g_share:
                 occ.list_of_employed.append(worker(occ.occupation_id, False, 1, wages[i,0], False, True, np.random.uniform(low=experience_age[i], high = 65),
-                                               abs(int(np.random.normal(fem_ra,2))), 1, 1,0,0))
+                                               abs(int(np.random.normal(fem_ra,2))), 1, 1,0,0, None))
             else:
                 occ.list_of_employed.append(worker(occ.occupation_id, False, 1, wages[i,0], False, False, np.random.uniform(experience_age[i], high = 65),
-                                               abs(int(np.random.normal(male_ra,2))), 1, 1,0,0))
+                                               abs(int(np.random.normal(male_ra,2))), 1, 1,0,0,None))
             ## adding unemployed workers
         for u in range(round(unemployment[i,0])):
             if np.random.rand() <= g_share:
@@ -518,13 +573,13 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
                                                      np.random.normal(wages[i,0], 0.05* wages[i,0]), False, True, 
                                                      np.random.uniform(experience_age[i], high = 65), 
-                                                     abs(int(np.random.normal(fem_ra,0.1))), 1, 1, 1, 0))
+                                                     abs(int(np.random.normal(fem_ra,0.1))), 1, 1, 1, 0, None))
             else:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
                                                      np.random.normal(wages[i,0], 0.05* wages[i,0]), False, False, 
                                                      np.random.uniform(experience_age[i], high = 65), 
-                                                     abs(int(np.random.normal(male_ra,0.1))), 1, 1, 1, 0))
+                                                     abs(int(np.random.normal(male_ra,0.1))), 1, 1, 1, 0, None))
 
 
         occs.append(occ)

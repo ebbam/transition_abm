@@ -42,7 +42,7 @@ def run_single_local(d_u,
     # Records variables of interest for plotting
     # Initialise deepcopy occupational mobility network
     if simple_res:
-        record = np.empty((0, 7))
+        record = np.empty((0, 8))
     else:
         record = [] 
 
@@ -51,7 +51,9 @@ def run_single_local(d_u,
     seekers_rec = []
     time_steps = time_steps + delay
     avg_wage_offer_diff_records = []
+    app_load_records = []
     retired_all = 0
+    ue_spell_records = []
 
     for t in range(time_steps-1):
         if t < delay:
@@ -113,7 +115,7 @@ def run_single_local(d_u,
             ### APPLICATIONS
             # isolate list of vacancies in economy that are relevant to the occupation
             # - avoids selecting in each search_and_apply application
-            r_vacs = vacancies_by_occ         
+            r_vacs = vacancies_by_occ  
     
             for u in occ.list_of_unemployed:
                 unemp_seekers += 1
@@ -150,7 +152,21 @@ def run_single_local(d_u,
                     
         seekers_rec.append([t+1, unemp_seekers, u_apps])
 
-
+        # Collect application flow per occupation
+        app_load_rows = [
+            (t+1, v.occupation_id, len(v.applicants))
+            for v in vacs_temp
+        ]
+        if app_load_rows:  # only if there are vacancies
+            app_load_step = pd.DataFrame(app_load_rows, columns=['Time Step', 'Occupation', 'ApplicantsPerVac'])
+            app_load_agg = app_load_step.groupby(['Time Step', 'Occupation']).agg(
+                OpenVacs=('ApplicantsPerVac', 'size'),
+                TotalApplicants=('ApplicantsPerVac', 'sum'),
+                MeanAppsPerVac=('ApplicantsPerVac', 'mean'),
+                MedianAppsPerVac=('ApplicantsPerVac', 'median')
+            ).reset_index()
+            app_load_records.append(app_load_agg)
+    
         ### HIRING
         # Ordering of hiring randomised to ensure list order does not matter in filling vacancies...
         for v_open in sorted(vacs_temp,key=lambda _: random.random()):
@@ -158,9 +174,12 @@ def run_single_local(d_u,
             v_open.applicants[:] = [app for app in v_open.applicants if not(app.hired)]
             v_open.time_open += 1
             if len(v_open.applicants) > 0:
-                v_open.hire(net)
+                ret = v_open.hire(net)
                 v_open.filled = True
                 assert(len(v_open.applicants) == 0)
+                if ret is not None:
+                    origin_occ, dest_occ, ue_dur = ret
+                    ue_spell_records.append((t+1, origin_occ, dest_occ, ue_dur))
             else:
                 pass
 
@@ -172,6 +191,7 @@ def run_single_local(d_u,
             unemp = 0
             n_ltue = 0
             t_demand = 0
+            seps = 0
 
         ### OPEN VACANCIES
         # Update vacancies after all shifts have taken place
@@ -212,6 +232,8 @@ def run_single_local(d_u,
                 unemp += len(occ.list_of_unemployed)
                 n_ltue += sum(wrkr.longterm_unemp for wrkr in occ.list_of_unemployed)
                 t_demand += occ.target_demand*occ_shock
+                seps += occ.separated + retired
+
             
             else:
                 empl = len(occ.list_of_employed) 
@@ -229,11 +251,10 @@ def run_single_local(d_u,
                 ### UPDATE INDICATOR RECORD
                 record.append([t+1, occ.occupation_id, empl, unemp, empl + unemp, vacs_occ, n_ltue, curr_demand, t_demand, emp_seekers, unemp_seekers, wages_occ, u_rel_wage, e_rel_wage, ue, ee, seps, hires, vacs_wage, wage_occ])
 
-
         if simple_res:
             ### UPDATE INDICATOR RECORD
             record = np.append(record, 
-                        np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand]]), axis=0)
+                        np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand, seps]]), axis=0)
 
         else:
             record_temp_df = pd.DataFrame(record, columns=['Time Step', 'Occupation', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Current_Demand', 'Target_Demand', 'Employed Seekers', 'Unemployed Seekers', 'Total_Wages', 'U_Rel_Wage', 'E_Rel_Wage', 'UE_Transitions', 'EE_Transitions', "Separations", "Hires", "Mean Vacancy Offer", "Mean Occupational Wage"])
@@ -247,21 +268,28 @@ def run_single_local(d_u,
             grouped['EE_Trans_Rate'] = grouped['EE_Transitions'] / grouped['Workers']
             grouped['VACRATE'] = grouped['Vacancies'] / (grouped['Vacancies'] + grouped['Employment'])
             grouped['Hires Rate'] = grouped['Hires'] / grouped['Employment']
-            grouped['Separations Rate'] = grouped['Separations'] / grouped['Employment']
+            grouped['Separations Rate'] = (grouped['Separations'] + grouped['EE_Transitions']) / grouped['Employment']
 
-            data = {'UER': grouped['UER'], 'VACRATE': grouped['VACRATE']}
+            data = {'UER': grouped['UER'], 'VACRATE': grouped['VACRATE'], 'SEPSRATE': grouped['Separations Rate']}
             avg_wage_offer_diff_df = pd.DataFrame(avg_wage_offer_diff_records)
 
+            if app_load_records:
+                app_load_df = pd.concat(app_load_records, ignore_index=True)
+            else:
+                app_load_df = pd.DataFrame(columns=['Time Step','Occupation','OpenVacs','TotalApplicants','MeanAppsPerVac','MedianAppsPerVac'])
+
+            ue_spell_origin_df = pd.DataFrame(ue_spell_records, columns=['Time Step', 'OriginOccupation', 'DestinationOccupation', 'UEDuration'])
 
     if simple_res:
-        data = {'UER': np.array(record[delay:,2]/record[delay:,3]), 
-            'VACRATE': np.array(record[delay:,4]/(record[delay:,4] + record[delay:,1]))}
+        data = {'UER': np.array(record[delay:,2]/record[delay:,3]),
+            'VACRATE': np.array(record[delay:,4]/(record[delay:,4] + record[delay:,1])),
+            'SEPSRATE': np.array(record[delay:,7]/(record[delay:,1]+1))}
         return data
     else:
 
         seekers_rec = pd.DataFrame(seekers_rec, columns=['Time Step', 'Unemployed Seekers', 'Applications Sent'])
         seekers_rec = seekers_rec[seekers_rec['Time Step'] >= delay]
-        return record_df, grouped, net, data, seekers_rec, avg_wage_offer_diff_df
+        return record_df, grouped, net, data, seekers_rec, avg_wage_offer_diff_df, app_load_df, ue_spell_origin_df
 
 #########################################
 # # Wrapper for pyabc ########
