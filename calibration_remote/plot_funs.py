@@ -282,16 +282,23 @@ def hires_seps_rate(mod_results_dict, jolts, save=False, path=None):
     # Step 1: Separate models
     model_groups = {
         "Non-behavioral": {k: v for k, v in mod_results_dict.items() if "Non-behavioural" in k},
-        "Behavioral/Other": {k: v for k, v in mod_results_dict.items() if "Non-behavioural" not in k}
+        "Behavioral": {k: v for k, v in mod_results_dict.items() if "Non-behavioural" not in k}
     }
 
     # Step 2: Setup grid: rows = model groups, cols = [Hires Rate, Separations Rate]
-    fig, axes = plt.subplots(2, 2, figsize=(18, 12), sharex=True)
-    rate_types = [("Hires Rate", "HIRESRATE"), ("Separations Rate", "SEPSRATE")]
+    fig, axes = plt.subplots(4, 2, figsize=(18, 12), sharex=True)
+    rate_types = [("Hires Rate", "HIRESRATE"), ("Separations Rate", "SEPSRATE"), ("E-U Rate", 'QUITSRATE'), ("E-U Rate", 'LAYOFFRATE')]
+
+    # Add overall column titles using group_name
+    for col_idx, group_name in enumerate(model_groups.keys()):
+        fig.text(
+            0.25 + col_idx * 0.5, 0.97, group_name,
+            ha='center', va='top', fontsize=18, fontweight='bold'
+        )
 
     # Step 3: Loop through rows (model groups) and columns (rate types)
-    for row_idx, (group_name, group_models) in enumerate(model_groups.items()):
-        for col_idx, (rate_col_sim, rate_col_obs) in enumerate(rate_types):
+    for col_idx, (group_name, group_models) in enumerate(model_groups.items()):
+        for row_idx, (rate_col_sim, rate_col_obs) in enumerate(rate_types):
             ax = axes[row_idx, col_idx]
 
             # Plot observed JOLTS rate
@@ -303,20 +310,19 @@ def hires_seps_rate(mod_results_dict, jolts, save=False, path=None):
                 ax.plot(df['DATE'], df[rate_col_sim], label=model_name)
 
             # Titles and labels
-            title = f"{rate_col_sim} ({group_name} Models)"
+            title = f"{rate_col_sim} - {rate_col_obs} ({group_name} Models)"
             ax.set_title(title, fontweight='bold')
             ax.set_ylabel(rate_col_sim)
+            ax.set_xlim(df['DATE'].min(), df['DATE'].max())
             if row_idx == 1:
                 ax.set_xlabel('Date')
-            ax.grid(True)
             ax.legend()
 
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
 
     if save:
         plt.savefig(f'{path}hires_seps_rate_grid.jpg', dpi=300)
     plt.show()
-
     
 
 ####################################################

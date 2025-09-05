@@ -269,6 +269,7 @@ def run_single_local(d_u,
             grouped['VACRATE'] = grouped['Vacancies'] / (grouped['Vacancies'] + grouped['Employment'])
             grouped['Hires Rate'] = grouped['Hires'] / grouped['Employment']
             grouped['Separations Rate'] = (grouped['Separations'] + grouped['EE_Transitions']) / grouped['Employment']
+            grouped['E-U Rate'] = grouped['Separations'] / grouped['Employment']
 
             data = {'UER': grouped['UER'], 'VACRATE': grouped['VACRATE'], 'SEPSRATE': grouped['Separations Rate']}
             avg_wage_offer_diff_df = pd.DataFrame(avg_wage_offer_diff_records)
