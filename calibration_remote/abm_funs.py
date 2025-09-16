@@ -313,7 +313,7 @@ class occupation:
             sep_prob_base = delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
             sep_prob_gamma = delta_u + occ.seps_rate*(1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
             sep_prob_delta = occ.seps_rate*delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
-            w = np.random.binomial(len(occ.list_of_employed), sep_prob_base)
+            w = np.random.binomial(len(occ.list_of_employed), sep_prob_delta)
             occ.separated = w
             separated_workers = random.sample(occ.list_of_employed, w)
             #print(f'Separated workers: {len(separated_workers)}')
