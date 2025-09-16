@@ -168,7 +168,7 @@ class worker:
         wrkr.last_ue_duration = last_ue_duration
 
 
-    def search_and_apply(wrkr, net, vacancies_by_occ, disc, bus_cy, alpha, app_effort):
+    def search_and_apply(wrkr, net, vacancies_by_occ, disc, app_effort):
         MAX_VACS = 30
         wrkr_occ = wrkr.occupation_id
         neigh_probs = net[wrkr_occ].list_of_neigh_weights  # Already normalized
@@ -186,12 +186,17 @@ class worker:
 
         if not all_vacs:
             wrkr.apps_sent = 0
-            return
+            wrkr.d_wage_offer = np.nan
+            return 0
 
         # Sample up to MAX_VACS vacancies directly
-        # if len(all_vacs) == 0:
-        #     print(f'No relevant vacancies found for occupation {wrkr_occ}')
-        found_vacs = random.choices(all_vacs, weights=weights, k=min(MAX_VACS, len(all_vacs)))
+        try:
+            found_vacs = random.choices(all_vacs, weights=weights, k=min(MAX_VACS, len(all_vacs)))
+
+        except ValueError:
+            wrkr.apps_sent = 0
+            wrkr.d_wage_offer = np.nan
+            return 0
         mean_wage = np.mean([v.wage for v in found_vacs]) if found_vacs else 0
 
         vsent = 0
@@ -258,24 +263,36 @@ class worker:
             return
 
         # Sample up to MAX_VACS vacancies directly
-        found_vacs = random.choices(all_vacs, weights=weights, k=min(MAX_VACS, len(all_vacs)))
+        try:
+            found_vacs = random.choices(all_vacs, weights=weights, k=min(MAX_VACS, len(all_vacs)))
+        
+        except ValueError:
+            wrkr.apps_sent = 0
+            wrkr.d_wage_offer = np.nan
+            return 0
+        
         mean_wage = np.mean([v.wage for v in found_vacs]) if found_vacs else 0
 
         if disc:
-            found_vacs = [v for v in found_vacs if v.wage >= wrkr.wage*1.05]
+            found_vacs = [v for v in found_vacs if v.wage >= np.random.normal(wrkr.wage*1.05, 0.05*wrkr.wage*1.05)]
+        else:
+            found_vacs = [v for v in found_vacs if v.wage >= np.random.normal(wrkr.wage, 0.05*wrkr.wage)]
         # Filter found_vacs to keep only elements where util(el) > 0
         # We assume that employed workers will only apply to vacancies for which there is a wage gain. 
-        filtered_vacs = [el for el in found_vacs if util(wrkr.wage, el.wage, net[wrkr.occupation_id].list_of_neigh_weights[el.occupation_id]) > 0]
-        vs = random.sample(filtered_vacs, min(len(filtered_vacs), 5))
+        #filtered_vacs = [el for el in found_vacs if util(wrkr.wage, el.wage, net[wrkr.occupation_id].list_of_neigh_weights[el.occupation_id]) > 0]
+        vs = random.sample(found_vacs, min(len(found_vacs), 5))
+        sent_apps = len(vs)
         for r in vs:
             r.applicants.append(wrkr)
         wrkr.apps_sent = 0
         wrkr.d_wage_offer = np.nan
+
+        return sent_apps
             
 class occupation:
     def __init__(occ, occupation_id, list_of_employed, list_of_unemployed, 
                  list_of_neigh_bool, list_of_neigh_weights, current_demand, 
-                 target_demand, wage, separated, hired, entry_level_bool, experience_age, seps_rate):
+                 target_demand, wage, separated, hired, entry_level_bool, experience_age, seps_rate, competition_last):
         occ.occupation_id = occupation_id
         occ.list_of_employed = list_of_employed
         occ.list_of_unemployed = list_of_unemployed
@@ -289,13 +306,14 @@ class occupation:
         occ.entry_level = entry_level_bool
         occ.experience_age = experience_age
         occ.seps_rate = seps_rate
+        occ.competition_last = competition_last
 
     def separate_workers(occ, delta_u, gam, bus_cy):
         if(len(occ.list_of_employed) != 0):
             sep_prob_base = delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
             sep_prob_gamma = delta_u + occ.seps_rate*(1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
             sep_prob_delta = occ.seps_rate*delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
-            w = np.random.binomial(len(occ.list_of_employed), sep_prob_delta)
+            w = np.random.binomial(len(occ.list_of_employed), sep_prob_base)
             occ.separated = w
             separated_workers = random.sample(occ.list_of_employed, w)
             #print(f'Separated workers: {len(separated_workers)}')
@@ -437,6 +455,51 @@ class occupation:
                 None                       # last_ue_duration
             ))
 
+    def update_competition_metric(
+            occ,
+            net,
+            vacancies_by_occ,
+            use_weights: bool = True,
+            include_self: bool = True,
+            metric: str = "u_per_v",
+        ):
+            """
+            Compute neighborhood competition once and store it in occ.comp_last.
+            metric:
+            - "u_per_v": unemployed / max(1, vacancies) (default)
+            - "apps_per_v": total applicants / max(1, vacancies)  (requires applicants populated)
+            """
+            def vac_count(j: int) -> int:
+                return len(vacancies_by_occ.get(j, []))
+
+            def unemp_count(j: int) -> int:
+                return len(net[j].list_of_unemployed)
+
+            def apps_count(j: int) -> int:
+                vacs = vacancies_by_occ.get(j, [])
+                return sum(len(v.applicants) for v in vacs)
+
+            numer = 0.0
+            denom = 0.0
+            for j, is_neigh in enumerate(occ.list_of_neigh_bool):
+                if not is_neigh:
+                    continue
+                if not include_self and j == occ.occupation_id:
+                    continue
+                w = 1.0 if not use_weights or occ.list_of_neigh_weights is None else float(occ.list_of_neigh_weights[j])
+                v = vac_count(j)
+                if metric == "u_per_v":
+                    comp_j = unemp_count(j) / max(1, v)
+                elif metric == "apps_per_v":
+                    comp_j = apps_count(j) / max(1, v)
+                else:
+                    raise ValueError(f"Unknown metric '{metric}'")
+                numer += w * comp_j
+                denom += w
+
+            occ.comp_last = (numer / denom) if denom > 0 else 0.0
+            return occ.comp_last
+
 class vac:
     def __init__(v, occupation_id, applicants, wage, filled, time_open):
         v.occupation_id = occupation_id
@@ -554,7 +617,7 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
             
         occ = occupation(i, [], [], list(A[i] > 0), list(A[i]),
                          (employment[i,0] + vacancies[i,0]), 
-                         demand_target[i,0], wages[i,0], 0, 0, entry_level[i], experience_age[i], sep_rates[i])
+                         demand_target[i,0], wages[i,0], 0, 0, entry_level[i], experience_age[i], sep_rates[i], np.nan)
         # creating the workers of occupation i and attaching to occupation
         ## adding employed workers
         g_share = gend_share[i,0]
@@ -586,4 +649,15 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
         ids += 1
     return occs, vac_list
 
+def _sigmoid(x):
+    return 1.0 / (1.0 + np.exp(-x))
 
+def p_search_logit(age, comp, *, alpha=0.0, beta_A=-0.05, beta_C=-0.8, beta_CA=0.0, A0=40.0):
+    """
+    Logit p = alpha + beta_A*(age-A0) + beta_C*comp + beta_CA*comp*(age-A0)
+    No cycle term, no occ_shock.
+    """
+    logit_val = (alpha
+                 + beta_A * (age - A0)
+                 + beta_C * comp)
+    return _sigmoid(logit_val)

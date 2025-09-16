@@ -10,11 +10,12 @@
 
 # %%
 # Import packages
+import pandas as pd
 from abm_funs import *
 from plot_funs import *
-from model_fun import run_single_local
+from model_fun import *
+from collate_macro_vars import *
 import numpy as np
-import pandas as pd
 import random as random
 import matplotlib.pyplot as plt
 import tempfile
@@ -40,141 +41,118 @@ import os
 print(os.cpu_count()) 
 
 calib = True
+grid_search = False
 save = True
-
-# %%
-search_effort_dat = pd.read_csv("data/quarterly_search_ts.csv")
-search_effort_dat['DATE'] = pd.to_datetime(search_effort_dat['year'].astype(str) + '-' + (search_effort_dat['quarter'] * 3 - 2).astype(str) + '-01')
-search_effort_np = np.array(search_effort_dat['value_smooth'])
-search_effort_np = search_effort_np/search_effort_np.mean()
-
-# Define a range of bus_cy values  # Generates 100 values from 0 to 1
-search_effort_values = [search_effort_alpha(0, b, False, 0.1) for b in gdp_dat]  # Apply function
-search_effort_bus_conf_values = [search_effort_alpha(0, b, False, 0.1) for b in bus_conf_dat]  # Apply function
-search_effort_bk_values = [search_effort_alpha(0, b, False, 0.1) for b in gdp_dat_bk]  # Apply function
-search_effort_hamilton_values = [search_effort_alpha(0, b, False, 0.1) for b in gdp_dat_hamilton]  # Apply function
-# def search_effort_ts(t_unemp, se):
-#     apps = max(0, round(10 - 100*(1-se)))
-#     # if discouraged:
-#     #     apps = round(a_stable/((t_unemp)**2 + 1)) + 1
-#     return apps
-search_effort_values_dyn = [search_effort_ts(0, b) for b in search_effort_np]
-
-# Plot the results
-plt.figure(figsize=(8, 5))
-plt.plot(range(len(search_effort_values)), search_effort_values, marker='o', linestyle='-', color='b', label="Search Effort")
-plt.plot(range(len(search_effort_bus_conf_values)), search_effort_bus_conf_values, marker='o', linestyle='-', color='pink', label="Search Effort Bus. Conf.")
-plt.plot(range(len(search_effort_bk_values)), search_effort_bk_values, marker='o', linestyle='-', color='g', label="Search Effort BK")
-plt.plot(range(len(search_effort_hamilton_values)), search_effort_hamilton_values, marker='o', linestyle='-', color='purple', label="Search Effort Hamilton")
-
-plt.plot(range(len(search_effort_values_dyn)), search_effort_values_dyn, marker='o', linestyle='-', color='r', label="Search Effort TS")
-plt.xlabel("Business Cycle (bus_cy)")
-plt.ylabel("Search Effort (apps)")
-plt.title("Search Effort vs. Business Cycle")
-plt.legend()
-plt.grid(True)
-plt.show()
-
-
-
-# %%
-series_dict = {}
-for i, a in enumerate([0.3, 0.2, 0.1, 0.05, 0.01]):
-    efforts = []
-    for t_unemp in range(15):
-        apps = search_effort_alpha(t_unemp, 1, True, a)
-        efforts.append(apps)
-
-    series_dict[f"Alpha: {a}"] = {
-        "x": list(range(0, len(efforts))),
-        "y": efforts
-        }
-
-for i, a in series_dict.items():
-    print(a)
-    if i == 'Alpha: 0.1':
-        plt.plot(a['x'], a['y'],marker='o', linestyle='-', label=i)
-    else:
-        plt.plot(a['x'], a['y'],  linestyle='-', label=i)
-    plt.xlabel("Unemployment Duration (quarters)")
-    plt.ylabel("Applications Sent")
-
-   
-plt.axvline(x=8, color='black', linestyle='--', linewidth=1, label='2 years')
-plt.axvline(x=12, color='grey', linestyle='--', linewidth=1, label='3 years')
-plt.legend(loc='upper right')
-plt.grid(True)
-plt.suptitle("Applications Sent by Unemployment Duration")
-plt.tight_layout()
-plt.show()
-
-print(series_dict)
-def utility_fun(lambda_param, utility):
-    if lambda_param == 1:
-        return(np.log(utility))
-    else:
-        return((utility**(1-lambda_param))/(1-lambda_param))
-
-lambdas = [-0.5, -0.3, 0, 0.3, 0.5]
-utilities = [0, 0.2, 0.5, 1, 2]
-
-plt.figure(figsize=(10, 6))
-
-for lambda_p in lambdas:
-    utility_outputs = []
-    for utility in utilities:
-        utility_outputs.append(utility_fun(lambda_p, utility))
-    plt.plot(utilities, utility_outputs, marker='o', label=f'λ={lambda_p}')
-
-plt.xlabel('Utility Input')
-plt.ylabel('Utility Output') 
-plt.title('Utility Function Output for Different λ Values')
-plt.grid(True)
-plt.legend()
-plt.show()
-
 
 # %%
 
 # Macro observations
-observation = macro_observations.loc[(macro_observations['DATE'] >= calib_date[0]) & (macro_observations['DATE'] <= calib_date[1])].dropna(subset=["UNRATE", "VACRATE"]).reset_index()
+observation = macro_observations.loc[
+    (macro_observations['DATE'] >= calib_date[0]) & 
+    (macro_observations['DATE'] <= calib_date[1])
+].dropna(subset=["UNRATE", "VACRATE"]).reset_index()
+
 # Load US_input data
-A = pd.read_csv(path+"dRC_Replication/data/occupational_mobility_network.csv", header=None)
-employment = round(pd.read_csv(path+"dRC_Replication/data/ipums_employment_2016.csv", header = 0).iloc[:, [4]]/10000)
+A = pd.read_csv(path + "dRC_Replication/data/occupational_mobility_network.csv", header=None)
+employment = round(pd.read_csv(path + "dRC_Replication/data/ipums_employment_2016.csv", header=0).iloc[:, [4]] / 10000)
+
 # Crude approximation using avg unemployment rate of ~5% - should aim for occupation-specific unemployment rates
-unemployment = round(employment*(0.05/0.95))
+unemployment = round(employment * (0.05 / 0.95))
+
 # Less crude approximation using avg vacancy rate - should still aim for occupation-specific vacancy rates
-vac_rate_base = pd.read_csv(path+"dRC_Replication/data/vacancy_rateDec2000.csv").iloc[:, 2].mean()/100
-vacancies = round(employment*vac_rate_base/(1-vac_rate_base))
+vac_rate_base = pd.read_csv(path + "dRC_Replication/data/vacancy_rateDec2000.csv").iloc[:, 2].mean() / 100
+vacancies = round(employment * vac_rate_base / (1 - vac_rate_base))
+
 # Needs input data...
 demand_target = employment + vacancies
-wages = pd.read_csv(path+"dRC_Replication/data/ipums_variables.csv")[['median_earnings']]
-occ_ids = pd.read_csv(path+"dRC_Replication/data/ipums_variables.csv")[['id', 'acs_occ_code']]
-gend_share = pd.read_csv(path+"data/ipums_variables_w_gender.csv")[['women_pct']]
-mod_data =  {"A": A, "employment": employment, 
-             'unemployment':unemployment, 'vacancies':vacancies, 
-             'demand_target': demand_target, 'wages': wages, 'gend_share': gend_share}
+wages = pd.read_csv(path + "dRC_Replication/data/ipums_variables.csv")[['median_earnings']]
+occ_ids = pd.read_csv(path + "dRC_Replication/data/ipums_variables.csv")[['id', 'acs_occ_code']]
+gend_share = pd.read_csv(path + "data/ipums_variables_w_gender.csv")[['women_pct']]
+experience_req = pd.read_csv(path + "dRC_Replication/data/ipums_variables_w_exp.csv")
+seps_rates = pd.read_csv(path + "dRC_Replication/data/ipums_variables_w_seps_rate.csv")
+
+
+mod_data = {
+    "A": A,
+    "employment": employment,
+    'unemployment': unemployment,
+    'vacancies': vacancies,
+    'demand_target': demand_target,
+    'wages': wages,
+    'gend_share': gend_share,
+    'entry_level': experience_req['entry_level'],
+    # 'entry_age': experience_req['entry_age'],
+    'experience_age': experience_req['experience_age'],
+    'separation_rates': seps_rates['seps_rate']*10
+}
+
+# Create complete network
+n = A.shape
+complete_network = np.ones(n)
+mod_data_complete = {
+    "A": complete_network,
+    "employment": employment,
+    'unemployment': unemployment,
+    'vacancies': vacancies,
+    'demand_target': demand_target,
+    'wages': wages,
+    'gend_share': gend_share,
+    'entry_level': experience_req['entry_level'],
+    # 'entry_age': experience_req['entry_age'],
+    'experience_age': experience_req['experience_age'],
+    'separation_rates': seps_rates['seps_rate']*10
+
+}
 
 ###################################
 # Initialise the model
 ##################################
-net_temp, vacs = initialise(len(mod_data['A']), mod_data['employment'].to_numpy(), mod_data['unemployment'].to_numpy(), mod_data['vacancies'].to_numpy(), mod_data['demand_target'].to_numpy(), mod_data['A'], mod_data['wages'].to_numpy(), mod_data['gend_share'].to_numpy(), 0, 0)
+net_temp, vacs = initialise(
+    len(mod_data['A']),
+    mod_data['employment'].to_numpy(),
+    mod_data['unemployment'].to_numpy(),
+    mod_data['vacancies'].to_numpy(),
+    mod_data['demand_target'].to_numpy(),
+    mod_data['A'],
+    mod_data['wages'].to_numpy(),
+    mod_data['gend_share'].to_numpy(),
+    7, 3,
+    mod_data['entry_level'],
+    mod_data['experience_age'],
+    mod_data['separation_rates']
+)
+net_temp_complete, vacs_complete = initialise(
+    len(mod_data_complete['A']),
+    mod_data_complete['employment'].to_numpy(),
+    mod_data_complete['unemployment'].to_numpy(),
+    mod_data_complete['vacancies'].to_numpy(),
+    mod_data_complete['demand_target'].to_numpy(),
+    mod_data_complete['A'],
+    mod_data_complete['wages'].to_numpy(),
+    mod_data_complete['gend_share'].to_numpy(),
+    7, 3,
+    mod_data_complete['entry_level'],
+    mod_data_complete['experience_age'],
+    mod_data_complete['separation_rates']
+)
 
-# observation = macro_observations.loc[(macro_observations['DATE'] >= calib_date[0]) & (macro_observations['DATE'] <= calib_date[1])].dropna(subset = ["UNRATE", "VACRATE"]).reset_index()
 # Load calibrated parameters from CSV
-param_df = pd.read_csv(path+"old_output/output_06_06/calibrated_params_all.csv")
+param_df = pd.read_csv(path + "output/calibrated_params_all.csv")
 # Sort by Timestamp in descending order
 param_df = param_df.sort_values(by='Timestamp', ascending=False)
 
-params = {'mod_data': mod_data, 
-            'net_temp': net_temp,
-            'vacs': vacs, 
-            'time_steps': len(gdp_dat),
-            'delay': 100,
-            'gdp_data': gdp_dat,
-            'app_effort_dat': duration_to_prob_dict}
+params = {
+    'mod_data': mod_data,
+    'net_temp': net_temp,
+    'vacs': vacs,
+    'time_steps': len(gdp_dat),
+    'delay': 0,
+    'gdp_data': gdp_dat,
+    'app_effort_dat': duration_to_prob_dict,
+    'occ_shocks_data': occ_shocks_dat
+}
 
-# Shorten vac_df to the same length as gdp_dat using a moving average (if needed)   
+# Shorten vac_df to the same length as gdp_dat using a moving average (if needed)
 vac_df = observation['VACRATE'].to_numpy()
 if len(vac_df) > len(gdp_dat):
     print("smoothing vac_df")
@@ -184,214 +162,33 @@ if len(vac_df) > len(gdp_dat):
     vac_dat = vac_dat[:len(gdp_dat)]
 else:
     vac_dat = vac_df[:len(gdp_dat)]
-    
+
 print(len(vac_dat))
 plt.plot(vac_dat, label="Vacancy Rate (smoothed)")
 
 # %%
-# ####################
-# # Model Run ########
-# ####################
-# def run_single_local( #behav_spec, 
-#                     d_u, 
-#                     #d_v,
-#                     gamma_u,
-#                     #gamma_v,
-#                     otj,
-#                     cyc_otj, 
-#                     cyc_ue, 
-#                     disc,
-#                     mod_data = mod_data, 
-#                     net_temp = net_temp, 
-#                     vacs = vacs, 
-#                     time_steps = len(gdp_dat), # set equal to length of gdp_data
-#                     delay = 100,
-#                     gdp_data = gdp_dat,
-#                     bus_confidence_dat = gdp_dat,
-#                     app_effort_dat = duration_to_prob_dict,
-#                     simple_res = False, 
-#                     vac_data = vac_dat):
-    
-#     """ Runs the model once
-#     Argsuments:
-#        behav_spec: whether or not to run the behavioural model
-#        data: data required of initialise function  
-#        time_steps: Number of time steps for single model run
-#        d_u: parameter input to separation probability
-#        d_v: parameter input to vacancy opening probability
 
-#     Returns:
-#        dataframe of model run results
-#     """
-#     # Records variables of interest for plotting
-#     # Initialise deepcopy occupational mobility network
-#     #print(behav_spec)
-#     record = np.empty((0, 7))
-#     #print(parameter['vacs'])
-#     vacs_temp = deepcopy(vacs)
-#     net = deepcopy(net_temp)
-#     seekers_rec = []
-#     time_steps = time_steps + delay
-
-#     for t in range(time_steps):
-#         #if t == 1:
-#             #print(behav_spec)
-#         if t <= delay:
-#             curr_bus_cy = 1
-#             bus_conf = 1
-#             ue_bc = 1
-#             vr_t = 0.03
-#         if t > delay:
-#             curr_bus_cy = gdp_data[t-delay]
-#             bus_conf = bus_confidence_dat[t-delay]
-#             ue_bc = curr_bus_cy
-#             vr_t = vac_data[t-delay]
-#         if not cyc_ue:
-#             ue_bc = 1
-#         # search_eff_curr = search_eff_ts[t]
-#         # Ensure number of workers in economy has not changed
-#         #tic = time.process_time()
-#         emp_seekers = 0
-#         unemp_seekers = 0
-#         u_apps = 0
-#         u_searchers = 0
-#         for occ in net:
-#             # Exit and entry
-#             # Remove the top 2% of earners in an occupation's employed list
-#             occ.entry_and_exit(0.02)
-            
-#             ### APPLICATIONS
-#             # Questions to verify:
-#             # - CANNOT be fired and apply in same time step ie. time_unemployed > 0
-#             # - CAN be rejected and apply in the same time step - no protected attribute
-#             # isolate list of vacancies in economy that are relevant to the occupation
-#             # - avoids selecting in each search_and_apply application
-#             r_vacs = [vac for vac in vacs_temp if occ.list_of_neigh_bool[vac.occupation_id]]          
-    
-#             for u in occ.list_of_unemployed:
-#                 unemp_seekers += 1
-#                 # this one if only using simple scaling factor for the search effort
-#                 u.search_and_apply(net, r_vacs, disc, ue_bc, 0.1, app_effort_dat)
-#                 # use the following if we wish to incorporate the entire TS of search effort
-#                 #u.search_and_apply(net, r_vacs, behav_spec, search_eff_curr)
-            
-#             if otj:
-#                 # For both models, a mean of 40% of employed workers are searching for new jobs
-#                 # This fluctuates with the business cycle in the behavioural model in line with gdp
-#                 if cyc_otj:
-#                     search_scaling = curr_bus_cy*0.07
-#                 # Static mean in the non-behavioural model
-#                 else:
-#                     search_scaling = 0.07
-#                 for e in random.sample(occ.list_of_employed, int(search_scaling*len(occ.list_of_employed))):
-#                     emp_seekers += 1
-#                     e.emp_search_and_apply(net, r_vacs, disc)
-
-#             u_apps += sum(wrkr.apps_sent for wrkr in occ.list_of_unemployed if  wrkr.apps_sent is not None)
-#             u_searchers += len(occ.list_of_unemployed)
-
-#             ### SEPARATIONS
-#             try:
-#                 occ.separate_workers(d_u, gamma_u, curr_bus_cy)
-#             except Exception as e:
-#                 return np.inf
-
-
-#         ### HIRING
-#         # Ordering of hiring randomised to ensure list order does not matter in filling vacancies...
-#         # Possibly still introduces some bias...this seems to be where the "multiple offer" challenge Maria mentioned comes from
-#         # ....might be better to do this using an unordered set?
-#         for v_open in sorted(vacs_temp,key=lambda _: random.random()):
-#             # Removes any applicants that have already been hired in another vacancy
-#             v_open.applicants[:] = [app for app in v_open.applicants if not(app.hired)]
-#             v_open.time_open += 1
-#             if len(v_open.applicants) > 0:
-#                 v_open.hire(net)
-#                 v_open.filled = True
-#                 #vacs.remove(v_open)
-#                 assert(len(v_open.applicants) == 0)
-#             else:
-#                 pass
-
-#         vacs_temp = [v for v in vacs_temp if not(v.filled)] 
-
-#         # # Reset counters for record in time t
-#         empl = 0 
-#         unemp = 0
-#         n_ltue = 0
-#         # curr_demand = 0
-#         t_demand = 0
-
-#         ### OPEN VACANCIES
-#         # Update vacancies after all shifts have taken place
-#         # Could consider making this a function of the class itself?
-#         for occ in net:
-#             u_rel_wage = sum(wrkr.ue_rel_wage for wrkr in occ.list_of_employed if wrkr.hired and wrkr.ue_rel_wage is not None)
-#             e_rel_wage = sum(wrkr.ee_rel_wage for wrkr in occ.list_of_employed if wrkr.hired and wrkr.ee_rel_wage is not None)
-#             ue = len([w for w in occ.list_of_employed if w.hired and w.ue_rel_wage is not None])
-#             ee = len([w for w in occ.list_of_employed if w.hired and w.ee_rel_wage is not None])
-#             # Update time_unemployed and long-term unemployed status of unemployed workers
-#             # Remove protected "hired" attribute of employed workers
-#             occ.update_workers()
-#             # Assert that all unemployed people have spent 1 or more time periods unemployed
-#             assert(sum([worker.time_unemployed <= 0 for worker in occ.list_of_unemployed]) == 0)
-#             # Assert that all employed people have spent 0 time periods unemployed
-#             assert(sum([worker.time_unemployed <= 0 for worker in occ.list_of_employed]) == len(occ.list_of_employed))
-#             emp = len(occ.list_of_employed)
-#             curr_vacs = len([v_open for v_open in vacs_temp if v_open.occupation_id == occ.occupation_id])
-#             occ.current_demand = (curr_vacs + emp)
-#             # If real-world vacancy rate is greater than the current vacancy rate, then we create new vacancies 
-#             vac_prob = max(0, vr_t - (curr_vacs/(occ.current_demand + 1)))
-#             # vac_prob = d_v + ((gamma_v * max(0, occ.target_demand*(bus_conf) - occ.current_demand)) / (emp + 1))
-#             vacs_create = int(np.random.binomial(emp, vac_prob))
-
-#             #vacs_create = emp*int(vac_prob) + int(np.random.binomial(emp, vac_prob%1))
-#             for v in range(vacs_create):
-#                 vacs_temp.append(vac(occ.occupation_id, [], occ.wage, False, 0))
-#             empl += len(occ.list_of_employed) 
-#             unemp += len(occ.list_of_unemployed)
-#             n_ltue += sum(wrkr.longterm_unemp for wrkr in occ.list_of_unemployed)
-#             t_demand += occ.target_demand
-
-#         ### UPDATE INDICATOR RECORD
-#         record = np.append(record, 
-#                        np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand]]), axis=0)
-
-#     data = {'UER': np.array(record[delay:,2]/record[delay:,3]), 
-#             'VACRATE': np.array(record[delay:,4]/(record[delay:,4] + record[delay:,1]))}
-
-#     if simple_res:
-#         return data
-#     else:
-#         return record_df, grouped, net, data, seekers_rec
-
-# #########################################
-# # Wrapper for pyabc ########
-# #########################################
-# def pyabc_run_single(parameter):     
-#     res = run_single_local(**parameter)
-#     return res 
-
-run_single_local(
-    d_u = 0.01, 
-    #d_v = 0.1,
-    gamma_u = 0.01,
-    #gamma_v = 0.1,
-    otj = True,
-    cyc_otj = True, 
-    cyc_ue = True, 
-    disc = False,
-    mod_data = mod_data, 
-    net_temp = net_temp, 
-    vacs = vacs, 
-    time_steps = len(gdp_dat), # set equal to length of gdp_data
-    delay = 100,
-    gdp_data = gdp_dat,
-    bus_confidence_dat = gdp_dat,
-    app_effort_dat = duration_to_prob_dict,
-    simple_res = True, 
-    vac_data = vac_dat
-)
+# run_single_local(
+#     d_u = 0.01, 
+#     #d_v = 0.1,
+#     gamma_u = 0.01,
+#     #gamma_v = 0.1,
+#     otj = True,
+#     cyc_otj = True, 
+#     cyc_ue = True, 
+#     disc = False,
+#     mod_data = mod_data, 
+#     net_temp = net_temp, 
+#     vacs = vacs, 
+#     time_steps = len(gdp_dat), # set equal to length of gdp_data
+#     delay = 100,
+#     gdp_data = gdp_dat,
+#     bus_confidence_dat = gdp_dat,
+#     app_effort_dat = duration_to_prob_dict,
+#     simple_res = True, 
+#     vac_data = vac_dat,
+#     occ_shocks_data = occ_shocks_dat
+# )
 
 # %%
 def harmonise_length(x, y):
@@ -427,17 +224,113 @@ def distance_weighted(x, y): #weight_shape=0, weight_mean=1):
     dist = (np.sqrt(uer_sse))
     return dist
 
+jolts_obs = jolts[(jolts['DATE'] >= calib_date[0]) & (jolts['DATE'] <= calib_date[1])].reset_index()
+
+def distance_uer_sep_rate(x, y): #weight_shape=0, weight_mean=1):
+    x_ = harmonise_length(x, y)
+    
+    # Normalized SSE using variance
+    uer_sse = np.sum((x_["UER"] - y["UER"])**2) / np.var(y["UER"])
+    seprate_sse = np.sum((x_["SEPSRATE"] - y["SEPSRATE"])**2) / np.var(y["SEPSRATE"])
+
+    # Weighted combination
+    dist = (np.sqrt(uer_sse) + np.sqrt(seprate_sse))
+    return dist
+
+
+# %%
+# Prepare DataFrame for correlation analysis
+mod_data_df = pd.DataFrame({
+    #'Employment': mod_data['employment'],
+    'Wages': mod_data['wages']['median_earnings'],
+    'Gender Share': mod_data['gend_share']['women_pct'],
+    'Entry Level': mod_data['entry_level'],
+    'Experience Age': mod_data['experience_age'],
+    'Separation Rates': mod_data['separation_rates'],
+    'Education Requirements': experience_req['ed_req'],
+    'Experience Requirements': experience_req['experience_req'],
+    'Entry Age': experience_req['entry_age'],
+    'Experience Age': experience_req['experience_age']
+})
+
+# Map education requirements to ordinal values
+edu_order = [
+    'No formal educational credential',
+    'High school diploma or equivalent',
+    'Some college, no degree',
+    'Postsecondary nondegree award',
+    "Associate's degree",
+    "Bachelor's degree",
+    "Master's degree",
+    'Doctoral or professional degree'
+]
+
+experience_order = [
+    np.nan,
+    "Less than 5 years",
+    "5 years or more"
+]
+edu_map = {name: i for i, name in enumerate(edu_order)}
+mod_data_df['Education Requirements Ordinal'] = mod_data_df['Education Requirements'].map(edu_map)
+
+experience_map = {name: i for i, name in enumerate(experience_order)}
+mod_data_df['Experience Requirements Ordinal'] = mod_data_df['Experience Requirements'].map(experience_map)
+# Calculate correlations between Separation Rates and other variables
+corrs = mod_data_df.drop(columns=['Education Requirements', 'Experience Requirements']).corr()
+sep_corrs = corrs['Separation Rates'].drop('Separation Rates')
+
+# Sort correlations by absolute value (or just value)
+sep_corrs_sorted = sep_corrs.sort_values()
+
+# Plot correlation coefficients as a bar plot
+plt.figure(figsize=(10, 6))
+bars = plt.barh(sep_corrs_sorted.index, sep_corrs_sorted.values, color='magenta', alpha=0.3)
+plt.xlabel('Correlation with Separation Rates')
+plt.title('Correlation of Separation Rates with Occupational Characteristics')
+
+
+# Scatterplots of separation_rates vs each other variable in a 3x3 grid
+# Exclude specific columns from scatterplots
+exclude_cols = ['Education Requirements', 'Experience Requirements', 'Separation Rates']
+other_cols = [col for col in mod_data_df.columns if col not in exclude_cols]
+fig, axes = plt.subplots(3, 3, figsize=(15, 12))
+axes = axes.flatten()
+
+for i, col in enumerate(other_cols):
+    ax = axes[i]
+    sns.scatterplot(x=mod_data_df[col], y=mod_data_df['Separation Rates'], color="purple", ax=ax)
+    ax.set_ylabel('Separation Rates')
+    ax.set_title(f'Separation Rates vs {col}')
+    # Custom x-tick labels for ordinal columns
+    if col == 'Education Requirements Ordinal':
+        ax.set_xticks(range(len(edu_order)))
+        ax.set_xticklabels(edu_order, rotation=45, ha='right', fontsize=8)
+        ax.set_xlabel('Education Requirements')
+    elif col == 'Experience Requirements Ordinal':
+        ax.set_xticks(range(len(experience_order)))
+        ax.set_xticklabels([str(x) if pd.isna(x) else x for x in experience_order], rotation=45, ha='right', fontsize=8)
+        ax.set_xlabel('Experience Requirements')
+    else:
+        ax.set_xlabel(col)
+
+# Hide any unused subplots
+for j in range(len(other_cols), len(axes)):
+    fig.delaxes(axes[j])
+
+plt.tight_layout()
+plt.show()
+
 
 # %%
 params = {'mod_data': mod_data, 
             'net_temp': net_temp,
             'vacs': vacs, 
             'time_steps': len(gdp_dat),
-            'delay': 100,
             'gdp_data': gdp_dat,
             "bus_confidence_dat": gdp_dat,
             'app_effort_dat': duration_to_prob_dict,
             "vac_data": vac_dat,
+            'occ_shocks_data': occ_shocks_dat,
             'simple_res': True,
             'delay': 5}
 
@@ -486,9 +379,9 @@ calib_list = {
 observation = macro_observations.loc[(macro_observations['DATE'] >= calib_date[0]) & (macro_observations['DATE'] <= calib_date[1])].dropna(subset = ["UNRATE", "VACRATE"]).reset_index()
 
 if calib:
-    prior = pyabc.Distribution(d_u = pyabc.RV("uniform", 0.00001, 0.2),
+    prior = pyabc.Distribution(d_u = pyabc.RV("uniform", 0.00001, 0.9),
                         #d_v = pyabc.RV("uniform", 0.00001, 0.06),
-                        gamma_u = pyabc.RV("uniform", 0.00001, 0.7))
+                        gamma_u = pyabc.RV("uniform", 0.00001, 0.9))
                         #gamma_v = pyabc.RV("uniform", 0.00001, 1)) 
     
     
@@ -559,9 +452,9 @@ if calib:
         plot_kde_matrix(
             df, 
             w, 
-            limits={"d_u": (0.00001, 0.2),
+            limits={"d_u": (0.00001, 0.9),
                      #"d_v": (0.00001, 0.1),
-                       "gamma_u": (0.00001, 0.7)},
+                       "gamma_u": (0.00001, 0.9)},
                         # "gamma_v": (0.00001, 1)}, 
             refval=final_params, 
             names={"d_u": r"$\delta_u$", 
@@ -627,5 +520,204 @@ if calib:
         plt.close()
 
     print("Calibration complete. Results saved to CSV and plots saved as images.")
+
+# %%
+if grid_search:
+    from itertools import product
+    model_cats = ["otj_cyclical_e_disc"]#,  "otj_disc", "nonbehav", "otj_nonbehav"] #  #"nonbehav"]#, "otj_nonbehav"] #, #]
+
+    # Define parameter grid
+    nb_d_u_vals = np.linspace(0.01, 0.3, 10)
+    nb_gamma_u_vals = np.linspace(0.2, 0.9, 10)
+
+    b_d_u_vals = np.linspace(0.001, 0.15, 10)
+    b_gamma_u_vals = np.linspace(0.005, 0.05, 10)
+
+    for model_cat in model_cats:
+        if "nonbehav" in model_cat:
+            d_u_vals = nb_d_u_vals
+            gamma_u_vals = nb_gamma_u_vals
+        else:
+            d_u_vals = b_d_u_vals
+            gamma_u_vals = b_gamma_u_vals
+
+        print(f"\n Starting grid search for model category: {model_cat} with {len(d_u_vals) * len(gamma_u_vals)} parameter combinations")
+
+        setting = calib_list[model_cat]
+        grid_params = {**params, **setting}
+
+        # Output CSV per model_cat
+        results_csv = os.path.expanduser(path + f"output/grid_search_results_{model_cat}.csv")
+        if not os.path.exists(results_csv):
+            with open(results_csv, "w", newline="") as f:
+                writer = csv.writer(f)
+                writer.writerow(["d_u", "gamma_u", "distance", "otj", "cyc_otj", "cyc_ue", "disc", "timestamp", "model_cat"])
+
+        observation_data = {
+            "UER": observation["UER"].values,
+            "VACRATE": observation["VACRATE"].values,
+            'SEPSRATE': jolts_obs["SEPSRATE"].values
+        }
+
+        grid_results = []
+
+        for d_u, gamma_u in product(d_u_vals, gamma_u_vals):
+            full_params = grid_params.copy()
+            full_params.update({"d_u": d_u, "gamma_u": gamma_u})
+
+            try:
+                model_output = run_single_local(**full_params)
+                if isinstance(model_output, dict):
+                    dist = distance_weighted(model_output, observation_data)
+                else:
+                    dist = np.inf
+
+                grid_results.append((d_u, gamma_u, dist))
+
+                with open(results_csv, "a", newline="") as f:
+                    writer = csv.writer(f)
+                    writer.writerow([
+                        d_u, gamma_u, dist,
+                        setting['otj'], setting['cyc_otj'], setting['cyc_ue'], setting['disc'],
+                        datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        model_cat
+                    ])
+
+                print(f"✓ d_u={d_u:.4f}, gamma_u={gamma_u:.4f}, dist={dist:.4f}")
+
+            except Exception as e:
+                print(f"✗ d_u={d_u:.4f}, gamma_u={gamma_u:.4f} → ERROR: {e}")
+
+        # ---------------- Best Parameters ----------------
+        grid_results.sort(key=lambda x: x[2])
+        best_d_u, best_gamma_u, best_dist = grid_results[0]
+        print(f" Best parameters for {model_cat}: d_u={best_d_u:.4f}, gamma_u={best_gamma_u:.4f}, distance={best_dist:.4f}")
+
+        # ---------------- Best-Fit Time Series Plot ----------------
+        best_params = grid_params.copy()
+        best_params.update({"d_u": best_d_u, "gamma_u": best_gamma_u})
+        model_output = run_single_local(**best_params)
+        model_output_interp = harmonise_length(model_output, observation_data)
+        date_range = pd.date_range(start=observation["DATE"].iloc[0], end=observation["DATE"].iloc[-1], periods=len(model_output_interp))
+
+        plt.figure(figsize=(12, 10))
+        plt.subplot(3, 1, 1)
+        plt.plot(date_range, observation["UER"], label="Observed UER", color="black", linewidth=2)
+        plt.plot(date_range, model_output_interp["UER"], label="Model UER", color="green", linestyle="--")
+        plt.title(f"Best-Fit UER — {model_cat}")
+        plt.ylabel("UER")
+        plt.legend()
+        plt.grid(True)
+
+        plt.subplot(3, 1, 2)
+        plt.plot(date_range, jolts_obs['SEPSRATE'], label="Observed SEPSRATE", color="black", linewidth=2)
+        plt.plot(date_range, model_output_interp["SEPSRATE"], label="Model SEPSRATE", color="blue", linestyle="--")
+        plt.title(f"Best-Fit SEPSRATE — {model_cat}")
+        plt.ylabel("SEPSRATE")
+        plt.xlabel("Date")
+        plt.legend()
+        plt.grid(True)
+
+        plt.subplot(3, 1, 3)
+        plt.plot(date_range, observation["VACRATE"], label="Observed VACRATE", color="black", linewidth=2)
+        plt.plot(date_range, model_output_interp["VACRATE"], label="Model VACRATE", color="blue", linestyle="--")
+        plt.title(f"Best-Fit VACRATE — {model_cat}")
+        plt.ylabel("VACRATE")
+        plt.xlabel("Date")
+        plt.legend()
+        plt.grid(True)
+
+        plt.tight_layout()
+        plt.savefig(os.path.expanduser(path + f"output/best_fit_uer_vacrate_{model_cat}.png"))
+        plt.close()
+
+        # ---------------- Heatmap Plot ----------------
+        du_vals = sorted(set(x[0] for x in grid_results))
+        gu_vals = sorted(set(x[1] for x in grid_results))
+        du_idx = {val: i for i, val in enumerate(du_vals)}
+        gu_idx = {val: i for i, val in enumerate(gu_vals)}
+        heatmap = np.full((len(gu_vals), len(du_vals)), np.nan)
+
+        for d_u, gamma_u, dist in grid_results:
+            i = gu_idx[gamma_u]
+            j = du_idx[d_u]
+            heatmap[i, j] = dist
+
+        plt.figure(figsize=(10, 8))
+        sns.heatmap(
+            heatmap,
+            xticklabels=[f"{v:.3f}" for v in du_vals],
+            yticklabels=[f"{v:.3f}" for v in gu_vals],
+            cmap="viridis",
+            annot=True,
+            fmt=".2f"
+        )
+        plt.title(f"Distance Surface — {model_cat}")
+        plt.xlabel("d_u")
+        plt.ylabel("gamma_u")
+        plt.tight_layout()
+        plt.savefig(os.path.expanduser(path + f"output/grid_search_heatmap_{model_cat}.png"))
+        plt.close()
+
+# %%
+# ---------------- Best Parameters ----------------
+if grid_search:
+    model_cats = ["otj_disc", "otj_cyclical_e_disc", "nonbehav", "otj_nonbehav"]
+    for model_cat in model_cats:
+        import matplotlib.gridspec as gridspec
+
+        grid_results = pd.read_csv(f'{path}output/grid_search_results_{model_cat}.csv')
+        grid_results = grid_results.sort_values(by='distance', ascending=True).reset_index(drop=True)
+        best_d_u, best_gamma_u, best_dist = grid_results['d_u'].iloc[0], grid_results['gamma_u'].iloc[0], grid_results['distance'].iloc[0]
+        print(f" Best parameters for {model_cat}: d_u={best_d_u:.4f}, gamma_u={best_gamma_u:.4f}, distance={best_dist:.4f}")
+
+        setting = calib_list[model_cat]
+        grid_params = {**params, **setting}
+        best_params = grid_params.copy()
+        best_params.update({"d_u": best_d_u, "gamma_u": best_gamma_u, 'simple_res': True})
+        model_output = run_single_local(**best_params)
+        date_range = pd.date_range(start=observation["DATE"].iloc[0], end=observation["DATE"].iloc[-1], periods=len(model_output['UER']))
+
+        # Create a figure with 2 rows using gridspec
+        fig = plt.figure(figsize=(8, 12))
+        gs = gridspec.GridSpec(3, 1, height_ratios=[1, 1, 1.5])
+
+        # First plot: Best-Fit Time Series
+        ax1 = fig.add_subplot(gs[0])
+        ax1.plot(observation['DATE'], observation["UER"], label="Observed UER", color="black", linewidth=2)
+        ax1.plot(date_range, model_output["UER"], label="Model UER", color="green", linestyle="--")
+        ax1.set_title(f"Best-Fit UER — {model_cat}")
+        ax1.set_ylabel("UER")
+        ax1.legend()
+        ax1.grid(True)
+
+        ax2 = fig.add_subplot(gs[1])
+        ax2.plot(observation['DATE'], observation["VACRATE"], label="Observed VACRATE", color="black", linewidth=2, alpha=0.5)
+        ax2.plot(date_range, model_output["VACRATE"], label="Model VACRATE", color="blue", linestyle="--", alpha=0.5)
+        ax2.set_ylabel("VACRATE")
+        ax2.legend(loc="lower right")
+        ax2.grid(True)
+
+        # Second plot: Heatmap
+        ax3 = fig.add_subplot(gs[2])
+        heatmap_data = grid_results.pivot_table(index='d_u', columns='gamma_u', values='distance')
+        sns.heatmap(
+            heatmap_data,
+            cmap='viridis',
+            annot=False,
+            cbar_kws={'label': 'Distance'},
+            xticklabels=[f"{x:.3f}" for x in heatmap_data.columns],
+            yticklabels=[f"{y:.3f}" for y in heatmap_data.index],
+            ax=ax3
+        )
+        ax3.set_xlabel('gamma_u')
+        ax3.set_ylabel('d_u')
+        ax3.set_title(f'Grid Search Results Heatmap — {model_cat}')
+
+        plt.tight_layout()
+        #plt.show()
+        plt.savefig(os.path.expanduser(path + f"output/best_fit_and_heatmap_{model_cat}.png"))
+        plt.close(fig)
+
 
 

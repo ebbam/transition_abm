@@ -323,7 +323,7 @@ plt.show()
 # Full time series: "2024-5-1"
 # calib_date = ["2004-12-01", "2019-05-01"]
 calib_date = ["2000-12-01", "2019-05-01"]
-# calib_date = ["2000-12-01", "2024-05-01"]
+#calib_date = ["2000-12-01", "2024-05-01"]
 bus_conf_short = bus_conf_index[(bus_conf_index['DATE'] >= calib_date[0]) & (bus_conf_index['DATE'] <= calib_date[1])]
 gdp_dat_pd = realgdp.set_index('DATE').sort_index()
 

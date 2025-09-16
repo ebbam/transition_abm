@@ -26,6 +26,7 @@ def run_single_local(d_u,
                     bus_confidence_dat,
                     app_effort_dat,
                     vac_data,
+                    steady_state,
                     simple_res = False):
 
     """ Runs the model once
@@ -56,28 +57,23 @@ def run_single_local(d_u,
     ue_spell_records = []
 
     for t in range(time_steps-1):
-        if t < delay:
+        # Steady State option
+        if t < delay | steady_state:
             curr_bus_cy = 1
-            bus_conf = 1
-            ue_bc = 1
             vr_t = 0.03
-        if t >= delay:
+        if t >= delay and not steady_state:
             if occ_shocks_data is not None:
                 curr_bus_cy = np.take(occ_shocks_data, indices=t-delay, axis=1)
-                bus_conf = curr_bus_cy
             # else:
             #     curr_bus_cy = gdp_data[t-delay]
-            #     bus_conf = bus_confidence_dat[t-delay]
 
-            ue_bc = curr_bus_cy
             vr_t = vac_data[t-delay]
-        if not cyc_ue:
-            ue_bc = 1
-        # search_eff_curr = search_eff_ts[t]
+
         # Ensure number of workers in economy has not changed
         emp_seekers = 0
         unemp_seekers = 0
         u_apps = 0
+        e_apps = 0
         
         vacancies_by_occ = defaultdict(list)
         for v in vacs_temp:
@@ -95,11 +91,11 @@ def run_single_local(d_u,
             entry_alloc = {o.occupation_id: n for o, n in zip(entry_occs, draws)}
         else:
             entry_alloc = {}
-            
+
         for occ in net:
             occ.separated = 0
             occ.hired = 0
-            if occ_shocks_data is not None and t >= delay:
+            if occ_shocks_data is not None and t >= delay and not steady_state:
                 occ_shock = curr_bus_cy[occ.occupation_id]
             else:
                 occ_shock = curr_bus_cy
@@ -119,21 +115,41 @@ def run_single_local(d_u,
     
             for u in occ.list_of_unemployed:
                 unemp_seekers += 1
-                u.search_and_apply(net, r_vacs, disc, ue_bc, 0.1, app_effort_dat)
+                u.search_and_apply(net, r_vacs, disc, app_effort_dat)
             
             if otj:
-                # For both models, a mean of 7% of employed workers are searching for new jobs
-                # This fluctuates with the business cycle in the behavioural model in line with gdp
+                # # For both models, a mean of 7% of employed workers are searching for new jobs
+                # # This fluctuates with the business cycle in the behavioural model in line with gdp
+                # if cyc_otj:
+                #     search_scaling = occ_shock*0.07
+                # # Static mean in the non-behavioural model
+                # else:
+                #     search_scaling = 0.07
+                # for e in random.sample(occ.list_of_employed, int(search_scaling*len(occ.list_of_employed))):
+                #     emp_seekers += 1
+                #     e_apps += e.emp_search_and_apply(net, r_vacs, disc)
                 if cyc_otj:
-                    search_scaling = occ_shock*0.07
-                # Static mean in the non-behavioural model
+                    #print(f'Competition: {occ.competition_last}')
+                    for e in occ.list_of_employed:
+                        prob = p_search_logit(
+                            age=e.age,
+                            # Taken from calculated competition metric for occupation
+                            comp=occ.competition_last,
+                            alpha=-1.58,     # tune baseline
+                            beta_A=-0.05,  # age effect
+                            beta_C=-0.1,    # competition effect
+                            A0=40.0
+                        )
+                        #print(f'Search Probability: {prob}')
+                        if np.random.random() < prob:
+                            emp_seekers += 1
+                            e_apps += e.emp_search_and_apply(net, r_vacs, disc)
                 else:
-                    search_scaling = 0.07
-                for e in random.sample(occ.list_of_employed, int(search_scaling*len(occ.list_of_employed))):
-                    emp_seekers += 1
-                    e.emp_search_and_apply(net, r_vacs, disc)
+                    for e in random.sample(occ.list_of_employed, int(0.07*len(occ.list_of_employed))):
+                        emp_seekers += 1
+                        e_apps += e.emp_search_and_apply(net, r_vacs, disc)
 
-            u_apps += sum(wrkr.apps_sent for wrkr in occ.list_of_unemployed if  wrkr.apps_sent is not None)
+            u_apps += sum(wrkr.apps_sent for wrkr in occ.list_of_unemployed if wrkr.apps_sent is not None)
 
             d_wage_offers = [w.d_wage_offer for w in occ.list_of_unemployed if hasattr(w, 'd_wage_offer')]
             avg_diff = np.mean(d_wage_offers) if d_wage_offers else np.nan
@@ -150,23 +166,60 @@ def run_single_local(d_u,
                 return np.inf
             
                     
-        seekers_rec.append([t+1, unemp_seekers, u_apps])
+        seekers_rec.append([t+1, unemp_seekers, u_apps, emp_seekers, e_apps])
 
         # Collect application flow per occupation
         app_load_rows = [
-            (t+1, v.occupation_id, len(v.applicants))
+            (t+1, v.occupation_id, 
+             # All applicants
+             len(v.applicants), 
+             # Only unemployed applicants
+            len([app for app in v.applicants if app.time_unemployed != 0]), 
+            # Only employed applicants
+            len([app for app in v.applicants if app.time_unemployed == 0]))
             for v in vacs_temp
         ]
         if app_load_rows:  # only if there are vacancies
-            app_load_step = pd.DataFrame(app_load_rows, columns=['Time Step', 'Occupation', 'ApplicantsPerVac'])
+            app_load_step = pd.DataFrame(app_load_rows, columns=['Time Step', 'Occupation', 'ApplicantsPerVac', 'UnempApplicantsPerVac', 'EmpApplicantsPerVac'])
             app_load_agg = app_load_step.groupby(['Time Step', 'Occupation']).agg(
                 OpenVacs=('ApplicantsPerVac', 'size'),
                 TotalApplicants=('ApplicantsPerVac', 'sum'),
                 MeanAppsPerVac=('ApplicantsPerVac', 'mean'),
-                MedianAppsPerVac=('ApplicantsPerVac', 'median')
+                MedianAppsPerVac=('ApplicantsPerVac', 'median'),
+                TotalUnempAppsPerVac=('UnempApplicantsPerVac', 'sum')
             ).reset_index()
+            app_load_agg['MeanUnempAppsPerVac'] = app_load_agg['TotalUnempAppsPerVac'] / app_load_agg['TotalApplicants']
+
+            # Find level of competition in neighboring occupations in the network
+            app_load_agg['AppsPerVac'] = app_load_agg.apply(
+                lambda r: (r['TotalApplicants'] / r['OpenVacs'])
+                        if r['OpenVacs'] > 0 else np.nan,
+                axis=1
+            )
+            comp_map = dict(zip(app_load_agg['Occupation'], app_load_agg['AppsPerVac']))
+
+            # Assign to occupations for use in next step
+            for occ in net:
+                val = comp_map.get(occ.occupation_id, np.nan)
+                if np.isnan(val):
+                    # fallback if no vacancies: keep last known
+                    val = getattr(occ, "competition_last", 0.0)
+                occ.competition_last = val
+
             app_load_records.append(app_load_agg)
     
+        vacancies_by_occ = defaultdict(list)
+        for v in vacs_temp:
+            vacancies_by_occ[v.occupation_id].append(v)
+        
+        # for occ in net:
+        #     occ.update_competition_metric(
+        #         net=net,
+        #         vacancies_by_occ=vacancies_by_occ,
+        #         use_weights=True,
+        #         include_self=True,
+        #         metric="apps_per_v"   # or "apps_per_v" if you prefer that proxy
+        #     )
         ### HIRING
         # Ordering of hiring randomised to ensure list order does not matter in filling vacancies...
         for v_open in sorted(vacs_temp,key=lambda _: random.random()):
@@ -198,7 +251,7 @@ def run_single_local(d_u,
         # Could consider making this a function of the class itself?
         retired_all = 0
         for occ in net:
-            if occ_shocks_data is not None and t >= delay:
+            if occ_shocks_data is not None and t >= delay and not steady_state:
                 occ_shock = curr_bus_cy[occ.occupation_id]
             else:
                 occ_shock = curr_bus_cy
@@ -222,7 +275,7 @@ def run_single_local(d_u,
             # If real-world vacancy rate is greater than the current vacancy rate, then we create new vacancies 
             vac_prob = max(0, vr_t - (curr_vacs/(occ.current_demand + 1)))
             # vac_prob = d_v + ((gamma_v * max(0, occ.target_demand*(bus_conf) - occ.current_demand)) / (emp + 1))
-            vacs_create = int(np.random.binomial(emp, vac_prob))
+            vacs_create = int(np.random.binomial(occ.target_demand, vac_prob))
 
             #vacs_create = emp*int(vac_prob) + int(np.random.binomial(emp, vac_prob%1))
             for v in range(vacs_create):
@@ -246,10 +299,12 @@ def run_single_local(d_u,
                 wage_occ = np.mean([wrkr.wage for wrkr in occ.list_of_employed]) if emp > 0 else np.nan
                 wages_occ = sum(wrkr.wage for wrkr in occ.list_of_employed)
                 seps = occ.separated + retired
+                retirees = retired
                 hires = occ.hired
+                entry_level_entrants = entry_alloc.get(occ.occupation_id, 0) if occ.entry_level else 0
 
                 ### UPDATE INDICATOR RECORD
-                record.append([t+1, occ.occupation_id, empl, unemp, empl + unemp, vacs_occ, n_ltue, curr_demand, t_demand, emp_seekers, unemp_seekers, wages_occ, u_rel_wage, e_rel_wage, ue, ee, seps, hires, vacs_wage, wage_occ])
+                record.append([t+1, occ.occupation_id, empl, unemp, empl + unemp, vacs_occ, n_ltue, curr_demand, t_demand, emp_seekers, unemp_seekers, wages_occ, u_rel_wage, e_rel_wage, ue, ee, seps, hires, vacs_wage, wage_occ, retirees, entry_level_entrants])
 
         if simple_res:
             ### UPDATE INDICATOR RECORD
@@ -257,7 +312,7 @@ def run_single_local(d_u,
                         np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand, seps]]), axis=0)
 
         else:
-            record_temp_df = pd.DataFrame(record, columns=['Time Step', 'Occupation', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Current_Demand', 'Target_Demand', 'Employed Seekers', 'Unemployed Seekers', 'Total_Wages', 'U_Rel_Wage', 'E_Rel_Wage', 'UE_Transitions', 'EE_Transitions', "Separations", "Hires", "Mean Vacancy Offer", "Mean Occupational Wage"])
+            record_temp_df = pd.DataFrame(record, columns=['Time Step', 'Occupation', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Current_Demand', 'Target_Demand', 'Employed Seekers', 'Unemployed Seekers', 'Total_Wages', 'U_Rel_Wage', 'E_Rel_Wage', 'UE_Transitions', 'EE_Transitions', "Separations", "Hires", "Mean Vacancy Offer", "Mean Occupational Wage", "Retirees", "Entry_Level_Hires"])
             record_df = record_temp_df[record_temp_df['Time Step'] >= delay]
             grouped = record_df.groupby('Time Step').sum().reset_index()
 
@@ -288,7 +343,7 @@ def run_single_local(d_u,
         return data
     else:
 
-        seekers_rec = pd.DataFrame(seekers_rec, columns=['Time Step', 'Unemployed Seekers', 'Applications Sent'])
+        seekers_rec = pd.DataFrame(seekers_rec, columns=['Time Step', 'Unemployed Seekers', 'Applications Sent (Unemployed)', 'Employed Seekers', 'Applications Sent (Employed)'])
         seekers_rec = seekers_rec[seekers_rec['Time Step'] >= delay]
         return record_df, grouped, net, data, seekers_rec, avg_wage_offer_diff_df, app_load_df, ue_spell_origin_df
 

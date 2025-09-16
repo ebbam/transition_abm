@@ -599,6 +599,16 @@ def plot_gender_gaps(net_dict, sep = False, save = False, path = None):
         
     rows = math.ceil(n / cols)
 
+    # Find the global max wage across all models
+    global_max_wage = 0
+    for net in net_dict.values():
+        for occ in net:
+            w_wages = [wrkr.wage for wrkr in occ.list_of_employed if wrkr.female]
+            m_wages = [wrkr.wage for wrkr in occ.list_of_employed if not(wrkr.female)]
+            max_wage = max(w_wages + m_wages) if (w_wages + m_wages) else 0
+            if max_wage > global_max_wage:
+                global_max_wage = max_wage
+
     fig, axes = plt.subplots(rows, cols, figsize=(5 * cols, 5 * rows), squeeze=False, sharey = True)
     axes = axes.flatten()  # Flatten to make indexing easy
 
@@ -627,14 +637,14 @@ def plot_gender_gaps(net_dict, sep = False, save = False, path = None):
         t= " \n" + " \n" +  "Female share of employed: " + str(round((women/emp_counter)*100)) + "% \n" + "Mean Female Wage: $" + str(round(w_wage/women)) + "\n" + "Mean Male Wage: $" + str(round(m_wage/men)) + "\n" + "Gender wage gap: " + str(round(100*(1 - (w_wage/women)/(m_wage/men)))) + "%" + "\n" + "--------------------"
 
         n_bins = 10
-        women = np.array(w_wages)
-        men = np.array(m_wages)
+        women_arr = np.array(w_wages)
+        men_arr = np.array(m_wages)
 
         # We can set the number of bins with the *bins* keyword argument.
-        ax.hist(women, bins=n_bins, alpha = 0.3, color = 'purple', label = 'Women', fill = True, hatch = '.')
-        ax.hist(men, bins=n_bins, alpha = 0.3, label = 'Men', color = 'green', fill = True, hatch = '.')  
-        ax.axvline(women.mean(), color='purple', linestyle='dashed', linewidth=1, label = 'Women Avg.')
-        ax.axvline(men.mean(), color='green', linestyle='dashed', linewidth=1, label = 'Men Avg.')
+        ax.hist(women_arr, bins=n_bins, alpha = 0.3, color = 'purple', label = 'Women', fill = True, hatch = '.')
+        ax.hist(men_arr, bins=n_bins, alpha = 0.3, label = 'Men', color = 'green', fill = True, hatch = '.')  
+        ax.axvline(women_arr.mean(), color='purple', linestyle='dashed', linewidth=1, label = 'Women Avg.')
+        ax.axvline(men_arr.mean(), color='green', linestyle='dashed', linewidth=1, label = 'Men Avg.')
         ax.legend(loc='upper right') 
         ax.annotate(
                 t,
@@ -644,12 +654,12 @@ def plot_gender_gaps(net_dict, sep = False, save = False, path = None):
                 verticalalignment='center',
                 bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.6)
             )
-        ax.set_title(names[i])
+        ax.set_title(name)
+        ax.set_xlim([0, global_max_wage])
 
     fig.supxlabel("Wage")  # Shared x-axis label
     fig.suptitle('Distribution of Male and Female Wages', fontsize = 15) 
     fig.subplots_adjust(bottom=0.1)
-
 
     if save:
         plt.savefig(f'{path}gender_wage_gaps.jpg', dpi = 300)
