@@ -137,7 +137,7 @@ def run_single_local(d_u,
                             comp=occ.competition_last,
                             alpha=-1.58,     # tune baseline
                             beta_A=-0.05,  # age effect
-                            beta_C=-0.1,    # competition effect
+                            beta_C=-0.05,    # competition effect
                             A0=40.0
                         )
                         #print(f'Search Probability: {prob}')
@@ -338,8 +338,8 @@ def run_single_local(d_u,
 
     if simple_res:
         data = {'UER': np.array(record[delay:,2]/record[delay:,3]),
-            'VACRATE': np.array(record[delay:,4]/(record[delay:,4] + record[delay:,1])),
-            'SEPSRATE': np.array(record[delay:,7]/(record[delay:,1]+1))}
+            'VACRATE': np.array(record[delay:,4]/(record[delay:,4] + record[delay:,1]))}
+           # 'SEPSRATE': np.array(record[delay:,7]/(record[delay:,1]+1))}
         return data
     else:
 
