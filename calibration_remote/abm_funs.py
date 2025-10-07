@@ -239,7 +239,7 @@ class worker:
         wrkr.apps_sent = vsent
 
 
-    def emp_search_and_apply(wrkr, net, vac_list, disc):
+    def emp_search_and_apply(wrkr, net, vac_list, disc, emp_apps):
         # A sample of relevant vacancies are found that are in neighboring occupations
         # Select different random sample of "relevant" vacancies found by each worker
         # found_vacs = random.sample(vac_list, min(len(vac_list), 30))
@@ -280,7 +280,7 @@ class worker:
         # Filter found_vacs to keep only elements where util(el) > 0
         # We assume that employed workers will only apply to vacancies for which there is a wage gain. 
         #filtered_vacs = [el for el in found_vacs if util(wrkr.wage, el.wage, net[wrkr.occupation_id].list_of_neigh_weights[el.occupation_id]) > 0]
-        vs = random.sample(found_vacs, min(len(found_vacs), 5))
+        vs = random.sample(found_vacs, min(len(found_vacs), emp_apps))
         sent_apps = len(vs)
         for r in vs:
             r.applicants.append(wrkr)

@@ -23,5 +23,13 @@ d_u,0.1475907782541834,True,True,False,True,2025-09-18 03:59:59,otj_cyclical_e_d
 gamma_u,0.014120601122549824,True,True,False,True,2025-09-18 03:59:59,otj_cyclical_e_disc
 d_u,0.09083011938198254,True,False,False,False,2025-09-18 04:38:00,otj_nonbehav
 gamma_u,0.42049789203592536,True,False,False,False,2025-09-18 04:38:00,otj_nonbehav
-d_u,0.13012149812853785,True,False,False,True,2025-09-24 06:51:58,otj_disc
-gamma_u,0.018903789643080673,True,False,False,True,2025-09-24 06:51:58,otj_disc
+d_u,0.13012149812853785,True,False,False,True,2025-09-18 09:36:42,otj_disc
+gamma_u,0.018903789643080673,True,False,False,True,2025-09-18 09:36:42,otj_disc
+d_u,0.14001418525932044,False,False,False,False,2025-09-19 08:13:35,nonbehav
+gamma_u,0.8582214160364731,False,False,False,False,2025-09-19 08:13:35,nonbehav
+d_u,0.14008821963244794,False,False,False,False,2025-09-30 22:10:12,nonbehav
+gamma_u,0.8464451188766011,False,False,False,False,2025-09-30 22:10:12,nonbehav
+d_u,0.16897143394170122,True,True,False,True,2025-10-01 12:51:20,otj_cyclical_e_disc
+gamma_u,0.014064141220404927,True,True,False,True,2025-10-01 12:51:20,otj_cyclical_e_disc
+d_u,0.17830648427418533,True,False,False,True,2025-10-01 16:36:43,otj_disc
+gamma_u,0.01765662349657332,True,False,False,True,2025-10-01 16:36:43,otj_disc

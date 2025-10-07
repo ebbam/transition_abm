@@ -11,3 +11,5 @@ d_u,0.0023402865259134105,True,True,False,True,2025-06-26 01:50:24,otj_cyclical_
 gamma_u,0.005113972899831963,True,True,False,True,2025-06-26 01:50:24,otj_cyclical_e_disc
 d_u,0.0019649746634816845,True,False,False,True,2025-06-26 02:39:00,otj_disc
 gamma_u,0.005894738453460106,True,False,False,True,2025-06-26 02:39:00,otj_disc
+d_u,0.08377783674184272,False,False,False,False,2025-09-17 01:39:19,nonbehav
+gamma_u,0.4273656686996076,False,False,False,False,2025-09-17 01:39:19,nonbehav

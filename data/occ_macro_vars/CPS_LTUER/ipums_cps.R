@@ -11,6 +11,7 @@ library(tidyverse)
 library(here)
 library(lubridate)
 library(readxl)
+source(here("code/formatting/plot_dicts.R"))
 
 if (!require("ipumsr")) stop("Reading IPUMS data into R requires the ipumsr package. It can be installed using the following command: install.packages('ipumsr')")
 
@@ -54,6 +55,70 @@ filtered <- data %>%
          LTUE2 = DURUNEM2 >= 12
          ) # Counts the categories 5 (27-39 weeks), 6 (40+ weeks), and 7 (Over 26 weeks - period 1962-1967) as LTUE
   
+
+library(ggridges)
+library(viridis)
+ridges <- filtered %>% 
+  mutate(DATE = as.factor(as.Date(paste0(YEAR, "-", MONTH, "-01")))) %>% 
+  group_by(YEAR, DATE, DURUNEM2) %>% 
+  summarise(n = n()) %>% 
+  ungroup
+
+ridges %>% 
+  group_by(YEAR, DURUNEM2) %>% 
+  summarise(n = mean(n, na.rm = TRUE)) %>% 
+  ungroup %>% 
+  filter(DURUNEM2 != 0) %>% 
+  ggplot(., aes(x = DURUNEM2, y = YEAR, height = n, group = YEAR)) + 
+  geom_density_ridges(stat = "identity", scale = 1) +
+  theme(legend.position = "none") + coord_flip() + common_theme + theme(fill = "lightblue") +
+  labs(y = "Year", x = "Unemployment Duration")
+
+ridges2 <- filtered %>% 
+  mutate(DATE = as.factor(as.Date(paste0(YEAR, "-", MONTH, "-01")))) %>% 
+  group_by(YEAR, DATE, DURUNEMP) %>% 
+  summarise(n = n()) %>% 
+  ungroup
+
+ridges2 %>% 
+  group_by(YEAR, DURUNEMP) %>% 
+  summarise(n = mean(n, na.rm = TRUE)) %>% 
+  ungroup %>% 
+  filter(DURUNEMP != 0) %>% 
+  ggplot(., aes(x = DURUNEMP/4, y = YEAR, height = n, group = YEAR)) + 
+  geom_density_ridges(stat = "identity", scale = 1) +
+  theme(legend.position = "none") + 
+  coord_flip() + common_theme + 
+  labs(y = "Year", x = "Unemployment Duration (Months)", title = "Distribution of Unemployment Duration (Annual Average)") 
+
+ggsave(here('data/occ_macro_vars/CPS_LTUER/unemp_distributions_cps.png'))
+
+ridges2 %>% 
+  group_by(YEAR, DURUNEMP) %>% 
+  # summarise(n = mean(n, na.rm = TRUE)) %>% 
+  # ungroup %>% 
+  filter(DURUNEMP != 0) %>% 
+  ggplot(., aes(x = DURUNEMP/4, y = YEAR, group = YEAR)) + 
+  geom_violin(trim =FALSE) +
+  theme(legend.position = "none") + 
+  coord_flip() + common_theme + theme(fill = "lightblue") +
+  labs(y = "Year", x = "Unemployment Duration (Months)")
+
+ridges2 %>% 
+  group_by(YEAR, DURUNEM) %>% 
+  summarise(n = mean(n, na.rm = TRUE)) %>% 
+  ungroup %>% 
+  filter(DURUNEM2 != 0) %>% 
+  ggplot(aes(x = DURUNEM2, y = YEAR, group = YEAR, height = n)) + 
+  geom_density_ridges(stat = "binline", bins = 30, scale = 0.2, draw_baseline = TRUE) +
+  theme(legend.position = "none") + coord_flip() + common_theme 
+
+filtered %>% 
+  mutate(DATE = as.factor(as.Date(paste0(YEAR, "-", MONTH, "-01")))) %>% 
+  filter(DURUNEM2 != 0) %>% 
+  ggplot(aes(x = DATE, y = DURUNEM2)) +
+    geom_density() + 
+  common_theme
 ################################################################################
 ################### NATIONAL RATE ##############################################
 ################################################################################

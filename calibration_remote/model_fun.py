@@ -27,6 +27,7 @@ def run_single_local(d_u,
                     app_effort_dat,
                     vac_data,
                     steady_state,
+                    emp_apps,
                     simple_res = False):
 
     """ Runs the model once
@@ -143,11 +144,11 @@ def run_single_local(d_u,
                         #print(f'Search Probability: {prob}')
                         if np.random.random() < prob:
                             emp_seekers += 1
-                            e_apps += e.emp_search_and_apply(net, r_vacs, disc)
+                            e_apps += e.emp_search_and_apply(net, r_vacs, disc, emp_apps)
                 else:
                     for e in random.sample(occ.list_of_employed, int(0.07*len(occ.list_of_employed))):
                         emp_seekers += 1
-                        e_apps += e.emp_search_and_apply(net, r_vacs, disc)
+                        e_apps += e.emp_search_and_apply(net, r_vacs, disc,emp_apps)
 
             u_apps += sum(wrkr.apps_sent for wrkr in occ.list_of_unemployed if wrkr.apps_sent is not None)
 
@@ -212,14 +213,6 @@ def run_single_local(d_u,
         for v in vacs_temp:
             vacancies_by_occ[v.occupation_id].append(v)
         
-        # for occ in net:
-        #     occ.update_competition_metric(
-        #         net=net,
-        #         vacancies_by_occ=vacancies_by_occ,
-        #         use_weights=True,
-        #         include_self=True,
-        #         metric="apps_per_v"   # or "apps_per_v" if you prefer that proxy
-        #     )
         ### HIRING
         # Ordering of hiring randomised to ensure list order does not matter in filling vacancies...
         for v_open in sorted(vacs_temp,key=lambda _: random.random()):
@@ -286,6 +279,8 @@ def run_single_local(d_u,
                 n_ltue += sum(wrkr.longterm_unemp for wrkr in occ.list_of_unemployed)
                 t_demand += occ.target_demand*occ_shock
                 seps += occ.separated + retired
+                #e_seekers += emp_seekers
+                #u_seekers += unemp_seekers
 
             
             else:
@@ -309,7 +304,7 @@ def run_single_local(d_u,
         if simple_res:
             ### UPDATE INDICATOR RECORD
             record = np.append(record, 
-                        np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand, seps]]), axis=0)
+                        np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand, seps, emp_seekers, unemp_seekers]]), axis=0)
 
         else:
             record_temp_df = pd.DataFrame(record, columns=['Time Step', 'Occupation', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Current_Demand', 'Target_Demand', 'Employed Seekers', 'Unemployed Seekers', 'Total_Wages', 'U_Rel_Wage', 'E_Rel_Wage', 'UE_Transitions', 'EE_Transitions', "Separations", "Hires", "Mean Vacancy Offer", "Mean Occupational Wage", "Retirees", "Entry_Level_Hires"])
@@ -326,7 +321,7 @@ def run_single_local(d_u,
             grouped['Separations Rate'] = (grouped['Separations'] + grouped['EE_Transitions']) / grouped['Employment']
             grouped['E-U Rate'] = grouped['Separations'] / grouped['Employment']
 
-            data = {'UER': grouped['UER'], 'VACRATE': grouped['VACRATE'], 'SEPSRATE': grouped['Separations Rate']}
+            data = {'UER': grouped['UER'], 'VACRATE': grouped['VACRATE'], }#, 'SEPSRATE': grouped['Separations Rate']}
             avg_wage_offer_diff_df = pd.DataFrame(avg_wage_offer_diff_records)
 
             if app_load_records:
@@ -338,7 +333,8 @@ def run_single_local(d_u,
 
     if simple_res:
         data = {'UER': np.array(record[delay:,2]/record[delay:,3]),
-            'VACRATE': np.array(record[delay:,4]/(record[delay:,4] + record[delay:,1]))}
+            'VACRATE': np.array(record[delay:,4]/(record[delay:,4] + record[delay:,1])),
+            'COMPOSITION': np.array(record[delay:,8]/(record[delay:,8] + record[delay:,9]))}
            # 'SEPSRATE': np.array(record[delay:,7]/(record[delay:,1]+1))}
         return data
     else:
