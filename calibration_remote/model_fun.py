@@ -27,7 +27,9 @@ def run_single_local(d_u,
                     app_effort_dat,
                     vac_data,
                     steady_state,
+                    wage_prefs,
                     emp_apps,
+                    theta,
                     simple_res = False):
 
     """ Runs the model once
@@ -116,7 +118,7 @@ def run_single_local(d_u,
     
             for u in occ.list_of_unemployed:
                 unemp_seekers += 1
-                u.search_and_apply(net, r_vacs, disc, app_effort_dat)
+                u.search_and_apply(net, r_vacs, disc, app_effort_dat, wage_prefs)
             
             if otj:
                 # # For both models, a mean of 7% of employed workers are searching for new jobs
@@ -138,17 +140,17 @@ def run_single_local(d_u,
                             comp=occ.competition_last,
                             alpha=-1.58,     # tune baseline
                             beta_A=-0.05,  # age effect
-                            beta_C=-0.05,    # competition effect
+                            beta_C=theta,    # competition effect
                             A0=40.0
                         )
                         #print(f'Search Probability: {prob}')
                         if np.random.random() < prob:
                             emp_seekers += 1
-                            e_apps += e.emp_search_and_apply(net, r_vacs, disc, emp_apps)
+                            e_apps += e.emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs)
                 else:
                     for e in random.sample(occ.list_of_employed, int(0.07*len(occ.list_of_employed))):
                         emp_seekers += 1
-                        e_apps += e.emp_search_and_apply(net, r_vacs, disc,emp_apps)
+                        e_apps += e.emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs)
 
             u_apps += sum(wrkr.apps_sent for wrkr in occ.list_of_unemployed if wrkr.apps_sent is not None)
 
@@ -266,7 +268,7 @@ def run_single_local(d_u,
             curr_vacs = len([v_open for v_open in vacs_temp if v_open.occupation_id == occ.occupation_id])
             occ.current_demand = (curr_vacs + emp)
             # If real-world vacancy rate is greater than the current vacancy rate, then we create new vacancies 
-            vac_prob = max(0, vr_t - (curr_vacs/(occ.current_demand + 1)))
+            vac_prob = max(0, vr_t - (curr_vacs/(occ.target_demand + 1)))
             # vac_prob = d_v + ((gamma_v * max(0, occ.target_demand*(bus_conf) - occ.current_demand)) / (emp + 1))
             vacs_create = int(np.random.binomial(occ.target_demand, vac_prob))
 
@@ -304,7 +306,7 @@ def run_single_local(d_u,
         if simple_res:
             ### UPDATE INDICATOR RECORD
             record = np.append(record, 
-                        np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand, seps, emp_seekers, unemp_seekers]]), axis=0)
+                        np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand, seps]]), axis=0)
 
         else:
             record_temp_df = pd.DataFrame(record, columns=['Time Step', 'Occupation', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Current_Demand', 'Target_Demand', 'Employed Seekers', 'Unemployed Seekers', 'Total_Wages', 'U_Rel_Wage', 'E_Rel_Wage', 'UE_Transitions', 'EE_Transitions', "Separations", "Hires", "Mean Vacancy Offer", "Mean Occupational Wage", "Retirees", "Entry_Level_Hires"])
@@ -333,8 +335,8 @@ def run_single_local(d_u,
 
     if simple_res:
         data = {'UER': np.array(record[delay:,2]/record[delay:,3]),
-            'VACRATE': np.array(record[delay:,4]/(record[delay:,4] + record[delay:,1])),
-            'COMPOSITION': np.array(record[delay:,8]/(record[delay:,8] + record[delay:,9]))}
+            'VACRATE': np.array(record[delay:,4]/(record[delay:,4] + record[delay:,1]))}
+            #'COMPOSITION': np.array(record[delay:,8]/(record[delay:,8] + record[delay:,9]))}
            # 'SEPSRATE': np.array(record[delay:,7]/(record[delay:,1]+1))}
         return data
     else:

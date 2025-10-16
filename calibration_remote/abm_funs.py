@@ -168,7 +168,7 @@ class worker:
         wrkr.last_ue_duration = last_ue_duration
 
 
-    def search_and_apply(wrkr, net, vacancies_by_occ, disc, app_effort):
+    def search_and_apply(wrkr, net, vacancies_by_occ, disc, app_effort, wage_prefs):
         MAX_VACS = 30
         wrkr_occ = wrkr.occupation_id
         neigh_probs = net[wrkr_occ].list_of_neigh_weights  # Already normalized
@@ -202,17 +202,21 @@ class worker:
         vsent = 0
 
         if disc:
-            # Apply reservation wage filter
-            if wrkr.time_unemployed > 3:
-                res_wage = wrkr.wage * (1 - 0.1 * (wrkr.time_unemployed - 3))
+            if wage_prefs:
+                # Apply reservation wage filter
+                if wrkr.time_unemployed > 3:
+                    res_wage = wrkr.wage * (1 - 0.1 * (wrkr.time_unemployed - 3))
+                else:
+                    res_wage = wrkr.wage
+
+                found_vacs_res = [v for v in found_vacs if v.wage >= res_wage]
+                #if len(found_vacs_res) == 0 & wrkr.time_unemployed > 5:
+                #    found_vacs_res = [max(found_vacs, key=lambda v: v.wage)]
+                #    print(f"applied to max wage vacancy absent vacancies about res wage {wrkr_occ} with wage diff: {found_vacs_res[0].wage/res_wage}")
+
             else:
-                res_wage = wrkr.wage
-
-            found_vacs_res = [v for v in found_vacs if v.wage >= res_wage]
-            #if len(found_vacs_res) == 0 & wrkr.time_unemployed > 5:
-            #    found_vacs_res = [max(found_vacs, key=lambda v: v.wage)]
-            #    print(f"applied to max wage vacancy absent vacancies about res wage {wrkr_occ} with wage diff: {found_vacs_res[0].wage/res_wage}")
-
+                found_vacs_res = found_vacs
+                res_wage = np.nan
 
             # Rank by utility
             sorted_vacs = sorted(
@@ -234,12 +238,13 @@ class worker:
             for v in random.sample(found_vacs, min(len(found_vacs), 7)):
                 v.applicants.append(wrkr)
                 vsent += 1
+            res_wage = np.nan
 
         wrkr.d_wage_offer = mean_wage-res_wage if disc else np.nan
         wrkr.apps_sent = vsent
 
 
-    def emp_search_and_apply(wrkr, net, vac_list, disc, emp_apps):
+    def emp_search_and_apply(wrkr, net, vac_list, disc, emp_apps, wage_prefs):
         # A sample of relevant vacancies are found that are in neighboring occupations
         # Select different random sample of "relevant" vacancies found by each worker
         # found_vacs = random.sample(vac_list, min(len(vac_list), 30))
@@ -273,10 +278,12 @@ class worker:
         
         mean_wage = np.mean([v.wage for v in found_vacs]) if found_vacs else 0
 
-        if disc:
+        if disc and wage_prefs:
             found_vacs = [v for v in found_vacs if v.wage >= np.random.normal(wrkr.wage*1.05, 0.05*wrkr.wage*1.05)]
-        else:
+        elif wage_prefs and not disc:
             found_vacs = [v for v in found_vacs if v.wage >= np.random.normal(wrkr.wage, 0.05*wrkr.wage)]
+        else:
+            found_vacs = found_vacs
         # Filter found_vacs to keep only elements where util(el) > 0
         # We assume that employed workers will only apply to vacancies for which there is a wage gain. 
         #filtered_vacs = [el for el in found_vacs if util(wrkr.wage, el.wage, net[wrkr.occupation_id].list_of_neigh_weights[el.occupation_id]) > 0]
@@ -650,14 +657,19 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
     return occs, vac_list
 
 def _sigmoid(x):
-    return 1.0 / (1.0 + np.exp(-x))
+    if x < -709:  # Prevent overflow in exp for large negative x
+        return 0.0
+    elif x > 709:  # Prevent overflow in exp for large positive x
+        return 1.0
+    else:
+        return 1.0 / (1.0 + np.exp(-x))
 
-def p_search_logit(age, comp, *, alpha=0.0, beta_A=-0.05, beta_C=-0.8, beta_CA=0.0, A0=40.0):
+def p_search_logit(age, comp, *, alpha=0.0, beta_A=0.05, beta_C=-0.8, beta_CA=0.0, A0=40.0):
     """
     Logit p = alpha + beta_A*(age-A0) + beta_C*comp + beta_CA*comp*(age-A0)
     No cycle term, no occ_shock.
     """
     logit_val = (alpha
                  + beta_A * (age - A0)
-                 + beta_C * comp)
+                 - beta_C * comp)
     return _sigmoid(logit_val)
