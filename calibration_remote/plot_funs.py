@@ -594,7 +594,7 @@ def plot_gender_gaps(net_dict, sep = False, save = False, path = None):
     if sep:
         cols = 2
     else:
-        max_cols = 4
+        max_cols = 2
         cols = min(n, max_cols)
         
     rows = math.ceil(n / cols)
