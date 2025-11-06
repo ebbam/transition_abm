@@ -323,7 +323,7 @@ plt.show()
 # Full time series: "2024-5-1"
 # calib_date = ["2004-12-01", "2019-05-01"]
 calib_date = ["2000-12-01", "2019-05-01"]
-#calib_date = ["2000-12-01", "2024-05-01"]
+# calib_date = ["2000-12-01", "2024-05-01"]
 bus_conf_short = bus_conf_index[(bus_conf_index['DATE'] >= calib_date[0]) & (bus_conf_index['DATE'] <= calib_date[1])]
 gdp_dat_pd = realgdp.set_index('DATE').sort_index()
 
@@ -408,8 +408,50 @@ plt.ylabel("Value")
 plt.title("Occupation-Specific Shocks Over Time")
 plt.xticks(rotation=45)
 plt.grid()
+plt.show()
 
 #plt.savefig('output/figures/occ_shocks.png', dpi=300)
 
 
 occ_shocks_dat = np.array(df_monthly[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1])].transpose())
+
+
+# Seeker composition
+
+
+seekers_comp_obs_full = pd.read_csv('../data/behav_params/Eeckhout_Replication/comp_searchers_s_series_abm_validation.csv')
+
+# Map quarters to first day of quarter
+quarter_map = {"Q1": "-01-01", "Q2": "-04-01", "Q3": "-07-01", "Q4": "-10-01"}
+
+# Convert quarterly to monthly time series and interpolate missing values
+
+# Replace and convert
+seekers_comp_obs_full['DATE'] = (
+    seekers_comp_obs_full['date']
+    .replace(quarter_map, regex=True)
+    .pipe(pd.to_datetime)
+)
+
+# Set DATE as index for resampling
+seekers_comp_obs_full = seekers_comp_obs_full.set_index('DATE')
+
+# Resample to monthly frequency, keeping the value at the start of each quarter
+monthly = seekers_comp_obs_full.resample('MS').asfreq()
+
+# Interpolate missing values linearly
+monthly['comp_searchers_s'] = monthly['comp_searchers_s'].interpolate(method='linear')
+
+# Reset index to restore DATE as a column
+seekers_comp_obs_full = monthly.reset_index()
+
+seekers_comp_obs_full = seekers_comp_obs_full.rename(columns={"comp_searchers_s": "Seeker Composition"})
+seekers_comp_obs_full['DATE'] = pd.to_datetime(seekers_comp_obs_full['DATE'])
+seekers_comp_obs = seekers_comp_obs_full[(seekers_comp_obs_full['DATE'] >= calib_date[0]) & (seekers_comp_obs_full['DATE'] <= calib_date[1])]
+
+#seekers_comp_obs.to_csv(path + "data/macro_vars/collated_seekers_composition.csv", index = False)
+
+plt.plot(seekers_comp_obs_full['DATE'], seekers_comp_obs_full['Seeker Composition'], label='Full Series', color='lightgray', linestyle='dotted')
+plt.plot(seekers_comp_obs['DATE'], seekers_comp_obs['Seeker Composition'], label='Calibration Window', color='blue', linestyle='solid')
+plt.show()
+
