@@ -11,3 +11,13 @@ d_u,0.12123288907383224,True,False,False,False,2025-10-16 04:33:54,otj_nonbehav
 gamma_u,0.7957348114841369,True,False,False,False,2025-10-16 04:33:54,otj_nonbehav
 d_u,0.16430424444479952,True,False,False,True,2025-10-16 11:07:58,otj_disc
 gamma_u,0.018850511112406407,True,False,False,True,2025-10-16 11:07:58,otj_disc
+d_u,0.13941866558838253,False,False,False,False,2025-10-17 15:54:55,nonbehav
+gamma_u,0.8420500332931182,False,False,False,False,2025-10-17 15:54:55,nonbehav
+d_u,0.12130952240110551,True,False,False,False,2025-10-20 18:27:38,otj_nonbehav
+gamma_u,0.8037182175779306,True,False,False,False,2025-10-20 18:27:38,otj_nonbehav
+d_u,0.16392115219276998,True,False,False,True,2025-10-21 01:27:08,otj_disc
+gamma_u,0.020297282388095302,True,False,False,True,2025-10-21 01:27:08,otj_disc
+d_u,0.17401778522833325,True,False,False,True,2025-10-21 13:37:17,otj_disc
+gamma_u,0.016499661070003516,True,False,False,True,2025-10-21 13:37:17,otj_disc
+d_u,0.11948889840339035,True,False,False,True,2025-10-30 06:30:49,otj_disc_no_rw
+gamma_u,0.5294276052896301,True,False,False,True,2025-10-30 06:30:49,otj_disc_no_rw
