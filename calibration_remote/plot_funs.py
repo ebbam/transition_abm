@@ -362,12 +362,97 @@ def hires_seps_rate(mod_results_dict, jolts, save=False, path=None):
 #         plt.savefig(f'{path}uer_vac.jpg', dpi = 300)
 #     plt.show()
 
-def plot_uer_vac(res_dict, macro_obs, recessions=None, sep_strings=None, sep=False, save=False, path=None):
+# def plot_uer_vac(res_dict, macro_obs, recessions=None, sep_strings=None, sep=False, save=False, path=None):
+#     colors = ["skyblue", "orange",]# "brown", "pink"]
+#     def plot_uer(ax, models, title):
+#         for i, (name, res) in enumerate(models.items()):
+#             ax.plot(res['DATE'], res['UER'], label=f'Sim. UER: {name}', color=colors[i % len(colors)])
+#         ax.plot(macro_obs['DATE'], macro_obs['UER'], color="grey", linestyle="dotted", label="Obs. UER")
+#         if recessions is not None:
+#             for _, row in recessions.iterrows():
+#                 ax.axvspan(row['start'], row['end'], color='grey', alpha=0.2)
+#         ax.set_title(title)
+#         ax.set_xlabel("DATE")
+#         ax.set_ylabel("Unemployment Rate")
+#         ax.legend()
+
+#     def plot_vac(ax, models, title):
+#         for i, (name, res) in enumerate(models.items()):
+#             ax.plot(res['DATE'], res['VACRATE'], label=f'Sim. Vac Rate: {name}', color=colors[i % len(colors)])
+#         ax.plot(macro_obs['DATE'], macro_obs['VACRATE'], color="grey", linestyle="dotted", label="Obs. VR")
+#         if recessions is not None:
+#             for _, row in recessions.iterrows():
+#                 ax.axvspan(row['start'], row['end'], color='grey', alpha=0.2)
+#         ax.set_xlabel("DATE")
+#         ax.set_ylabel("Vacancy Rate")
+#         ax.legend()
+
+#     if sep and sep_strings:
+#         # Step 1: Categorize
+#         categorized = {match: {} for match, _ in sep_strings}
+#         titles = {match: title for match, title in sep_strings}
+#         unmatched = {}
+
+#         for name, res in res_dict.items():
+#             matched = False
+#             for match_str, _ in sep_strings:
+#                 if match_str in name:
+#                     categorized[match_str][name] = res
+#                     matched = True
+#                     break
+#             if not matched:
+#                 unmatched[name] = res
+
+#         # Add unmatched group
+#         if unmatched:
+#             categorized["__unmatched__"] = unmatched
+#             titles["__unmatched__"] = "Other Models"
+
+#         num_plots = len(categorized)
+#         fig, axes = plt.subplots(2, num_plots, figsize=(6 * num_plots, 8), sharex='col')
+#         if num_plots == 1:
+#             axes = np.array(axes).reshape(2, 1)
+
+#         for i, (match_str, models) in enumerate(categorized.items()):
+#             plot_uer(axes[0, i], models, titles[match_str])
+#             plot_vac(axes[1, i], models, titles[match_str])
+
+#         plt.tight_layout()
+
+#     else:
+#         # All in separate plots (grid layout)
+#         n = len(res_dict)
+#         fig, axes = plt.subplots(2, n, figsize=(6 * n, 8), sharex='col')
+#         if n == 1:
+#             axes = np.array(axes).reshape(2, 1)
+
+#         for i, (name, res) in enumerate(res_dict.items()):
+#             plot_uer(axes[0, i], {name: res}, name)
+#             plot_vac(axes[1, i], {name: res}, name)
+
+#         plt.tight_layout()
+
+#     # Save or show
+#     if save:
+#         plt.savefig(f'{path}uer_vac.jpg', dpi=300)
+#     plt.show()
+
+def plot_uer_vac( res_dict, macro_obs, calib_date, recessions=None, sep_strings=None, sep=False, save=False, path=None, free_date_scale = False):
     colors = ["skyblue", "orange",]# "brown", "pink"]
+    start = pd.to_datetime(calib_date[0])          # works whether it's already a Timestamp or a string
+    model_start_date = start + pd.DateOffset(months=25)
+
     def plot_uer(ax, models, title):
         for i, (name, res) in enumerate(models.items()):
+            if free_date_scale:
+                res['DATE'] = pd.date_range(
+                    start=calib_date[0],
+                    periods=len(res),
+                    freq="M"
+                )
             ax.plot(res['DATE'], res['UER'], label=f'Sim. UER: {name}', color=colors[i % len(colors)])
         ax.plot(macro_obs['DATE'], macro_obs['UER'], color="grey", linestyle="dotted", label="Obs. UER")
+        #ax.axvline(x=model_start_date, color='red', linestyle='--', label='Typical Model Start')
         if recessions is not None:
             for _, row in recessions.iterrows():
                 ax.axvspan(row['start'], row['end'], color='grey', alpha=0.2)
@@ -378,8 +463,38 @@ def plot_uer_vac(res_dict, macro_obs, recessions=None, sep_strings=None, sep=Fal
 
     def plot_vac(ax, models, title):
         for i, (name, res) in enumerate(models.items()):
+            if free_date_scale:
+                res['DATE'] = pd.date_range(
+                    start=calib_date[0],
+                    periods=len(res),
+                    freq="M"
+                )
             ax.plot(res['DATE'], res['VACRATE'], label=f'Sim. Vac Rate: {name}', color=colors[i % len(colors)])
         ax.plot(macro_obs['DATE'], macro_obs['VACRATE'], color="grey", linestyle="dotted", label="Obs. VR")
+        #ax.axvline(x=model_start_date, color='red', linestyle='--', label='Typical Model Start')
+
+        if recessions is not None:
+            for _, row in recessions.iterrows():
+                ax.axvspan(row['start'], row['end'], color='grey', alpha=0.2)
+        ax.set_xlabel("DATE")
+        ax.set_ylabel("Vacancy Rate")
+        ax.legend()
+
+    def plot_uer_error(ax, models, title):
+        for i, (name, res) in enumerate(models.items()):
+
+            if free_date_scale:
+                res['DATE'] = pd.date_range(
+                    start=calib_date[0],
+                    periods=len(res),
+                    freq="M"
+                )
+            if len(res['UER']) == len([macro_obs['UER']]):
+                ax.fill_between(res['DATE'], 0, res['UER'] - macro_obs['UER'], label=f'UER Error: {name}', color=colors[i % len(colors)], alpha = 0.5)
+            else:
+                ax.fill_between(res['DATE'], 0, res['UER'] - macro_obs['UER'].iloc[:len(res['UER'])], label=f'UER Error: {name}', color=colors[i % len(colors)], alpha = 0.5)
+        #ax.axvline(x=model_start_date, color='red', linestyle='--', label='Typical Model Start')
+
         if recessions is not None:
             for _, row in recessions.iterrows():
                 ax.axvspan(row['start'], row['end'], color='grey', alpha=0.2)
@@ -409,15 +524,26 @@ def plot_uer_vac(res_dict, macro_obs, recessions=None, sep_strings=None, sep=Fal
             titles["__unmatched__"] = "Other Models"
 
         num_plots = len(categorized)
-        fig, axes = plt.subplots(2, num_plots, figsize=(6 * num_plots, 8), sharex='col')
+        fig, axes = plt.subplots(3, num_plots, figsize=(8 * num_plots, 10), sharex='col')
         if num_plots == 1:
-            axes = np.array(axes).reshape(2, 1)
+            axes = np.array(axes).reshape(3, 1)
 
         for i, (match_str, models) in enumerate(categorized.items()):
             plot_uer(axes[0, i], models, titles[match_str])
-            plot_vac(axes[1, i], models, titles[match_str])
+            plot_uer_error(axes[1, i], models, titles[match_str])
+            plot_vac(axes[2, i], models, titles[match_str])
 
-        plt.tight_layout()
+                    # Ensure same y-axis limits for the UER error row (2nd row)
+        y_mins, y_maxs = [], []
+        for ax in axes[1, :]:
+            y_min, y_max = ax.get_ylim()
+            y_mins.append(y_min)
+            y_maxs.append(y_max)
+        common_min = min(y_mins)
+        common_max = max(y_maxs)
+        for ax in axes[1, :]:
+            ax.set_ylim(common_min, common_max)
+
 
     else:
         # All in separate plots (grid layout)
@@ -436,6 +562,7 @@ def plot_uer_vac(res_dict, macro_obs, recessions=None, sep_strings=None, sep=Fal
     if save:
         plt.savefig(f'{path}uer_vac.jpg', dpi=300)
     plt.show()
+
 
 def plot_uer_vac_single_row(res_dict, macro_obs, recessions=None, sep_strings=None, sep=False, save=False, path=None):
     colors = ["skyblue", "lightcoral", "purple", "green", "orange", "brown", "pink"]
@@ -565,6 +692,7 @@ def plot_seeker_comp(res_dict, observation, share = False, sep = False, save = F
     if save:
         plt.savefig(f'{path}seeker_composition.png', dpi = 300)
     plt.show()
+    
 def plot_seeker_comp_line(res_dict, observation, save = False, path = None):
     plt.figure(figsize=(10, 6))
     for i, (name, res) in enumerate(res_dict.items()):
@@ -630,10 +758,20 @@ def plot_gender_gaps(net_dict, sep = False, save = False, path = None):
             men += len([wrkr for wrkr in occ.list_of_employed if not(wrkr.female)])
             w_wages.extend([wrkr.wage for wrkr in occ.list_of_employed if wrkr.female])
             m_wages.extend([wrkr.wage for wrkr in occ.list_of_employed if not(wrkr.female)])
-            w_wage += sum([wrkr.wage for wrkr in occ.list_of_employed if wrkr.female])
-            m_wage += sum([wrkr.wage for wrkr in occ.list_of_employed if not(wrkr.female)])
-        
-            
+            w_wage += np.nansum([wrkr.wage for wrkr in occ.list_of_employed if wrkr.female])
+            m_wage += np.nansum([wrkr.wage for wrkr in occ.list_of_employed if not wrkr.female])
+
+
+        # Count NaNs
+        num_nan_women = np.isnan(women_arr).sum()
+        num_nan_men = np.isnan(men_arr).sum()
+
+        # Print warnings if any are found
+        if num_nan_women > 0:
+            print(f"{num_nan_women} NA value(s) found in women's wages for '{name}' — ignored in calculations.")
+        if num_nan_men > 0:
+            print(f"{num_nan_men} NA value(s) found in men's wages for '{name}' — ignored in calculations.")
+
         t= " \n" + " \n" +  "Female share of employed: " + str(round((women/emp_counter)*100)) + "% \n" + "Mean Female Wage: $" + str(round(w_wage/women)) + "\n" + "Mean Male Wage: $" + str(round(m_wage/men)) + "\n" + "Gender wage gap: " + str(round(100*(1 - (w_wage/women)/(m_wage/men)))) + "%" + "\n" + "--------------------"
 
         n_bins = 10
@@ -643,8 +781,8 @@ def plot_gender_gaps(net_dict, sep = False, save = False, path = None):
         # We can set the number of bins with the *bins* keyword argument.
         ax.hist(women_arr, bins=n_bins, alpha = 0.3, color = 'purple', label = 'Women', fill = True, hatch = '.')
         ax.hist(men_arr, bins=n_bins, alpha = 0.3, label = 'Men', color = 'green', fill = True, hatch = '.')  
-        ax.axvline(women_arr.mean(), color='purple', linestyle='dashed', linewidth=1, label = 'Women Avg.')
-        ax.axvline(men_arr.mean(), color='green', linestyle='dashed', linewidth=1, label = 'Men Avg.')
+        ax.axvline(np.nanmean(women_arr), color='purple', linestyle='dashed', linewidth=1, label = 'Women Avg.')
+        ax.axvline(np.nanmean(men_arr), color='green', linestyle='dashed', linewidth=1, label = 'Men Avg.')
         ax.legend(loc='upper right') 
         ax.annotate(
                 t,
