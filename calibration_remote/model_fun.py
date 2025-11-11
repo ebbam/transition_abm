@@ -30,6 +30,7 @@ def run_single_local(d_u,
                     wage_prefs,
                     emp_apps,
                     theta,
+                    mistake_rate,
                     simple_res = False):
 
     """ Runs the model once
@@ -46,7 +47,7 @@ def run_single_local(d_u,
     # Records variables of interest for plotting
     # Initialise deepcopy occupational mobility network
     if simple_res:
-        record = np.empty((0, 8))
+        record = np.empty((0, 10))
     else:
         record = [] 
 
@@ -118,8 +119,8 @@ def run_single_local(d_u,
     
             for u in occ.list_of_unemployed:
                 unemp_seekers += 1
-                u.search_and_apply(net, r_vacs, disc, app_effort_dat, wage_prefs)
-            
+                u.search_and_apply(net, r_vacs, disc, app_effort_dat, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp)
+
             if otj:
                 # # For both models, a mean of 7% of employed workers are searching for new jobs
                 # # This fluctuates with the business cycle in the behavioural model in line with gdp
@@ -146,11 +147,11 @@ def run_single_local(d_u,
                         #print(f'Search Probability: {prob}')
                         if np.random.random() < prob:
                             emp_seekers += 1
-                            e_apps += e.emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs)
+                            e_apps += e.emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp)
                 else:
                     for e in random.sample(occ.list_of_employed, int(0.07*len(occ.list_of_employed))):
                         emp_seekers += 1
-                        e_apps += e.emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs)
+                        e_apps += e.emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp)
 
             u_apps += sum(wrkr.apps_sent for wrkr in occ.list_of_unemployed if wrkr.apps_sent is not None)
 
@@ -306,7 +307,7 @@ def run_single_local(d_u,
         if simple_res:
             ### UPDATE INDICATOR RECORD
             record = np.append(record, 
-                        np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand, seps]]), axis=0)
+                        np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand, seps, emp_seekers, unemp_seekers]]), axis=0)
 
         else:
             record_temp_df = pd.DataFrame(record, columns=['Time Step', 'Occupation', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Current_Demand', 'Target_Demand', 'Employed Seekers', 'Unemployed Seekers', 'Total_Wages', 'U_Rel_Wage', 'E_Rel_Wage', 'UE_Transitions', 'EE_Transitions', "Separations", "Hires", "Mean Vacancy Offer", "Mean Occupational Wage", "Retirees", "Entry_Level_Hires"])
@@ -334,9 +335,13 @@ def run_single_local(d_u,
             ue_spell_origin_df = pd.DataFrame(ue_spell_records, columns=['Time Step', 'OriginOccupation', 'DestinationOccupation', 'UEDuration'])
 
     if simple_res:
-        data = {'UER': np.array(record[delay:,2]/record[delay:,3]),
-            'VACRATE': np.array(record[delay:,4]/(record[delay:,4] + record[delay:,1]))}
-            #'COMPOSITION': np.array(record[delay:,8]/(record[delay:,8] + record[delay:,9]))}
+        if theta is not None:
+            data = {'UER': np.array(record[delay:,2]/record[delay:,3]),
+                'VACRATE': np.array(record[delay:,4]/(record[delay:,4] + record[delay:,1])),
+                'Seeker Composition': np.array(record[delay:,8]/(record[delay:,8] + record[delay:,9]))}
+        else:
+            data = {'UER': np.array(record[delay:,2]/record[delay:,3]),
+                'VACRATE': np.array(record[delay:,4]/(record[delay:,4] + record[delay:,1]))}
            # 'SEPSRATE': np.array(record[delay:,7]/(record[delay:,1]+1))}
         return data
     else:
