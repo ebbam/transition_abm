@@ -12,7 +12,11 @@ source(here('code/formatting/plot_dicts.R'))
 
 new_data = FALSE
 
-if(new_data)
+#nx = "Original OMN"
+# nx = "Full OMN"
+nx = "ONET"
+
+if(isTRUE(new_data)){
   #ddi <- read_ipums_ddi(here("data/behav_params/Eeckhout_Replication/cps_data/cps_00009.xml"))
   ddi <- read_ipums_ddi(here("data/behav_params/Eeckhout_Replication/cps_data/cps_00014.xml"))
   data1 <- read_ipums_micro(ddi) %>% 
@@ -45,11 +49,11 @@ if(new_data)
   #all_rates <- readRDS(here('data/behav_params/Eeckhout_Replication/cps_data/new_allrates_17_24.rds'))
   
   # Loop through years and months
-  for (i in 1996:2016) {
+  for (i in 1996:2016){
     print(i)
     data_short <- data %>% 
       filter(year == i | (year == i + 1 & month == 1))
-    for (j in unique(data$month)) {
+    for (j in unique(data$month)){
       print(j)
       # STEP 1.2: Filter data for the current year and two adjacent months
       # STEP 1.3: Recode month labels
@@ -103,7 +107,7 @@ if(new_data)
         ungroup()
       
       group_vars <- c("sex", "age", "occ2010")
-      for (group_var in group_vars) {
+      for (group_var in group_vars){
         print(group_var)
         flows_by_group <- df %>%
           filter(!is.na(.data[[group_var]])) %>%
@@ -214,8 +218,8 @@ if(new_data)
   #   labs(title = "EE and EU Flow Rates", y = "Rates", x = "Time", color = "Flow Type") +
   #   theme_minimal()
   # 
-  }
-else{
+  }else{
+    
   all_rates <- readRDS(here('data/behav_params/Eeckhout_Replication/cps_data/grouped_transition_rates_99_16.RDS')) %>% 
     rbind(readRDS(here('data/behav_params/Eeckhout_Replication/cps_data/grouped_transition_rates_99_24.RDS')))
   
@@ -338,10 +342,41 @@ else{
     ggplot(aes(x = date, y = eu)) + geom_line()
   
   ## Occ codes
-  cw <- read.csv(here('data/crosswalk_occ_soc_cps_codes.csv')) %>%
-    tibble %>% 
-    mutate(SOC2010_cleaned = gsub("X", "0", SOC2010)) %>% 
-    mutate(OCC2010_match_cps = as.character(OCC2010_cps))
+  if(nx == "Original OMN"){
+    
+    cw <- read.csv(here('data/crosswalk_occ_soc_cps_codes.csv')) %>%
+      tibble %>% 
+      mutate(SOC2010_cleaned = gsub("X", "0", SOC2010)) %>% 
+      mutate(OCC2010_match_cps = as.character(OCC2010_cps))
+    
+    file_title = "ipums_variables_w_seps_rate_original_omn.csv"
+    
+    ipums_vars <- read.csv(here("calibration_remote/dRC_Replication/data/ipums_variables.csv")) %>% tibble
+    
+  }else if(nx == "Full OMN"){
+    
+    cw <- read.csv(here('data/crosswalk_occ_soc_cps_codes_full_omn.csv')) %>% 
+      tibble %>% 
+      mutate(SOC2010_cleaned = gsub("X", "0", SOC2010)) %>% 
+      mutate(OCC2010_match_cps = as.character(OCC2010_cps))
+    
+    file_title = "ipums_variables_w_seps_rate_full_omn.csv"
+    
+    ipums_vars <- read.csv(here("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_ipums_vars.csv")) %>% tibble %>% 
+      mutate(acs_occ_code = occ)
+    
+  }else if(nx == "ONET"){
+    
+    cw <- read.csv(here('data/crosswalk_occ_soc_cps_codes_onet.csv')) %>%
+      tibble %>% 
+      mutate(SOC2010_cleaned = gsub("X", "0", SOC2010)) %>% 
+      mutate(OCC2010_match_cps = as.character(OCC2010_cps))
+    
+    ipums_vars <- read.csv(here("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/acs_onet_2010_ipums_vars.csv")) %>% tibble %>% 
+      rename(acs_occ_code = occ)
+    
+    file_title = "ipums_variables_w_seps_rate_onet.csv"
+  }
   
   seps_rates <- all_rates %>% 
     group_by(occ2010) %>% 
@@ -350,6 +385,8 @@ else{
     left_join(cw, by = c("occ2010" = "OCC2010_match_cps")) %>% 
     filter(!is.na(acs_occ_code)) %>% 
     mutate(OCC2010_desc = fct_reorder(OCC2010_desc, mean_eu, .na_rm = TRUE))
+  
+  stopifnot(seps_rates %>% filter(is.na(mean_eu)) %>% nrow(.) == 0)
   
   p1 <- seps_rates %>% 
     ggplot(aes(x = OCC2010_desc, y = mean_eu)) +
@@ -377,22 +414,31 @@ else{
     theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
     common_theme
   
-  p2 / p3
+  print(p2 / p3)
   
   #ggsave(here("output/seps_rates_p10s.png"))
   
-  p1
+  print(p1)
   
   #ggsave(here("output/seps_rates_total.png"), width = 36, height = 14)
   
-  read.csv(here("calibration_remote/dRC_Replication/data/ipums_variables.csv")) %>% tibble -> temp
+  stopifnot(length(setdiff(unique(ipums_vars$acs_occ_code), unique(seps_rates$acs_occ_code))) == 0)
+  stopifnot(length(setdiff(unique(seps_rates$acs_occ_code), unique(ipums_vars$acs_occ_code))) == 0)
   
-  stopifnot(length(setdiff(unique(temp$acs_occ_code), unique(seps_rates$acs_occ_code))) == 0)
-  stopifnot(length(setdiff(unique(seps_rates$acs_occ_code), unique(temp$acs_occ_code))) == 0)
-  # 
-  # seps_rates %>% 
-  #   select(acs_occ_code, mean_eu) %>% 
-  #   rename(seps_rate = mean_eu) %>% 
-  #   left_join(temp, ., by = "acs_occ_code") %>% 
-  #   write.csv(here("calibration_remote/dRC_Replication/data/ipums_variables_w_seps_rate.csv"))
+  
+  if(nx == "Original OMN"){
+    stopifnot(identical(read.csv(here(paste0("calibration_remote/dRC_Replication/data/", file_title))), read.csv(here("calibration_remote/dRC_Replication/data/ipums_variables_w_seps_rate.csv")))) 
+  }
+
+  if(new_data){
+    tmp <- seps_rates %>%
+      select(acs_occ_code, mean_eu) %>%
+      rename(seps_rate = mean_eu) %>%
+      left_join(ipums_vars, ., by = "acs_occ_code") 
+    
+    stopifnot(identical(tmp$acs_occ_code, ipums_vars$acs_occ_code))
+    
+    tmp %>% write.csv(here(paste0("calibration_remote/dRC_Replication/data/", file_title)))
+  }
 }
+

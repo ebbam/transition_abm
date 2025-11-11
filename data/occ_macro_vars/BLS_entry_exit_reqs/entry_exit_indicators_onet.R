@@ -5,9 +5,14 @@ library(here)
 library(readxl)
 library(assertthat)
 
-cw <- read.csv(here('data/crosswalk_occ_soc_cps_codes.csv')) %>%
-  tibble %>% 
-  mutate(SOC2010_cleaned = gsub("X", "0", SOC2010))
+# ONET
+cw <- read.csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/acs_onet_2010_soc_cw.csv") %>% tibble %>% 
+  rename(SOC2010 = soc_2010_code,
+         acs_occ_code = acs_2010_code,
+         label = title)
+
+temp <- read.csv(here("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/acs_onet_2010_ipums_vars.csv")) %>% tibble %>% 
+  rename(acs_occ_code = occ)
 
 # Crosswalk here:
 # https://www.bls.gov/emp/classifications-crosswalks/NEM-OccCode-ACS-Crosswalk.xlsx
@@ -19,9 +24,6 @@ cw_ed_acs <- read_xlsx(here("data/occ_macro_vars/BLS_entry_exit_reqs/NEM-OccCode
          occ_title = 3,
          acs_code = 4,
          acs_title = 5)
-
-read.csv(here("calibration_remote/dRC_Replication/data/ipums_variables.csv")) %>% tibble -> temp
-
 
 dat <- read_xlsx(here("data/occ_macro_vars/BLS_entry_exit_reqs/occ_entry_level_education_reqs.xlsx"),
                  sheet = 5, skip = 1) %>%
@@ -57,9 +59,10 @@ dat <- read_xlsx(here("data/occ_macro_vars/BLS_entry_exit_reqs/occ_entry_level_e
 assert_that(dat %>% filter(is.na(entry_level)) %>% nrow(.) == 0)
 
 cw %>% 
-  select(label, id = X, acs_occ_code) %>% 
-  mutate(id = as.integer(id - 1)) %>% 
-  all.equal(select(temp, label, id, acs_occ_code))
+  select(acs_occ_code) %>% 
+  distinct %>%
+  #mutate(id = id - 1) %>% 
+  all_equal(select(temp, acs_occ_code))
 
 test_missing <- function(df, total_df){
   df %>% 
@@ -77,34 +80,35 @@ test_missing <- function(df, total_df){
 }
 
 # match on ACS Code
-# Match 369 codes (369/464)
+# Match 369 codes (369/516)
 acs_matches <- cw %>% 
-  left_join(., select(dat, -any_of(names(cw))), by = c("acs_occ_code" = "acs_code")) %>% 
+  left_join(., select(dat, -any_of(names(cw))), by = c("acs_occ_code" = "acs_code"), multiple = "first") %>% 
   select(-contains(".y"))
 
 test_missing(acs_matches)
 
-# Match 2 codes (371/464)
-acs_cps_matches <- acs_matches %>% 
-  filter(is.na(ed_req)) %>% 
-  select(-any_of(names(dat)[!(names(dat) %in% c("SOC2010", "SOC_broad", "SOC_minor"))])) %>% 
-  left_join(., select(dat, -any_of(names(cw))), by = c("OCC2010_cps" = "acs_code")) 
+# # Match 2 codes (371/464)
+# acs_cps_matches <- acs_matches %>% 
+#   filter(is.na(ed_req)) %>% 
+#   select(-any_of(names(dat)[!(names(dat) %in% c("SOC2010", "SOC_broad", "SOC_minor"))])) %>% 
+#   left_join(., select(dat, -any_of(names(cw))), by = c("OCC2010_cps" = "acs_code")) 
+# 
+# test_missing(acs_cps_matches)
 
-test_missing(acs_cps_matches)
-  
-# Match 26 codes (397 total/464)
-soc2010_matches <- acs_cps_matches %>% 
+# Match 82 codes (451/516)
+soc2010_matches <- acs_matches %>% 
   filter(is.na(ed_req)) %>% 
-  select(-any_of(names(dat)[!(names(dat) %in% c("SOC2010", "SOC_broad", "SOC_minor"))])) %>%   
+  select(-any_of(names(dat)[!(names(dat) %in% c("SOC2010"))])) %>%   
   left_join(., select(dat, -any_of(names(cw)[!(names(cw) %in% c("SOC2010"))])), by = c("SOC2010" = "SOC2010"))
 
 test_missing(soc2010_matches)
 
-# Match 44 codes (441 total/464)
+# Match 45 codes (441 total/464)
 soc_broad_matches <- soc2010_matches %>% 
   filter(is.na(ed_req)) %>% 
-  select(-any_of(names(dat)[!(names(dat) %in% c("SOC2010", "SOC_broad", "SOC_minor"))])) %>% 
-  left_join(., select(dat, -any_of(names(cw)[!(names(cw) %in% c("SOC2010", "SOC_broad"))])), by = c('SOC_broad'), relationship = "many-to-many")
+  select(-any_of(names(dat)[!(names(dat) %in% c("SOC2010", "SOC_broad"))])) %>% 
+  mutate(SOC_broad = paste0(substr(SOC2010, 1, 6), 0)) %>% 
+  left_join(., select(dat, -any_of(names(cw)[!(names(cw) %in% c("SOC_broad"))])), by = c('SOC_broad'), relationship = "many-to-many")
 
 test_missing(soc_broad_matches)
 
@@ -112,15 +116,15 @@ test_missing(soc_broad_matches)
 soc_minor_matches <- soc_broad_matches %>% 
   filter(is.na(ed_req)) %>% 
   select(-any_of(names(dat)[!(names(dat) %in% c("SOC2010", "SOC_broad", "SOC_minor"))])) %>% 
+  mutate(SOC_minor = paste0(substr(SOC2010, 1, 4), "000")) %>% 
   left_join(., select(dat, -any_of(names(cw)[!(names(cw) %in% c("SOC2010", "SOC_broad", "SOC_minor"))])), by = c('SOC_minor'), relationship = "many-to-many")
 
 test_missing(soc_minor_matches)
 
 total_df <- bind_rows(acs_matches,
-                  acs_cps_matches,
-                  soc2010_matches,
-                  soc_broad_matches,
-                  soc_minor_matches) %>% 
+                      soc2010_matches,
+                      soc_broad_matches,
+                      soc_minor_matches) %>% 
   filter(!is.na(ed_req)) %>% 
   select(acs_occ_code, label, ed_req, experience_req, otj_training, entry_level, entry_age) %>% 
   distinct(.)
@@ -141,14 +145,18 @@ final_exp <- total_df %>%
   select(-label)
 
 
-assert_that(temp %>% arrange(id) %>% identical(temp))
+assert_that(temp %>% arrange(X) %>% identical(temp))
 assert_that(temp %>% filter(!(acs_occ_code %in% unique(final_exp$acs_occ_code))) %>% nrow(.) == 0)
 assert_that(final_exp %>% filter(!(acs_occ_code %in% unique(temp$acs_occ_code))) %>% nrow(.) == 0)
 assert_that(final_exp %>% filter(any(is.na(.))) %>% nrow(.) == 0)
 
+temp %>%
+  left_join(., final_exp, by = "acs_occ_code") %>%
+  mutate(entry_level = as.numeric(experience_req == "None"),
+         acs_occ_code = as.integer(acs_occ_code)) -> tosave
 
-temp %>% 
-  left_join(., final_exp, by = "acs_occ_code") %>% 
-  mutate(entry_level = as.numeric(experience_req == "None")) %>% 
-  write.csv(here("calibration_remote/dRC_Replication/data/ipums_variables_w_exp.csv"))
+stopifnot(identical(temp$acs_occ_code, tosave$acs_occ_code))
+
+tosave %>% 
+ write.csv(here("calibration_remote/dRC_Replication/data/acs_onet_2010_ipums_vars_w_exp.csv"))
 

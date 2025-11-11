@@ -16,7 +16,10 @@ library(mFilter)
 source(here('code/formatting/plot_dicts.R'))
 
 save_data = FALSE
-
+#nx = "Original OMN"
+nx = "Full OMN"
+#nx = "ONET Related Occupations"
+  
 ```
 
 # Setting Occupational Target Demand
@@ -47,13 +50,46 @@ source(here("data/occ_macro_vars/bea_industry_va.R"))
 
 We use annual occupational shares of employment from the Occupational Employment and Wage Statistics database from the US Bureau of Labour Statistics to derive our $\bar d{ij}$.
 
-Excludes public administration. The first figure shows the “reported percent total” from the OEWS data. The discrepances in reporting is almost certainly due to a reshuffling of occupational codes in 2010 and 2018.
+Excludes public administration. The first figure shows the “reported percent total” from the OEWS data. The discrepancies in reporting is almost certainly due to a reshuffling of occupational codes in 2010 and 2018.
 
 If we look at the shares as a percentage of total reported employment in a particular industry the “shares” are not consistent across the recategorisation - I will need to investigate this again.
 
 We take the mean industry-share of occupational employment reported in the years where majority (\>97%) of our occ codes are present (2012-2018 - after and before SOC reorganisation of 2010 and 2018).
 
 ```{r, echo = FALSE, results = 'asis', message = FALSE, warning = FALSE}
+
+if(nx == "Original OMN"){
+  # Which occupations are in the crosswalk. 
+  abm_orig <- read.csv(here("data/crosswalk_occ_soc_cps_codes.csv")) %>% 
+    tibble %>% 
+    mutate(SOC2010 = gsub("X", "0", SOC2010))
+  
+  abm %>% filter(!(SOC2010 %in% df$occ_code)) %>% nrow(.) == 0
+  
+  }else if(nx == "Full OMN"){
+  
+# FULL OMN
+  abm <- read.csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_2010_soc_cw.csv") %>%
+    rename(SOC2010 = soc_2010_code,
+           OCC2010_desc = title)
+  
+  abm %>% filter(!(SOC2010 %in% df$occ_code)) %>% nrow(.) == 0
+  }else if(nx == "ONET Related Occupations"){
+  
+  # ONET
+  abm <- read.csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/acs_onet_2010_soc_cw.csv") %>% 
+       rename(SOC2010 = soc_2010_code,
+              OCC2010_desc = title) %>% 
+    group_by(acs_2010_code, OCC2010_desc) %>% 
+    summarise(SOC2010 = first(SOC2010),
+              X = first(X)) %>% 
+    ungroup
+  
+  nrow(abm) == n_distinct(abm$acs_2010_code)
+  
+  #abm %>% filter(!(SOC2010 %in% df$occ_code)) %>% nrow(.) == 0
+
+}
 
 source(here("data/occ_macro_vars/OEWS/occ_emp_industry_oews.R"))
 
@@ -225,12 +261,44 @@ occ_shocks <- mean_shares_for_bind %>%
 
 Important note is that we are missing information on occupation code 13-2081 (Tax examiners and collectors, and revenue agents) which are present in our occupational network but not in our VA data as they are only employed in public administration. VA information does not exist for public administration. For now, I will use the shocks to 13-2082 as the shocks to 13-2081 though we might consider changing this. For example, we could potentially abstract to say that public administration fluctuations should depend on just GDP fluctuations (ie. we use the HP-filtered GDP series that we were originally using as the direct shock to occupations employed only in public administration). 
 
+In the case of the full OMN we are missing both 13-2081 and 33-3031 (Fish and Game Wardens). We assign the fish and game wardens the same occupational shocks as 33-9011 (Animal Control Workers) within the same broad category grouping of SOC codes. 
+
+In the case of the ONET Related Occupations Network both of the above are missing in addition to 45-3021 (hunters and trappers). We assign hunters and trappers the same occupational shocks as the only other occupation in the same Minor SOC Group (45-3011 - Fishers and Related Fishing Workers). They are both categorised within the same "Fishing and Hunting Workers" Minor SOC Group (45-3000).
+
 ```{r, echo = FALSE, message = FALSE}
 
-occ_shocks_full <- occ_shocks %>% 
+if(nx == "Original OMN"){
+  occ_shocks_full <- occ_shocks %>% 
   filter(occ_code == "13-2082") %>% 
   mutate(occ_code = "13-2081") %>% 
   rbind(occ_shocks)
+}else if(nx == "Full OMN"){
+  r1 <- occ_shocks %>% 
+    filter(occ_code == "13-2082") %>% 
+    mutate(occ_code = "13-2081")
+  
+  r2 <- occ_shocks %>% 
+    filter(occ_code == "33-9011") %>% 
+    mutate(occ_code = "33-3031")
+  
+  occ_shocks_full <- rbind(r1, r2, occ_shocks)
+}else if(nx == "ONET Related Occupations"){
+  r1 <- occ_shocks %>% 
+    filter(occ_code == "13-2082") %>% 
+    mutate(occ_code = "13-2081")
+  
+  r2 <- occ_shocks %>% 
+    filter(occ_code == "33-9011") %>% 
+    mutate(occ_code = "33-3031")
+  
+  r3 <- occ_shocks %>% 
+    filter(occ_code == "45-3011") %>% 
+    mutate(occ_code = "45-3021")
+  
+  occ_shocks_full <- rbind(r1, r2, r3, occ_shocks)
+}
+
+stopifnot(sort(unique(abm$SOC2010)) == sort(unique(occ_shocks_full$occ_code)))
 
 # Create monochromatic color palette
 n_colors <- length(unique(occ_shocks_full$occ_code))
@@ -256,26 +324,70 @@ occ_shocks_full %>%
   common_theme +
   theme(legend.position = "none")
 
-abm_cw <- read.csv(here('data/crosswalk_occ_soc_cps_codes.csv')) %>% 
-  #select(X, SOC2010) %>% 
-  mutate(SOC2010_adj = gsub("X", "0", SOC2010))
+abm_cw <- abm %>% 
+  mutate(SOC2010_adj = SOC2010)
 
 occ_shocks_full %>% 
-  left_join(select(abm_cw, SOC2010_adj, X), by = c("occ_code" = "SOC2010_adj")) -> temp
+  left_join(select(abm_cw, acs_2010_code, SOC2010_adj, X), by = c("occ_code" = "SOC2010_adj")) -> temp
+
+if(nx == "Full OMN"){
+    file_title = "occupational_va_shocks_full_omn.csv"
+    
+        
+    ipums_vars <- read.csv(here("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_ipums_vars.csv")) %>% tibble %>% 
+      mutate(acs_occ_code = occ)
+    
+    temp %>% 
+      group_by(acs_2010_code, date) %>% 
+      summarise(shock = mean(shock, na.rm = TRUE),
+                occ_code = first(occ_code),
+                OCC2010_desc = first(OCC2010_desc),
+                broad_occ = first(broad_occ), 
+                X = first(X)) %>% 
+      ungroup %>% 
+    mutate(
+      acs_2010_code = factor(acs_2010_code, levels = ipums_vars$acs_occ_code)
+    ) -> temp
+      
+  }
 
 ```
 
 ```{r, echo = FALSE, message = FALSE}
-
 stopifnot(temp %>% filter(is.na(X)) %>% nrow(.) == 0)
 stopifnot(temp %>% filter(is.na(date)) %>% nrow(.) == 0)
 stopifnot(temp %>% filter(is.na(shock)) %>% nrow(.) == 0)
+stopifnot(abm %>% arrange(X) %>% identical(abm))
+stopifnot(temp %>% arrange(X) %>% identical(temp))
+
+if(nx == "Original OMN"){
+ file_title = "occupational_va_shocks_original_omn.csv"
+  
+  }else if(nx == "Full OMN"){
+    
+    file_title = "occupational_va_shocks_full_omn.csv"
+  
+  }else if(nx == "ONET Related Occupations"){
+    
+  file_title = "occupational_va_shocks_onet_related_occs.csv"
+}
 
 temp %>% 
-  select(X, date, shock) %>% 
-  arrange(X, date) %>% 
-  pivot_wider(names_from = date, values_from = shock) %>%
-  write.csv(here("calibration_remote/data/occupational_va_shocks.csv"))
+  select(acs_2010_code, date, shock) %>% 
+  arrange(acs_2010_code, date) %>% 
+  pivot_wider(names_from = date, values_from = shock) -> tosave
+
+if(nx == "Full OMN"){
+  stopifnot(identical(as.character(tosave$acs_2010_code), as.character(ipums_vars$acs_occ_code)))
+    stopifnot(nrow(tosave) == nrow(ipums_vars))
+}else{
+  stopifnot(nrow(tosave) == nrow(abm))
+}
+
+
+write.csv(tosave, here(paste0("calibration_remote/data/", file_title)))
+
+if(nx == "Original OMN"){stopifnot(identical(read.csv(paste0("calibration_remote/data/", file_title)), read.csv(here("calibration_remote/data/occupational_va_shocks.csv"))))}
 
 ```
 

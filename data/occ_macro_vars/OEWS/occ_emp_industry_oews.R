@@ -50,14 +50,9 @@ if(new_data){
     df <- readRDS(here("data/occ_macro_vars/OEWS/occ_ind_employment_compiled.RDS"))
   }
 
+print(paste0("Calculating occupational TD for ", nx,"."))
 
-
-# Which occupations are in the crosswalk. 
-abm <- read.csv(here("data/crosswalk_occ_soc_cps_codes.csv")) %>% 
-  tibble %>% 
-  mutate(SOC2010 = gsub("X", "0", SOC2010))
-
-abm %>% filter(!(SOC2010 %in% df$occ_code)) %>% nrow(.) == 0
+# ABM gets input from occ_td_setting
 
 temp <- df %>% select(year, naics, naics_title, sic, sic_title, occ_code, occ_title, tot_emp, pct_total) %>% 
   filter(naics %in% c('11', '21', '22', '23', '31-33', '42', '44-45', '48-49', '51', '52', '53', '54', '55', '56', '61', '62', '71', '72', '81') & occ_code %in% abm$SOC2010) %>% 
@@ -247,3 +242,6 @@ odd_ones %>% kable(format = "latex") %>% print(.)
 mean_shares_for_bind <- mean_shares %>% 
   ungroup %>% 
   left_join(., codes, by = "naics_title") 
+
+print(abm %>% filter(!(SOC2010 %in% c(mean_shares_for_bind$occ_code))))
+
