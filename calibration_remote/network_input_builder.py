@@ -25,6 +25,8 @@ def network_input_builder(nx):
         demand_target = employment + vacancies
         wages = pd.read_csv(path + "dRC_Replication/data/ipums_variables.csv")[['median_earnings']]
         occ_ids = pd.read_csv(path + "dRC_Replication/data/ipums_variables.csv")[['id', 'acs_occ_code', 'label']]
+        assert(all(occ_ids.index.values == occ_ids['id'].values))
+        assert(all(range(0, len(occ_ids)) == occ_ids['id'].values))
         gend_share = pd.read_csv(path + "data/ipums_variables_w_gender.csv")[['women_pct']]
         experience_req = pd.read_csv(path + "dRC_Replication/data/ipums_variables_w_exp.csv")
         seps_rates = pd.read_csv(path + "dRC_Replication/data/ipums_variables_w_seps_rate.csv")
@@ -115,19 +117,21 @@ def network_input_builder(nx):
         print("Using Full Corrected OMN") 
         A = pd.read_csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/data/asec_11_19_occ_alltransitions_2025_normalised.csv", header = None)
         print(A.shape)
-        ipums_input = pd.read_csv(here("calibration_remote/dRC_Replication/data/ipums_variables_full_omn_w_exp.csv"), delimiter = ",")
+        ipums_input = pd.read_csv(path +"dRC_Replication/data/ipums_variables_full_omn_w_exp.csv", delimiter = ",")
         #ipums_input = pd.read_csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_ipums_vars.csv", delimiter=",")
-        print(ipums_input.shape)
 
         occ_ids = pd.read_csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/data/occ_names_employment_asec_occ.csv", delimiter=",")[['Code', 'Label']]
         occ_ids = occ_ids.rename(columns={"Label": "label"})
-        print(occ_ids.shape)
+        occ_ids['id'] = occ_ids.index.values
+        assert(all(occ_ids['id'].values == range(0,len(occ_ids))))
+        assert(all(occ_ids.index.values == occ_ids['id'].values))
 
         # diagnostics
         missing = occ_ids['label'].isna().sum()
         assert(missing == 0)
 
         employment = np.round(ipums_input[['emp']]/10000) + 1
+
         # Crude approximation using avg unemployment rate of ~5% - should aim for occupation-specific unemployment rates
         unemployment = round(employment * (0.05 / 0.95))
         #unemployment = np.round(ipums_input[['unemp']]/10000) + 1
@@ -147,18 +151,18 @@ def network_input_builder(nx):
         mean_seps_rate = seps_rates['seps_rate'].mean()
 
         mod_data = {
-            "A": A,
-            "employment": employment,
-            'unemployment': unemployment,
-            'vacancies': vacancies,
-            'demand_target': demand_target,
-            'wages': wages,
-            'gend_share': gend_share,
-            'entry_level': entry_level,
-            'entry_age': experience_req['entry_age'],
-            'experience_age': experience_age,
-            'separation_rates': seps_rates['seps_rate']*10
-            #'separation_rates': np.full_like(employment, mean_seps_rate, dtype=float)*10
+                "A": A,
+                "employment": employment,
+                'unemployment': unemployment,
+                'vacancies': vacancies,
+                'demand_target': demand_target,
+                'wages': wages,
+                'gend_share': gend_share,
+                'entry_level': entry_level,
+                #'entry_age': experience_req['entry_age'],
+                'experience_age': experience_age,
+                'separation_rates': seps_rates['seps_rate']*10
+                #'separation_rates': np.full_like(employment, mean_seps_rate, dtype=float)*10
         }
         print("Build mod_data.")
         print(f"Nodes (n): {len(mod_data['A'])}")
@@ -167,23 +171,23 @@ def network_input_builder(nx):
         # Initialise the model
         ##################################
         net_temp, vacs = initialise(
-            len(mod_data['A']),
-            mod_data['employment'].to_numpy(),
-            mod_data['unemployment'].to_numpy(),
-            mod_data['vacancies'].to_numpy(),
-            mod_data['demand_target'].to_numpy(),
-            mod_data['A'],
-            mod_data['wages'].to_numpy(),
-            mod_data['gend_share'].to_numpy(),
-            7, 1#,
-            mod_data['entry_level'],
-            mod_data['experience_age'],
-            mod_data['separation_rates']
+                len(mod_data['A']),
+                mod_data['employment'].to_numpy(),
+                mod_data['unemployment'].to_numpy(),
+                mod_data['vacancies'].to_numpy(),
+                mod_data['demand_target'].to_numpy(),
+                mod_data['A'],
+                mod_data['wages'].to_numpy(),
+                mod_data['gend_share'].to_numpy(),
+                7, 1,
+                mod_data['entry_level'],
+                mod_data['experience_age'],
+                mod_data['separation_rates']
         )
         print("Initialised network.")
 
-        
-        occ_shocks = pd.read_csv(path+"data/occupational_va_shocks_full_omn.csv", index_col = 0).drop('X', axis = 'columns')
+
+        occ_shocks = pd.read_csv(path+"data/occupational_va_shocks_full_omn.csv", index_col = 0).drop('acs_2010_code', axis = 'columns')
         print(occ_shocks.shape)
 
         df_quarterly = occ_shocks.transpose() + 1  # now rows are dates, columns are occupations
@@ -197,6 +201,37 @@ def network_input_builder(nx):
         # Linearly interpolate missing monthly values
         df_monthly = df_monthly.interpolate(method='linear')
 
+        for col in df_monthly.columns:
+            # Segment 1: Before calibration window
+            plt.plot(df_monthly.loc[df_monthly.index < calib_date[0]].index,
+                    df_monthly.loc[df_monthly.index < calib_date[0], col],
+                    color='darkseagreen', linewidth=0.5, alpha=0.1)
+
+            # Segment 2: During calibration window
+            plt.plot(df_monthly.loc[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1])].index,
+                    df_monthly.loc[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1]), col],
+                    color='forestgreen', linewidth=0.5, alpha = 0.5)
+
+            # Segment 3: After calibration window
+            plt.plot(df_monthly.loc[df_monthly.index > calib_date[1]].index,
+                    df_monthly.loc[df_monthly.index > calib_date[1], col],
+                    color='darkseagreen', linewidth=0.5, alpha=0.1)
+
+        # Vertical lines for calibration boundaries
+        for cal_date in calib_date:
+            plt.axvline(x=pd.to_datetime(cal_date), color='steelblue', linestyle='--', alpha=0.6)
+
+        #plt.plot(monthly_dates, gdp_dat, color='rebeccapurple', label='HP Filtered GDP')
+
+        plt.xlabel("Date")
+        plt.ylabel("Value")
+        plt.title("Occupation-Specific Shocks Over Time (ONET Occs)")
+        plt.xticks(rotation=45)
+        plt.grid()
+        plt.show()
+
+        occ_shocks_dat = np.array(df_monthly[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1])].transpose())
+
     elif nx == "onet":
         print("Using ONET Related Occupations Network")
         A = pd.read_csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/acs_2010_max_index_adjacency_matrix.csv", index_col = 0)
@@ -204,8 +239,10 @@ def network_input_builder(nx):
 
         occ_ids = ipums_input[['X.1', 'acs_occ_code']]
         occ_ids = occ_ids.rename(columns={"X.1": "id"})
+        occ_ids['id'] = occ_ids['id'] - 1  # change to zero-indexed
+        assert(all(occ_ids['id'].values == range(0,len(occ_ids))))
+        assert(all(occ_ids.index.values == occ_ids['id'].values))
         labels = pd.read_csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/acs_onet_2010_soc_cw.csv")
-
 
         # merge titles from labels into occ_ids by ACS code and create 'label' column
         labels_map = labels[['acs_2010_code', 'title']].drop_duplicates(subset='acs_2010_code')
