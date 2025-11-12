@@ -10,7 +10,7 @@ library(readxl)
 library(assertthat)
 conflict_prefer_all("dplyr", quiet = TRUE)
 
-df <- read_xlsx(here(paste0("data/occ_macro_vars/OEWS/national_M2023_dl.xlsx")))
+#df <- read_xlsx(here(paste0("data/occ_macro_vars/OEWS/national_M2023_dl.xlsx")))
 
 # There are upper limits for the hourly and annual wages that are not reported in the data and are replaced by a # value. We extract these limits from the field description files
 limits <- tibble()
@@ -169,52 +169,103 @@ for(yr in 2000:2023){
 
 occ_wages %>% group_by(occ_code) %>% select(-occ_group) %>% filter(if_any(everything(), is.na)) %>% arrange(occ_code, year)
 
-# Crosswalk from ABM data - written in occ_soc_cps_codes_crosswalk.R
-abm_occs <- read.csv(here("data/crosswalk_occ_soc_cps_codes.csv")) %>% 
+################################################################################
+################################################################################
+########################### FULL OMN  ##########################################
+################################################################################
+################################################################################
+abm_occs <- read.csv(here('data/crosswalk_occ_soc_cps_codes_full_omn.csv')) %>% 
   tibble %>% 
-  mutate(SOC2010 = gsub("X", "0", SOC2010))
+  mutate(SOC2010_cleaned = gsub("X", "0", SOC2010)) %>% 
+  mutate(OCC2010_match_cps = as.character(OCC2010_cps))
+
+ipums_vars <- read.csv(here("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_ipums_vars.csv")) %>% tibble %>%
+  mutate(acs_occ_code = occ) %>%
+  rename(id = `X.1`)
+
+# # Crosswalk from ABM data - written in occ_soc_cps_codes_crosswalk.R
+# abm_occs <- read.csv(here("data/crosswalk_occ_soc_cps_codes.csv")) %>% 
+#   tibble %>% 
+#   mutate(SOC2010 = gsub("X", "0", SOC2010))
 
 # Confirm that all OCS codes in abm_vars are present in the crosswalk
-abm_occs %>% filter(!(SOC2010 %in% unique(occ_wages$occ_code))) %>% nrow(.) == 0
-abm_occs %>% filter(!(SOC2010 %in% unique(occ_wages$occ_code)))
+abm_occs %>% filter(!(SOC2010_cleaned %in% unique(occ_wages$occ_code))) %>% nrow(.) == 0
+abm_occs %>% filter(!(SOC2010_cleaned %in% unique(occ_wages$occ_code)))
 
-occ_wages %>% 
-  ggplot() + 
-  geom_line(aes(x = year, y = tot_emp, group = occ_code))
+occ_wages_mean <- occ_wages %>% 
+  group_by(occ_code) %>% 
+  summarise(across(c(h_mean, a_mean, h_pct10, h_pct25, h_median, h_pct75, h_pct90, a_pct10, a_pct25, a_median, a_pct75, a_pct90), ~mean(., na.rm = TRUE)))
 
-# Convert all occupational categories to 2010 codes 
-occs_00_10 <- read_xls(here("data/occ_macro_vars/OEWS/soc_2000_to_2010_crosswalk.xls"), skip = 6) %>% 
-  clean_names() %>% 
-  filter(!if_all(everything(), is.na)) 
+wage_dist_temp <- abm_occs %>% 
+  left_join(., occ_wages_mean, by = c("SOC2010_cleaned" = "occ_code")) %>% 
+  select(-c(X, OCC2010_cps, acs_occ_code_label, major_cat, OCC2010_desc, OCC2010, SOC2010_cleaned, OCC2010_match_cps))
 
-#write.csv(occs_00_10, here("data/occ_macro_vars/OEWS/soc_2000_to_2010_crosswalk.csv"))
+stopifnot(identical(wage_dist_temp$acs_occ_code, ipums_vars$acs_occ_code))
 
-occs_00_10_short <- occs_00_10 %>% 
-  # Retain only those codes that are not equivalent across the years - 79 in the 00-10 code
-  filter(x2010_soc_code != x2000_soc_code)
+saveRDS(wage_dist_temp, here("data/occ_macro_vars/OEWS/wage_distributions_full_omn.csv"))
 
-occs_10_18 <- read_xlsx(here("data/occ_macro_vars/OEWS/soc_2010_to_2018_crosswalk.xlsx"), skip = 6) %>% 
-  clean_names() %>% 
-  filter(!if_all(everything(), is.na)) 
 
-occs_10_18_short <- occs_10_18 %>%
-  # Retain only those codes that are not equivalent across the years - 148 in the 10-18 code
-  filter(x2010_soc_code != x2018_soc_code)
+################################################################################
+################################################################################
+########################### ONET  ##############################################
+################################################################################
+################################################################################
+abm_occs <- read.csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/acs_onet_2010_soc_cw.csv") %>% tibble %>% 
+  rename(SOC2010 = soc_2010_code,
+         acs_occ_code = acs_2010_code,
+         label = title) %>% 
+  # Hunters and trappers do not have a wage estimate in the network so we give them as we do in the occupational target demand setting process: In the case of the ONET Related Occupations Network both of the above are missing in addition to 45-3021 (hunters and trappers). We assign hunters and trappers the same occupational shocks as the only other occupation in the same Minor SOC Group (45-3011 - Fishers and Related Fishing Workers). They are both categorised within the same "Fishing and Hunting Workers" Minor SOC Group (45-3000).
+  mutate(SOC2010 = case_when(SOC2010 == "45-3021" ~ "45-3011",
+                   TRUE ~ SOC2010)) %>% 
+  group_by(acs_occ_code, label) %>% 
+  summarise(SOC2010 = first(SOC2010))  %>% 
+  ungroup
+  
 
-identical(sort(unique(occs_00_10$x2010_soc_code)), sort(unique(occs_10_18$x2010_soc_code)))
+ipums_vars <- read.csv(here("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/acs_onet_2010_ipums_vars.csv")) %>% tibble %>% 
+  rename(acs_occ_code = occ)
 
-occ_wages %>% 
-  filter(occ_code %in% c(abm_occs$SOC2010)) %>% 
-  ggplot() + 
-  geom_line(aes(x = year, y = tot_emp, group = occ_code))
+# Confirm that all OCS codes in abm_vars are present in the crosswalk
+stopifnot(abm_occs %>% filter(!(SOC2010 %in% unique(occ_wages_mean$occ_code))) %>% nrow(.) == 0)
+
+wage_dist_temp <- abm_occs %>% 
+  left_join(., occ_wages_mean, by = c("SOC2010" = "occ_code")) %>% 
+  select(-c(label))
+
+stopifnot(identical(wage_dist_temp$acs_occ_code, ipums_vars$acs_occ_code))
+
+saveRDS(wage_dist_temp, here("data/occ_macro_vars/OEWS/wage_distributions_onet.csv"))
+
+# # Convert all occupational categories to 2010 codes 
+# occs_00_10 <- read_xls(here("data/occ_macro_vars/OEWS/soc_2000_to_2010_crosswalk.xls"), skip = 6) %>% 
+#   clean_names() %>% 
+#   filter(!if_all(everything(), is.na)) 
+# 
+# #write.csv(occs_00_10, here("data/occ_macro_vars/OEWS/soc_2000_to_2010_crosswalk.csv"))
+# 
+# occs_00_10_short <- occs_00_10 %>% 
+#   # Retain only those codes that are not equivalent across the years - 79 in the 00-10 code
+#   filter(x2010_soc_code != x2000_soc_code)
+
+# occs_10_18 <- read_xlsx(here("data/occ_macro_vars/OEWS/soc_2010_to_2018_crosswalk.xlsx"), skip = 6) %>% 
+#   clean_names() %>% 
+#   filter(!if_all(everything(), is.na)) 
+# 
+# occs_10_18_short <- occs_10_18 %>%
+#   # Retain only those codes that are not equivalent across the years - 148 in the 10-18 code
+#   filter(x2010_soc_code != x2018_soc_code)
+# 
+# identical(sort(unique(occs_00_10$x2010_soc_code)), sort(unique(occs_10_18$x2010_soc_code)))
+# 
+# occ_wages %>% 
+#   filter(occ_code %in% c(abm_occs$SOC2010)) %>% 
+#   ggplot() + 
+#   geom_line(aes(x = year, y = tot_emp, group = occ_code))
 
 
 # occ_wages %>% 
 #   select(year, occ_code) %>% 
 #   write.csv(here("data/occ_macro_vars/OEWS/occ_wages_short_oews.csv"))
-
-
-
 
 ################################################################################
 # Load data
