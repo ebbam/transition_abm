@@ -1,8 +1,12 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+#from torch import norm
+from scipy.stats import norm
 from abm_funs import *
 calib_date = ["2000-12-01", "2019-05-01"]
+#calib_date = ["2000-12-01", "2024-05-01"]
+
 
 path = "~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/calibration_remote/"
 
@@ -11,7 +15,7 @@ path = "~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/calibration_re
 def network_input_builder(nx):
     if nx == "original_omn":
         print("Using Corrected Original OMN")
-        A = pd.read_csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/data/omn_asec_11_19_occ_matched_plus_oldtransitions_2025_normalised.csv", delimiter=",", header = None)
+        #A = pd.read_csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/data/omn_asec_11_19_occ_matched_plus_oldtransitions_2025_normalised.csv", delimiter=",", header = None)
         employment = round(pd.read_csv(path + "dRC_Replication/data/ipums_employment_2016.csv", header=0).iloc[:, [4]] / 10000)
 
         # Crude approximation using avg unemployment rate of ~5% - should aim for occupation-specific unemployment rates
@@ -40,6 +44,8 @@ def network_input_builder(nx):
             'vacancies': vacancies,
             'demand_target': demand_target,
             'wages': wages,
+            'wage_mu': np.full_like(wages, np.inf),
+            'wage_mu': np.full_like(wages, np.inf),
             'gend_share': gend_share,
             'entry_level': experience_req['entry_level'],
             # 'entry_age': experience_req['entry_age'],
@@ -60,6 +66,8 @@ def network_input_builder(nx):
             mod_data['demand_target'].to_numpy(),
             mod_data['A'],
             mod_data['wages'].to_numpy(),
+            mod_data['wage_mu'].to_numpy(),
+            mod_data['wage_sigma'].to_numpy(),
             mod_data['gend_share'].to_numpy(),
             7, 1,
             mod_data['entry_level'],
@@ -115,12 +123,12 @@ def network_input_builder(nx):
 
     elif nx == "full_omn":
         print("Using Full Corrected OMN") 
-        A = pd.read_csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/data/asec_11_19_occ_alltransitions_2025_normalised.csv", header = None)
+        A = pd.read_csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/data/asec_11_19_occ_alltransitions_2025_normalised.csv", header = None)
         print(A.shape)
         ipums_input = pd.read_csv(path +"dRC_Replication/data/ipums_variables_full_omn_w_exp.csv", delimiter = ",")
-        #ipums_input = pd.read_csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_ipums_vars.csv", delimiter=",")
+        #ipums_input = pd.read_csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_ipums_vars.csv", delimiter=",")
 
-        occ_ids = pd.read_csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/data/occ_names_employment_asec_occ.csv", delimiter=",")[['Code', 'Label']]
+        occ_ids = pd.read_csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/data/occ_names_employment_asec_occ.csv", delimiter=",")[['Code', 'Label']]
         occ_ids = occ_ids.rename(columns={"Label": "label"})
         occ_ids['id'] = occ_ids.index.values
         assert(all(occ_ids['id'].values == range(0,len(occ_ids))))
@@ -142,7 +150,12 @@ def network_input_builder(nx):
 
         # Needs input data...
         demand_target = employment + vacancies
-        wages = ipums_input[['median_weekly_earnings']]*52
+
+        wage_comp = ipums_input[['acs_occ_code', 'median_weekly_earnings']]
+        wage_comp['median_annual_earnings'] = wage_comp['median_weekly_earnings'] * 52
+        wage_dist = pd.read_csv("~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/data/occ_macro_vars/OEWS/wage_distributions_full_omn.csv", compression='gzip',  delimiter=",", header = 0)
+        wage_full = wage_comp.merge(wage_dist, left_on='acs_occ_code', right_on='acs_occ_code', how='inner')
+
         gend_share = ipums_input[['female_share']]
         experience_req = ipums_input['experience_req']
         entry_level = ipums_input['entry_level']
@@ -156,7 +169,9 @@ def network_input_builder(nx):
                 'unemployment': unemployment,
                 'vacancies': vacancies,
                 'demand_target': demand_target,
-                'wages': wages,
+                'wages': wage_full['a_median'],
+                'wage_mu': wage_full['mu'],
+                'wage_sigma': wage_full['sigma'],
                 'gend_share': gend_share,
                 'entry_level': entry_level,
                 #'entry_age': experience_req['entry_age'],
@@ -178,6 +193,8 @@ def network_input_builder(nx):
                 mod_data['demand_target'].to_numpy(),
                 mod_data['A'],
                 mod_data['wages'].to_numpy(),
+                mod_data['wage_mu'].to_numpy(),
+                mod_data['wage_sigma'].to_numpy(),
                 mod_data['gend_share'].to_numpy(),
                 7, 1,
                 mod_data['entry_level'],
@@ -234,7 +251,7 @@ def network_input_builder(nx):
 
     elif nx == "onet":
         print("Using ONET Related Occupations Network")
-        A = pd.read_csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/acs_2010_max_index_adjacency_matrix.csv", index_col = 0)
+        A = pd.read_csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/acs_2010_max_index_adjacency_matrix.csv", index_col = 0)
         ipums_input = pd.read_csv(path + "dRC_Replication/data/acs_onet_2010_ipums_vars_w_exp.csv", delimiter=",")
 
         occ_ids = ipums_input[['X.1', 'acs_occ_code']]
@@ -242,7 +259,7 @@ def network_input_builder(nx):
         occ_ids['id'] = occ_ids['id'] - 1  # change to zero-indexed
         assert(all(occ_ids['id'].values == range(0,len(occ_ids))))
         assert(all(occ_ids.index.values == occ_ids['id'].values))
-        labels = pd.read_csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/acs_onet_2010_soc_cw.csv")
+        labels = pd.read_csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/acs_onet_2010_soc_cw.csv")
 
         # merge titles from labels into occ_ids by ACS code and create 'label' column
         labels_map = labels[['acs_2010_code', 'title']].drop_duplicates(subset='acs_2010_code')
@@ -255,6 +272,11 @@ def network_input_builder(nx):
         assert(missing == 0)
 
         assert(np.array_equal(A.index.values, occ_ids['acs_occ_code'].values))
+
+        wage_comp = ipums_input[['acs_occ_code', 'median_weekly_earnings']]
+        wage_comp['median_annual_earnings'] = wage_comp['median_weekly_earnings'] * 52
+        wage_dist = pd.read_csv("~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/data/occ_macro_vars/OEWS/wage_distributions_onet.csv", compression='gzip',  delimiter=",", header = 0)
+        wage_full = wage_comp.merge(wage_dist, left_on='acs_occ_code', right_on='acs_occ_code', how='inner')
 
         A = np.array(A)
 
@@ -286,7 +308,7 @@ def network_input_builder(nx):
 
         # Needs input data...
         demand_target = employment + vacancies
-        wages = ipums_input[['median_weekly_earnings']]*52
+        #wages = ipums_input[['median_weekly_earnings']]*52
         gend_share = ipums_input[['female_share']]
         experience_req = ipums_input['experience_req']
         entry_level = ipums_input['entry_level']
@@ -301,7 +323,9 @@ def network_input_builder(nx):
             'unemployment': unemployment,
             'vacancies': vacancies,
             'demand_target': demand_target,
-            'wages': wages,
+            'wages': wage_full['a_median'],
+            'wage_mu': wage_full['mu'],
+            'wage_sigma': wage_full['sigma'],
             'gend_share': gend_share,
             'entry_level': entry_level,
             # 'entry_age': experience_req['entry_age'],
@@ -323,6 +347,8 @@ def network_input_builder(nx):
             mod_data['demand_target'].to_numpy(),
             mod_data['A'],
             mod_data['wages'].to_numpy(),
+            mod_data['wage_mu'].to_numpy(),
+            mod_data['wage_sigma'].to_numpy(),
             mod_data['gend_share'].to_numpy(),
             7, 1,
             mod_data['entry_level'],
