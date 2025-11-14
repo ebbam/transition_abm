@@ -275,7 +275,9 @@ def run_single_local(d_u,
 
             #vacs_create = emp*int(vac_prob) + int(np.random.binomial(emp, vac_prob%1))
             for v in range(vacs_create):
-                vacs_temp.append(vac(occ.occupation_id, [], np.random.normal(occ.wage, 0.05*occ.wage), False, 0))
+                vacs_temp.append(vac(occ.occupation_id, [], np.clip(np.random.lognormal(occ.wage_mu, occ.wage_sigma), 15080, 250000), False, 0)) #np.random.normal(occ.wage, 0.05*occ.wage)
+                #vacs_temp.append(vac(occ.occupation_id, [], np.random.normal(occ.wage, 0.05*occ.wage), False, 0)) #
+
             if simple_res:
                 empl += len(occ.list_of_employed) 
                 unemp += len(occ.list_of_unemployed)
@@ -294,8 +296,8 @@ def run_single_local(d_u,
                 t_demand = occ.target_demand*occ_shock
                 vacs_occ = len([v for v in vacs_temp if v.occupation_id == occ.occupation_id])
                 vacs_wage = np.mean([v.wage for v in vacs_temp if v.occupation_id == occ.occupation_id]) if vacs_occ > 0 else np.nan
-                wage_occ = np.mean([wrkr.wage for wrkr in occ.list_of_employed]) if emp > 0 else np.nan
-                wages_occ = sum(wrkr.wage for wrkr in occ.list_of_employed)
+                wage_occ = 0 #np.mean([wrkr.wage for wrkr in occ.list_of_employed]) if emp > 0 else np.nan
+                wages_occ = 0 #sum(wrkr.wage for wrkr in occ.list_of_employed)
                 seps = occ.separated + retired
                 retirees = retired
                 hires = occ.hired
