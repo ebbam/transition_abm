@@ -1,0 +1,7 @@
+Parameter,Value,otj,cyc_otj,cyc_ue,disc,Timestamp,model_cat
+d_u,0.07206562093961964,True,True,False,True,2025-11-15 02:23:14,otj_cyclical_e_disc
+gamma_u,0.051321687453492186,True,True,False,True,2025-11-15 02:23:14,otj_cyclical_e_disc
+theta,0.3811955756080179,True,True,False,True,2025-11-15 02:23:14,otj_cyclical_e_disc
+d_u,0.092631869174765,True,True,False,True,2025-11-15 05:53:48,otj_cyclical_e_disc_no_rw
+gamma_u,0.6757978698937601,True,True,False,True,2025-11-15 05:53:48,otj_cyclical_e_disc_no_rw
+theta,0.10809733118968948,True,True,False,True,2025-11-15 05:53:48,otj_cyclical_e_disc_no_rw
