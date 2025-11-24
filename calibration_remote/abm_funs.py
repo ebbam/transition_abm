@@ -131,7 +131,7 @@ def reservation_wage(duration_months,
         else:
             res_wage = np.random.normal(loc=mean_val.iloc[0], scale=se_val.iloc[0], size=1)[0]
     
-    return(res_wage)
+    return res_wage
 
 ## Defining classes
 # Potentially redundant use of IDs in the below classes...to check
@@ -377,11 +377,12 @@ class worker:
         # APPLY RESERVATION WAGE FILTER, BUT ALWAYS KEEP GLOBAL RANDOM PICKS (CHANGE)
         if disc:
             if wage_prefs:
-                # RESERVATION WAGE AS YOU DEFINED
-                if wrkr.time_unemployed > 3:
-                    res_wage = wrkr.wage * (1 - 0.1 * (wrkr.time_unemployed - 3))
-                else:
-                    res_wage = wrkr.wage
+                res_wage = wrkr.wage*reservation_wage(wrkr.time_unemployed, res_wage_dat)
+                # # RESERVATION WAGE AS YOU DEFINED
+                # if wrkr.time_unemployed > 3:
+                #     res_wage = wrkr.wage * (1 - 0.1 * (wrkr.time_unemployed - 3))
+                # else:
+                #     res_wage = wrkr.wage
 
                 found_vacs_res = [v for v in found_vacs if v.wage >= res_wage]
                 # # KEEP VACANCIES THAT (A) ARE GLOBAL RANDOM PICKS OR (B) MEET RES_WAGE
