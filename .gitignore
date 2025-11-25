@@ -337,3 +337,7 @@ data/occ_macro_vars/OEWS/national_2002_dl.xls
 /calibration_remote/output/new_network_old
 /calibration_remote/output/plots_wage_distributions/detailed_occs
 /calibration_remote/output/pre_res_wage_implementation/pre_res_wage
+data/occ_macro_vars/ipums_vars/cps_00021.dat
+data/occ_macro_vars/ipums_vars/cps_00021.xml
+data/occ_macro_vars/ipums_vars/cps_00022.dat
+data/occ_macro_vars/ipums_vars/cps_00022.xml
