@@ -232,7 +232,8 @@ def run_single_local(d_u,
             else:
                 pass
 
-        vacs_temp = [v for v in vacs_temp if not(v.filled)] 
+        # Close a vacancy after it's been open for 6 months
+        vacs_temp = [v for v in vacs_temp if not(v.filled) and v.time_open < 3] 
 
         # # Reset counters for record in time t
         if simple_res:
@@ -350,7 +351,7 @@ def run_single_local(d_u,
 
         seekers_rec = pd.DataFrame(seekers_rec, columns=['Time Step', 'Unemployed Seekers', 'Applications Sent (Unemployed)', 'Employed Seekers', 'Applications Sent (Employed)'])
         seekers_rec = seekers_rec[seekers_rec['Time Step'] >= delay]
-        return record_df, grouped, net, data, seekers_rec, avg_wage_offer_diff_df, app_load_df, ue_spell_origin_df
+        return record_df, grouped, net, data, seekers_rec, avg_wage_offer_diff_df, app_load_df, ue_spell_origin_df, vacs_temp
 
 #########################################
 # # Wrapper for pyabc ########
