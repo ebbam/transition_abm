@@ -12,7 +12,7 @@ path = "~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/calibration_re
 
 
 # Network in put file
-def network_input_builder(nx):
+def network_input_builder(nx, complete):
     if nx == "original_omn":
         print("Using Corrected Original OMN")
         #A = pd.read_csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/data/omn_asec_11_19_occ_matched_plus_oldtransitions_2025_normalised.csv", delimiter=",", header = None)
@@ -36,6 +36,12 @@ def network_input_builder(nx):
         seps_rates = pd.read_csv(path + "dRC_Replication/data/ipums_variables_w_seps_rate.csv")
         mean_seps_rate = seps_rates['seps_rate'].mean()
 
+        if complete:
+            print("Using complete network")
+            # Create complete network
+            n = A.shape
+            complete_network = np.ones(n)
+            A = complete_network
 
         mod_data = {
             "A": A,
@@ -163,6 +169,13 @@ def network_input_builder(nx):
         seps_rates = pd.read_csv(path + "dRC_Replication/data/ipums_variables_w_seps_rate_full_omn.csv")
         mean_seps_rate = seps_rates['seps_rate'].mean()
 
+        if complete:
+            print("Using complete network")
+            # Create complete network
+            n = A.shape
+            complete_network = np.ones(n)
+            A = complete_network
+
         mod_data = {
                 "A": A,
                 "employment": employment,
@@ -249,9 +262,14 @@ def network_input_builder(nx):
 
         occ_shocks_dat = np.array(df_monthly[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1])].transpose())
 
-    elif nx == "onet":
-        print("Using ONET Related Occupations Network")
-        A = pd.read_csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/acs_2010_max_index_adjacency_matrix.csv", index_col = 0)
+    elif nx == "onet" or nx == "onet_wage_asym":
+        if nx == "onet":
+            print("Using ONET Related Occupations Network")
+            A = pd.read_csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/acs_2010_max_index_adjacency_matrix.csv", index_col = 0)
+        elif nx == "onet_wage_asym":
+            print("Using Reweighted Wage Asymmetric ONET Related Occupations Network")
+            A = pd.read_csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/acs_2010_onet_wage_asym_filled_adjacency_matrix.csv", index_col = 0)
+        
         ipums_input = pd.read_csv(path + "dRC_Replication/data/acs_onet_2010_ipums_vars_w_exp.csv", delimiter=",")
 
         occ_ids = ipums_input[['X.1', 'acs_occ_code']]
@@ -316,6 +334,13 @@ def network_input_builder(nx):
         #seps_rates = np.array(516, 0.02)
         seps_rates = pd.read_csv("/Users/ebbamark/Documents/Documents - Nuff-Malham/GitHub/transition_abm/calibration_remote/dRC_Replication/data/ipums_variables_w_seps_rate_onet.csv")
         mean_seps_rate = seps_rates['seps_rate'].mean()
+
+        if complete:
+            print("Using complete network")
+            # Create complete network
+            n = A_norm.shape
+            complete_network = np.ones(n)
+            A_norm = complete_network
 
         mod_data = {
             "A": A_norm,
