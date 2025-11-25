@@ -4,6 +4,7 @@ import pandas as pd
 import random as random
 from copy import deepcopy 
 import math as math
+import heapq
 from collections import defaultdict
 import cProfile, pstats, io
 rng = np.random.default_rng()
@@ -300,202 +301,82 @@ class worker:
 
     #     return vsent
 
-    def search_and_apply(
-        wrkr,
-        net,
-        vacancies_by_occ,
-        disc,
-        app_effort,
-        wage_prefs,
-        mis_rate: float = 0.10,              # PROBABILITY TO REPLACE A SAMPLED VAC WITH A GLOBAL RANDOM VAC
-        unique_random: bool = False,         # TRY TO AVOID DUPLICATE RANDOM PICKS IF TRUE
-        global_pool_override=None  # OPTIONAL PRECOMPUTED GLOBAL POOL (FOR PERFORMANCE)
-    ):
+    # def search_and_apply(
+    #     wrkr,
+    #     net,
+    #     vacancies_by_occ,
+    #     disc,
+    #     app_effort,
+    #     wage_prefs,
+    #     mis_rate: float = 0.10,              # PROBABILITY TO REPLACE A SAMPLED VAC WITH A GLOBAL RANDOM VAC
+    #     unique_random: bool = False,         # TRY TO AVOID DUPLICATE RANDOM PICKS IF TRUE
+    #     global_pool_override=None  # OPTIONAL PRECOMPUTED GLOBAL POOL (FOR PERFORMANCE)
+    # ):
 
-        MAX_VACS = 30
-        wrkr_occ = wrkr.occupation_id
-        neigh_probs = net[wrkr_occ].list_of_neigh_weights  # ALREADY NORMALIZED
-        occ_ids = list(range(len(neigh_probs)))
-
-        # BUILD NEIGHBOURHOOD POOL (UNCHANGED)
-        all_vacs = []
-        weights = []
-        for occ_id, occ_prob in zip(occ_ids, neigh_probs):
-            vacs = vacancies_by_occ.get(occ_id, [])
-            for v in vacs:
-                all_vacs.append(v)
-                weights.append(occ_prob)
-
-        if not all_vacs:
-            wrkr.apps_sent = 0
-            wrkr.d_wage_offer = np.nan
-            return 0
-
-        # SAMPLE NEIGHBOURHOOD VACANCIES (UNCHANGED)
-        try:
-            found_vacs = random.choices(all_vacs, weights=weights, k=min(MAX_VACS, len(all_vacs)))
-        except ValueError:
-            wrkr.apps_sent = 0
-            wrkr.d_wage_offer = np.nan
-            return 0
-
-        # # PREPARE GLOBAL POOL (ECONOMY-WIDE). ALLOW OVERRIDE FOR PERFORMANCE (CHANGE)
-        # if global_pool_override is not None:
-        #     global_pool = list(global_pool_override)
-        # else:
-        #     global_pool = [v for vacs in vacancies_by_occ.values() for v in vacs]
-
-        # global_pool_size = len(global_pool)
-
-        # # CREATE PARALLEL FLAGS TO MARK WHICH SAMPLED VACS WERE REPLACED BY GLOBAL PICKS (CHANGE)
-        # random_flags = [False] * len(found_vacs)
-
-        # # PERFORM REPLACEMENTS: EACH SAMPLED VAC HAS INDEPENDENT mis_rate PROBABILITY (UNCHANGED)
-        # if mis_rate > 0 and global_pool_size > 0:
-        #     if unique_random and len(found_vacs) <= global_pool_size:
-        #         # IF UNIQUE AND POOL BIG ENOUGH: SAMPLE UNIQUE GLOBAL PICKS FOR ALL REPLACEMENTS
-        #         replace_idxs = [i for i in range(len(found_vacs)) if random.random() < mis_rate]
-        #         if replace_idxs:
-        #             chosen_idxs = random.sample(range(global_pool_size), k=len(replace_idxs))
-        #             for idx_pos, chosen_idx in zip(replace_idxs, chosen_idxs):
-        #                 found_vacs[idx_pos] = global_pool[chosen_idx]
-        #                 random_flags[idx_pos] = True
-        #     else:
-        #         # FALLBACK: POSSIBLE DUPLICATES (SIMPLE AND FAST)
-        #         for i in range(len(found_vacs)):
-        #             rand_added = 0
-        #             if random.random() < mis_rate:
-        #                 rand_added += 1
-        #                 found_vacs[i] = random.choice(global_pool)
-        #                 random_flags[i] = True
-
-        # MEAN WAGE OF THE SAMPLED POOL (INCLUDES GLOBAL PICKS)
-        mean_wage_sampled = np.mean([v.wage for v in found_vacs]) if found_vacs else 0
-
-        vsent = 0
-
-        # APPLY RESERVATION WAGE FILTER, BUT ALWAYS KEEP GLOBAL RANDOM PICKS (CHANGE)
-        if disc:
-            if wage_prefs:
-                res_wage = wrkr.wage*reservation_wage(wrkr.time_unemployed, res_wage_dat)
-                # # RESERVATION WAGE AS YOU DEFINED
-                # if wrkr.time_unemployed > 3:
-                #     res_wage = wrkr.wage * (1 - 0.1 * (wrkr.time_unemployed - 3))
-                # else:
-                #     res_wage = wrkr.wage
-
-                found_vacs_res = [v for v in found_vacs if v.wage >= res_wage]
-                # # KEEP VACANCIES THAT (A) ARE GLOBAL RANDOM PICKS OR (B) MEET RES_WAGE
-                # found_vacs_res = []
-                # for v, is_rand in zip(found_vacs, random_flags):
-                #     if is_rand:
-                #         # GLOBAL PICK: BYPASS WAGE FILTER (CHANGE)
-                #         found_vacs_res.append(v)
-                #     else:
-                #         if v.wage >= res_wage:
-                #             found_vacs_res.append(v)
-
-            else:
-                # NO WAGE PREFS: keep all sampled (including global picks)
-                found_vacs_res = found_vacs
-                res_wage = np.nan
-
-            # RANK BY UTILITY (UNCHANGED)
-            sorted_vacs = sorted(
-                found_vacs_res,
-                key=lambda v: util(
-                    wrkr.wage, v.wage,
-                    net[wrkr_occ].list_of_neigh_weights[v.occupation_id]
-                ),
-                reverse=True
-            )
-
-            n_apps = applications_sent(wrkr.time_unemployed, app_effort, expectation=False)
-            chosen_vacs = sorted_vacs[wrkr.risk_aversion: wrkr.risk_aversion + n_apps]
-
-            for v in chosen_vacs:
-                if mis_rate > 0 and random.random() < mis_rate:
-                    random_vac = random.choice(global_pool_override)
-                    # APPLY MISSING RATE: REPLACE WITH RANDOM GLOBAL PICK
-                    random_vac.applicants.append(wrkr)
-                else:
-                    v.applicants.append(wrkr)
-                vsent += 1
-
-            # # MEAN WAGE OF ACTUALLY APPLIED-TO VACANCIES (USED FOR d_wage_offer) (CHANGE)
-            # mean_wage_applied = np.mean([v.wage for v in chosen_vacs]) if chosen_vacs else np.nan
-
-        else:
-            for v in random.sample(found_vacs, min(len(found_vacs), 7)):
-                if mis_rate > 0 and random.random() < mis_rate:
-                    random_vac = random.choice(global_pool_override)
-                    # APPLY MISSING RATE: REPLACE WITH RANDOM GLOBAL PICK
-                    random_vac.applicants.append(wrkr)
-                else:
-                    v.applicants.append(wrkr)
-                vsent += 1
-            res_wage = np.nan
-
-        # SET OUTPUTS: USE mean_wage_applied WHERE AVAILABLE (CHANGE)
-        wrkr.d_wage_offer = (mean_wage_sampled - res_wage) if disc else np.nan
-        wrkr.apps_sent = vsent
-
-        return vsent
-
-
-    # def search_and_apply(wrkr, net, vacancies_by_occ, disc, app_effort, wage_prefs):
     #     MAX_VACS = 30
     #     wrkr_occ = wrkr.occupation_id
-    #     neigh_probs = net[wrkr_occ].list_of_neigh_weights  # Already normalized
+    #     neigh_probs = net[wrkr_occ].list_of_neigh_weights  # ALREADY NORMALIZED
     #     occ_ids = list(range(len(neigh_probs)))
 
-    #     # Build a flat list of vacancies and their weights
-    #     all_vacs = []
+    #     # BUILD NEIGHBOURHOOD POOL (UNCHANGED)
+    #     all_vacs_ = []
     #     weights = []
-
     #     for occ_id, occ_prob in zip(occ_ids, neigh_probs):
     #         vacs = vacancies_by_occ.get(occ_id, [])
     #         for v in vacs:
-    #             all_vacs.append(v)
+    #             all_vacs_.append(v)
     #             weights.append(occ_prob)
 
-    #     if not all_vacs:
+    #     if not all_vacs_:
     #         wrkr.apps_sent = 0
     #         wrkr.d_wage_offer = np.nan
     #         return 0
+        
+    #     if wage_prefs:
+    #         res_wage = wrkr.wage*reservation_wage(wrkr.time_unemployed, res_wage_dat)
+    #         all_vacs = [v for v in all_vacs_ if v.wage >= res_wage]
+    #     else:
+    #         all_vacs = all_vacs_
+    #         res_wage = np.nan
 
-    #     # Sample up to MAX_VACS vacancies directly
+    #     # SAMPLE NEIGHBOURHOOD VACANCIES (UNCHANGED)
     #     try:
     #         found_vacs = random.choices(all_vacs, weights=weights, k=min(MAX_VACS, len(all_vacs)))
-
+    #         len_f_v = len(found_vacs)
+    #         if wage_prefs:
+    #             print(len_f_v)
     #     except ValueError:
     #         wrkr.apps_sent = 0
     #         wrkr.d_wage_offer = np.nan
     #         return 0
-    #     mean_wage = np.mean([v.wage for v in found_vacs]) if found_vacs else 0
+
+    #     # MEAN WAGE OF THE SAMPLED POOL (INCLUDES GLOBAL PICKS)
+    #     mean_wage_sampled = np.mean([v.wage for v in found_vacs]) if found_vacs else 0
 
     #     vsent = 0
 
+    #     # APPLY RESERVATION WAGE FILTER, BUT ALWAYS KEEP GLOBAL RANDOM PICKS (CHANGE)
     #     if disc:
-    #         if wage_prefs:
-    #             # Apply reservation wage filter
-    #             if wrkr.time_unemployed > 3:
-    #                 res_wage = wrkr.wage * (1 - 0.1 * (wrkr.time_unemployed - 3))
-    #             else:
-    #                 res_wage = wrkr.wage
+    #         # if wage_prefs:
+    #         #     #res_wage = wrkr.wage*reservation_wage(wrkr.time_unemployed, res_wage_dat)
+    #         #     # # RESERVATION WAGE AS YOU DEFINED
+    #         #     # if wrkr.time_unemployed > 3:
+    #         #     #     res_wage = wrkr.wage * (1 - 0.1 * (wrkr.time_unemployed - 3))
+    #         #     # else:
+    #         #     #     res_wage = wrkr.wage
 
-    #             found_vacs_res = [v for v in found_vacs if v.wage >= res_wage]
-    #             #if len(found_vacs_res) == 0 & wrkr.time_unemployed > 5:
-    #             #    found_vacs_res = [max(found_vacs, key=lambda v: v.wage)]
-    #             #    print(f"applied to max wage vacancy absent vacancies about res wage {wrkr_occ} with wage diff: {found_vacs_res[0].wage/res_wage}")
+    #         #     found_vacs_res = [v for v in found_vacs if v.wage >= res_wage]
+    #         #     len_f_v_res = len(found_vacs_res)
 
-    #         else:
-    #             found_vacs_res = found_vacs
-    #             res_wage = np.nan
+    #         #     print(f'Found vacs: {len_f_v}; Found vacs above RW: {len_f_v_res}')
+    #         # else:
+    #         #     # NO WAGE PREFS: keep all sampled (including global picks)
+    #         #     found_vacs_res = found_vacs
+    #         #     res_wage = np.nan
 
-    #         # Rank by utility
+    #         # RANK BY UTILITY (UNCHANGED)
     #         sorted_vacs = sorted(
-    #             found_vacs_res,
+    #             found_vacs,
     #             key=lambda v: util(
     #                 wrkr.wage, v.wage,
     #                 net[wrkr_occ].list_of_neigh_weights[v.occupation_id]
@@ -507,145 +388,207 @@ class worker:
     #         chosen_vacs = sorted_vacs[wrkr.risk_aversion: wrkr.risk_aversion + n_apps]
 
     #         for v in chosen_vacs:
-    #             v.applicants.append(wrkr)
+    #             if mis_rate > 0 and random.random() < mis_rate:
+    #                 random_vac = random.choice(global_pool_override)
+    #                 # APPLY MISSING RATE: REPLACE WITH RANDOM GLOBAL PICK
+    #                 random_vac.applicants.append(wrkr)
+    #             else:
+    #                 v.applicants.append(wrkr)
     #             vsent += 1
+
+    #         # # MEAN WAGE OF ACTUALLY APPLIED-TO VACANCIES (USED FOR d_wage_offer) (CHANGE)
+    #         # mean_wage_applied = np.mean([v.wage for v in chosen_vacs]) if chosen_vacs else np.nan
+
     #     else:
     #         for v in random.sample(found_vacs, min(len(found_vacs), 7)):
-    #             v.applicants.append(wrkr)
+    #             if mis_rate > 0 and random.random() < mis_rate:
+    #                 random_vac = random.choice(global_pool_override)
+    #                 # APPLY MISSING RATE: REPLACE WITH RANDOM GLOBAL PICK
+    #                 random_vac.applicants.append(wrkr)
+    #             else:
+    #                 v.applicants.append(wrkr)
     #             vsent += 1
     #         res_wage = np.nan
 
-    #     wrkr.d_wage_offer = mean_wage-res_wage if disc else np.nan
+    #     # SET OUTPUTS: USE mean_wage_applied WHERE AVAILABLE (CHANGE)
+    #     wrkr.d_wage_offer = (mean_wage_sampled - res_wage) if disc else np.nan
     #     wrkr.apps_sent = vsent
 
+    #     return vsent
 
-    # def emp_search_and_apply(
-    #     wrkr,
-    #     net,
-    #     vac_list,
-    #     disc,
-    #     emp_apps,
-    #     wage_prefs,
-    #     mis_rate: float = 0.10,                 # PROBABILITY TO REPLACE A SAMPLED VAC WITH A GLOBAL RANDOM VAC
-    #     unique_random: bool = False,            # TRY TO AVOID DUPLICATE RANDOM PICKS IF TRUE
-    #     global_pool_override = None  # OPTIONAL PRECOMPUTED GLOBAL POOL (FOR PERFORMANCE) (CHANGE)
-    # ):
-    #     MAX_VACS = 30
-    #     wrkr_occ = wrkr.occupation_id
-    #     neigh_probs = net[wrkr_occ].list_of_neigh_weights  # Already normalized
-    #     occ_ids = list(range(len(neigh_probs)))
 
-    #     # Build a flat list of neighbourhood vacancies and their weights (UNCHANGED)
-    #     all_vacs = []
-    #     weights = []
-    #     for occ_id, occ_prob in zip(occ_ids, neigh_probs):
-    #         vacs = vac_list.get(occ_id, [])
-    #         for v in vacs:
-    #             all_vacs.append(v)
-    #             weights.append(occ_prob)
+    def search_and_apply(
+        wrkr,
+        net,
+        vacancies_by_occ,
+        disc,
+        app_effort,
+        wage_prefs,
+        mis_rate: float = 0.10,
+        unique_random: bool = False,
+        global_pool_override=None
+    ):
+        MAX_VACS = 30
+        wrkr_occ = wrkr.occupation_id
 
-    #     if not all_vacs:
-    #         wrkr.apps_sent = 0
-    #         wrkr.d_wage_offer = np.nan
-    #         # ALL-CAPS CHANGE: INSTRUMENTATION ATTRIBUTE WHEN NOTHING SENT
-    #         wrkr.random_apps_sent = 0
-    #         return 0
+        # local-bindings for speed
+        rand = random.random
+        r_choice = random.choice
+        r_sample = random.sample
+        neigh_probs = net[wrkr_occ].list_of_neigh_weights  # already normalized
+        occ_count = len(neigh_probs)
 
-    #     # Sample up to MAX_VACS vacancies directly (UNCHANGED)
-    #     try:
-    #         found_vacs = random.choices(all_vacs, weights=weights, k=min(MAX_VACS, len(all_vacs)))
-    #     except ValueError:
-    #         wrkr.apps_sent = 0
-    #         wrkr.d_wage_offer = np.nan
-    #         wrkr.random_apps_sent = 0  # ALL-CAPS CHANGE: INSTRUMENTATION
-    #         return 0
+        # Build (vacancy, weight) pairs in one pass and optionally apply reservation wage
+        all_vacs = []
+        weights = []
+        # If wage_prefs, compute reservation wage once
+        if wage_prefs:
+            res_wage = wrkr.wage * reservation_wage(wrkr.time_unemployed, res_wage_dat)
+        else:
+            res_wage = np.nan
 
-    #     # ADDED: PREPARE GLOBAL POOL FOR RANDOM REPLACEMENTS (USE OVERRIDE IF PROVIDED) (CHANGE)
-    #     if global_pool_override is not None:
-    #         global_pool = list(global_pool_override)
-    #     else:
-    #         # BUILD TRUE ECONOMY-WIDE POOL FROM vac_list (CHANGE)
-    #         global_pool = [v for vacs in vac_list.values() for v in vacs]
+        for occ_id, occ_prob in enumerate(neigh_probs):
+            if occ_prob == 0:
+                continue
+            vacs = vacancies_by_occ.get(occ_id)
+            if not vacs:
+                continue
+            # iterate once, keep only those that meet reservation wage if requested
+            if wage_prefs:
+                for v in vacs:
+                    w = getattr(v, "wage", None)
+                    if w is not None and w >= res_wage:
+                        all_vacs.append(v)
+                        weights.append(occ_prob)
+            else:
+                # fast extend when no wage filtering
+                all_vacs.extend(vacs)
+                weights.extend([occ_prob] * len(vacs))
 
-    #     global_pool_size = len(global_pool)
-    #     used_global_idxs = set()
+        if not all_vacs:
+            wrkr.apps_sent = 0
+            wrkr.d_wage_offer = np.nan
+            return 0
 
-    #     # ALL-CAPS CHANGE: PARALLEL FLAGS TO MARK WHICH SAMPLED VACS WERE REPLACED BY GLOBAL PICKS
-    #     random_flags = [False] * len(found_vacs)
+        n_to_sample = min(MAX_VACS, len(all_vacs))
 
-    #     # ADDED: REPLACE SOME SAMPLED VACANCIES WITH UNIFORM GLOBAL PICKS ACCORDING TO mis_rate (CHANGE)
-    #     if mis_rate > 0 and global_pool_size > 0:
-    #         if unique_random and len(found_vacs) <= global_pool_size:
-    #             replace_idxs = [i for i in range(len(found_vacs)) if random.random() < mis_rate]
-    #             if replace_idxs:
-    #                 chosen_idxs = random.sample(range(global_pool_size), k=len(replace_idxs))
-    #                 for idx_pos, chosen_idx in zip(replace_idxs, chosen_idxs):
-    #                     found_vacs[idx_pos] = global_pool[chosen_idx]
-    #                     random_flags[idx_pos] = True
-    #         else:
-    #             for i in range(len(found_vacs)):
-    #                 if random.random() < mis_rate:
-    #                     found_vacs[i] = random.choice(global_pool)
-    #                     random_flags[i] = True
+        # If weights are all equal (or not provided), we can use random.sample (faster)
+        use_weights = any(w != weights[0] for w in weights) if weights else False
 
-    #     mean_wage = np.mean([v.wage for v in found_vacs]) if found_vacs else 0
+        if use_weights:
+            # random.choices supports weights but returns with replacement.
+            # To emulate original behaviour (k may be <= population), we accept replacement.
+            found_vacs = random.choices(all_vacs, weights=weights, k=n_to_sample)
+        else:
+            # if all weights equal -> sampling without replacement is faster and simpler
+            if n_to_sample == len(all_vacs):
+                found_vacs = list(all_vacs)
+            else:
+                # sample without replacement
+                found_vacs = r_sample(all_vacs, k=n_to_sample)
 
-    #     # APPLY RESERVATION/NOISE FILTERS BUT ALWAYS KEEP GLOBAL RANDOM PICKS (CHANGE)
-    #     # We build a filtered list preserving flags
-    #     filtered_pairs = []  # tuples (vacancy, is_random_flag)
+        # mean wage of sampled pool
+        # use numpy.fromiter for a tiny speed advantage on larger lists
+        wages_iter = (getattr(v, "wage", 0.0) for v in found_vacs)
+        try:
+            mean_wage_sampled = float(np.mean(list(wages_iter))) if found_vacs else 0.0
+        except Exception:
+            mean_wage_sampled = 0.0
 
-    #     if disc and wage_prefs:
-    #         # reservation threshold drawn per vacancy as in original
-    #         for v, is_rand in zip(found_vacs, random_flags):
-    #             if is_rand:
-    #                 # GLOBAL RANDOM PICKS BYPASS WAGE FILTER (CHANGE)
-    #                 filtered_pairs.append((v, True))
-    #             else:
-    #                 thresh = np.random.normal(wrkr.wage * 1.05, 0.05 * wrkr.wage * 1.05)
-    #                 if v.wage >= thresh:
-    #                     filtered_pairs.append((v, False))
-    #     elif wage_prefs and not disc:
-    #         for v, is_rand in zip(found_vacs, random_flags):
-    #             if is_rand:
-    #                 filtered_pairs.append((v, True))
-    #             else:
-    #                 thresh = np.random.normal(wrkr.wage, 0.05 * wrkr.wage)
-    #                 if v.wage >= thresh:
-    #                     filtered_pairs.append((v, False))
-    #     else:
-    #         # No wage prefs: keep all, preserving flags
-    #         filtered_pairs = list(zip(found_vacs, random_flags))
+        vsent = 0
 
-    #     # If filtering removed all vacancies, nothing to apply to
-    #     if not filtered_pairs:
-    #         wrkr.apps_sent = 0
-    #         wrkr.d_wage_offer = np.nan
-    #         wrkr.random_apps_sent = 0  # ALL-CAPS CHANGE: INSTRUMENTATION
-    #         return 0
+        if mean_wage_sampled < res_wage:
+            print(f'Reservation wage: {res_wage}; Sampled Wage: {mean_wage_sampled}')
 
-    #     # From filtered_pairs, sample up to emp_apps (uniformly) and apply
-    #     # KEEP TRACK OF HOW MANY OF THE SENT APPLICATIONS WERE GLOBAL (INSTRUMENTATION)
-    #     # If you prefer ranking by utility for employed, replace sampling with ranking logic
-    #     # Here we follow original: random.sample among filtered
-    #     k = min(len(filtered_pairs), emp_apps)
-    #     sampled_pairs = random.sample(filtered_pairs, k)
+        # Helper: compute utility quickly; local-binding of net neighbor weights lookup
+        neigh_weights = net[wrkr_occ].list_of_neigh_weights
+        util_fn = util  # local bind (function)
 
-    #     sent_apps = 0
-    #     n_random_sent = 0  # ALL-CAPS CHANGE: COUNT OF RANDOM APPS SENT
-    #     for v, is_rand in sampled_pairs:
-    #         v.applicants.append(wrkr)
-    #         sent_apps += 1
-    #         if is_rand:
-    #             n_random_sent += 1
+        if disc:
+            # # compute number of applications
+            # n_apps = applications_sent(wrkr.time_unemployed, app_effort, expectation=False)
+            # # we will pick top (risk_aversion + n_apps) by utility, then slice to chosen range
+            # want_k = wrkr.risk_aversion + n_apps
 
-    #     # KEEP ORIGINAL BEHAVIOUR: SET wrkr.apps_sent TO 0 (AS IN YOUR ORIGINAL FUNCTION)
-    #     wrkr.apps_sent = 0
-    #     wrkr.d_wage_offer = np.nan
+            # Use heapq.nlargest to avoid sorting entire found_vacs if found_vacs is large.
+            # Create tuples (utility, vacancy) and get top want_k
+            # utility calculation uses neighbor weight lookup; bind local to avoid repeated global lookups.
+            def _util_for_v(v):
+                # inline attribute lookups and neighbor weight
+                v_wage = getattr(v, "wage", 0.0)
+                occ_w = neigh_weights[v.occupation_id] if v.occupation_id < len(neigh_weights) else 0.0
+                return util_fn(wrkr.wage, v_wage, occ_w)
 
-    #     # ALL-CAPS CHANGE: ATTACH INSTRUMENTATION TO WORKER
-    #     wrkr.random_apps_sent = n_random_sent
+            # # if want_k is small relative to found_vacs, nlargest is faster than full sort
+            # top_k = heapq.nlargest(want_k, found_vacs, key=_util_for_v) if want_k > 0 else []
 
-    #     return sent_apps
+            # # chosen_vacs are slice from risk_aversion to risk_aversion + n_apps
+            # start = wrkr.risk_aversion
+            # end = start + n_apps
+
+            n_apps = applications_sent(wrkr.time_unemployed, app_effort, expectation=False)
+            available = len(found_vacs)
+
+            # Check if we have enough vacancies to support both risk aversion AND desired applications
+            if available < wrkr.risk_aversion + n_apps:
+                # Not enough vacancies - need to compromise
+                if available <= wrkr.risk_aversion:
+                    # Can't afford to skip any
+                    adjusted_start = 0
+                    adjusted_n_apps = min(n_apps, available)
+                else:
+                    # Can skip some, but need to reduce either start or n_apps
+                    # Option A: Reduce risk aversion to ensure we get n_apps
+                    adjusted_start = max(0, available - n_apps)
+                    adjusted_n_apps = min(n_apps, available - adjusted_start)
+                    
+                    # Option B: Keep full risk aversion, accept fewer apps
+                    # adjusted_start = wrkr.risk_aversion
+                    # adjusted_n_apps = available - wrkr.risk_aversion
+            else:
+                # Plenty of vacancies - use normal behavior
+                adjusted_start = wrkr.risk_aversion
+                adjusted_n_apps = n_apps
+
+            want_k = adjusted_start + adjusted_n_apps
+
+            top_k = heapq.nlargest(want_k, found_vacs, key=_util_for_v) if want_k > 0 else []
+            chosen_vacs = top_k[adjusted_start:adjusted_start + adjusted_n_apps]
+            # apply to chosen vacancies
+            # use local references for speed
+            gpool = global_pool_override
+            append_to_applicants = lambda vac: vac.applicants.append(wrkr)
+
+            for v in chosen_vacs:
+                if mis_rate > 0 and rand() < mis_rate and gpool:
+                    random_vac = r_choice(gpool)
+                    append_to_applicants(random_vac)
+                else:
+                    append_to_applicants(v)
+                vsent += 1
+
+        else:
+            # when not disc, choose up to 7 random vacancies from found_vacs without replacement if possible
+            n_choice = min(len(found_vacs), 7)
+            # If n_choice == len(found_vacs), use the whole list
+            chosen_sample = found_vacs if n_choice == len(found_vacs) else r_sample(found_vacs, k=n_choice)
+            gpool = global_pool_override
+            append_to_applicants = lambda vac: vac.applicants.append(wrkr)
+
+            for v in chosen_sample:
+                if mis_rate > 0 and rand() < mis_rate and gpool:
+                    random_vac = r_choice(gpool)
+                    append_to_applicants(random_vac)
+                else:
+                    append_to_applicants(v)
+                vsent += 1
+
+        # Set wrkr outputs (note: original used mean_wage_sampled - res_wage if disc)
+        wrkr.d_wage_offer = (mean_wage_sampled - res_wage) if disc else np.nan
+        wrkr.apps_sent = vsent
+
+        return vsent
+
 
     def emp_search_and_apply(wrkr, net, vac_list, disc, emp_apps, wage_prefs,   
                           mis_rate: float = 0.10,                 # PROBABILITY TO REPLACE A SAMPLED VAC WITH A GLOBAL RANDOM VAC
@@ -1092,7 +1035,7 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
         # appending relevant number of vacancies to economy-wide vacancy list
         for v in range(round(vacancies[i,0])):
             vac_list.append(vac(i, [], #wages[i]
-                                np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000), False, 0))
+                                np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000), False, np.random.uniform(0, 5)))
             
         occ = occupation(i, [], [], list(A[i] > 0), list(A[i]),
                          (employment[i,0] + vacancies[i,0]), 
