@@ -58,6 +58,8 @@ We take the mean industry-share of occupational employment reported in the years
 
 ```{r, echo = FALSE, results = 'asis', message = FALSE, warning = FALSE}
 
+source(here("data/occ_macro_vars/OEWS/occ_emp_industry_oews.R"))
+
 if(nx == "Original OMN"){
   # Which occupations are in the crosswalk. 
   abm_orig <- read.csv(here("data/crosswalk_occ_soc_cps_codes.csv")) %>% 
@@ -69,7 +71,7 @@ if(nx == "Original OMN"){
   }else if(nx == "Full OMN"){
   
 # FULL OMN
-  abm <- read.csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_2010_soc_cw.csv") %>%
+  abm <- read.csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_2010_soc_cw.csv") %>%
     rename(SOC2010 = soc_2010_code,
            OCC2010_desc = title)
   
@@ -77,7 +79,7 @@ if(nx == "Original OMN"){
   }else if(nx == "ONET Related Occupations"){
   
   # ONET
-  abm <- read.csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/acs_onet_2010_soc_cw.csv") %>% 
+  abm <- read.csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/acs_onet_2010_soc_cw.csv") %>% 
        rename(SOC2010 = soc_2010_code,
               OCC2010_desc = title) %>% 
     group_by(acs_2010_code, OCC2010_desc) %>% 
@@ -91,7 +93,7 @@ if(nx == "Original OMN"){
 
 }
 
-source(here("data/occ_macro_vars/OEWS/occ_emp_industry_oews.R"))
+
 
 ```
 
@@ -334,7 +336,7 @@ if(nx == "Full OMN"){
     file_title = "occupational_va_shocks_full_omn.csv"
     
         
-    ipums_vars <- read.csv(here("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_ipums_vars.csv")) %>% tibble %>% 
+    ipums_vars <- read.csv(here("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_ipums_vars.csv")) %>% tibble %>% 
       mutate(acs_occ_code = occ)
     
     temp %>% 

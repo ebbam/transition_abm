@@ -163,7 +163,7 @@ shares %>%
   summarise(n_occs = n_distinct(occ_code)) %>% 
   filter(n_occs >= 463)
 
-# I take the years where all/majority (97%) of occ codes are present: between 2012 and 2018
+# I take the years where all/majority (97%) of occ codes are present: after 2012
 mean_shares <- shares %>% 
   group_by(year) %>% 
   mutate(n_occs = n_distinct(occ_code)) %>% 
