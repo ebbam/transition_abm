@@ -6,6 +6,7 @@ from copy import deepcopy
 import math as math
 import heapq
 from collections import defaultdict
+from scipy.stats import norm
 import cProfile, pstats, io
 rng = np.random.default_rng()
 
@@ -417,6 +418,178 @@ class worker:
     #     return vsent
 
 
+    # def search_and_apply(
+    #     wrkr,
+    #     net,
+    #     vacancies_by_occ,
+    #     disc,
+    #     app_effort,
+    #     wage_prefs,
+    #     mis_rate: float = 0.10,
+    #     unique_random: bool = False,
+    #     global_pool_override=None
+    # ):
+    #     MAX_VACS = 30
+    #     wrkr_occ = wrkr.occupation_id
+
+    #     # local-bindings for speed
+    #     rand = random.random
+    #     r_choice = random.choice
+    #     r_sample = random.sample
+    #     neigh_probs = net[wrkr_occ].list_of_neigh_weights  # already normalized
+    #     occ_count = len(neigh_probs)
+
+    #     # Build (vacancy, weight) pairs in one pass and optionally apply reservation wage
+    #     all_vacs = []
+    #     weights = []
+    #     # If wage_prefs, compute reservation wage once
+    #     if wage_prefs:
+    #         res_wage = wrkr.wage * reservation_wage(wrkr.time_unemployed, res_wage_dat)
+    #     else:
+    #         res_wage = np.nan
+
+    #     for occ_id, occ_prob in enumerate(neigh_probs):
+    #         if occ_prob == 0:
+    #             continue
+    #         vacs = vacancies_by_occ.get(occ_id)
+    #         if not vacs:
+    #             continue
+    #         # iterate once, keep only those that meet reservation wage if requested
+    #         if wage_prefs:
+    #             for v in vacs:
+    #                 w = getattr(v, "wage", None)
+    #                 if w is not None and w >= res_wage:
+    #                     all_vacs.append(v)
+    #                     weights.append(occ_prob)
+    #         else:
+    #             # fast extend when no wage filtering
+    #             all_vacs.extend(vacs)
+    #             weights.extend([occ_prob] * len(vacs))
+
+    #     if not all_vacs:
+    #         wrkr.apps_sent = 0
+    #         wrkr.d_wage_offer = np.nan
+    #         return 0
+
+    #     n_to_sample = min(MAX_VACS, len(all_vacs))
+
+    #     # If weights are all equal (or not provided), we can use random.sample (faster)
+    #     use_weights = any(w != weights[0] for w in weights) if weights else False
+
+    #     if use_weights:
+    #         # random.choices supports weights but returns with replacement.
+    #         # To emulate original behaviour (k may be <= population), we accept replacement.
+    #         found_vacs = random.choices(all_vacs, weights=weights, k=n_to_sample)
+    #     else:
+    #         # if all weights equal -> sampling without replacement is faster and simpler
+    #         if n_to_sample == len(all_vacs):
+    #             found_vacs = list(all_vacs)
+    #         else:
+    #             # sample without replacement
+    #             found_vacs = r_sample(all_vacs, k=n_to_sample)
+
+    #     # mean wage of sampled pool
+    #     # use numpy.fromiter for a tiny speed advantage on larger lists
+    #     wages_iter = (getattr(v, "wage", 0.0) for v in found_vacs)
+    #     try:
+    #         mean_wage_sampled = float(np.mean(list(wages_iter))) if found_vacs else 0.0
+    #     except Exception:
+    #         mean_wage_sampled = 0.0
+
+    #     vsent = 0
+
+    #     if mean_wage_sampled < res_wage:
+    #         print(f'Reservation wage: {res_wage}; Sampled Wage: {mean_wage_sampled}')
+
+    #     # Helper: compute utility quickly; local-binding of net neighbor weights lookup
+    #     neigh_weights = net[wrkr_occ].list_of_neigh_weights
+    #     util_fn = util  # local bind (function)
+
+    #     if disc:
+    #         # # compute number of applications
+    #         # n_apps = applications_sent(wrkr.time_unemployed, app_effort, expectation=False)
+    #         # # we will pick top (risk_aversion + n_apps) by utility, then slice to chosen range
+    #         # want_k = wrkr.risk_aversion + n_apps
+
+    #         # Use heapq.nlargest to avoid sorting entire found_vacs if found_vacs is large.
+    #         # Create tuples (utility, vacancy) and get top want_k
+    #         # utility calculation uses neighbor weight lookup; bind local to avoid repeated global lookups.
+    #         def _util_for_v(v):
+    #             # inline attribute lookups and neighbor weight
+    #             v_wage = getattr(v, "wage", 0.0)
+    #             occ_w = neigh_weights[v.occupation_id] if v.occupation_id < len(neigh_weights) else 0.0
+    #             return util_fn(wrkr.wage, v_wage, occ_w)
+
+    #         # # if want_k is small relative to found_vacs, nlargest is faster than full sort
+    #         # top_k = heapq.nlargest(want_k, found_vacs, key=_util_for_v) if want_k > 0 else []
+
+    #         # # chosen_vacs are slice from risk_aversion to risk_aversion + n_apps
+    #         # start = wrkr.risk_aversion
+    #         # end = start + n_apps
+
+    #         n_apps = applications_sent(wrkr.time_unemployed, app_effort, expectation=False)
+    #         available = len(found_vacs)
+
+    #         # Check if we have enough vacancies to support both risk aversion AND desired applications
+    #         if available < wrkr.risk_aversion + n_apps:
+    #             # Not enough vacancies - need to compromise
+    #             if available <= wrkr.risk_aversion:
+    #                 # Can't afford to skip any
+    #                 adjusted_start = 0
+    #                 adjusted_n_apps = min(n_apps, available)
+    #             else:
+    #                 # Can skip some, but need to reduce either start or n_apps
+    #                 # Option A: Reduce risk aversion to ensure we get n_apps
+    #                 adjusted_start = max(0, available - n_apps)
+    #                 adjusted_n_apps = min(n_apps, available - adjusted_start)
+                    
+    #                 # Option B: Keep full risk aversion, accept fewer apps
+    #                 # adjusted_start = wrkr.risk_aversion
+    #                 # adjusted_n_apps = available - wrkr.risk_aversion
+    #         else:
+    #             # Plenty of vacancies - use normal behavior
+    #             adjusted_start = wrkr.risk_aversion
+    #             adjusted_n_apps = n_apps
+
+    #         want_k = adjusted_start + adjusted_n_apps
+
+    #         top_k = heapq.nlargest(want_k, found_vacs, key=_util_for_v) if want_k > 0 else []
+    #         chosen_vacs = top_k[adjusted_start:adjusted_start + adjusted_n_apps]
+    #         # apply to chosen vacancies
+    #         # use local references for speed
+    #         gpool = global_pool_override
+    #         append_to_applicants = lambda vac: vac.applicants.append(wrkr)
+
+    #         for v in chosen_vacs:
+    #             if mis_rate > 0 and rand() < mis_rate and gpool:
+    #                 random_vac = r_choice(gpool)
+    #                 append_to_applicants(random_vac)
+    #             else:
+    #                 append_to_applicants(v)
+    #             vsent += 1
+
+    #     else:
+    #         # when not disc, choose up to 7 random vacancies from found_vacs without replacement if possible
+    #         n_choice = min(len(found_vacs), 7)
+    #         # If n_choice == len(found_vacs), use the whole list
+    #         chosen_sample = found_vacs if n_choice == len(found_vacs) else r_sample(found_vacs, k=n_choice)
+    #         gpool = global_pool_override
+    #         append_to_applicants = lambda vac: vac.applicants.append(wrkr)
+
+    #         for v in chosen_sample:
+    #             if mis_rate > 0 and rand() < mis_rate and gpool:
+    #                 random_vac = r_choice(gpool)
+    #                 append_to_applicants(random_vac)
+    #             else:
+    #                 append_to_applicants(v)
+    #             vsent += 1
+
+    #     # Set wrkr outputs (note: original used mean_wage_sampled - res_wage if disc)
+    #     wrkr.d_wage_offer = (mean_wage_sampled - res_wage) if disc else np.nan
+    #     wrkr.apps_sent = vsent
+
+    #     return vsent
+    
     def search_and_apply(
         wrkr,
         net,
@@ -435,13 +608,15 @@ class worker:
         rand = random.random
         r_choice = random.choice
         r_sample = random.sample
-        neigh_probs = net[wrkr_occ].list_of_neigh_weights  # already normalized
+        neigh_probs = net[wrkr_occ].list_of_neigh_weights
         occ_count = len(neigh_probs)
 
-        # Build (vacancy, weight) pairs in one pass and optionally apply reservation wage
+        # Build (vacancy, weight) pairs in one pass
+        # *** REMOVE reservation wage filtering here ***
         all_vacs = []
         weights = []
-        # If wage_prefs, compute reservation wage once
+        
+        # Compute reservation wage once if needed
         if wage_prefs:
             res_wage = wrkr.wage * reservation_wage(wrkr.time_unemployed, res_wage_dat)
         else:
@@ -453,42 +628,31 @@ class worker:
             vacs = vacancies_by_occ.get(occ_id)
             if not vacs:
                 continue
-            # iterate once, keep only those that meet reservation wage if requested
-            if wage_prefs:
-                for v in vacs:
-                    w = getattr(v, "wage", None)
-                    if w is not None and w >= res_wage:
-                        all_vacs.append(v)
-                        weights.append(occ_prob)
-            else:
-                # fast extend when no wage filtering
-                all_vacs.extend(vacs)
-                weights.extend([occ_prob] * len(vacs))
+            
+            # *** DON'T filter by wage here - include all vacancies ***
+            all_vacs.extend(vacs)
+            weights.extend([occ_prob] * len(vacs))
 
         if not all_vacs:
             wrkr.apps_sent = 0
             wrkr.d_wage_offer = np.nan
+            #print(f"{wrkr_occ} all_vacs empty")
             return 0
 
         n_to_sample = min(MAX_VACS, len(all_vacs))
 
-        # If weights are all equal (or not provided), we can use random.sample (faster)
+        # Sampling logic (unchanged)
         use_weights = any(w != weights[0] for w in weights) if weights else False
 
         if use_weights:
-            # random.choices supports weights but returns with replacement.
-            # To emulate original behaviour (k may be <= population), we accept replacement.
             found_vacs = random.choices(all_vacs, weights=weights, k=n_to_sample)
         else:
-            # if all weights equal -> sampling without replacement is faster and simpler
             if n_to_sample == len(all_vacs):
                 found_vacs = list(all_vacs)
             else:
-                # sample without replacement
                 found_vacs = r_sample(all_vacs, k=n_to_sample)
 
         # mean wage of sampled pool
-        # use numpy.fromiter for a tiny speed advantage on larger lists
         wages_iter = (getattr(v, "wage", 0.0) for v in found_vacs)
         try:
             mean_wage_sampled = float(np.mean(list(wages_iter))) if found_vacs else 0.0
@@ -497,56 +661,41 @@ class worker:
 
         vsent = 0
 
-        if mean_wage_sampled < res_wage:
-            print(f'Reservation wage: {res_wage}; Sampled Wage: {mean_wage_sampled}')
-
         # Helper: compute utility quickly; local-binding of net neighbor weights lookup
         neigh_weights = net[wrkr_occ].list_of_neigh_weights
-        util_fn = util  # local bind (function)
+        util_fn = util
 
         if disc:
-            # # compute number of applications
-            # n_apps = applications_sent(wrkr.time_unemployed, app_effort, expectation=False)
-            # # we will pick top (risk_aversion + n_apps) by utility, then slice to chosen range
-            # want_k = wrkr.risk_aversion + n_apps
-
-            # Use heapq.nlargest to avoid sorting entire found_vacs if found_vacs is large.
-            # Create tuples (utility, vacancy) and get top want_k
-            # utility calculation uses neighbor weight lookup; bind local to avoid repeated global lookups.
+            # *** MODIFY utility function to include reservation wage penalty ***
             def _util_for_v(v):
-                # inline attribute lookups and neighbor weight
                 v_wage = getattr(v, "wage", 0.0)
                 occ_w = neigh_weights[v.occupation_id] if v.occupation_id < len(neigh_weights) else 0.0
-                return util_fn(wrkr.wage, v_wage, occ_w)
-
-            # # if want_k is small relative to found_vacs, nlargest is faster than full sort
-            # top_k = heapq.nlargest(want_k, found_vacs, key=_util_for_v) if want_k > 0 else []
-
-            # # chosen_vacs are slice from risk_aversion to risk_aversion + n_apps
-            # start = wrkr.risk_aversion
-            # end = start + n_apps
+                base_util = util_fn(wrkr.wage, v_wage, occ_w)
+                
+                # Apply reservation wage as utility modifier (not hard filter)
+                if wage_prefs and not np.isnan(res_wage):
+                    if v_wage < res_wage:
+                        # Penalize vacancies below reservation wage
+                        # The further below, the stronger the penalty
+                        shortfall_ratio = (res_wage - v_wage) / res_wage
+                        # Exponential decay: 50% penalty at res_wage, 90% at 50% below res_wage
+                        penalty = np.exp(-3 * shortfall_ratio)
+                        return base_util * penalty
+                
+                return base_util
 
             n_apps = applications_sent(wrkr.time_unemployed, app_effort, expectation=False)
             available = len(found_vacs)
 
-            # Check if we have enough vacancies to support both risk aversion AND desired applications
+            # Your risk aversion adjustment (UNCHANGED - this is correct!)
             if available < wrkr.risk_aversion + n_apps:
-                # Not enough vacancies - need to compromise
                 if available <= wrkr.risk_aversion:
-                    # Can't afford to skip any
                     adjusted_start = 0
                     adjusted_n_apps = min(n_apps, available)
                 else:
-                    # Can skip some, but need to reduce either start or n_apps
-                    # Option A: Reduce risk aversion to ensure we get n_apps
                     adjusted_start = max(0, available - n_apps)
                     adjusted_n_apps = min(n_apps, available - adjusted_start)
-                    
-                    # Option B: Keep full risk aversion, accept fewer apps
-                    # adjusted_start = wrkr.risk_aversion
-                    # adjusted_n_apps = available - wrkr.risk_aversion
             else:
-                # Plenty of vacancies - use normal behavior
                 adjusted_start = wrkr.risk_aversion
                 adjusted_n_apps = n_apps
 
@@ -554,8 +703,8 @@ class worker:
 
             top_k = heapq.nlargest(want_k, found_vacs, key=_util_for_v) if want_k > 0 else []
             chosen_vacs = top_k[adjusted_start:adjusted_start + adjusted_n_apps]
+            
             # apply to chosen vacancies
-            # use local references for speed
             gpool = global_pool_override
             append_to_applicants = lambda vac: vac.applicants.append(wrkr)
 
@@ -568,10 +717,11 @@ class worker:
                 vsent += 1
 
         else:
-            # when not disc, choose up to 7 random vacancies from found_vacs without replacement if possible
+            # when not disc, choose up to 7 random vacancies
             n_choice = min(len(found_vacs), 7)
-            # If n_choice == len(found_vacs), use the whole list
             chosen_sample = found_vacs if n_choice == len(found_vacs) else r_sample(found_vacs, k=n_choice)
+            # if n_choice < 7:
+            #     print(f'Occ_id = {wrkr_occ}; n_vacs = {n_choice}; Len of chosen_sample = {len(chosen_sample)}')
             gpool = global_pool_override
             append_to_applicants = lambda vac: vac.applicants.append(wrkr)
 
@@ -583,7 +733,7 @@ class worker:
                     append_to_applicants(v)
                 vsent += 1
 
-        # Set wrkr outputs (note: original used mean_wage_sampled - res_wage if disc)
+        # Set wrkr outputs
         wrkr.d_wage_offer = (mean_wage_sampled - res_wage) if disc else np.nan
         wrkr.apps_sent = vsent
 
@@ -735,7 +885,7 @@ class occupation:
             sep_prob_base = delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
             sep_prob_gamma = delta_u + occ.seps_rate*(1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
             sep_prob_delta = occ.seps_rate*delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
-            w = np.random.binomial(len(occ.list_of_employed), sep_prob_delta)
+            w = np.random.binomial(len(occ.list_of_employed), sep_prob_base)#sep_prob_delta)
             occ.separated = int(w)
             separated_workers = random.sample(occ.list_of_employed, int(w))
             occ.list_of_unemployed = occ.list_of_unemployed + separated_workers
@@ -1010,6 +1160,79 @@ def bus_cycle_demand(d_0, time, amp, period):
     return d_target
 
 
+# ### Function and condition to initialise network
+# def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wages, wage_mu, wage_sigma, gend_share, fem_ra, male_ra, entry_level, experience_age, sep_rates):
+#     """ Makes a list of occupations with initial conditions
+#        Args:
+#            n_occ: number of occupations initialised (464)
+#            employment: vector with employment of each occupation
+#            unemployment: vector with unemployment of each occupation
+#            vacancies: vector with vacancies of each occupation
+#            demand_target: vector with (initial) target_demand for each occupation (never updated)
+#            A: adjacency matrix of network (not including auto-transition probability)
+#            wages: vector of wages of each occupation
+#            entry_leve: boolean of whether it is an entry-level occupation
+#            experience_age: minimum wage of entry (including education and minimum experience)
+
+#        Returns:
+#             occupations: list of occupations with above attributes
+#             vacancies: list of vacancies with occupation id, wage, and list of applicants
+#        """
+#     occs = []
+#     vac_list = []
+#     ids = 0
+#     for i in range(0, n_occ):
+#         # appending relevant number of vacancies to economy-wide vacancy list
+#         for v in range(round(vacancies[i,0])):
+#             vac_list.append(vac(i, [], #wages[i]
+#                                 np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000), False, np.random.uniform(0, 5)))
+            
+#         occ = occupation(i, [], [], list(A[i] > 0), list(A[i]),
+#                          (employment[i,0] + vacancies[i,0]), 
+#                          demand_target[i,0], wages[i], wage_mu[i], wage_sigma[i], 0, 0, entry_level[i], experience_age[i], sep_rates[i], np.nan)
+        
+    
+#         # creating the workers of occupation i and attaching to occupation
+#         ## adding employed workers
+#         g_share = gend_share[i,0]
+#         for e in range(round(employment[i,0])):
+#             # Assume they have all at least 1 t.s. of employment
+#             if np.random.rand() <= g_share:
+#                 occ.list_of_employed.append(worker(occ.occupation_id, False, 1, 
+#                                                    np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000),
+#                                                    #wages[i], 
+#                                                    False, True, np.random.uniform(low=experience_age[i], high = 65),
+#                                                abs(int(np.random.normal(fem_ra,2))), 1, 1,0,0, None))
+#             else:
+#                 occ.list_of_employed.append(worker(occ.occupation_id, False, 1, 
+#                                                    np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000),
+#                                                    #wages[i], 
+#                                                    False, False, np.random.uniform(experience_age[i], high = 65),
+#                                                abs(int(np.random.normal(male_ra,2))), 1, 1,0,0,None))
+#             ## adding unemployed workers
+#         for u in range(round(unemployment[i,0])):
+#             if np.random.rand() <= g_share:
+#                 # Assigns time unemployed from absolute value of normal distribution....
+#                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
+#                                                      np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000),
+#                                                      #np.random.normal(wages[i], 0.05* wages[i]), 
+#                                                      False, True, 
+#                                                      np.random.uniform(experience_age[i], high = 65), 
+#                                                      abs(int(np.random.normal(fem_ra,0.1))), 1, 1, 1, 0, None))
+#             else:
+#                 # Assigns time unemployed from absolute value of normal distribution....
+#                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
+#                                                      np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000),
+#                                                     # np.random.normal(wages[i], 0.05* wages[i]), 
+#                                                      False, False, 
+#                                                      np.random.uniform(experience_age[i], high = 65), 
+#                                                      abs(int(np.random.normal(male_ra,0.1))), 1, 1, 1, 0, None))
+
+
+#         occs.append(occ)
+#         ids += 1
+#     return occs, vac_list
+
 ### Function and condition to initialise network
 def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wages, wage_mu, wage_sigma, gend_share, fem_ra, male_ra, entry_level, experience_age, sep_rates):
     """ Makes a list of occupations with initial conditions
@@ -1034,8 +1257,19 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
     for i in range(0, n_occ):
         # appending relevant number of vacancies to economy-wide vacancy list
         for v in range(round(vacancies[i,0])):
+            # Draw a random wage
+            w = np.random.lognormal(wage_mu[i], wage_sigma[i])
+
+            # Compute 25th and 75th percentiles
+            z25 = norm.ppf(0.25)
+            z75 = norm.ppf(0.75)
+            w25 = np.exp(wage_mu[i] + wage_sigma[i] * z25)
+            w75 = np.exp(wage_mu[i] + wage_sigma[i] * z75)
+
+            # Clip to IQR (25th–75th)
+            w_clipped = np.clip(w, w25, w75)
             vac_list.append(vac(i, [], #wages[i]
-                                np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000), False, np.random.uniform(0, 5)))
+                                w_clipped, False, np.random.uniform(0, 5)))
             
         occ = occupation(i, [], [], list(A[i] > 0), list(A[i]),
                          (employment[i,0] + vacancies[i,0]), 
@@ -1046,25 +1280,50 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
         ## adding employed workers
         g_share = gend_share[i,0]
         for e in range(round(employment[i,0])):
+            # Draw a random wage
+            w = np.random.lognormal(wage_mu[i], wage_sigma[i])
+
+            # Compute 25th and 75th percentiles
+            z25 = norm.ppf(0.25)
+            z75 = norm.ppf(0.75)
+            w25 = np.exp(wage_mu[i] + wage_sigma[i] * z25)
+            w75 = np.exp(wage_mu[i] + wage_sigma[i] * z75)
+
+            # Clip to IQR (25th–75th)
+            w_clipped = np.clip(w, w25, w75)
             # Assume they have all at least 1 t.s. of employment
             if np.random.rand() <= g_share:
                 occ.list_of_employed.append(worker(occ.occupation_id, False, 1, 
-                                                   np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000),
+                                                   w_clipped,
+                                                   #np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000),
                                                    #wages[i], 
                                                    False, True, np.random.uniform(low=experience_age[i], high = 65),
                                                abs(int(np.random.normal(fem_ra,2))), 1, 1,0,0, None))
             else:
                 occ.list_of_employed.append(worker(occ.occupation_id, False, 1, 
-                                                   np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000),
+                                                   w_clipped,
+                                                   # np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000).
                                                    #wages[i], 
                                                    False, False, np.random.uniform(experience_age[i], high = 65),
                                                abs(int(np.random.normal(male_ra,2))), 1, 1,0,0,None))
             ## adding unemployed workers
         for u in range(round(unemployment[i,0])):
+            # Draw a random wage
+            w = np.random.lognormal(wage_mu[i], wage_sigma[i])
+
+            # Compute 25th and 75th percentiles
+            z25 = norm.ppf(0.25)
+            z75 = norm.ppf(0.75)
+            w25 = np.exp(wage_mu[i] + wage_sigma[i] * z25)
+            w75 = np.exp(wage_mu[i] + wage_sigma[i] * z75)
+
+            # Clip to IQR (25th–75th)
+            w_clipped = np.clip(w, w25, w75)
             if np.random.rand() <= g_share:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
-                                                     np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000),
+                                                     w_clipped,
+                                                     #np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000),
                                                      #np.random.normal(wages[i], 0.05* wages[i]), 
                                                      False, True, 
                                                      np.random.uniform(experience_age[i], high = 65), 
@@ -1072,7 +1331,8 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
             else:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
-                                                     np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000),
+                                                     w_clipped,
+                                                     #np.clip(np.random.lognormal(wage_mu[i], wage_sigma[i]), 15080, 250000),
                                                     # np.random.normal(wages[i], 0.05* wages[i]), 
                                                      False, False, 
                                                      np.random.uniform(experience_age[i], high = 65), 

@@ -6,6 +6,7 @@ from abm_funs import *
 import random as random
 from copy import deepcopy 
 import math as math
+from scipy.stats import norm
 
 ####################
 # Model Run ########
@@ -167,6 +168,7 @@ def run_single_local(d_u,
             try:
                 occ.separate_workers(d_u, gamma_u, occ_shock)
             except Exception as e:
+                print("Error at separation step")
                 return np.inf
             
                     
@@ -233,7 +235,7 @@ def run_single_local(d_u,
                 pass
 
         # Close a vacancy after it's been open for 6 months
-        vacs_temp = [v for v in vacs_temp if not(v.filled) and v.time_open < 3] 
+        vacs_temp = [v for v in vacs_temp if not(v.filled) and v.time_open < 6] 
 
         # # Reset counters for record in time t
         if simple_res:
@@ -276,7 +278,29 @@ def run_single_local(d_u,
 
             #vacs_create = emp*int(vac_prob) + int(np.random.binomial(emp, vac_prob%1))
             for v in range(vacs_create):
-                vacs_temp.append(vac(occ.occupation_id, [], np.clip(np.random.lognormal(occ.wage_mu, occ.wage_sigma), 15080, 250000), False, 0)) #np.random.normal(occ.wage, 0.05*occ.wage)
+                                # Draw a random wage
+                w = np.random.lognormal(occ.wage_mu, occ.wage_sigma)
+
+                # Compute 25th and 75th percentiles
+                z25 = norm.ppf(0.25)
+                z75 = norm.ppf(0.75)
+                w25 = np.exp(occ.wage_mu + occ.wage_sigma * z25)
+                w75 = np.exp(occ.wage_mu + occ.wage_sigma * z75)
+
+                # Clip to IQR (25th–75th)
+                w_clipped = np.clip(w, w25, w75)
+
+                # Create vacancy object with clipped wage
+                vacs_temp.append(
+                    vac(
+                        occ.occupation_id,
+                        [],
+                        w_clipped,
+                        False,
+                        0
+                    )
+                )
+                #vacs_temp.append(vac(occ.occupation_id, [], np.clip(np.random.lognormal(occ.wage_mu, occ.wage_sigma), 15080, 250000), False, 0)) #np.random.normal(occ.wage, 0.05*occ.wage)
                 #vacs_temp.append(vac(occ.occupation_id, [], np.random.normal(occ.wage, 0.05*occ.wage), False, 0)) #
 
             if simple_res:
