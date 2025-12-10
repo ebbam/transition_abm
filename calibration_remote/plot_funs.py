@@ -202,7 +202,7 @@ def plot_avg_wages(mod_results_dict, save=False, path=None):
 ####################################################
 ############## RELATIVE WAGES ##########
 ####################################################
-def plot_rel_wages(mod_results_dict, save=False, path=None, freq = 'Y'):
+def plot_rel_wages(mod_results_dict, save=False, path=None, freq = 'M'):
     """
     Creates plots of relative wages with annual smoothing:
     - Left: Unemployed relative wages
@@ -234,7 +234,7 @@ def plot_rel_wages(mod_results_dict, save=False, path=None, freq = 'Y'):
         u_wages = annual_data['U_REL_WAGE_MEAN'].values
         #u_wages = np.clip(u_wages, None, 1.7)
         ax1.plot(dates_array, u_wages, 
-                color=colors[i], label=name, marker='o', zorder=3)
+                color=colors[i], label=name, zorder=3)
         # Add shading
         ax1.fill_between(dates_array, u_wages, 1,
                         color=colors[i], alpha=0.2, zorder=2)
@@ -242,7 +242,7 @@ def plot_rel_wages(mod_results_dict, save=False, path=None, freq = 'Y'):
         # Plot employed relative wages (smoothed)
         e_wages = annual_data['E_REL_WAGE_MEAN'].values
         ax2.plot(dates_array, e_wages, 
-                color=colors[i], label=name, marker='o', zorder=3)
+                color=colors[i], label=name, zorder=3)
         # Add shading
         ax2.fill_between(dates_array, e_wages, 1,
                         color=colors[i], alpha=0.2, zorder=2)
