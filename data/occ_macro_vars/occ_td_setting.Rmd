@@ -17,8 +17,9 @@ source(here('code/formatting/plot_dicts.R'))
 
 save_data = FALSE
 #nx = "Original OMN"
-nx = "Full OMN"
+#nx = "Full OMN"
 #nx = "ONET Related Occupations"
+nx = "OMN SOC_minor"
   
 ```
 
@@ -58,7 +59,6 @@ We take the mean industry-share of occupational employment reported in the years
 
 ```{r, echo = FALSE, results = 'asis', message = FALSE, warning = FALSE}
 
-source(here("data/occ_macro_vars/OEWS/occ_emp_industry_oews.R"))
 
 if(nx == "Original OMN"){
   # Which occupations are in the crosswalk. 
@@ -91,8 +91,15 @@ if(nx == "Original OMN"){
   
   #abm %>% filter(!(SOC2010 %in% df$occ_code)) %>% nrow(.) == 0
 
+  }else if(nx == "OMN SOC_minor"){
+  abm <- read.csv("/Users/ebbamark/Library/CloudStorage/OneDrive-Nexus365/GenerateOccMobNets/ONET/occ_names_employment_asec_soc_2010_minor_ipums_vars.csv") %>% 
+  rename(SOC2010 = soc) %>% 
+    mutate(OCC2010_desc = SOC2010)
+  
+  nrow(abm) == n_distinct(abm$SOC2010)
 }
 
+source(here("data/occ_macro_vars/OEWS/occ_emp_industry_oews.R"))
 
 
 ```
@@ -298,6 +305,8 @@ if(nx == "Original OMN"){
     mutate(occ_code = "45-3021")
   
   occ_shocks_full <- rbind(r1, r2, r3, occ_shocks)
+}else if(nx == "OMN SOC_minor"){
+  occ_shocks_full <- occ_shocks
 }
 
 stopifnot(sort(unique(abm$SOC2010)) == sort(unique(occ_shocks_full$occ_code)))
@@ -329,8 +338,15 @@ occ_shocks_full %>%
 abm_cw <- abm %>% 
   mutate(SOC2010_adj = SOC2010)
 
-occ_shocks_full %>% 
+stopifnot(occ_shocks_full %>% summarise(across(everything(), ~sum(is.na(.)))) %>% rowSums(.) == 0)
+
+if(nx != "OMN SOC_minor"){
+  occ_shocks_full %>% 
   left_join(select(abm_cw, acs_2010_code, SOC2010_adj, X), by = c("occ_code" = "SOC2010_adj")) -> temp
+}else{
+  occ_shocks_full -> temp
+}
+
 
 if(nx == "Full OMN"){
     file_title = "occupational_va_shocks_full_omn.csv"
@@ -372,12 +388,23 @@ if(nx == "Original OMN"){
   }else if(nx == "ONET Related Occupations"){
     
   file_title = "occupational_va_shocks_onet_related_occs.csv"
+  }else if(nx == "OMN SOC_minor"){
+  file_title = "occupational_va_shocks_omn_soc_minor_occs.csv"
 }
 
-temp %>% 
+if(nx != "OMN SOC_minor"){
+  temp %>% 
   select(acs_2010_code, date, shock) %>% 
   arrange(acs_2010_code, date) %>% 
   pivot_wider(names_from = date, values_from = shock) -> tosave
+}else{
+  temp %>% 
+    select(occ_code, date, shock) %>% 
+    arrange(occ_code, date) %>% 
+    pivot_wider(names_from = date, values_from = shock) -> tosave
+  stopifnot(identical(tosave$occ_code, abm$SOC2010))
+}
+
 
 if(nx == "Full OMN"){
   stopifnot(identical(as.character(tosave$acs_2010_code), as.character(ipums_vars$acs_occ_code)))

@@ -167,7 +167,7 @@ shares %>%
 mean_shares <- shares %>% 
   group_by(year) %>% 
   mutate(n_occs = n_distinct(occ_code)) %>% 
-  filter(n_occs >= 450) %>% 
+  filter((n_occs/n_distinct(shares$occ_code)) >= .96) %>% 
   group_by(occ_code, naics_title) %>% 
   summarise(mean_share = mean(occ_share, na.rm = TRUE))
 
@@ -234,7 +234,7 @@ odd_ones <- mean_shares %>%
   left_join(., abm, by = c("occ_code" = "SOC2010")) %>% 
   select("SOC2010 Occupational Code" = occ_code, "Occupational Label" = OCC2010_desc, "Sum of Mean Shares" = total_share)
 
-print("Two occupational categories have a sum of mean shares > 1.1:")
+print(paste0(nrow(odd_ones), " occupational categories have a sum of mean shares > 1.1:"))
 
 odd_ones %>% kable(format = "latex") %>% print(.)
 

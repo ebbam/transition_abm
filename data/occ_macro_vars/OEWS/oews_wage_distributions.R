@@ -293,6 +293,44 @@ stopifnot(identical(wage_dist_final$acs_occ_code, ipums_vars$acs_occ_code))
 
 write_csv(wage_dist_final, here("data/occ_macro_vars/OEWS/wage_distributions_onet.csv"))
 
+
+################################################################################
+################################################################################
+########################### OMN SOC MINOR  #####################################
+################################################################################
+################################################################################
+# abm_occs <- read.csv(here('data/crosswalk_occ_soc_cps_codes_full_omn.csv')) %>% 
+#   tibble %>% 
+#   mutate(SOC2010_cleaned = gsub("X", "0", SOC2010)) %>% 
+#   mutate(OCC2010_match_cps = as.character(OCC2010_cps))
+
+ipums_vars <- read.csv("/Users/ebbamark/Library/CloudStorage/OneDrive-Nexus365/GenerateOccMobNets/ONET/occ_names_employment_asec_soc_2010_minor_ipums_vars.csv") %>% 
+  rename(SOC2010 = soc) %>% 
+  mutate(id = `X.1`) %>% tibble
+
+# # Crosswalk from ABM data - written in occ_soc_cps_codes_crosswalk.R
+# abm_occs <- read.csv(here("data/crosswalk_occ_soc_cps_codes.csv")) %>% 
+#   tibble %>% 
+#   mutate(SOC2010 = gsub("X", "0", SOC2010))
+
+# Confirm that all OCS codes in abm_vars are present in the crosswalk
+ipums_vars %>% filter(!(SOC2010 %in% unique(occ_wages$occ_code))) %>% nrow(.) == 0
+ipums_vars %>% filter(!(SOC2010 %in% unique(occ_wages$occ_code)))
+
+occ_wages_mean <- occ_wages %>% 
+  group_by(occ_code) %>% 
+  summarise(across(c(h_mean, a_mean, h_pct10, h_pct25, h_median, h_pct75, h_pct90, a_pct10, a_pct25, a_median, a_pct75, a_pct90), ~mean(., na.rm = TRUE)))
+
+wage_dist_temp <- ipums_vars %>% 
+  left_join(., occ_wages_mean, by = c("SOC2010" = "occ_code")) %>% 
+  select(-c(X))
+
+wage_dist_final <- transform_log_normal(wage_dist_temp)
+stopifnot(identical(wage_dist_final$SOC2010, ipums_vars$SOC2010))
+stopifnot(wage_dist_final %>% summarise(across(everything(), ~sum(is.na(.)))) %>% rowSums(.) == 0)
+write_csv(wage_dist_final, here("data/occ_macro_vars/OEWS/wage_distributions_omn_soc_minor.csv"))
+
+
 # # Convert all occupational categories to 2010 codes 
 # occs_00_10 <- read_xls(here("data/occ_macro_vars/OEWS/soc_2000_to_2010_crosswalk.xls"), skip = 6) %>% 
 #   clean_names() %>% 
