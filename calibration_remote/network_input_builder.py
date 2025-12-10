@@ -4,8 +4,8 @@ import numpy as np
 #from torch import norm
 from scipy.stats import norm
 from abm_funs import *
-calib_date = ["2000-12-01", "2019-05-01"]
-#calib_date = ["2000-12-01", "2024-05-01"]
+#calib_date = ["2000-12-01", "2019-05-01"]
+calib_date = ["2000-12-01", "2024-05-01"]
 
 
 path = "~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/calibration_remote/"
@@ -427,39 +427,173 @@ def network_input_builder(nx, complete):
 
         occ_shocks_dat = np.array(df_monthly[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1])].transpose())
 
+    elif nx == "omn_soc_minor":
+        print("Using Full Corrected OMN") 
+        A = pd.read_csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/data/omn_asec_11_19_soc_2010_minor_alltransitions_2025_normalised.csv", header = None)
+        print(A.shape)
+        ipums_input = pd.read_csv(path + "dRC_Replication/data/ipums_variables_SOC_minor_w_exp.csv", delimiter = ",")
 
-    elif nx == "complete":
-        print("Using complete network")
-        # Create complete network
-        n = A.shape
-        complete_network = np.ones(n)
+        occ_ids = pd.read_csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/data/soc_2010_minor_codes_employment_asec.csv", delimiter=",")[['SOC']]
+        #occ_ids = occ_ids.rename(columns={"Label": "label"})
+        occ_ids['id'] = occ_ids.index.values
+        assert(all(occ_ids['id'].values == range(0,len(occ_ids))))
+        assert(all(occ_ids.index.values == occ_ids['id'].values))
+
+        # diagnostics
+        #missing = occ_ids['label'].isna().sum()
+        #assert(missing == 0)
+
+        employment = np.round(ipums_input[['emp']]/10000) + 1
+
+        # Crude approximation using avg unemployment rate of ~5% - should aim for occupation-specific unemployment rates
+        unemployment = round(employment * (0.05 / 0.95))
+        #unemployment = np.round(ipums_input[['unemp']]/10000) + 1
+
+        # Less crude approximation using avg vacancy rate - should still aim for occupation-specific vacancy rates
+        vac_rate_base = pd.read_csv(path + "dRC_Replication/data/vacancy_rateDec2000.csv").iloc[:, 2].mean() / 100
+        vacancies = round(employment * vac_rate_base / (1 - vac_rate_base))
+
+        # Needs input data...
+        demand_target = employment + vacancies
+
+        wage_comp = ipums_input[['SOC_minor', 'median_weekly_earnings']]
+        wage_comp['median_annual_earnings'] = wage_comp['median_weekly_earnings'] * 52
+        wage_dist = pd.read_csv("~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/data/occ_macro_vars/OEWS/wage_distributions_omn_soc_minor.csv", delimiter=",", header = 0)
+        wage_full = wage_comp.merge(wage_dist, left_on='SOC_minor', right_on='SOC_minor', how='inner')
+
+        gend_share = ipums_input[['female_share']]
+        experience_req = ipums_input['experience_req']
+        entry_level = ipums_input['entry_level']
+        experience_age = ipums_input['experience_age']
+        #seps_rates = pd.read_csv(path + "dRC_Replication/data/ipums_variables_w_seps_rate_full_omn.csv")
+        #mean_seps_rate = seps_rates['seps_rate'].mean()
+
+        if complete:
+            print("Using complete network")
+            # Create complete network
+            n = A.shape
+            complete_network = np.ones(n)
+            A = complete_network
+
         mod_data = {
-            "A": complete_network,
-            "employment": employment,
-            'unemployment': unemployment,
-            'vacancies': vacancies,
-            'demand_target': demand_target,
-            'wages': wages,
-            'gend_share': gend_share,
-            'entry_level': experience_req['entry_level'],
-            # 'entry_age': experience_req['entry_age'],
-            'experience_age': experience_req['experience_age'],
-            'separation_rates': seps_rates['seps_rate']*10
+                "A": A,
+                "employment": employment,
+                'unemployment': unemployment,
+                'vacancies': vacancies,
+                'demand_target': demand_target,
+                'wages': wage_full['a_median'],
+                'wage_mu': wage_full['mu'],
+                'wage_sigma': wage_full['sigma'],
+                'gend_share': gend_share,
+                'entry_level': entry_level,
+                #'entry_age': experience_req['entry_age'],
+                'experience_age': experience_age,
+                #'separation_rates': seps_rates['seps_rate']*10
+                'separation_rates': np.full_like(employment, np.nan, dtype=float)
         }
+        print("Build mod_data.")
+        print(f"Nodes (n): {len(mod_data['A'])}")
 
+        ###################################
+        # Initialise the model
+        ##################################
         net_temp, vacs = initialise(
-            len(mod_data['A']),
-            mod_data['employment'].to_numpy(),
-            mod_data['unemployment'].to_numpy(),
-            mod_data['vacancies'].to_numpy(),
-            mod_data['demand_target'].to_numpy(),
-            mod_data['A'],
-            mod_data['wages'].to_numpy(),
-            mod_data['gend_share'].to_numpy(),
-            7, 1,
-            mod_data['entry_level'],
-            mod_data['experience_age'],
-            mod_data['separation_rates']
+                len(mod_data['A']),
+                mod_data['employment'].to_numpy(),
+                mod_data['unemployment'].to_numpy(),
+                mod_data['vacancies'].to_numpy(),
+                mod_data['demand_target'].to_numpy(),
+                mod_data['A'],
+                mod_data['wages'].to_numpy(),
+                mod_data['wage_mu'].to_numpy(),
+                mod_data['wage_sigma'].to_numpy(),
+                mod_data['gend_share'].to_numpy(),
+                7, 1,
+                mod_data['entry_level'],
+                mod_data['experience_age'],
+                mod_data['separation_rates']
         )
+        print("Initialised network.")
+
+
+        occ_shocks = pd.read_csv(path+"data/occupational_va_shocks_omn_soc_minor_occs.csv", index_col = 0).drop('occ_code', axis = 'columns')
+        print(occ_shocks.shape)
+
+        df_quarterly = occ_shocks.transpose() + 1  # now rows are dates, columns are occupations
+        # Convert index to datetime
+        df_quarterly.index = pd.to_datetime(df_quarterly.index)
+
+        # Reindex to monthly frequency
+        monthly_index = pd.date_range(start=df_quarterly.index.min(), end=df_quarterly.index.max(), freq='MS')  # Month start frequency
+        df_monthly = df_quarterly.reindex(monthly_index)
+
+        # Linearly interpolate missing monthly values
+        df_monthly = df_monthly.interpolate(method='linear')
+
+        for col in df_monthly.columns:
+            # Segment 1: Before calibration window
+            plt.plot(df_monthly.loc[df_monthly.index < calib_date[0]].index,
+                    df_monthly.loc[df_monthly.index < calib_date[0], col],
+                    color='darkseagreen', linewidth=0.5, alpha=0.1)
+
+            # Segment 2: During calibration window
+            plt.plot(df_monthly.loc[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1])].index,
+                    df_monthly.loc[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1]), col],
+                    color='forestgreen', linewidth=0.5, alpha = 0.5)
+
+            # Segment 3: After calibration window
+            plt.plot(df_monthly.loc[df_monthly.index > calib_date[1]].index,
+                    df_monthly.loc[df_monthly.index > calib_date[1], col],
+                    color='darkseagreen', linewidth=0.5, alpha=0.1)
+
+        # Vertical lines for calibration boundaries
+        for cal_date in calib_date:
+            plt.axvline(x=pd.to_datetime(cal_date), color='steelblue', linestyle='--', alpha=0.6)
+
+        #plt.plot(monthly_dates, gdp_dat, color='rebeccapurple', label='HP Filtered GDP')
+
+        plt.xlabel("Date")
+        plt.ylabel("Value")
+        plt.title("Occupation-Specific Shocks Over Time (ONET Occs)")
+        plt.xticks(rotation=45)
+        plt.grid()
+        plt.show()
+
+        occ_shocks_dat = np.array(df_monthly[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1])].transpose())
+    elif nx == "onet_small":
+        return
+    # elif nx == "complete":
+    #     print("Using complete network")
+    #     # Create complete network
+    #     n = A.shape
+    #     complete_network = np.ones(n)
+    #     mod_data = {
+    #         "A": complete_network,
+    #         "employment": employment,
+    #         'unemployment': unemployment,
+    #         'vacancies': vacancies,
+    #         'demand_target': demand_target,
+    #         'wages': wages,
+    #         'gend_share': gend_share,
+    #         'entry_level': experience_req['entry_level'],
+    #         # 'entry_age': experience_req['entry_age'],
+    #         'experience_age': experience_req['experience_age'],
+    #         'separation_rates': seps_rates['seps_rate']*10
+    #     }
+
+    #     net_temp, vacs = initialise(
+    #         len(mod_data['A']),
+    #         mod_data['employment'].to_numpy(),
+    #         mod_data['unemployment'].to_numpy(),
+    #         mod_data['vacancies'].to_numpy(),
+    #         mod_data['demand_target'].to_numpy(),
+    #         mod_data['A'],
+    #         mod_data['wages'].to_numpy(),
+    #         mod_data['gend_share'].to_numpy(),
+    #         7, 1,
+    #         mod_data['entry_level'],
+    #         mod_data['experience_age'],
+    #         mod_data['separation_rates']
+    #     )
 
     return mod_data, net_temp, vacs, occ_ids, occ_shocks_dat
