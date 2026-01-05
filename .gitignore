@@ -368,3 +368,5 @@ data/behav_params/Eeckhout_Replication/.RData
 /calibration_remote/output/steady_state
 /calibration_remote/output/pyabc_runs
 /calibration_remote/output/occ_seps_rates
+*.pkl
+.RData
