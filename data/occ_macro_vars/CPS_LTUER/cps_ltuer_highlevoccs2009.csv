@@ -1,0 +1,36 @@
+occupation,total_unemployed,less_than_5_weeks,wks5_14,wks15plus,wks15_26,wks27plus,wks_mean_duration,wks_median_duration
+"Management, professional, and related occupations","2,531",535,665,"1,331",491,840,25.7,16.0
+"Management, business, and financial operations occupations....................................","1,105",201,273,631,226,404,27.0,18.4
+Professional and related occupations............,"1,427",334,393,700,265,436,24.6,14.1
+,NA,NA,NA,NA,NA,NA,NA,NA
+Service occupations...............................,"2,605",638,724,"1,243",493,750,22.8,13.6
+Sales and office occupations......................,"3,143",641,828,"1,675",608,"1,067",25.8,16.4
+Sales and related occupations...................,"1,501",324,399,778,281,497,24.7,15.6
+Office and administrative support occupations...,"1,642",317,429,896,326,570,26.7,17.1
+"Natural resources, construction, and maintenance occupations......................................","2,464",573,667,"1,224",500,724,22.9,14.4
+"Farming, fishing, and forestry occupations......",179,48,59,73,36,37,18.7,11.6
+Construction and extraction occupations.........,"1,825",432,499,894,367,527,22.5,14.1
+"Installation, maintenance, and repair occupations....................................",459,93,109,257,97,160,26.4,17.7
+"Production, transportation, and material moving occupations......................................","2,453",519,632,"1,302",489,814,24.9,16.3
+Production occupations..........................,"1,322",268,326,729,270,458,25.6,17.3
+Transportation and material moving occupations..,"1,131",251,306,574,218,356,24.1,14.9
+INDUSTRY,1,NA,NA,NA,NA,NA,NA,NA
+Agriculture and related industries................,206,52,63,91,43,48,20.6,12.6
+"Mining, quarrying, and oil and gas extraction.....",92,20,28,44,21,23,19.9,13.7
+Construction......................................,"1,797",406,484,907,377,530,22.4,14.8
+Manufacturing.....................................,"1,905",368,478,"1,059",402,657,25.9,17.5
+Durable goods.................................,"1,287",254,331,702,273,428,25.1,16.9
+Nondurable goods..............................,618,114,147,357,128,229,27.6,18.9
+Wholesale and retail trade........................,"1,862",390,510,962,355,607,25.2,15.5
+Transportation and utilities......................,563,119,155,290,110,180,24.6,15.4
+Information.......................................,304,60,74,170,55,115,28.1,18.2
+Financial activities..............................,613,107,150,357,124,232,28.5,19.1
+Professional and business services................,"1,555",332,412,810,301,510,24.4,15.7
+Education and health services.....................,"1,444",352,400,691,259,432,23.7,13.6
+Leisure and hospitality...........................,"1,594",392,447,755,310,445,21.9,13.5
+Other services....................................,480,114,122,245,84,161,25.8,15.2
+Public administration.............................,204,46,51,107,42,66,26.4,16.0
+No previous work experience.......................,"1,035",255,307,474,189,285,23.6,12.9
+1 Includes wage and salary workers only.,NA,NA,NA,NA,NA,NA,NA,NA
+NOTE:  Effectively with January,"2009 data, industries reflect the introduction of the",2007 census industry classification system into the Current Population Survey.  This industry classification system is derived from the,2007 North American Industry,NA,NA,NA,NA,NA
+Classification System.  No historical data have been revised.  Updated population controls are introduced annually with the release of January data.,NA,NA,NA,NA,NA,NA,NA,NA

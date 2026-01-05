@@ -1,0 +1,287 @@
+"","occupation","total_unemployed","less_than_5_weeks","wks5_14","wks15plus","wks15_26","wks27plus","wks_mean_duration","wks_median_duration","year","ltuer"
+"1","Managerial and professional specialty",1357,401,399,556,246,310,18.7,11,2002,0.228445099484156
+"2","Technical, sales, and administrative support",2144,727,653,764,363,402,16.9,9.4,2002,0.1875
+"3","Service occupations",1369,526,441,402,198,204,14.6,7.7,2002,0.149013878743608
+"4","Precision production, craft, and repair",955,349,291,314,157,157,16,8.8,2002,0.164397905759162
+"5","Operators, fabricators, and laborers",1720,578,526,616,287,328,16.9,9.5,2002,0.190697674418605
+"6","Farming, forestry, and fishing",275,109,90,77,40,37,14.3,7.5,2002,0.134545454545455
+"7","Management, professional, and related occupations",1777,444,449,884,259,625,36.2,14.4,2003,0.351716375914463
+"8","Management, business, and financial operations occupations",704,141,170,392,110,282,40.3,18.8,2003,0.400568181818182
+"9","Professional and related occupations",1073,303,278,492,149,343,33.5,12.5,2003,0.319664492078285
+"10","Service occupations",2048,561,502,984,311,673,32.3,13.6,2003,0.32861328125
+"11","Sales and office occupations",2119,492,527,1099,338,760,35.3,15.9,2003,0.358659745162813
+"12","Sales and related occupations",1022,245,263,515,177,338,32.9,14.7,2003,0.330724070450098
+"13","Office and administrative support occupations",1096,247,265,584,161,423,37.6,17.1,2003,0.385948905109489
+"14","Natural resources, construction, and maintenance occupations",1171,340,297,534,188,346,31.2,12.4,2003,0.295473953885568
+"15","Farming, fishing, and forestry occupations",134,39,36,59,26,33,27.6,12.1,2003,0.246268656716418
+"16","Construction and extraction occupations",813,245,206,361,128,233,30.6,12,2003,0.286592865928659
+"17","Installation, maintenance, and repair occupations",224,56,55,113,34,79,35.8,14.9,2003,0.352678571428571
+"18","Production, transportation, and material moving occupations",1385,350,352,683,222,461,32.6,14.2,2003,0.332851985559567
+"19","Production occupations",632,153,158,321,99,222,33.1,15.1,2003,0.35126582278481
+"20","Transportation and material moving occupations",754,197,194,362,123,239,32.3,13.6,2003,0.316976127320955
+"21","Management, professional, and related occupations",1346,407,367,571,215,356,22.9,11.4,2004,0.264487369985141
+"22","Management, business, and financial operations occupations",544,138,145,262,95,167,25.7,13.8,2004,0.306985294117647
+"23","Professional and related occupations",801,269,222,310,120,190,21,9.9,2004,0.237203495630462
+"24","Service occupations",1617,572,479,565,258,307,18,9,2004,0.189857761286333
+"25","Sales and office occupations",1937,622,565,750,331,419,19.5,10,2004,0.216313887454827
+"26","Sales and related occupations",912,306,263,343,150,193,18.9,9.6,2004,0.211622807017544
+"27","Office and administrative support occupations",1025,316,302,407,180,226,20.1,10.4,2004,0.220487804878049
+"28","Natural resources, construction, and maintenance occupations",1140,421,334,386,164,221,17.6,8.7,2004,0.193859649122807
+"29","Farming, fishing, and forestry occupations",132,48,45,39,17,22,15.1,8.7,2004,0.166666666666667
+"30","Construction and extraction occupations",786,306,233,248,109,139,16.8,8,2004,0.176844783715013
+"31","Installation, maintenance, and repair occupations",222,67,56,99,38,61,21.7,12,2004,0.274774774774775
+"32","Production, transportation, and material moving occupations",1393,438,394,561,224,336,20.8,10.5,2004,0.241206030150754
+"33","Production occupations",714,213,195,306,113,194,22.6,11.5,2004,0.271708683473389
+"34","Transportation and material moving occupations",679,225,199,255,112,143,18.9,9.8,2004,0.21060382916053
+"35","Management, professional, and related occupations",1172,385,351,436,167,269,20.9,9.7,2005,0.229522184300341
+"36","Management, business, and financial operations occupations",464,136,135,193,80,112,22,11,2005,0.241379310344828
+"37","Professional and related occupations",708,249,216,243,87,157,20.2,9,2005,0.221751412429379
+"38","Service occupations",1587,602,474,511,227,284,17.2,8.2,2005,0.178954001260239
+"39","Sales and office occupations",1820,619,560,641,287,354,18,9.2,2005,0.194505494505495
+"40","Sales and related occupations",874,316,269,290,131,158,17,8.6,2005,0.180778032036613
+"41","Office and administrative support occupations",946,303,292,351,155,196,19,9.9,2005,0.207188160676533
+"42","Natural resources, construction, and maintenance occupations",1069,410,317,341,155,186,16.8,8,2005,0.17399438727783
+"43","Farming, fishing, and forestry occupations",103,44,32,27,14,13,12.5,6.7,2005,0.12621359223301
+"44","Construction and extraction occupations",751,300,224,226,110,116,15.8,7.6,2005,0.154460719041278
+"45","Installation, maintenance, and repair occupations",214,65,61,88,31,57,22.3,10.6,2005,0.266355140186916
+"46","Production, transportation, and material moving occupations",1245,414,370,461,200,261,19.5,9.7,2005,0.209638554216867
+"47","Production occupations",677,209,192,275,122,153,21.3,10.9,2005,0.225997045790251
+"48","Transportation and material moving occupations",568,204,178,186,77,109,17.5,8.6,2005,0.191901408450704
+"49","Management, professional, and related occupations",1065,372,320,373,167,206,18.1,9.1,2006,0.193427230046948
+"50","Management, business, and financial operations occupations",427,138,125,164,74,89,19.5,10.1,2006,0.208430913348946
+"51","Professional and related occupations",638,234,195,209,93,116,17.1,8.4,2006,0.181818181818182
+"52","Service occupations",1485,571,450,464,215,249,15.9,7.9,2006,0.167676767676768
+"53","Sales and office occupations",1667,610,497,561,262,299,17.2,8.6,2006,0.179364127174565
+"54","Sales and related occupations",812,310,244,257,122,135,16.5,8,2006,0.166256157635468
+"55","Office and administrative support occupations",856,299,253,304,139,164,17.9,9.2,2006,0.191588785046729
+"56","Natural resources, construction, and maintenance occupations",1007,405,309,294,136,158,15.2,7.5,2006,0.156901688182721
+"57","Farming, fishing, and forestry occupations",101,42,31,29,16,12,13.3,6.8,2006,0.118811881188119
+"58","Construction and extraction occupations",699,294,220,184,84,100,14.2,6.9,2006,0.143061516452074
+"59","Installation, maintenance, and repair occupations",207,69,58,81,35,45,19.5,10.5,2006,0.217391304347826
+"60","Production, transportation, and material moving occupations",1127,416,331,380,174,206,17.7,8.6,2006,0.182786157941437
+"61","Production occupations",544,201,155,188,83,105,18.4,8.7,2006,0.193014705882353
+"62","Transportation and material moving occupations",583,216,176,192,90,101,17,8.4,2006,0.173241852487136
+"63","Management, professional, and related occupations",1090,379,344,368,161,207,17.9,8.8,2007,0.189908256880734
+"64","Management, business, and financial operations occupations",429,138,141,150,68,82,17.6,9.4,2007,0.191142191142191
+"65","Professional and related occupations",662,240,203,218,93,126,18.1,8.4,2007,0.190332326283988
+"66","Service occupations",1521,560,478,482,232,251,16.3,8.3,2007,0.165023011176857
+"67","Sales and office occupations",1638,570,508,560,276,285,16.9,8.9,2007,0.173992673992674
+"68","Sales and related occupations",835,302,255,277,136,142,16.2,8.7,2007,0.170059880239521
+"69","Office and administrative support occupations",804,268,253,283,140,143,17.5,9.2,2007,0.177860696517413
+"70","Natural resources, construction, and maintenance occupations",1052,408,345,299,142,157,15.1,7.6,2007,0.149239543726236
+"71","Farming, fishing, and forestry occupations",89,30,32,27,13,13,16.5,8.6,2007,0.146067415730337
+"72","Construction and extraction occupations",781,316,253,212,100,112,14.4,7.1,2007,0.143405889884763
+"73","Installation, maintenance, and repair occupations",182,62,60,60,28,32,17.2,9.1,2007,0.175824175824176
+"74","Production, transportation, and material moving occupations",1128,383,361,384,164,219,17.9,9,2007,0.194148936170213
+"75","Production occupations",564,187,183,193,83,110,18.1,9.2,2007,0.195035460992908
+"76","Transportation and material moving occupations",564,196,177,191,81,109,17.7,8.8,2007,0.193262411347518
+"77","Management, professional, and related occupations",1463,440,454,569,249,320,19.3,10.2,2008,0.218728639781271
+"78","Management, business, and financial operations occupations",619,166,195,258,112,146,19.9,11.2,2008,0.235864297253635
+"79","Professional and related occupations",844,274,259,311,138,174,18.9,9.7,2008,0.206161137440758
+"80","Service occupations",1769,620,554,595,266,329,17.2,8.9,2008,0.185980780101752
+"81","Sales and office occupations",2006,611,654,741,330,411,18.4,9.9,2008,0.204885343968096
+"82","Sales and related occupations",980,312,323,344,155,189,17.8,9.4,2008,0.192857142857143
+"83","Office and administrative support occupations",1026,299,330,397,175,221,19.1,10.4,2008,0.215399610136452
+"84","Natural resources, construction, and maintenance occupations",1421,515,444,463,222,240,16.1,8.5,2008,0.168895144264602
+"85","Farming, fishing, and forestry occupations",112,44,36,32,19,13,13.5,8.1,2008,0.116071428571429
+"86","Construction and extraction occupations",1067,392,334,340,164,176,15.7,8.3,2008,0.164948453608247
+"87","Installation, maintenance, and repair occupations",243,79,74,90,39,51,18.8,9.7,2008,0.209876543209877
+"88","Production, transportation, and material moving occupations",1474,481,423,570,247,323,18.8,10,2008,0.219131614654003
+"89","Production occupations",746,236,217,293,119,174,19.3,10.2,2008,0.233243967828418
+"90","Transportation and material moving occupations",727,244,206,277,128,149,18.3,9.8,2008,0.204951856946355
+"91","Management, professional, and related occupations",2531,535,665,1331,491,840,25.7,16,2009,0.331884630580798
+"92","Management, business, and financial operations occupations",1105,201,273,631,226,404,27,18.4,2009,0.365610859728507
+"93","Professional and related occupations",1427,334,393,700,265,436,24.6,14.1,2009,0.305536089698669
+"94","Service occupations",2605,638,724,1243,493,750,22.8,13.6,2009,0.287907869481766
+"95","Sales and office occupations",3143,641,828,1675,608,1067,25.8,16.4,2009,0.339484568883233
+"96","Sales and related occupations",1501,324,399,778,281,497,24.7,15.6,2009,0.331112591605596
+"97","Office and administrative support occupations",1642,317,429,896,326,570,26.7,17.1,2009,0.347137637028015
+"98","Natural resources, construction, and maintenance occupations",2464,573,667,1224,500,724,22.9,14.4,2009,0.293831168831169
+"99","Farming, fishing, and forestry occupations",179,48,59,73,36,37,18.7,11.6,2009,0.206703910614525
+"100","Construction and extraction occupations",1825,432,499,894,367,527,22.5,14.1,2009,0.288767123287671
+"101","Installation, maintenance, and repair occupations",459,93,109,257,97,160,26.4,17.7,2009,0.348583877995643
+"102","Production, transportation, and material moving occupations",2453,519,632,1302,489,814,24.9,16.3,2009,0.331838565022422
+"103","Production occupations",1322,268,326,729,270,458,25.6,17.3,2009,0.346444780635401
+"104","Transportation and material moving occupations",1131,251,306,574,218,356,24.1,14.9,2009,0.314765694076039
+"105","Management, professional, and related occupations",2566,444,522,1600,398,1203,34.9,24.3,2010,0.468823070927514
+"106","Management, business, and financial operations occupations",1117,152,209,756,176,580,38.3,29,2010,0.519247985675918
+"107","Professional and related occupations",1449,292,313,844,221,623,32.3,20.8,2010,0.429951690821256
+"108","Service occupations",2819,588,674,1557,463,1094,29.8,18.3,2010,0.38808087974459
+"109","Sales and office occupations",3315,577,690,2048,535,1513,34.6,23.4,2010,0.456410256410256
+"110","Sales and related occupations",1596,291,349,956,255,701,33.1,22.1,2010,0.43922305764411
+"111","Office and administrative support occupations",1719,286,341,1092,279,813,36.1,24.8,2010,0.472949389179756
+"112","Natural resources, construction, and maintenance occupations",2504,502,557,1445,403,1042,32,20,2010,0.416134185303514
+"113","Farming, fishing, and forestry occupations",193,56,59,78,34,44,19.4,11.2,2010,0.227979274611399
+"114","Construction and extraction occupations",1809,366,399,1044,295,749,32,19.9,2010,0.41404090657822
+"115","Installation, maintenance, and repair occupations",503,80,99,323,75,249,36.8,26.3,2010,0.495029821073559
+"116","Production, transportation, and material moving occupations",2365,391,477,1498,356,1142,36.3,25.5,2010,0.482875264270613
+"117","Production occupations",1206,193,226,788,173,615,37.9,28.2,2010,0.509950248756219
+"118","Transportation and material moving occupations",1159,198,251,710,183,527,34.6,22.9,2010,0.454702329594478
+"119","Management, professional, and related occupations",2458,466,510,1482,361,1121,41.6,22.8,2011,0.456061838893409
+"120","Management, business, and financial operations occupations",1067,157,215,695,164,531,45.1,27.2,2011,0.497656982193065
+"121","Professional and related occupations",1392,309,295,788,197,591,39,20,2011,0.424568965517241
+"122","Service occupations",2727,587,639,1500,415,1086,36.1,18.4,2011,0.398239823982398
+"123","Sales and office occupations",3135,545,641,1949,463,1486,40.6,24.7,2011,0.474003189792663
+"124","Sales and related occupations",1481,277,310,894,211,683,40,23.3,2011,0.461174881836597
+"125","Office and administrative support occupations",1653,267,331,1055,252,803,41.2,26,2011,0.485783424077435
+"126","Natural resources, construction, and maintenance occupations",2000,421,430,1150,295,855,39.2,20.4,2011,0.4275
+"127","Farming, fishing, and forestry occupations",181,45,58,77,36,42,23.8,12,2011,0.232044198895028
+"128","Construction and extraction occupations",1414,315,292,807,196,611,39.5,20.6,2011,0.432107496463932
+"129","Installation, maintenance, and repair occupations",406,60,80,265,63,202,44.9,27.4,2011,0.497536945812808
+"130","Production, transportation, and material moving occupations",2099,383,426,1290,317,973,41.4,23.5,2011,0.463554073368271
+"131","Production occupations",1025,180,204,641,142,499,43.8,25.9,2011,0.486829268292683
+"132","Transportation and material moving occupations",1073,203,222,648,175,474,39,21.8,2011,0.441752096924511
+"133","Management, professional, and related occupations",2318,445,511,1362,340,1022,42.6,21.5,2012,0.440897325280414
+"134","Management, business, and financial operations occupations",935,146,189,601,144,456,46.9,26,2012,0.487700534759358
+"135","Professional and related occupations",1383,299,322,762,196,566,39.7,18.7,2012,0.409255242227043
+"136","Service occupations",2540,584,600,1356,386,971,35.9,17.2,2012,0.382283464566929
+"137","Sales and office occupations",2775,534,618,1622,411,1211,41.8,21.4,2012,0.436396396396396
+"138","Sales and related occupations",1318,276,304,738,191,547,39.7,19.3,2012,0.415022761760243
+"139","Office and administrative support occupations",1457,258,314,884,220,664,43.6,23.4,2012,0.4557309540151
+"140","Natural resources, construction, and maintenance occupations",1668,381,373,914,238,676,39.3,18.3,2012,0.405275779376499
+"141","Farming, fishing, and forestry occupations",167,46,54,67,31,37,22.9,11.6,2012,0.221556886227545
+"142","Construction and extraction occupations",1181,272,252,658,173,484,39.5,18.9,2012,0.409822184589331
+"143","Installation, maintenance, and repair occupations",320,64,67,189,34,155,46.9,24.8,2012,0.484375
+"144","Production, transportation, and material moving occupations",1845,392,413,1041,268,773,39.7,19.8,2012,0.418970189701897
+"145","Production occupations",865,168,190,507,127,379,43,21.7,2012,0.438150289017341
+"146","Transportation and material moving occupations",980,224,223,534,140,394,36.7,18.2,2012,0.402040816326531
+"147","Management, professional, and related occupations",2036,447,473,1116,315,801,37.5,18,2013,0.393418467583497
+"148","Management, business, and financial operations occupations",831,149,186,496,141,355,41.2,21,2013,0.42719614921781
+"149","Professional and related occupations",1205,298,287,620,174,446,35,15.6,2013,0.370124481327801
+"150","Service occupations",2444,588,596,1261,364,896,34.4,15.7,2013,0.366612111292962
+"151","Sales and office occupations",2575,546,583,1446,404,1042,39.6,19.2,2013,0.404660194174757
+"152","Sales and related occupations",1212,275,288,648,185,463,37.7,17.2,2013,0.382013201320132
+"153","Office and administrative support occupations",1363,270,295,798,218,579,41.4,20.9,2013,0.424798239178283
+"154","Natural resources, construction, and maintenance occupations",1423,353,355,715,228,487,34.7,14.7,2013,0.342234715390021
+"155","Farming, fishing, and forestry occupations",124,33,38,53,22,30,26.7,11.8,2013,0.241935483870968
+"156","Construction and extraction occupations",1016,259,254,503,161,342,34.7,14.3,2013,0.336614173228346
+"157","Installation, maintenance, and repair occupations",284,61,63,160,45,115,38.5,19.4,2013,0.404929577464789
+"158","Production, transportation, and material moving occupations",1690,351,396,944,288,656,37.9,18.3,2013,0.388165680473373
+"159","Production occupations",792,153,176,462,136,327,40.5,19.9,2013,0.412878787878788
+"160","Transportation and material moving occupations",898,197,219,482,153,329,35.6,16.9,2013,0.366369710467706
+"161","Management, professional, and related occupations",1777,444,449,884,259,625,36.2,14.4,2014,0.351716375914463
+"162","Management, business, and financial operations occupations",704,141,170,392,110,282,40.3,18.8,2014,0.400568181818182
+"163","Professional and related occupations",1073,303,278,492,149,343,33.5,12.5,2014,0.319664492078285
+"164","Service occupations",2048,561,502,984,311,673,32.3,13.6,2014,0.32861328125
+"165","Sales and office occupations",2119,492,527,1099,338,760,35.3,15.9,2014,0.358659745162813
+"166","Sales and related occupations",1022,245,263,515,177,338,32.9,14.7,2014,0.330724070450098
+"167","Office and administrative support occupations",1096,247,265,584,161,423,37.6,17.1,2014,0.385948905109489
+"168","Natural resources, construction, and maintenance occupations",1171,340,297,534,188,346,31.2,12.4,2014,0.295473953885568
+"169","Farming, fishing, and forestry occupations",134,39,36,59,26,33,27.6,12.1,2014,0.246268656716418
+"170","Construction and extraction occupations",813,245,206,361,128,233,30.6,12,2014,0.286592865928659
+"171","Installation, maintenance, and repair occupations",224,56,55,113,34,79,35.8,14.9,2014,0.352678571428571
+"172","Production, transportation, and material moving occupations",1385,350,352,683,222,461,32.6,14.2,2014,0.332851985559567
+"173","Production occupations",632,153,158,321,99,222,33.1,15.1,2014,0.35126582278481
+"174","Transportation and material moving occupations",754,197,194,362,123,239,32.3,13.6,2014,0.316976127320955
+"175","Management, professional, and related occupations",1504,426,416,662,220,442,32.3,11.8,2015,0.293882978723404
+"176","Management, business, and financial operations occupations",602,144,160,298,97,202,36.4,14.3,2015,0.335548172757475
+"177","Professional and related occupations",902,282,256,364,123,241,29.5,10.2,2015,0.267184035476718
+"178","Service occupations",1855,563,504,788,275,513,28.3,11.1,2015,0.27654986522911
+"179","Sales and office occupations",1792,492,492,809,288,521,29.5,12.3,2015,0.290736607142857
+"180","Sales and related occupations",909,249,252,409,142,267,29.2,12.2,2015,0.293729372937294
+"181","Office and administrative support occupations",883,243,240,400,146,254,29.9,12.4,2015,0.287655719139298
+"182","Natural resources, construction, and maintenance occupations",1058,329,293,436,171,265,27.4,10.7,2015,0.25047258979206
+"183","Farming, fishing, and forestry occupations",132,48,44,40,19,21,18.6,8.6,2015,0.159090909090909
+"184","Construction and extraction occupations",701,221,190,290,117,173,27.5,10.8,2015,0.24679029957204
+"185","Installation, maintenance, and repair occupations",225,60,59,105,35,71,32.1,13,2015,0.315555555555556
+"186","Production, transportation, and material moving occupations",1182,342,332,508,176,331,27.9,11.5,2015,0.280033840947547
+"187","Production occupations",513,145,144,225,76,149,30,11.8,2015,0.290448343079922
+"188","Transportation and material moving occupations",668,197,188,283,100,183,26.3,11.2,2015,0.273952095808383
+"189","Management, professional, and related occupations",1513,442,438,634,219,414,28.3,11.1,2016,0.273628552544613
+"190","Management, business, and financial operations occupations",629,152,176,302,107,194,30.9,13.7,2016,0.308426073131955
+"191","Professional and related occupations",884,290,262,332,112,220,26.5,9.5,2016,0.248868778280543
+"192","Service occupations",1655,538,468,649,251,398,25.8,10,2016,0.240483383685801
+"193","Sales and office occupations",1623,484,460,679,251,429,27.9,11,2016,0.264325323475046
+"194","Sales and related occupations",799,248,233,318,119,199,26.3,10.3,2016,0.249061326658323
+"195","Office and administrative support occupations",825,236,227,361,132,229,29.5,11.8,2016,0.277575757575758
+"196","Natural resources, construction, and maintenance occupations",953,318,278,356,139,218,25.7,9.9,2016,0.228751311647429
+"197","Farming, fishing, and forestry occupations",127,45,44,38,20,19,16.3,8.7,2016,0.149606299212598
+"198","Construction and extraction occupations",618,222,181,215,80,135,24.9,9.1,2016,0.218446601941748
+"199","Installation, maintenance, and repair occupations",207,51,53,102,39,63,33.6,14.3,2016,0.304347826086957
+"200","Production, transportation, and material moving occupations",1160,343,332,485,179,306,27.4,11,2016,0.263793103448276
+"201","Production occupations",516,144,144,228,85,143,29.1,12.1,2016,0.277131782945736
+"202","Transportation and material moving occupations",644,200,187,257,95,163,26,10.3,2016,0.253105590062112
+"203","Management, professional, and related occupations",1383,415,402,566,196,370,27.7,10.6,2017,0.267534345625452
+"204","Management, business, and financial operations occupations",558,141,155,263,94,169,31.6,13.3,2017,0.302867383512545
+"205","Professional and related occupations",825,274,247,303,102,201,25.1,9.3,2017,0.243636363636364
+"206","Service occupations",1530,521,427,582,222,360,23.5,9.8,2017,0.235294117647059
+"207","Sales and office occupations",1443,452,400,591,216,375,25.9,10.5,2017,0.25987525987526
+"208","Sales and related occupations",699,220,191,289,105,184,25.2,10.5,2017,0.263233190271817
+"209","Office and administrative support occupations",744,232,210,302,111,191,26.5,10.5,2017,0.256720430107527
+"210","Natural resources, construction, and maintenance occupations",903,310,269,325,131,194,23.2,9.3,2017,0.21483942414175
+"211","Farming, fishing, and forestry occupations",113,42,40,31,17,14,14,8,2017,0.123893805309735
+"212","Construction and extraction occupations",611,214,183,214,89,125,22.3,8.9,2017,0.204582651391162
+"213","Installation, maintenance, and repair occupations",179,53,46,80,25,55,31.7,12.1,2017,0.307262569832402
+"214","Production, transportation, and material moving occupations",1014,339,302,373,152,221,23,9.4,2017,0.217948717948718
+"215","Production occupations",435,138,128,169,71,99,25,10,2017,0.227586206896552
+"216","Transportation and material moving occupations",579,201,174,204,81,122,21.5,9,2017,0.210708117443869
+"217","Management, professional, and related occupations",1346,443,393,509,197,312,24.5,9.8,2018,0.231797919762259
+"218","Management, business, and financial operations occupations",523,150,152,222,85,137,27.9,11.5,2018,0.261950286806883
+"219","Professional and related occupations",822,293,242,287,112,176,22.3,8.8,2018,0.214111922141119
+"220","Service occupations",1353,506,400,447,191,257,21.5,8.5,2018,0.189948263118995
+"221","Sales and office occupations",1337,430,402,505,190,315,23.9,9.9,2018,0.235602094240838
+"222","Sales and related occupations",669,210,190,269,105,164,24.3,10.3,2018,0.245142002989537
+"223","Office and administrative support occupations",668,220,211,236,85,151,23.5,9.5,2018,0.226047904191617
+"224","Natural resources, construction, and maintenance occupations",780,286,217,277,127,151,20.1,8.9,2018,0.193589743589744
+"225","Farming, fishing, and forestry occupations",114,42,33,38,20,18,15.9,8.4,2018,0.157894736842105
+"226","Construction and extraction occupations",530,197,146,187,83,104,20.4,8.7,2018,0.19622641509434
+"227","Installation, maintenance, and repair occupations",136,46,38,52,24,28,22.3,9.8,2018,0.205882352941176
+"228","Production, transportation, and material moving occupations",881,298,273,310,126,185,21.6,9.3,2018,0.209988649262202
+"229","Production occupations",361,123,114,125,50,75,21.3,9.4,2018,0.207756232686981
+"230","Transportation and material moving occupations",520,175,159,185,75,110,21.8,9.2,2018,0.211538461538462
+"231","Management, professional, and related occupations",1310,436,388,487,181,306,22.6,9.5,2019,0.233587786259542
+"232","Management, business, and financial operations occupations",499,153,138,209,77,132,23,11.1,2019,0.264529058116232
+"233","Professional and related occupations",811,283,250,278,104,174,22.4,8.8,2019,0.214549938347719
+"234","Service occupations",1255,465,364,426,181,245,20,8.6,2019,0.195219123505976
+"235","Sales and office occupations",1274,422,375,476,193,283,22.6,9.9,2019,0.222135007849294
+"236","Sales and related occupations",614,210,176,228,84,144,22.3,9.6,2019,0.234527687296417
+"237","Office and administrative support occupations",659,212,200,248,109,139,22.9,10.1,2019,0.21092564491654
+"238","Natural resources, construction, and maintenance occupations",703,266,216,221,100,121,17.8,8.2,2019,0.172119487908962
+"239","Farming, fishing, and forestry occupations",123,44,38,40,22,18,15,8.5,2019,0.146341463414634
+"240","Construction and extraction occupations",452,183,139,131,59,72,16.3,7.5,2019,0.15929203539823
+"241","Installation, maintenance, and repair occupations",129,39,38,51,19,31,26.1,10.4,2019,0.24031007751938
+"242","Production, transportation, and material moving occupations",847,296,259,292,121,171,21.5,8.9,2019,0.201889020070838
+"243","Production occupations",350,126,109,116,51,65,19.6,8.6,2019,0.185714285714286
+"244","Transportation and material moving occupations",497,170,150,176,70,107,22.9,9.2,2019,0.215291750503018
+"245","Management, professional, and related occupations",3029,837,1098,1094,602,493,17.1,10,2020,0.162759986794322
+"246","Management, business, and financial operations occupations",1149,312,377,460,244,216,18.1,10.9,2020,0.18798955613577
+"247","Professional and related occupations",1880,525,720,634,357,277,16.5,9.6,2020,0.147340425531915
+"248","Service occupations",3407,932,1292,1183,690,493,15.4,9.8,2020,0.144702083944819
+"249","Sales and office occupations",2591,755,948,889,498,391,16.3,9.6,2020,0.150906985719799
+"250","Sales and related occupations",1367,399,504,465,257,208,15.8,9.6,2020,0.152158010241405
+"251","Office and administrative support occupations",1224,356,445,424,241,183,16.9,9.7,2020,0.149509803921569
+"252","Natural resources, construction, and maintenance occupations",1298,415,456,427,228,199,16.1,9,2020,0.153312788906009
+"253","Farming, fishing, and forestry occupations",120,43,35,42,24,18,14.7,9.6,2020,0.15
+"254","Construction and extraction occupations",862,274,303,285,151,134,16.4,9,2020,0.155452436194896
+"255","Installation, maintenance, and repair occupations",316,98,118,100,53,47,15.7,8.6,2020,0.14873417721519
+"256","Production, transportation, and material moving occupations",2076,602,763,711,414,297,16,9.7,2020,0.143063583815029
+"257","Production occupations",747,238,267,242,141,101,15.6,9.1,2020,0.13520749665328
+"258","Transportation and material moving occupations",1329,364,496,469,273,196,16.2,10,2020,0.147479307750188
+"259","Management, professional, and related occupations",1889,415,406,1068,244,823,31.8,20.9,2021,0.4356802541027
+"260","Management, business, and financial operations occupations",812,157,163,493,115,377,34,24.3,2021,0.464285714285714
+"261","Professional and related occupations",1077,258,243,575,129,446,30.2,18.1,2021,0.414113277623027
+"262","Service occupations",2057,503,480,1074,262,812,28.1,16.6,2021,0.394749635391347
+"263","Sales and office occupations",1685,406,385,893,232,661,29.2,17.2,2021,0.392284866468843
+"264","Sales and related occupations",853,205,194,454,112,342,29.3,17.5,2021,0.400937866354045
+"265","Office and administrative support occupations",832,201,191,439,120,319,29,16.9,2021,0.383413461538462
+"266","Natural resources, construction, and maintenance occupations",984,261,220,502,143,359,26.5,15.4,2021,0.364837398373984
+"267","Farming, fishing, and forestry occupations",104,31,22,51,15,36,23.7,14,2021,0.346153846153846
+"268","Construction and extraction occupations",681,180,155,346,100,246,26.4,15.1,2021,0.361233480176211
+"269","Installation, maintenance, and repair occupations",199,50,43,106,28,77,28.5,17.5,2021,0.386934673366834
+"270","Production, transportation, and material moving occupations",1473,372,345,756,210,546,27.6,15.6,2021,0.370672097759674
+"271","Production occupations",485,118,101,266,74,192,29.1,18.5,2021,0.395876288659794
+"272","Transportation and material moving occupations",988,254,244,490,136,354,26.9,14.3,2021,0.3582995951417
+"273","Management, professional, and related occupations",1355,473,402,481,170,310,24.2,9,2022,0.228782287822878
+"274","Management, business, and financial operations occupations",530,170,159,201,74,128,25.9,9.9,2022,0.241509433962264
+"275","Professional and related occupations",825,303,243,279,97,183,23.2,8.4,2022,0.221818181818182
+"276","Service occupations",1281,487,346,447,157,290,22.3,8.4,2022,0.226385636221702
+"277","Sales and office occupations",1176,412,342,423,171,252,22.2,9.3,2022,0.214285714285714
+"278","Sales and related occupations",579,211,163,205,82,123,22,9,2022,0.212435233160622
+"279","Office and administrative support occupations",598,200,179,218,89,129,22.4,9.4,2022,0.21571906354515
+"280","Natural resources, construction, and maintenance occupations",658,277,176,205,73,132,19.9,7.3,2022,0.200607902735562
+"281","Farming, fishing, and forestry occupations",71,28,22,20,9,11,17.7,7.6,2022,0.154929577464789
+"282","Construction and extraction occupations",477,206,126,144,52,93,19.6,6.8,2022,0.19496855345912
+"283","Installation, maintenance, and repair occupations",110,43,27,40,12,28,22.6,9,2022,0.254545454545455
+"284","Production, transportation, and material moving occupations",1027,379,292,356,130,226,23.1,8.7,2022,0.220058422590068
+"285","Production occupations",332,127,92,112,41,72,22.8,8.6,2022,0.216867469879518
+"286","Transportation and material moving occupations",695,252,200,243,89,154,23.3,8.8,2022,0.22158273381295

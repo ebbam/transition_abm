@@ -1,0 +1,36 @@
+occupation,total_unemployed,less_than_5_weeks,wks5_14,wks15plus,wks15_26,wks27plus,wks_mean_duration,wks_median_duration
+"Management, professional, and related occupations...","1,346",407,367,571,215,356,22.9,11.4
+"Management, business, and financial operations occupations......................................",544,138,145,262,95,167,25.7,13.8
+Professional and related occupations..............,801,269,222,310,120,190,21.0,9.9
+Service occupations.................................,"1,617",572,479,565,258,307,18.0,9.0
+Sales and office occupations........................,"1,937",622,565,750,331,419,19.5,10.0
+Sales and related occupations.....................,912,306,263,343,150,193,18.9,9.6
+Office and administrative support occupations.....,"1,025",316,302,407,180,226,20.1,10.4
+"Natural resources, construction, and maintenance occupations........................................","1,140",421,334,386,164,221,17.6,8.7
+"Farming, fishing, and forestry occupations........",132,48,45,39,17,22,15.1,8.7
+Construction and extraction occupations...........,786,306,233,248,109,139,16.8,8.0
+"Installation, maintenance, and repair occupations......................................",222,67,56,99,38,61,21.7,12.0
+"Production, transportation, and material moving occupations........................................","1,393",438,394,561,224,336,20.8,10.5
+Production occupations............................,714,213,195,306,113,194,22.6,11.5
+Transportation and material moving occupations....,679,225,199,255,112,143,18.9,9.8
+,NA,NA,NA,NA,NA,NA,NA,NA
+INDUSTRY,1,NA,NA,NA,NA,NA,NA,NA
+Agriculture and related industries..................,136,52,45,38,20,18,14.4,8.3
+Mining..............................................,21,9,5,8,2,6,2,2
+Construction........................................,783,293,241,248,115,133,16.4,8.3
+Manufacturing.......................................,970,257,246,467,164,302,25.6,13.7
+Durable goods.....................................,594,158,143,293,97,196,26.8,14.2
+Nondurable goods..................................,376,99,103,174,67,106,23.7,13.0
+Wholesale and retail trade..........................,"1,202",390,358,455,194,261,19.6,9.9
+Transportation and utilities........................,266,82,70,114,50,63,20.1,11.1
+Information.........................................,192,56,49,87,29,58,24.4,12.5
+Financial activities................................,339,96,104,139,60,79,20.4,11.2
+Professional and business services..................,874,271,258,345,152,193,20.2,10.4
+Education and health services.......................,860,304,252,304,136,168,18.4,9.0
+Leisure and hospitality.............................,"1,011",380,309,321,152,169,16.3,8.2
+Other services......................................,326,111,89,126,50,76,20.4,9.7
+Public administration...............................,151,39,39,72,28,44,24.3,13.6
+No previous work experience.........................,686,226,231,229,94,135,18.3,8.9
+1 Includes wage and salary workers only.,NA,NA,NA,NA,NA,NA,NA,NA
+2 Data not shown where base is less than,"35,000.",NA,NA,NA,NA,NA,NA,NA
+NOTE: Beginning in January,"2004, data reflect revised population controls used in the household survey.",NA,NA,NA,NA,NA,NA,NA

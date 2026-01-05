@@ -1,0 +1,424 @@
+---
+title: "Setting Occupational Target Demand"
+date: "`r Sys.Date()`"
+output: 
+  pdf_document:
+    latex_engine: xelatex
+---
+
+```{r setup, echo = FALSE, include=FALSE}
+
+knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 8, fig.width = 7)
+library(here)
+library(RColorBrewer)
+library(gridExtra)
+library(mFilter)
+source(here('code/formatting/plot_dicts.R'))
+
+save_data = FALSE
+#nx = "Original OMN"
+#nx = "Full OMN"
+#nx = "ONET Related Occupations"
+nx = "OMN SOC_minor"
+  
+```
+
+# Setting Occupational Target Demand
+
+Using reported occupational shares of industry employment from the Bureau of Labor Statistics’ Occupational Employment and Wages dataset and the industry Value Added (quarterly data available from 2005 and annual data available from 1999).
+
+Assume that the baseline de-trended demand for occupation $i$ in the economy $D_{i}$ is:
+
+$D_{i} = \sum_{j=1}^{n} \bar d_{ij} = 1$
+
+where the de-trended fluctuating demand (ie. demand at time $t$ for occupation $i$) is:
+
+$D_{it} = \sum_{j=1}^{n} \hat d_{ijt}$
+
+$\hat d_{ijt} = \sum_{j=1}^{n} \bar d_{ij} \theta_{jt}$
+
+in which $\bar d_{ij}$ is the average share of occupation $i$ in industry $j$ and $\theta_{jt}$ is the de-trended value-added of industry $j$ at time $t$. Thus, we obtain occupation-specific fluctuations in demand dependent on their "exposure" or the share of a specific occupation in industry $j$. We de-trend the value added in the same way as in the GDP series such that we obtain the fluctuation around a mean.
+
+## Value Added by Industry
+
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
+
+source(here("data/occ_macro_vars/bea_industry_va.R"))
+
+```
+
+## Occupation-shares of industry
+
+We use annual occupational shares of employment from the Occupational Employment and Wage Statistics database from the US Bureau of Labour Statistics to derive our $\bar d{ij}$.
+
+Excludes public administration. The first figure shows the “reported percent total” from the OEWS data. The discrepancies in reporting is almost certainly due to a reshuffling of occupational codes in 2010 and 2018.
+
+If we look at the shares as a percentage of total reported employment in a particular industry the “shares” are not consistent across the recategorisation - I will need to investigate this again.
+
+We take the mean industry-share of occupational employment reported in the years where majority (\>97%) of our occ codes are present (2012-2018 - after and before SOC reorganisation of 2010 and 2018).
+
+```{r, echo = FALSE, results = 'asis', message = FALSE, warning = FALSE}
+
+
+if(nx == "Original OMN"){
+  # Which occupations are in the crosswalk. 
+  abm_orig <- read.csv(here("data/crosswalk_occ_soc_cps_codes.csv")) %>% 
+    tibble %>% 
+    mutate(SOC2010 = gsub("X", "0", SOC2010))
+  
+  abm %>% filter(!(SOC2010 %in% df$occ_code)) %>% nrow(.) == 0
+  
+  }else if(nx == "Full OMN"){
+  
+# FULL OMN
+  abm <- read.csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_2010_soc_cw.csv") %>%
+    rename(SOC2010 = soc_2010_code,
+           OCC2010_desc = title)
+  
+  abm %>% filter(!(SOC2010 %in% df$occ_code)) %>% nrow(.) == 0
+  }else if(nx == "ONET Related Occupations"){
+  
+  # ONET
+  abm <- read.csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/acs_onet_2010_soc_cw.csv") %>% 
+       rename(SOC2010 = soc_2010_code,
+              OCC2010_desc = title) %>% 
+    group_by(acs_2010_code, OCC2010_desc) %>% 
+    summarise(SOC2010 = first(SOC2010),
+              X = first(X)) %>% 
+    ungroup
+  
+  nrow(abm) == n_distinct(abm$acs_2010_code)
+  
+  #abm %>% filter(!(SOC2010 %in% df$occ_code)) %>% nrow(.) == 0
+
+  }else if(nx == "OMN SOC_minor"){
+  abm <- read.csv("/Users/ebbamark/Library/CloudStorage/OneDrive-Nexus365/GenerateOccMobNets/ONET/occ_names_employment_asec_soc_2010_minor_ipums_vars.csv") %>% 
+  rename(SOC2010 = soc) %>% 
+    mutate(OCC2010_desc = SOC2010)
+  
+  nrow(abm) == n_distinct(abm$SOC2010)
+}
+
+source(here("data/occ_macro_vars/OEWS/occ_emp_industry_oews.R"))
+
+
+```
+
+## Bringing them together
+
+```{r, echo = FALSE, message = FALSE}
+
+inds <- ind_va_for_abm_full %>% 
+  pull(industry) %>% unique
+
+# trend_tibble <- tibble()
+# for(k in inds){
+#   trend <- ind_va_for_abm_full %>% 
+#     filter(grepl(k, industry)) %>% 
+#     pull(log_real_VA) %>% 
+#     hpfilter(.,freq = 129600, type=c("lambda")) 
+# 
+#   trend_tibble <- trend$cycle %>% 
+#     tibble %>% 
+#     rename(trend = '.') %>% 
+#     mutate(date = ind_va_for_abm_full$date[1:28], 
+#            industry = k) %>% 
+#     rbind(trend_tibble, .)
+# 
+# }
+
+```
+
+```{r, echo = FALSE, message = FALSE}
+# Detrend and normalize each industry's GDP
+gdp_processed <- ind_va_for_abm_full %>%
+  group_by(industry) %>%
+  arrange(date) %>%
+  mutate(
+    # HP filter: lambda = 1600 for quarterly data
+    gdp_trend = hpfilter(log_real_VA, freq = 1600)$trend,
+    gdp_cycle = hpfilter(log_real_VA, freq = 1600)$cycle,
+
+    # Normalization 1: Percent deviation from trend
+    gdp_pct_dev = (log_real_VA - gdp_trend) / gdp_trend,
+
+    # Normalization 2: Z-score of cycle
+    gdp_cycle_z = as.numeric(scale(gdp_cycle)),
+
+    # Optional: Clip extreme values to avoid large shocks
+    gdp_cycle_z_capped = pmin(pmax(gdp_cycle_z, -0.5), 0.5)
+  ) %>%
+  ungroup()
+
+gdp_processed %>% 
+  select(date, industry, contains('z')) %>% 
+  pivot_longer(!c(date, industry)) %>% 
+  ggplot() +
+  geom_line(aes(x = date, y = value, color = name)) +
+  facet_wrap_custom(~industry) +
+    labs(title = "Industry-level Value Added Shocks",
+         subtitle = "Normalisation of HP Filter Method: Raw Z-Score vs. Z-Score capped at [-0.5, 0.5]",
+         x = "Date",
+         y = "Trend deviation %",
+         color = "Normalisation Method") +
+  common_theme +
+  theme(legend.position = "bottom")
+
+```
+
+
+```{r, echo = FALSE, message = FALSE}
+
+gdp_processed %>% 
+  select(date, industry, gdp_pct_dev, gdp_cycle) %>% 
+  pivot_longer(!c(date, industry)) %>% 
+  ggplot() +
+  geom_line(aes(x = date, y = value, color = name)) +
+  facet_wrap_custom(~industry) +
+    labs(title = "Industry-level Value Added Shocks",
+         subtitle = "Normalisation of HP Filter Method: Raw HP Filter vs. Percent Deviation",
+         x = "Date",
+         y = "Trend deviation %",
+         color = "Normalisation Method") +
+  common_theme +
+  theme(legend.position = "bottom")
+
+```
+
+
+```{r, echo = FALSE, message = FALSE}
+gdp_processed %>% 
+  ggplot() +  
+    geom_line(aes(x = date, y = gdp_cycle, color = industry)) +
+    theme_minimal() +
+    labs(title = "Deviation from Trend (HP log Filter)",
+         x = "Date",
+         y = "Trend deviation %",
+         color = "Industry") +
+  common_theme +
+  theme(legend.position = "bottom")
+
+```
+
+```{r, echo = FALSE, message = FALSE}
+
+if(save_data){
+  gdp_processed %>% 
+    select(!contains("label"), !contains("indent")) %>% 
+  saveRDS(., here("data/occ_macro_vars/bea_industry_va_for_abm.RDS"))
+}
+
+```
+
+Important future work should aim to accommodate shifts in labor productivity of different industries and/or shifting industry-specific occupational shares to account for additional sources of structural transformation beyond those explored in this work. 
+
+```{r, echo = FALSE, message = FALSE}
+
+names(rel_inds) <- tolower(names(rel_inds))
+
+gdp_processed <- readRDS(here("data/occ_macro_vars/bea_industry_va_for_abm.RDS")) %>% 
+  select(industry, date, contains("real_VA"), contains("gdp")) %>% 
+  mutate(naics = rel_inds[tolower(industry)])
+
+# Sanity checks
+stopifnot(mean_shares_for_bind %>% filter(!(naics %in% gdp_processed$naics)) %>% nrow(.) == 0)
+stopifnot(gdp_processed %>% filter(!(naics %in% mean_shares_for_bind$naics)) %>% nrow(.) == 0)
+stopifnot(gdp_processed %>% filter(is.na(naics)) %>% nrow(.) == 0)
+stopifnot(mean_shares_for_bind %>% filter(is.na(naics)) %>% nrow(.) == 0)
+
+# OCC2010-SOC Code Crosswalk
+# Using this for labels in the graphs
+# https://www.census.gov/topics/employment/industry-occupation/guidance/code-lists.html
+# More specifically: 2010 Census Occupation Codes with Crosswalk
+cw <- read_xlsx(here('data/occ_macro_vars/CPS_LTUER/2010-occ-codes-with-crosswalk-from-2002-2011.xlsx'), 
+                sheet = 1, skip = 6) %>% 
+  rename(major_cat = 1, OCC2010_desc = 2, OCC2010 = 3, SOC2010 = 4) %>% 
+  filter(nchar(SOC2010) == 7 & substr(SOC2010,4,7) == "0000") %>% 
+  select(-major_cat, - OCC2010) %>% 
+  mutate(broad_occ = substr(SOC2010, 1, 2)) %>% 
+  mutate(OCC2010_desc = gsub(":", "", OCC2010_desc)) %>% 
+  select(-SOC2010)
+
+# take mean shares from occ_emp_industry_oews.R
+occ_shocks <- mean_shares_for_bind %>% 
+  mutate(date = NA) %>% 
+  group_by(occ_code, naics_title, mean_share, naics) %>% 
+  complete(date = unique(gdp_processed$date)) %>% 
+  left_join(., gdp_processed, by = c('naics', 'date')) %>% 
+  select(occ_code, industry, naics, naics_title, date, mean_share, gdp_cycle) %>% 
+  ungroup %>% 
+  mutate(shock = mean_share*gdp_cycle) %>% 
+  group_by(occ_code, date) %>%
+  summarise(shock = sum(shock, na.rm = TRUE)) %>% 
+  ungroup %>% 
+  mutate(broad_occ = substr(occ_code, 1, 2)) %>% 
+  left_join(cw, by = "broad_occ") %>% 
+  filter(!is.na(date)) %>% 
+  # quarterly interpolation until I incorporate quarterly data
+    group_by(occ_code, broad_occ, OCC2010_desc) %>%
+  # Complete the date range to quarterly for years prior to 2005 where only annual data was available
+  complete(date = seq(min(date), max(date), by = "quarter")) %>%
+  # Fill in group data for new rows
+  fill(broad_occ, OCC2010_desc, .direction = "downup") %>%
+  # Linearly interpolate shock values
+  arrange(occ_code, date) %>%
+  group_by(occ_code) %>%
+  mutate(shock = zoo::na.approx(shock, x = date, na.rm = FALSE)) %>%
+  ungroup()
+
+```
+
+Important note is that we are missing information on occupation code 13-2081 (Tax examiners and collectors, and revenue agents) which are present in our occupational network but not in our VA data as they are only employed in public administration. VA information does not exist for public administration. For now, I will use the shocks to 13-2082 as the shocks to 13-2081 though we might consider changing this. For example, we could potentially abstract to say that public administration fluctuations should depend on just GDP fluctuations (ie. we use the HP-filtered GDP series that we were originally using as the direct shock to occupations employed only in public administration). 
+
+In the case of the full OMN we are missing both 13-2081 and 33-3031 (Fish and Game Wardens). We assign the fish and game wardens the same occupational shocks as 33-9011 (Animal Control Workers) within the same broad category grouping of SOC codes. 
+
+In the case of the ONET Related Occupations Network both of the above are missing in addition to 45-3021 (hunters and trappers). We assign hunters and trappers the same occupational shocks as the only other occupation in the same Minor SOC Group (45-3011 - Fishers and Related Fishing Workers). They are both categorised within the same "Fishing and Hunting Workers" Minor SOC Group (45-3000).
+
+```{r, echo = FALSE, message = FALSE}
+
+if(nx == "Original OMN"){
+  occ_shocks_full <- occ_shocks %>% 
+  filter(occ_code == "13-2082") %>% 
+  mutate(occ_code = "13-2081") %>% 
+  rbind(occ_shocks)
+}else if(nx == "Full OMN"){
+  r1 <- occ_shocks %>% 
+    filter(occ_code == "13-2082") %>% 
+    mutate(occ_code = "13-2081")
+  
+  r2 <- occ_shocks %>% 
+    filter(occ_code == "33-9011") %>% 
+    mutate(occ_code = "33-3031")
+  
+  occ_shocks_full <- rbind(r1, r2, occ_shocks)
+}else if(nx == "ONET Related Occupations"){
+  r1 <- occ_shocks %>% 
+    filter(occ_code == "13-2082") %>% 
+    mutate(occ_code = "13-2081")
+  
+  r2 <- occ_shocks %>% 
+    filter(occ_code == "33-9011") %>% 
+    mutate(occ_code = "33-3031")
+  
+  r3 <- occ_shocks %>% 
+    filter(occ_code == "45-3011") %>% 
+    mutate(occ_code = "45-3021")
+  
+  occ_shocks_full <- rbind(r1, r2, r3, occ_shocks)
+}else if(nx == "OMN SOC_minor"){
+  occ_shocks_full <- occ_shocks
+}
+
+stopifnot(sort(unique(abm$SOC2010)) == sort(unique(occ_shocks_full$occ_code)))
+
+# Create monochromatic color palette
+n_colors <- length(unique(occ_shocks_full$occ_code))
+purple_palette <- colorRampPalette(brewer.pal(9, "Purples"))(n_colors)
+
+# Randomly shuffle the colors
+set.seed(42)  
+shuffled_palette <- sample(purple_palette)
+color_map <- setNames(shuffled_palette, sort(unique(occ_shocks_full$occ_code)))
+
+# Plot with manual color scale
+occ_shocks_full %>% 
+  ggplot() +
+  geom_line(aes(x = date, y = shock, color = occ_code)) +
+  facet_wrap_custom(~OCC2010_desc) + 
+  scale_color_manual(values = color_map) +
+  labs(
+    x = "Date", 
+    y = "Occupation Specific VA Shock (Deviation from Trend)",
+    title = "Occupation Specific Value Added Shock", 
+    subtitle = "Composite of Industry VA shocks x Industry Occupational Shares"
+  ) +
+  common_theme +
+  theme(legend.position = "none")
+
+abm_cw <- abm %>% 
+  mutate(SOC2010_adj = SOC2010)
+
+stopifnot(occ_shocks_full %>% summarise(across(everything(), ~sum(is.na(.)))) %>% rowSums(.) == 0)
+
+if(nx != "OMN SOC_minor"){
+  occ_shocks_full %>% 
+  left_join(select(abm_cw, acs_2010_code, SOC2010_adj, X), by = c("occ_code" = "SOC2010_adj")) -> temp
+}else{
+  occ_shocks_full -> temp
+}
+
+
+if(nx == "Full OMN"){
+    file_title = "occupational_va_shocks_full_omn.csv"
+    
+        
+    ipums_vars <- read.csv(here("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_ipums_vars.csv")) %>% tibble %>% 
+      mutate(acs_occ_code = occ)
+    
+    temp %>% 
+      group_by(acs_2010_code, date) %>% 
+      summarise(shock = mean(shock, na.rm = TRUE),
+                occ_code = first(occ_code),
+                OCC2010_desc = first(OCC2010_desc),
+                broad_occ = first(broad_occ), 
+                X = first(X)) %>% 
+      ungroup %>% 
+    mutate(
+      acs_2010_code = factor(acs_2010_code, levels = ipums_vars$acs_occ_code)
+    ) -> temp
+      
+  }
+
+```
+
+```{r, echo = FALSE, message = FALSE}
+stopifnot(temp %>% filter(is.na(X)) %>% nrow(.) == 0)
+stopifnot(temp %>% filter(is.na(date)) %>% nrow(.) == 0)
+stopifnot(temp %>% filter(is.na(shock)) %>% nrow(.) == 0)
+stopifnot(abm %>% arrange(X) %>% identical(abm))
+stopifnot(temp %>% arrange(X) %>% identical(temp))
+
+if(nx == "Original OMN"){
+ file_title = "occupational_va_shocks_original_omn.csv"
+  
+  }else if(nx == "Full OMN"){
+    
+    file_title = "occupational_va_shocks_full_omn.csv"
+  
+  }else if(nx == "ONET Related Occupations"){
+    
+  file_title = "occupational_va_shocks_onet_related_occs.csv"
+  }else if(nx == "OMN SOC_minor"){
+  file_title = "occupational_va_shocks_omn_soc_minor_occs.csv"
+}
+
+if(nx != "OMN SOC_minor"){
+  temp %>% 
+  select(acs_2010_code, date, shock) %>% 
+  arrange(acs_2010_code, date) %>% 
+  pivot_wider(names_from = date, values_from = shock) -> tosave
+}else{
+  temp %>% 
+    select(occ_code, date, shock) %>% 
+    arrange(occ_code, date) %>% 
+    pivot_wider(names_from = date, values_from = shock) -> tosave
+  stopifnot(identical(tosave$occ_code, abm$SOC2010))
+}
+
+
+if(nx == "Full OMN"){
+  stopifnot(identical(as.character(tosave$acs_2010_code), as.character(ipums_vars$acs_occ_code)))
+    stopifnot(nrow(tosave) == nrow(ipums_vars))
+}else{
+  stopifnot(nrow(tosave) == nrow(abm))
+}
+
+
+write.csv(tosave, here(paste0("calibration_remote/data/", file_title)))
+
+if(nx == "Original OMN"){stopifnot(identical(read.csv(paste0("calibration_remote/data/", file_title)), read.csv(here("calibration_remote/data/occupational_va_shocks.csv"))))}
+
+```
+
+
+
