@@ -1,20 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-<<<<<<< Updated upstream
-#from torch import norm
-from scipy.stats import norm
-from abm_funs import *
-#calib_date = ["2000-12-01", "2019-05-01"]
-calib_date = ["2000-12-01", "2024-05-01"]
-
-
-path = "~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/calibration_remote/"
-
-
-# Network in put file
-def network_input_builder(nx, complete):
-=======
 import os
 #from torch import norm
 from scipy.stats import norm
@@ -27,7 +13,6 @@ path = "~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/calibration_re
 
 # Network in put file
 def network_input_builder(nx, complete, calib_date):
->>>>>>> Stashed changes
     if nx == "original_omn":
         print("Using Corrected Original OMN")
         #A = pd.read_csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/data/omn_asec_11_19_occ_matched_plus_oldtransitions_2025_normalised.csv", delimiter=",", header = None)
@@ -136,11 +121,7 @@ def network_input_builder(nx, complete, calib_date):
         # plt.title("Occupation-Specific Shocks Over Time")
         # plt.xticks(rotation=45)
         # plt.grid()
-<<<<<<< Updated upstream
-        # plt.show()
-=======
         # plt.close()
->>>>>>> Stashed changes
 
         # plt.savefig('output/figures/occ_shocks.png', dpi=300)
 
@@ -176,12 +157,8 @@ def network_input_builder(nx, complete, calib_date):
         # Needs input data...
         demand_target = employment + vacancies
 
-<<<<<<< Updated upstream
-        wage_comp = ipums_input[['acs_occ_code', 'median_weekly_earnings']]
-=======
         #wage_comp = ipums_input[['acs_occ_code', 'median_weekly_earnings']]
         wage_comp = ipums_input[['acs_occ_code', 'median_weekly_earnings']].copy()
->>>>>>> Stashed changes
         wage_comp['median_annual_earnings'] = wage_comp['median_weekly_earnings'] * 52
         wage_dist = pd.read_csv("~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/data/occ_macro_vars/OEWS/wage_distributions_full_omn.csv", compression='gzip',  delimiter=",", header = 0)
         wage_full = wage_comp.merge(wage_dist, left_on='acs_occ_code', right_on='acs_occ_code', how='inner')
@@ -239,12 +216,6 @@ def network_input_builder(nx, complete, calib_date):
                 mod_data['separation_rates']
         )
         print("Initialised network.")
-<<<<<<< Updated upstream
-
-
-        occ_shocks = pd.read_csv(path+"data/occupational_va_shocks_full_omn.csv", index_col = 0).drop('acs_2010_code', axis = 'columns')
-        print(occ_shocks.shape)
-=======
         
         #################################################################################################
         ####################### INPUT SERIES FOR MODEL ##################################################
@@ -288,7 +259,6 @@ def network_input_builder(nx, complete, calib_date):
 
         occ_shocks = pd.read_csv(path+"data/occupational_va_shocks_full_omn.csv", index_col = 0).drop('acs_2010_code', axis = 'columns')
         #print(occ_shocks.shape)
->>>>>>> Stashed changes
 
         df_quarterly = occ_shocks.transpose() + 1  # now rows are dates, columns are occupations
         # Convert index to datetime
@@ -305,44 +275,22 @@ def network_input_builder(nx, complete, calib_date):
             # Segment 1: Before calibration window
             plt.plot(df_monthly.loc[df_monthly.index < calib_date[0]].index,
                     df_monthly.loc[df_monthly.index < calib_date[0], col],
-<<<<<<< Updated upstream
-                    color='darkseagreen', linewidth=0.5, alpha=0.1)
-=======
                     color='lavender', linewidth=0.5, alpha=0.1)
->>>>>>> Stashed changes
 
             # Segment 2: During calibration window
             plt.plot(df_monthly.loc[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1])].index,
                     df_monthly.loc[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1]), col],
-<<<<<<< Updated upstream
-                    color='forestgreen', linewidth=0.5, alpha = 0.5)
-=======
                     color='orchid', linewidth=0.5, alpha = 0.5)
->>>>>>> Stashed changes
 
             # Segment 3: After calibration window
             plt.plot(df_monthly.loc[df_monthly.index > calib_date[1]].index,
                     df_monthly.loc[df_monthly.index > calib_date[1], col],
-<<<<<<< Updated upstream
-                    color='darkseagreen', linewidth=0.5, alpha=0.1)
-=======
                     color='lavender', linewidth=0.5, alpha=0.1)
->>>>>>> Stashed changes
 
         # Vertical lines for calibration boundaries
         for cal_date in calib_date:
             plt.axvline(x=pd.to_datetime(cal_date), color='steelblue', linestyle='--', alpha=0.6)
 
-<<<<<<< Updated upstream
-        #plt.plot(monthly_dates, gdp_dat, color='rebeccapurple', label='HP Filtered GDP')
-
-        plt.xlabel("Date")
-        plt.ylabel("Value")
-        plt.title("Occupation-Specific Shocks Over Time (ONET Occs)")
-        plt.xticks(rotation=45)
-        plt.grid()
-        plt.show()
-=======
         plt.plot(monthly_dates, gdp_dat, color='rebeccapurple', label='HP Filtered GDP')
 
         plt.xlabel("Date")
@@ -353,7 +301,6 @@ def network_input_builder(nx, complete, calib_date):
         plt.savefig(os.path.expanduser("~/Dropbox/Apps/Overleaf/ABM_Transitions/new_figures/full_omn/figures/occupational_va_shocks.png"), bbox_inches='tight', 
             pad_inches=0.1, dpi=300)
         plt.close()
->>>>>>> Stashed changes
 
         occ_shocks_dat = np.array(df_monthly[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1])].transpose())
 
@@ -386,11 +333,7 @@ def network_input_builder(nx, complete, calib_date):
 
         assert(np.array_equal(A.index.values, occ_ids['acs_occ_code'].values))
 
-<<<<<<< Updated upstream
-        wage_comp = ipums_input[['acs_occ_code', 'median_weekly_earnings']]
-=======
         wage_comp = ipums_input[['acs_occ_code', 'median_weekly_earnings']].copy()
->>>>>>> Stashed changes
         wage_comp['median_annual_earnings'] = wage_comp['median_weekly_earnings'] * 52
         wage_dist = pd.read_csv("~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/data/occ_macro_vars/OEWS/wage_distributions_onet.csv", compression='gzip',  delimiter=",", header = 0)
         wage_full = wage_comp.merge(wage_dist, left_on='acs_occ_code', right_on='acs_occ_code', how='inner')
@@ -483,11 +426,7 @@ def network_input_builder(nx, complete, calib_date):
         print("Initialised network.")
 
         occ_shocks = pd.read_csv(path+"data/occupational_va_shocks_onet_related_occs.csv", index_col = 0).drop('X', axis = 'columns')
-<<<<<<< Updated upstream
-        print(occ_shocks.shape)
-=======
         #print(occ_shocks.shape)
->>>>>>> Stashed changes
 
         df_quarterly = occ_shocks.transpose() + 1  # now rows are dates, columns are occupations
         # Convert index to datetime
@@ -526,11 +465,7 @@ def network_input_builder(nx, complete, calib_date):
         # plt.title("Occupation-Specific Shocks Over Time (ONET Occs)")
         # plt.xticks(rotation=45)
         # plt.grid()
-<<<<<<< Updated upstream
-        # plt.show()
-=======
         # plt.close()
->>>>>>> Stashed changes
 
         occ_shocks_dat = np.array(df_monthly[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1])].transpose())
 
@@ -563,11 +498,7 @@ def network_input_builder(nx, complete, calib_date):
         # Needs input data...
         demand_target = employment + vacancies
 
-<<<<<<< Updated upstream
-        wage_comp = ipums_input[['SOC_minor', 'median_weekly_earnings']]
-=======
         wage_comp = ipums_input[['SOC_minor', 'median_weekly_earnings']].copy()
->>>>>>> Stashed changes
         wage_comp['median_annual_earnings'] = wage_comp['median_weekly_earnings'] * 52
         wage_dist = pd.read_csv("~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/data/occ_macro_vars/OEWS/wage_distributions_omn_soc_minor.csv", delimiter=",", header = 0)
         wage_full = wage_comp.merge(wage_dist, left_on='SOC_minor', right_on='SOC_minor', how='inner')
@@ -628,11 +559,7 @@ def network_input_builder(nx, complete, calib_date):
 
 
         occ_shocks = pd.read_csv(path+"data/occupational_va_shocks_omn_soc_minor_occs.csv", index_col = 0).drop('occ_code', axis = 'columns')
-<<<<<<< Updated upstream
-        print(occ_shocks.shape)
-=======
         #print(occ_shocks.shape)
->>>>>>> Stashed changes
 
         df_quarterly = occ_shocks.transpose() + 1  # now rows are dates, columns are occupations
         # Convert index to datetime
@@ -672,52 +599,12 @@ def network_input_builder(nx, complete, calib_date):
         plt.title("Occupation-Specific Shocks Over Time (ONET Occs)")
         plt.xticks(rotation=45)
         plt.grid()
-<<<<<<< Updated upstream
-        plt.show()
-=======
         plt.savefig('output/omn_soc_minor/figures/occ_shocks.png', dpi=300)
         plt.close()
->>>>>>> Stashed changes
 
         occ_shocks_dat = np.array(df_monthly[(df_monthly.index >= calib_date[0]) & (df_monthly.index <= calib_date[1])].transpose())
     elif nx == "onet_small":
         return
-<<<<<<< Updated upstream
-    # elif nx == "complete":
-    #     print("Using complete network")
-    #     # Create complete network
-    #     n = A.shape
-    #     complete_network = np.ones(n)
-    #     mod_data = {
-    #         "A": complete_network,
-    #         "employment": employment,
-    #         'unemployment': unemployment,
-    #         'vacancies': vacancies,
-    #         'demand_target': demand_target,
-    #         'wages': wages,
-    #         'gend_share': gend_share,
-    #         'entry_level': experience_req['entry_level'],
-    #         # 'entry_age': experience_req['entry_age'],
-    #         'experience_age': experience_req['experience_age'],
-    #         'separation_rates': seps_rates['seps_rate']*10
-    #     }
-
-    #     net_temp, vacs = initialise(
-    #         len(mod_data['A']),
-    #         mod_data['employment'].to_numpy(),
-    #         mod_data['unemployment'].to_numpy(),
-    #         mod_data['vacancies'].to_numpy(),
-    #         mod_data['demand_target'].to_numpy(),
-    #         mod_data['A'],
-    #         mod_data['wages'].to_numpy(),
-    #         mod_data['gend_share'].to_numpy(),
-    #         7, 1,
-    #         mod_data['entry_level'],
-    #         mod_data['experience_age'],
-    #         mod_data['separation_rates']
-    #     )
-
-=======
     
     elif nx == "single_node":
         print("Using Single Node Network")
@@ -828,5 +715,4 @@ def network_input_builder(nx, complete, calib_date):
         
         occ_shocks_dat = np.array(occ_shocks_single.transpose())
         
->>>>>>> Stashed changes
     return mod_data, net_temp, vacs, occ_ids, occ_shocks_dat
