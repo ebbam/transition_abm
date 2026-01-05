@@ -17,6 +17,7 @@ library(lfe)  # for regressions with clustering
 library(weights)
 library(diagis)
 library(readxl)
+library(Hmisc)
 library(fixest)      # For regressions with clustering and fixed effects
 library(patchwork)
 library(broom) # For extracting model coefficients

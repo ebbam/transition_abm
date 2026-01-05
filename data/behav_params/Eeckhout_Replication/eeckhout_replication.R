@@ -256,13 +256,15 @@ t1 <- flow_rates_sa %>%
   select(date, eu_quart_s, ee_quart_s) %>% 
   pivot_longer(!date) %>% 
   ggplot(aes(x = date, y = value, color = name))+
-  geom_line()
+  geom_line() +
+  common_theme
 
 t2 <- flow_rates_sa %>% 
   select(date, EE_quart_s, EE_x_5_quart_s) %>% 
   pivot_longer(!date) %>% 
   ggplot(aes(x = date, y = value, color = name))+
-  geom_line()
+  geom_line() +
+  common_theme
 
 t2
 
@@ -408,7 +410,7 @@ for(new in c(FALSE, TRUE)){
     geom_line(aes(y = (u_quart_s*8) - 0.6, color = "Unemployment")) +
     scale_y_continuous(sec.axis = sec_axis(~ (./8)+0.6, name = "u (level)", breaks = c(0.04,0.08,0.1))) +
     labs(y = "Gamma (% deviation from trend)", x = "Time", title = paste0("New data: ", new)) +
-    theme_minimal() +
+    common_theme +
     theme(legend.position = "bottom")
   
   #print(p1_orig)
@@ -459,7 +461,7 @@ for(new in c(FALSE, TRUE)){
     geom_line(aes(y = (u_quart_s*8)-0.55, color = "Unemployment")) +
     scale_y_continuous(sec.axis = sec_axis(~ (./8)+0.55, name = "u (level)")) +
     labs(y = "Lambda (% deviation from trend)", x = "Time", title = paste0("New data: ", new)) +
-    theme_minimal() + 
+    common_theme +
     theme(legend.position = "bottom")
   
   p_list <- append(p_list, list(p2_orig))
@@ -591,8 +593,9 @@ for(new in c(FALSE, TRUE)){
       limits = c(min(merged_df$log_comp_searchers_sc, na.rm = TRUE) -0.001, max(merged_df$log_comp_searchers_sc, na.rm = TRUE) +0.001),
       sec.axis = sec_axis(transform = rescale$inverse_transform, name = "u (level)")
     ) +
-    theme_minimal() +
+    common_theme + 
     ggtitle(paste0("New data: ", new)) +
+    labs(x = "Date") +
     theme(plot.background = element_rect(fill = "white", color = NA), legend.position = "bottom")
   
   #print(p1)
@@ -623,9 +626,11 @@ for(new in c(FALSE, TRUE)){
       limits = c(0.1, 0.6),
       sec.axis = sec_axis(transform = rescale$inverse_transform, name = "Unemployment Rate")
     ) +
-    theme_minimal() +
+    common_theme + 
+    labs(x = "Date") +
     ggtitle(paste0("Employed as share of jobseekers (lamda*gamma/s) New data: ", new)) +
-    theme(plot.background = element_rect(fill = "white", color = NA), legend.position = "bottom")
+    # theme(plot.background = element_rect(fill = "white", color = NA), 
+      theme(legend.position = "bottom")
   
   save_for_plotting <- merged_df
   
@@ -652,8 +657,9 @@ for(new in c(FALSE, TRUE)){
       limits = c(0, 0.4),
       sec.axis = sec_axis(transform = rescale$inverse_transform, name = "u (level)")
     ) +
-    theme_minimal() +
+    common_theme +
     ggtitle(paste0("Employed People (gamma): New data: ", new)) +
+    labs(x = "Date") +
     theme(plot.background = element_rect(fill = "white", color = NA), legend.position = "bottom")
   
   #print(p1)
@@ -679,8 +685,9 @@ for(new in c(FALSE, TRUE)){
       limits = c(0.02, 0.06),
       sec.axis = sec_axis(transform = rescale$inverse_transform, name = "u (level)")
     ) +
-    theme_minimal() +
+    common_theme +
     ggtitle(paste0("(Employed jobseekers - lambda*gamma) w. New data: ", new)) +
+    labs(x = "Date") +
     theme(plot.background = element_rect(fill = "white", color = NA), legend.position = "bottom")
   
   #print(p1)
@@ -706,8 +713,9 @@ for(new in c(FALSE, TRUE)){
       limits = c(0, 0.67),
       sec.axis = sec_axis(transform = rescale$inverse_transform, name = "u (level)")
     ) +
-    theme_minimal() +
+    common_theme +
     ggtitle(paste0("(Employed search intensity - lambda) w. New data: ", new)) +
+    labs(x = "Date") +
     theme(plot.background = element_rect(fill = "white", color = NA), legend.position = "bottom")
   
   #print(p1)
@@ -771,8 +779,9 @@ for(new in c(FALSE, TRUE)){
       limits = c(-0.3, 0.2),
       sec.axis = sec_axis(transform = rescale$inverse_transform, name = "u (level)")
     ) +
-    theme_minimal() +
+    common_theme + 
     ggtitle(paste0("New data: ", new)) +
+    labs(x = "Date") +
     theme(plot.background = element_rect(fill = "white", color = NA), legend.position = "bottom")
   
   #print(p2)
@@ -815,7 +824,8 @@ t2 <- flow_rates_sa %>%
   select(date, EE_quart_s, EE_x_5_quart_s) %>% 
   pivot_longer(!date) %>% 
   ggplot(aes(x = date, y = value, color = name))+
-  geom_line()
+  geom_line() + 
+  common_theme
 
 t2
 
@@ -879,13 +889,8 @@ ggplot(plot_data, aes(x = x)) +
        color = "Model",  # Unifies the legend title for both color & fill
        fill = "Model",
        caption = "The above are predicted values of EE transitions as a function of the HP-filtered GDP cycle.\nThe black line represents the real (left) and de-trended (right) EE transition rate (EE/employment)\nusing the Current Population Survey and tabulation method from Eeckhout et al.\nThe green and blue lines represent the fitted/predicted values using a linear predictar and linear predictor with a linear trend component, respectively.\nThe red line demonstrates the fitted values of the HP filtered EE series using a linear predictor on the HP-filtered GDP series.") +
-  theme_minimal() +
-  theme(
-    title = element_text(size = 16),
-    axis.title.y.left = element_text(size = 14),
-    axis.title.y.right = element_text(size = 14)  # Different color for secondary axis
-  ) +
-  facet_wrap(~hp, scales = "free")
+  facet_wrap(~hp, scales = "free") +
+  common_theme
 
 modelsummary(res_list, gof_omit = 'AIC|BIC|Lik|RMSE')
 
@@ -917,12 +922,12 @@ comp_searchers_plot_save <- ggplot(save_for_plotting, aes(x = time)) +
                "UER"                  = "dashed")
   ) +
   
-  theme_minimal() +
+  common_theme + 
   ggtitle("Employed as share of jobseekers") +
-  theme(
-    plot.background = element_rect(fill = "white", color = NA),
-    legend.position = "bottom"
-  ) +
+  # theme(
+  #   plot.background = element_rect(fill = "white", color = NA),
+  #   legend.position = "bottom"
+  # ) +
   common_theme
 
 ggsave(
