@@ -1,0 +1,7 @@
+Parameter,Value,otj,cyc_otj,cyc_ue,disc,Timestamp,model_cat
+d_u,0.13419997509266005,False,False,False,False,2025-11-26 17:30:48,nonbehav
+gamma_u,0.7948758106674283,False,False,False,False,2025-11-26 17:30:48,nonbehav
+d_u,0.11717848795345444,True,False,False,False,2025-11-26 21:04:12,otj_nonbehav
+gamma_u,0.6477944832492041,True,False,False,False,2025-11-26 21:04:12,otj_nonbehav
+d_u,0.027249879917823155,True,False,False,True,2025-11-27 02:58:25,otj_disc
+gamma_u,0.03333587370183669,True,False,False,True,2025-11-27 02:58:25,otj_disc
