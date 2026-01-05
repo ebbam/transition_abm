@@ -220,7 +220,11 @@ for i, index_type in enumerate(bus_conf['Transformation'].unique()):
 
 plt.suptitle('OECD Business Confidence Metrics - USA')
 plt.tight_layout()
+<<<<<<< Updated upstream
 plt.show()
+=======
+plt.close()
+>>>>>>> Stashed changes
 
 # Load JOLTS data
 plt.figure(figsize=(12, 6))
@@ -234,7 +238,11 @@ plt.ylabel('Rate')
 plt.title('JOLTS Rates Over Time')
 plt.legend()
 plt.grid(True)
+<<<<<<< Updated upstream
 plt.show()
+=======
+plt.close()
+>>>>>>> Stashed changes
 
 #realgdp = macro_observations[["DATE", "REALGDP"]].dropna(subset=["REALGDP"]).reset_index()
 realgdp['log_REALGDP'] = np.log2(realgdp['REALGDP'])
@@ -317,13 +325,22 @@ labels = [line.get_label() for line in lines]
 ax1.legend(lines, labels, loc='upper right')
 
 plt.tight_layout()
+<<<<<<< Updated upstream
 plt.show()
+=======
+plt.close()
+>>>>>>> Stashed changes
 
 # Different calibration windows
 # Full time series: "2024-5-1"
 # calib_date = ["2004-12-01", "2019-05-01"]
+<<<<<<< Updated upstream
 #calib_date = ["2000-12-01", "2019-05-01"]
 calib_date = ["2000-12-01", "2024-05-01"]
+=======
+calib_date = ["2000-12-01", "2019-05-01"]
+#calib_date = ["2000-12-01", "2024-05-01"]
+>>>>>>> Stashed changes
 bus_conf_short = bus_conf_index[(bus_conf_index['DATE'] >= calib_date[0]) & (bus_conf_index['DATE'] <= calib_date[1])]
 gdp_dat_pd = realgdp.set_index('DATE').sort_index()
 
@@ -363,7 +380,11 @@ plt.xlabel('Date')
 plt.ylabel('log_Cycle')
 plt.title('Calibration Window')
 plt.legend()
+<<<<<<< Updated upstream
 plt.show()
+=======
+plt.close()
+>>>>>>> Stashed changes
 
 ##################################################################################################
 ####################### OCCUPATION-SPECIFIC SHOCKS ###############################################
@@ -408,7 +429,11 @@ plt.show()
 # plt.title("Occupation-Specific Shocks Over Time")
 # plt.xticks(rotation=45)
 # plt.grid()
+<<<<<<< Updated upstream
 # plt.show()
+=======
+# plt.close()
+>>>>>>> Stashed changes
 
 # #plt.savefig('output/figures/occ_shocks.png', dpi=300)
 
@@ -453,5 +478,9 @@ seekers_comp_obs = seekers_comp_obs_full[(seekers_comp_obs_full['DATE'] >= calib
 
 plt.plot(seekers_comp_obs_full['DATE'], seekers_comp_obs_full['Seeker Composition'], label='Full Series', color='lightgray', linestyle='dotted')
 plt.plot(seekers_comp_obs['DATE'], seekers_comp_obs['Seeker Composition'], label='Calibration Window', color='blue', linestyle='solid')
+<<<<<<< Updated upstream
 plt.show()
+=======
+plt.close()
+>>>>>>> Stashed changes
 

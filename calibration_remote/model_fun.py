@@ -12,6 +12,11 @@ from scipy.stats import norm
 # Model Run ########
 ####################
 def run_single_local(d_u, 
+<<<<<<< Updated upstream
+=======
+                    d_v,
+                    gamma_v,
+>>>>>>> Stashed changes
                     gamma_u,
                     otj,
                     cyc_otj, 
@@ -32,6 +37,10 @@ def run_single_local(d_u,
                     emp_apps,
                     theta,
                     mistake_rate,
+<<<<<<< Updated upstream
+=======
+                    strict_rw,
+>>>>>>> Stashed changes
                     simple_res = False):
 
     """ Runs the model once
@@ -120,7 +129,11 @@ def run_single_local(d_u,
     
             for u in occ.list_of_unemployed:
                 unemp_seekers += 1
+<<<<<<< Updated upstream
                 u.search_and_apply(net, r_vacs, disc, app_effort_dat, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp)
+=======
+                u.search_and_apply(net, r_vacs, disc, app_effort_dat, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp, strict_reservation_wage = strict_rw)
+>>>>>>> Stashed changes
 
             if otj:
                 # # For both models, a mean of 7% of employed workers are searching for new jobs
@@ -272,9 +285,15 @@ def run_single_local(d_u,
             curr_vacs = len([v_open for v_open in vacs_temp if v_open.occupation_id == occ.occupation_id])
             occ.current_demand = (curr_vacs + emp)
             # If real-world vacancy rate is greater than the current vacancy rate, then we create new vacancies 
+<<<<<<< Updated upstream
             vac_prob = max(0, vr_t - (curr_vacs/(occ.target_demand + 1)))
             # vac_prob = d_v + ((gamma_v * max(0, occ.target_demand*(bus_conf) - occ.current_demand)) / (emp + 1))
             vacs_create = int(np.random.binomial(occ.target_demand, vac_prob))
+=======
+            vac_prob= max(0, vr_t - (curr_vacs/(occ.target_demand + 1)))
+            #vac_prob = d_v + (1-d_v)*((gamma_v * max(0, occ.target_demand*(occ_shock) - occ.current_demand)) / (emp + 1))
+            vacs_create = int(np.random.binomial(occ.target_demand, np.clip(vac_prob, 0, 1)))
+>>>>>>> Stashed changes
 
             #vacs_create = emp*int(vac_prob) + int(np.random.binomial(emp, vac_prob%1))
             for v in range(vacs_create):
@@ -288,7 +307,11 @@ def run_single_local(d_u,
                 w75 = np.exp(occ.wage_mu + occ.wage_sigma * z75)
 
                 # Clip to IQR (25th–75th)
+<<<<<<< Updated upstream
                 w_clipped = np.clip(w, w25, w75)
+=======
+                w_clipped = w #np.clip(w, w25, w75)
+>>>>>>> Stashed changes
 
                 # Create vacancy object with clipped wage
                 vacs_temp.append(

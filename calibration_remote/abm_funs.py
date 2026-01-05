@@ -590,6 +590,314 @@ class worker:
 
     #     return vsent
     
+<<<<<<< Updated upstream
+=======
+    # def search_and_apply(
+    #     wrkr,
+    #     net,
+    #     vacancies_by_occ,
+    #     disc,
+    #     app_effort,
+    #     wage_prefs,
+    #     mis_rate: float = 0.10,
+    #     unique_random: bool = False,
+    #     global_pool_override=None
+    # ):
+    #     MAX_VACS = 30
+    #     wrkr_occ = wrkr.occupation_id
+
+    #     # local-bindings for speed
+    #     rand = random.random
+    #     r_choice = random.choice
+    #     r_sample = random.sample
+    #     neigh_probs = net[wrkr_occ].list_of_neigh_weights
+    #     occ_count = len(neigh_probs)
+
+    #     # Build (vacancy, weight) pairs in one pass
+    #     # *** REMOVE reservation wage filtering here ***
+    #     all_vacs = []
+    #     weights = []
+        
+    #     # Compute reservation wage once if needed
+    #     if wage_prefs:
+    #         res_wage = wrkr.wage * reservation_wage(wrkr.time_unemployed, res_wage_dat)
+    #     else:
+    #         res_wage = np.nan
+
+    #     for occ_id, occ_prob in enumerate(neigh_probs):
+    #         if occ_prob == 0:
+    #             continue
+    #         vacs = vacancies_by_occ.get(occ_id)
+    #         if not vacs:
+    #             continue
+            
+    #         # *** DON'T filter by wage here - include all vacancies ***
+    #         all_vacs.extend(vacs)
+    #         weights.extend([occ_prob] * len(vacs))
+
+    #     if not all_vacs:
+    #         wrkr.apps_sent = 0
+    #         wrkr.d_wage_offer = np.nan
+    #         #print(f"{wrkr_occ} all_vacs empty")
+    #         return 0
+
+    #     n_to_sample = min(MAX_VACS, len(all_vacs))
+
+    #     # Sampling logic (unchanged)
+    #     use_weights = any(w != weights[0] for w in weights) if weights else False
+
+    #     if use_weights:
+    #         found_vacs = random.choices(all_vacs, weights=weights, k=n_to_sample)
+    #     else:
+    #         if n_to_sample == len(all_vacs):
+    #             found_vacs = list(all_vacs)
+    #         else:
+    #             found_vacs = r_sample(all_vacs, k=n_to_sample)
+
+    #     # mean wage of sampled pool
+    #     wages_iter = (getattr(v, "wage", 0.0) for v in found_vacs)
+    #     try:
+    #         mean_wage_sampled = float(np.mean(list(wages_iter))) if found_vacs else 0.0
+    #     except Exception:
+    #         mean_wage_sampled = 0.0
+
+    #     vsent = 0
+
+    #     # Helper: compute utility quickly; local-binding of net neighbor weights lookup
+    #     neigh_weights = net[wrkr_occ].list_of_neigh_weights
+    #     util_fn = util
+
+    #     if disc:
+    #         # *** MODIFY utility function to include reservation wage penalty ***
+    #         def _util_for_v(v):
+    #             v_wage = getattr(v, "wage", 0.0)
+    #             occ_w = neigh_weights[v.occupation_id] if v.occupation_id < len(neigh_weights) else 0.0
+    #             base_util = util_fn(wrkr.wage, v_wage, occ_w)
+                
+    #             # Apply reservation wage as utility modifier (not hard filter)
+    #             if wage_prefs and not np.isnan(res_wage):
+    #                 if v_wage < res_wage:
+    #                     # Penalize vacancies below reservation wage
+    #                     # The further below, the stronger the penalty
+    #                     shortfall_ratio = (res_wage - v_wage) / res_wage
+    #                     # Exponential decay: 50% penalty at res_wage, 90% at 50% below res_wage
+    #                     penalty = np.exp(-3 * shortfall_ratio)
+    #                     return base_util * penalty
+                
+    #             return base_util
+
+    #         n_apps = applications_sent(wrkr.time_unemployed, app_effort, expectation=False)
+    #         available = len(found_vacs)
+
+    #         # Your risk aversion adjustment (UNCHANGED - this is correct!)
+    #         if available < wrkr.risk_aversion + n_apps:
+    #             if available <= wrkr.risk_aversion:
+    #                 adjusted_start = 0
+    #                 adjusted_n_apps = min(n_apps, available)
+    #             else:
+    #                 adjusted_start = max(0, available - n_apps)
+    #                 adjusted_n_apps = min(n_apps, available - adjusted_start)
+    #         else:
+    #             adjusted_start = wrkr.risk_aversion
+    #             adjusted_n_apps = n_apps
+
+    #         want_k = adjusted_start + adjusted_n_apps
+
+    #         top_k = heapq.nlargest(want_k, found_vacs, key=_util_for_v) if want_k > 0 else []
+    #         chosen_vacs = top_k[adjusted_start:adjusted_start + adjusted_n_apps]
+            
+    #         # apply to chosen vacancies
+    #         gpool = global_pool_override
+    #         append_to_applicants = lambda vac: vac.applicants.append(wrkr)
+
+    #         for v in chosen_vacs:
+    #             if mis_rate > 0 and rand() < mis_rate and gpool:
+    #                 random_vac = r_choice(gpool)
+    #                 append_to_applicants(random_vac)
+    #             else:
+    #                 append_to_applicants(v)
+    #             vsent += 1
+
+    #     else:
+    #         # when not disc, choose up to 7 random vacancies
+    #         n_choice = min(len(found_vacs), 7)
+    #         chosen_sample = found_vacs if n_choice == len(found_vacs) else r_sample(found_vacs, k=n_choice)
+    #         # if n_choice < 7:
+    #         #     print(f'Occ_id = {wrkr_occ}; n_vacs = {n_choice}; Len of chosen_sample = {len(chosen_sample)}')
+    #         gpool = global_pool_override
+    #         append_to_applicants = lambda vac: vac.applicants.append(wrkr)
+
+    #         for v in chosen_sample:
+    #             if mis_rate > 0 and rand() < mis_rate and gpool:
+    #                 random_vac = r_choice(gpool)
+    #                 append_to_applicants(random_vac)
+    #             else:
+    #                 append_to_applicants(v)
+    #             vsent += 1
+
+    #     # Set wrkr outputs
+    #     wrkr.d_wage_offer = (mean_wage_sampled - res_wage) if disc else np.nan
+    #     wrkr.apps_sent = vsent
+
+    #     return vsent
+### MOST RECENT 19 DECEMBER 
+        # def search_and_apply(
+        #     wrkr,
+        #     net,
+        #     vacancies_by_occ,
+        #     disc,
+        #     app_effort,
+        #     wage_prefs,
+        #     mis_rate: float = 0.10,
+        #     unique_random: bool = False,
+        #     global_pool_override=None,
+        #     strict_reservation_wage: bool = False  # NEW PARAMETER
+        # ):
+        #     MAX_VACS = 30
+        #     wrkr_occ = wrkr.occupation_id
+
+        #     # local-bindings for speed
+        #     rand = random.random
+        #     r_choice = random.choice
+        #     r_sample = random.sample
+        #     neigh_probs = net[wrkr_occ].list_of_neigh_weights
+        #     occ_count = len(neigh_probs)
+
+        #     # Build (vacancy, weight) pairs in one pass
+        #     all_vacs = []
+        #     weights = []
+            
+        #     # Compute reservation wage once if needed (only when disc=True AND wage_prefs=True)
+        #     if wage_prefs:
+        #         res_wage = wrkr.wage * reservation_wage(wrkr.time_unemployed, res_wage_dat)
+        #     else:
+        #         res_wage = np.nan
+
+        #     for occ_id, occ_prob in enumerate(neigh_probs):
+        #         if occ_prob == 0:
+        #             continue
+        #         vacs = vacancies_by_occ.get(occ_id)
+        #         if not vacs:
+        #             continue
+                
+        #         # Include all vacancies (no filtering here yet)
+        #         all_vacs.extend(vacs)
+        #         weights.extend([occ_prob] * len(vacs))
+
+        #     if not all_vacs:
+        #         wrkr.apps_sent = 0
+        #         wrkr.d_wage_offer = np.nan
+        #         return 0
+
+        #     n_to_sample = min(MAX_VACS, len(all_vacs))
+
+        #     # Sampling logic
+        #     use_weights = any(w != weights[0] for w in weights) if weights else False
+
+        #     if use_weights:
+        #         found_vacs = random.choices(all_vacs, weights=weights, k=n_to_sample)
+        #     else:
+        #         if n_to_sample == len(all_vacs):
+        #             found_vacs = list(all_vacs)
+        #         else:
+        #             found_vacs = r_sample(all_vacs, k=n_to_sample)
+
+        #     # *** APPLY STRICT RESERVATION WAGE FILTER IF REQUESTED ***
+        #     # Only applies when disc=True AND wage_prefs=True AND strict_reservation_wage=True
+        #     if disc and wage_prefs and not np.isnan(res_wage) and strict_reservation_wage:
+        #         found_vacs = [v for v in found_vacs if getattr(v, "wage", 0.0) >= res_wage]
+                
+        #         # If no vacancies pass the filter, return early
+        #         if not found_vacs:
+        #             wrkr.apps_sent = 0
+        #             wrkr.d_wage_offer = np.nan
+        #             return 0
+
+        #     # mean wage of sampled pool (after potential filtering)
+        #     wages_iter = (getattr(v, "wage", 0.0) for v in found_vacs)
+        #     try:
+        #         mean_wage_sampled = float(np.mean(list(wages_iter))) if found_vacs else 0.0
+        #     except Exception:
+        #         mean_wage_sampled = 0.0
+
+        #     vsent = 0
+
+        #     # Helper: compute utility quickly
+        #     neigh_weights = net[wrkr_occ].list_of_neigh_weights
+        #     util_fn = util
+
+        #     if disc:
+        #         # Define utility function
+        #         def _util_for_v(v):
+        #             v_wage = getattr(v, "wage", 0.0)
+        #             occ_w = neigh_weights[v.occupation_id] if v.occupation_id < len(neigh_weights) else 0.0
+        #             base_util = util_fn(wrkr.wage, v_wage, occ_w)
+                    
+        #             # *** ONLY APPLY PENALTY IF wage_prefs=True AND NOT USING STRICT FILTER ***
+        #             if wage_prefs and not np.isnan(res_wage) and not strict_reservation_wage:
+        #                 if v_wage < res_wage:
+        #                     # Penalize vacancies below reservation wage
+        #                     shortfall_ratio = (res_wage - v_wage) / res_wage
+        #                     penalty = np.exp(-3 * shortfall_ratio)
+        #                     return base_util * penalty
+                    
+        #             return base_util
+
+        #         n_apps = applications_sent(wrkr.time_unemployed, app_effort, expectation=False)
+        #         available = len(found_vacs)
+
+        #         # Risk aversion adjustment
+        #         if available < wrkr.risk_aversion + n_apps:
+        #             if available <= wrkr.risk_aversion:
+        #                 adjusted_start = 0
+        #                 adjusted_n_apps = min(n_apps, available)
+        #             else:
+        #                 adjusted_start = max(0, available - n_apps)
+        #                 adjusted_n_apps = min(n_apps, available - adjusted_start)
+        #         else:
+        #             adjusted_start = wrkr.risk_aversion
+        #             adjusted_n_apps = n_apps
+
+        #         want_k = adjusted_start + adjusted_n_apps
+
+        #         top_k = heapq.nlargest(want_k, found_vacs, key=_util_for_v) if want_k > 0 else []
+        #         chosen_vacs = top_k[adjusted_start:adjusted_start + adjusted_n_apps]
+                
+        #         # apply to chosen vacancies
+        #         gpool = global_pool_override
+        #         append_to_applicants = lambda vac: vac.applicants.append(wrkr)
+
+        #         for v in chosen_vacs:
+        #             if mis_rate > 0 and rand() < mis_rate and gpool:
+        #                 random_vac = r_choice(gpool)
+        #                 append_to_applicants(random_vac)
+        #             else:
+        #                 append_to_applicants(v)
+        #             vsent += 1
+
+        #     else:
+        #         # when not disc, choose up to 9 random vacancies (NO RESERVATION WAGE LOGIC)
+        #         n_choice = min(len(found_vacs), 9)
+        #         chosen_sample = found_vacs if n_choice == len(found_vacs) else r_sample(found_vacs, k=n_choice)
+                
+        #         gpool = global_pool_override
+        #         append_to_applicants = lambda vac: vac.applicants.append(wrkr)
+
+        #         for v in chosen_sample:
+        #             if mis_rate > 0 and rand() < mis_rate and gpool:
+        #                 random_vac = r_choice(gpool)
+        #                 append_to_applicants(random_vac)
+        #             else:
+        #                 append_to_applicants(v)
+        #             vsent += 1
+
+        #     # Set wrkr outputs (only meaningful when disc=True)
+        #     wrkr.d_wage_offer = (mean_wage_sampled - res_wage) if disc else np.nan
+        #     wrkr.apps_sent = vsent
+
+        #     return vsent
+
+>>>>>>> Stashed changes
     def search_and_apply(
         wrkr,
         net,
@@ -599,7 +907,13 @@ class worker:
         wage_prefs,
         mis_rate: float = 0.10,
         unique_random: bool = False,
+<<<<<<< Updated upstream
         global_pool_override=None
+=======
+        global_pool_override=None,
+        strict_reservation_wage: bool = False,
+        below_resw_prob: float = 0.15
+>>>>>>> Stashed changes
     ):
         MAX_VACS = 30
         wrkr_occ = wrkr.occupation_id
@@ -612,7 +926,10 @@ class worker:
         occ_count = len(neigh_probs)
 
         # Build (vacancy, weight) pairs in one pass
+<<<<<<< Updated upstream
         # *** REMOVE reservation wage filtering here ***
+=======
+>>>>>>> Stashed changes
         all_vacs = []
         weights = []
         
@@ -629,19 +946,30 @@ class worker:
             if not vacs:
                 continue
             
+<<<<<<< Updated upstream
             # *** DON'T filter by wage here - include all vacancies ***
+=======
+            # Include all vacancies (no filtering here yet)
+>>>>>>> Stashed changes
             all_vacs.extend(vacs)
             weights.extend([occ_prob] * len(vacs))
 
         if not all_vacs:
             wrkr.apps_sent = 0
             wrkr.d_wage_offer = np.nan
+<<<<<<< Updated upstream
             #print(f"{wrkr_occ} all_vacs empty")
+=======
+>>>>>>> Stashed changes
             return 0
 
         n_to_sample = min(MAX_VACS, len(all_vacs))
 
+<<<<<<< Updated upstream
         # Sampling logic (unchanged)
+=======
+        # Sampling logic
+>>>>>>> Stashed changes
         use_weights = any(w != weights[0] for w in weights) if weights else False
 
         if use_weights:
@@ -652,7 +980,21 @@ class worker:
             else:
                 found_vacs = r_sample(all_vacs, k=n_to_sample)
 
+<<<<<<< Updated upstream
         # mean wage of sampled pool
+=======
+        # *** APPLY STRICT RESERVATION WAGE FILTER IF REQUESTED ***
+        if wage_prefs and not np.isnan(res_wage) and strict_reservation_wage:
+            found_vacs = [v for v in found_vacs if getattr(v, "wage", 0.0) >= res_wage]
+            
+            # If no vacancies pass the filter, return early
+            if not found_vacs:
+                wrkr.apps_sent = 0
+                wrkr.d_wage_offer = np.nan
+                return 0
+
+        # mean wage of sampled pool (after potential filtering)
+>>>>>>> Stashed changes
         wages_iter = (getattr(v, "wage", 0.0) for v in found_vacs)
         try:
             mean_wage_sampled = float(np.mean(list(wages_iter))) if found_vacs else 0.0
@@ -661,6 +1003,7 @@ class worker:
 
         vsent = 0
 
+<<<<<<< Updated upstream
         # Helper: compute utility quickly; local-binding of net neighbor weights lookup
         neigh_weights = net[wrkr_occ].list_of_neigh_weights
         util_fn = util
@@ -688,6 +1031,32 @@ class worker:
             available = len(found_vacs)
 
             # Your risk aversion adjustment (UNCHANGED - this is correct!)
+=======
+        if disc:
+            # *** Split vacancies into above/below reservation wage ***
+            if wage_prefs and not np.isnan(res_wage) and not strict_reservation_wage:
+                above_resw = []
+                below_resw = []
+                for v in found_vacs:
+                    v_wage = getattr(v, "wage", 0.0)
+                    if v_wage >= res_wage:
+                        above_resw.append(v)
+                    else:
+                        below_resw.append(v)
+            else:
+                above_resw = found_vacs
+                below_resw = []
+            
+            # Get neighbor weights for utility calculation
+            neigh_weights = net[wrkr_occ].list_of_neigh_weights
+
+            n_apps = applications_sent(wrkr.time_unemployed, app_effort, expectation=False)
+            
+            # *** MAIN APPLICATIONS: Only consider above-reservation vacancies ***
+            available = len(above_resw)
+
+            # Risk aversion adjustment
+>>>>>>> Stashed changes
             if available < wrkr.risk_aversion + n_apps:
                 if available <= wrkr.risk_aversion:
                     adjusted_start = 0
@@ -701,9 +1070,29 @@ class worker:
 
             want_k = adjusted_start + adjusted_n_apps
 
+<<<<<<< Updated upstream
             top_k = heapq.nlargest(want_k, found_vacs, key=_util_for_v) if want_k > 0 else []
             chosen_vacs = top_k[adjusted_start:adjusted_start + adjusted_n_apps]
             
+=======
+            # Rank and select from ABOVE reservation wage vacancies using util()
+            # Use lambda to call util() with the right parameters
+            def utility_key(v):
+                v_wage = getattr(v, "wage", 0.0)
+                occ_w = neigh_weights[v.occupation_id] if v.occupation_id < len(neigh_weights) else 0.0
+                return util(wrkr.wage, v_wage, occ_w)
+            
+            top_k = heapq.nlargest(want_k, above_resw, key=utility_key) if want_k > 0 else []
+            chosen_vacs = top_k[adjusted_start:adjusted_start + adjusted_n_apps]
+            
+            # *** Probabilistically add some below-reservation vacancies ***
+            if below_resw and wage_prefs and not np.isnan(res_wage) and not strict_reservation_wage:
+                # Each below-reservation vacancy has below_resw_prob chance of being applied to
+                for v in below_resw:
+                    if rand() < below_resw_prob:
+                        chosen_vacs.append(v)
+            
+>>>>>>> Stashed changes
             # apply to chosen vacancies
             gpool = global_pool_override
             append_to_applicants = lambda vac: vac.applicants.append(wrkr)
@@ -717,11 +1106,18 @@ class worker:
                 vsent += 1
 
         else:
+<<<<<<< Updated upstream
             # when not disc, choose up to 7 random vacancies
             n_choice = min(len(found_vacs), 7)
             chosen_sample = found_vacs if n_choice == len(found_vacs) else r_sample(found_vacs, k=n_choice)
             # if n_choice < 7:
             #     print(f'Occ_id = {wrkr_occ}; n_vacs = {n_choice}; Len of chosen_sample = {len(chosen_sample)}')
+=======
+            # when not disc, choose up to 8 random vacancies
+            n_choice = min(len(found_vacs), 8)
+            chosen_sample = found_vacs if n_choice == len(found_vacs) else r_sample(found_vacs, k=n_choice)
+            
+>>>>>>> Stashed changes
             gpool = global_pool_override
             append_to_applicants = lambda vac: vac.applicants.append(wrkr)
 
@@ -739,7 +1135,10 @@ class worker:
 
         return vsent
 
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
     def emp_search_and_apply(wrkr, net, vac_list, disc, emp_apps, wage_prefs,   
                           mis_rate: float = 0.10,                 # PROBABILITY TO REPLACE A SAMPLED VAC WITH A GLOBAL RANDOM VAC
         unique_random: bool = False,            # TRY TO AVOID DUPLICATE RANDOM PICKS IF TRUE
@@ -885,7 +1284,11 @@ class occupation:
             sep_prob_base = delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
             sep_prob_gamma = delta_u + occ.seps_rate*(1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
             sep_prob_delta = occ.seps_rate*delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
+<<<<<<< Updated upstream
             w = np.random.binomial(len(occ.list_of_employed), sep_prob_base)#sep_prob_delta)
+=======
+            w = np.random.binomial(len(occ.list_of_employed), sep_prob_base) #sep_prob_delta) #sep_prob_base) #sep_prob_delta) # sep_prob_base
+>>>>>>> Stashed changes
             occ.separated = int(w)
             separated_workers = random.sample(occ.list_of_employed, int(w))
             occ.list_of_unemployed = occ.list_of_unemployed + separated_workers
@@ -1267,7 +1670,11 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
             w75 = np.exp(wage_mu[i] + wage_sigma[i] * z75)
 
             # Clip to IQR (25th–75th)
+<<<<<<< Updated upstream
             w_clipped = np.clip(w, w25, w75)
+=======
+            w_clipped = w#np.clip(w, w25, w75)
+>>>>>>> Stashed changes
             vac_list.append(vac(i, [], #wages[i]
                                 w_clipped, False, np.random.uniform(0, 5)))
             
@@ -1290,7 +1697,11 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
             w75 = np.exp(wage_mu[i] + wage_sigma[i] * z75)
 
             # Clip to IQR (25th–75th)
+<<<<<<< Updated upstream
             w_clipped = np.clip(w, w25, w75)
+=======
+            w_clipped = w #np.clip(w, w25, w75)
+>>>>>>> Stashed changes
             # Assume they have all at least 1 t.s. of employment
             if np.random.rand() <= g_share:
                 occ.list_of_employed.append(worker(occ.occupation_id, False, 1, 
@@ -1318,7 +1729,11 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
             w75 = np.exp(wage_mu[i] + wage_sigma[i] * z75)
 
             # Clip to IQR (25th–75th)
+<<<<<<< Updated upstream
             w_clipped = np.clip(w, w25, w75)
+=======
+            w_clipped = w #np.clip(w, w25, w75)
+>>>>>>> Stashed changes
             if np.random.rand() <= g_share:
                 # Assigns time unemployed from absolute value of normal distribution....
                 occ.list_of_unemployed.append(worker(occ.occupation_id, False, max(1,(int(np.random.normal(2,2)))), 
