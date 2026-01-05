@@ -332,11 +332,9 @@ data/occ_macro_vars/OEWS/national_2002_dl.xls
 /calibration_remote_old
 /calibration_remote/output_small
 /data/behav_params/cps_displaced_worker_supplement/cps_disc_worker_vignette_files
-/calibration_remote/output/figures/occ_seps_rates
 /calibration_remote/old
 /calibration_remote/output/new_network_old
 /calibration_remote/output/plots_wage_distributions/detailed_occs
-/calibration_remote/output/pre_res_wage_implementation/pre_res_wage
 data/occ_macro_vars/ipums_vars/cps_00021.dat
 data/occ_macro_vars/ipums_vars/cps_00021.xml
 data/occ_macro_vars/ipums_vars/cps_00022.dat
