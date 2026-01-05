@@ -15,3 +15,23 @@
 
 occ_soc_cw <- read.csv("/Users/ebbamark/Library/CloudStorage/OneDrive-Nexus365/GenerateOccMobNets/data/occ_soc_2010_crosswalk_cleaned.csv") %>% 
   mutate(across(c(soc_2010, soc_2010_major, soc_2010_minor, soc_2010_broad)))
+
+
+# Printing label structure
+library(tidyverse)
+library(here)
+library(readxl)
+soc_desc <- read_xls(here('data/soc_structure_2010.xls'), skip = 11) %>% 
+  rename('soc_2010_major' = 1,
+         'soc_2010_minor' = 2,
+         'soc_2010_broad' = 3,
+         'soc_2010' = 4,
+         'description' = 5) 
+
+get_soc_table <- function(code){
+  soc_desc %>% filter(!is.na(!!sym(code))) %>% select(!!code, description) %>% return(.)
+}
+
+get_soc_table('soc_2010_minor') %>% View()
+get_soc_table('soc_2010_broad') %>% View()
+         

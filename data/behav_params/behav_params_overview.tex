@@ -1,10 +1,12 @@
 % Options for packages loaded elsewhere
 \PassOptionsToPackage{unicode}{hyperref}
 \PassOptionsToPackage{hyphens}{url}
-%
 \documentclass[
 ]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
 \usepackage{iftex}
 \ifPDFTeX
   \usepackage[T1]{fontenc}
@@ -35,48 +37,6 @@
 }{% if KOMA class
   \KOMAoptions{parskip=half}}
 \makeatother
-\usepackage{xcolor}
-\usepackage[margin=1in]{geometry}
-\usepackage{color}
-\usepackage{fancyvrb}
-\newcommand{\VerbBar}{|}
-\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
-\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
-% Add ',fontsize=\small' for more characters per line
-\usepackage{framed}
-\definecolor{shadecolor}{RGB}{248,248,248}
-\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
-\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
-\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
-\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
-\newcommand{\BuiltInTok}[1]{#1}
-\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
-\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
-\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
-\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
-\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
-\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
-\newcommand{\ExtensionTok}[1]{#1}
-\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
-\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
-\newcommand{\ImportTok}[1]{#1}
-\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
-\newcommand{\NormalTok}[1]{#1}
-\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
-\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
-\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
-\newcommand{\RegionMarkerTok}[1]{#1}
-\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
-\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
-\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
 \usepackage{longtable,booktabs,array}
 \usepackage{calc} % for calculating minipage widths
 % Correct order of tables after \paragraph or \subparagraph
@@ -105,7 +65,6 @@
 \setlength{\emergencystretch}{3em} % prevent overfull lines
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
@@ -132,98 +91,57 @@
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same}
 \hypersetup{
-  pdftitle={Data Scoping: Job Search Behaviour},
-  pdfauthor={Ebba Mark},
   hidelinks,
   pdfcreator={LaTeX via pandoc}}
 
-\title{Data Scoping: Job Search Behaviour}
-\author{Ebba Mark}
-\date{2025-08-18}
+\author{}
+\date{\vspace{-2.5em}}
 
 \begin{document}
-\maketitle
 
-\section{Overview: Calibrating Behavioural
-Mechanisms}\label{overview-calibrating-behavioural-mechanisms}
+\section{A Calibrating Behavioural
+Mechanisms}\label{a-calibrating-behavioural-mechanisms}
 
-The following document summarises current progress on identifying data
-sources to inform the job search behaviour in our labour market
-ABM.\textcolor{red}{Once the main text is ready, I will go through and "formalise" the tone of this section and include greater detail about the data and methods.}
+The model's central functionality relies on a variety of behavioural
+mechanisms that are parametrised econometrically using micro data.
+Furthermore, the model relies on additional sources of micro data for
+validation. In the following section we outline, first, the data and
+analysis used to derive the model's behavioral parameters, followed by
+an inventory of the data used to validate various model outputs. We note
+where we make use of methodology employed or constructed by other
+authors. We conclude with an inventory of other data sources considered
+for behavioral parameter calibration ultimately disregarded due to lack
+of statistical power.
 
-\textbf{Goals:}
+\subsection{Behavioural Mechanism
+Calibration}\label{behavioural-mechanism-calibration}
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\item
-  Identify parameters relevant to agent search behaviour in the ABM.
-\item
-  Assess data quality for deriving empirical estimates of these
-  parameters.
-\end{enumerate}
-
-We have narrowed the list of behavioural adjustments to the following:\\
-- \textbf{Duration-dependent search effort}\\
-- \textbf{Reservation Wage Adjustment Rates}\\
-- \textbf{Cyclical On-the-Job Search}\\
-- \textbf{Risk Aversion}: For now this is randomised to ensure variation
-in vacancy targeting by similar workers. This is not yet supported by
-data.
-
-\textbf{Data we have decided to keep:}
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\item
-  Current Population Survey 2018 \& 2022: Information on applications
-  sent by unemployment duration.
-\item
-  Displaced Worker Supplement: As part of the Current Population Survey,
-  the US Census Bureau conducts an annual Displaced Worker Supplement in
-  which workers who have lost their job in the last three years are
-  asked additional questions about their unemployment experiences and
-  (if re-employed) their re-employment conditions. From this we draw a
-  reservation wage adjustment rate as a function of unemployment
-  duration.
-\item
-  \href{https://www.aeaweb.org/articles?id=10.1257/mac.20180105}{Eeckhout
-  et al.~2019 Unemployment Cycles}: We derive the sensitivity of
-  employed job seekers to the business cycle from the
-  employment-to-employment transitions data as used in Eeckhout et
-  al.~Due to unreliable component parts of the Eeckhout analysis, we
-  decided to abandon using their estimated parameters (search intensity
-  for employed workers).
-\item
-  (Validation) Mukoyama et al.~data on the intensive margin of
-  unemployed search effort (in minutes searched) over the business
-  cycle. We have chosen to include this as a validation exercise of our
-  application effort imposition.
-\item
-  \href{https://www.aeaweb.org/articles?id=10.1257/aer.20190808}{\textbf{Mueller
-  et al.~2021: Job Seekers' Perceptions and Employment Prospects:
-  Heterogeneity, Duration Dependence and Bias}}
-\end{enumerate}
-
-\textbf{Additional analyses that we have decided to exclude as data
-inputs due to lack of relevance or poor data quality are in the
-``Additional Analyses'' tab.}
-
-\section{Application Effort and Learning Dynamics: Applications
+\subsubsection{Application Effort and Learning Dynamics: Applications
 Sent}\label{application-effort-and-learning-dynamics-applications-sent}
 
-\subsection{(Calibration) Current Population Survey - 2018 \& 2020
-Supplement}\label{calibration-current-population-survey---2018-2020-supplement}
+In 2018 (May, September) and 2020 (February, May), the Bureau of Labor
+Statistics ran the ``Unemployment Insurance Nonfilers'' supplemental
+survey to the monthly Current Population Survey run by the US Census
+Bureau. The survey's stated intent was to ``obtain information on the
+characteristics of people who do not file for Unemployment Insurance
+benefits as well as their reasons for not doing so.'' The survey was
+conducted for all person responding the the monthly Current Population
+Survey which encompasses ``all persons in the civilian non-institutional
+population of the United States living in households. The probability
+sample selected to represent the universe consists of approximately
+54,000 households.''
 
 This 2020
 \href{https://www.bls.gov/opub/btn/volume-9/how-do-jobseekers-search-for-jobs.htm\#_edn5}{``Beyond
 the Numbers'' issue} distills insights from a 2018 Supplement to the
 Current Population Survey. The below plots show the highlights relevant
-to our decision-making on the job search process. In nearly all cases,
-the results are ``binned'' into intervals (ie. number of people sending
-81 or more applications or unemployment duration of between 5 and 14
-weeks) which means that any line plots (or linear interpretation of the
-bar graph) should be done carefully. Preliminary results using the raw
-data are found in the next section.
+to our decision-making on the job search process.
+
+In nearly all cases, the results are ``binned'' into intervals (ie.
+number of people sending 81 or more applications or unemployment
+duration of between 5 and 14 weeks) which means that any line plots (or
+linear interpretation of the bar graph) should be done carefully.
+Preliminary results using the raw data are found in the next section.
 
 \begin{itemize}
 \item
@@ -252,41 +170,9 @@ data are found in the next section.
 ## Processing URL: https://www.bls.gov/opub/btn/volume-9/how-do-jobseekers-search-for-jobs.htm#_edn2
 \end{verbatim}
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-1-1.pdf}}
+\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp1-1.png}}
 
-\begin{verbatim}
-## NULL
-\end{verbatim}
-
-It turns out that the 2018 supplement was also run in 2022, giving us
-two sets of years to compare (including pre- and post-Covid). The below
-looks at the
-\href{https://www.census.gov/data/datasets/time-series/demo/cps/cps-supp_cps-repwgt/cps-unemployment.2022.html\#list-tab-1269561637}{raw
-data} that underlies the plotting immediately above, plus the additional
-data from 2022. Below find a preliminary scatter plot of applications
-sent versus unemployment duration. Each individual is asked how many
-applications they sent in the last two months (two-month periods are
-indicated by the grey gridlines, for reference). This does NOT include
-data in on the job search.
-
-\textbf{Data Source:} Unemployment Insurance Nonfilers Supplement
-conducted in 2018 (n = 3,268) \& 2022 (n = 1,901) where individuals who
-are unemployed but have not filed for unemployment insurance are asked
-the following:
-
-\begin{figure}
-\centering
-\pandocbounded{\includegraphics[keepaspectratio]{CPS_BLS_Supplement_18_22/udur_survey_question.png}}
-\caption{Survey Question: Unemployment Duration}
-\end{figure}
-
-\begin{figure}
-\centering
-\pandocbounded{\includegraphics[keepaspectratio]{CPS_BLS_Supplement_18_22/apps_sent_question.png}}
-\caption{Survey Question: Applications Sent}
-\end{figure}
-
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-2-1.pdf}}
+\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp2-1.png}}
 
 Below, I display the results of an exploration of the probability of
 reporting a specific number of applications sent (in the bins as in the
@@ -343,9 +229,9 @@ probable.
 log-log as we care more about distinguishing between lower-level bins
 and there are few observations in the highest-level bins.
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-3-1.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-3-2.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-3-3.pdf}}
+\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp3-1.png}}
+\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp3-2.png}}
+\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp3-3.png}}
 
 Using an AIC information criterion to compare the fit across all models,
 the following results are clear:\\
@@ -375,7 +261,7 @@ individual's odds of dropping to a lower-level application category
 decreases by \textasciitilde.1\%. This is statistically significant
 across all specifications at the 0.1\% level.
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-4-1.pdf}}
+\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp4-1.png}}
 
 \begin{verbatim}
 ## [1] TRUE
@@ -385,40 +271,20 @@ across all specifications at the 0.1\% level.
 ## [1] TRUE
 \end{verbatim}
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-5-1.pdf}}
+\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-1-1.png}}
 
-\subsection{(Validation) Mukoyama et al.~Job Search and the Business
-Cycle}\label{validation-mukoyama-et-al.-job-search-and-the-business-cycle}
-
-We use evidence from Mukoyama et al regarding the cyclicality of
-unemployed job search effort to validate the micro behaviour of our
-agents. I will provide more explanation on this\ldots{}
-
-(Replicated with additional data for unemployed jobseekers)
-\href{https://www.aeaweb.org/articles?id=10.1257/mac.20160202}{\textbf{Mukoyama
-et al.~2018: Job Search Over the Business Cycle}}
-
-\emph{They provide a novel measure of job search effort exploiting the
-American Time Use and Current Population Surveys which can be reduced to
-just the intensive margin (changes in search effort by worker!). At the
-moment, I think this will be the most useful input for our model.}
-
-\emph{Abstract: We examine the cyclicality of search effort using
-time-series, cross-state, and individual variation and find that it is
-countercyclical. We then set up a search and matching model with
-endogenous search effort and show that search effort does not amplify
-labor market fluctuations but rather dampens them. Lastly, we examine
-the role of search effort in driving recent unemployment dynamics and
-show that the unemployment rate would have been 0.5 to 1 percentage
-points higher in the 2008--2014 period had search effort not increased.}
-
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-6-1.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-6-2.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-6-3.pdf}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-6-4.pdf}}
-
-\section{Wage Expectations and Satisficing: Reservation Wage
+\subsubsection{Wage Expectations and Satisficing: Reservation Wage
 Adjustment}\label{wage-expectations-and-satisficing-reservation-wage-adjustment}
+
+As part of the Current Population Survey, the US Census Bureau conducts
+an annual Displaced Worker Supplement in which workers who have lost
+their job in the last three years are asked additional questions about
+their unemployment experiences and (if re-employed) their re-employment
+conditions. From this we draw a reservation wage adjustment rate as a
+function of unemployment duration. We compare various econometric
+specifications across several samples that correct for selection effects
+that typically confound studies of duration-dependent employment
+outcomes.
 
 As part of the Current Population Survey, the US Census Bureau conducts
 an annuaol
@@ -523,159 +389,6 @@ could inform our reservation wage adjustment parameter in the model.
   interpretation. Curious for your reactions.
 \end{enumerate}
 
-\subsection{Data cleaning}\label{data-cleaning}
-
-Feel free to ignore this code chunk immediately below - included for now
-for transparency in case you spot issues. I include it for your info on
-binning and outlier trimming.
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{\# From the original dataset, I include only those that reported having lost a }
-\CommentTok{\# FT job in the last three years}
-\NormalTok{df }\OtherTok{\textless{}{-}} \FunctionTok{readRDS}\NormalTok{(}\FunctionTok{here}\NormalTok{(}\StringTok{"data/behav\_params/cps\_displaced\_worker\_supplement/cps\_disp\_filtered.RDS"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%} 
-  \FunctionTok{select}\NormalTok{(hwtfinl, cpsid, wtfinl, age, sex, race, marst, educ, }
-         \CommentTok{\# age, sex, race, marital status, educational attainment}
-\NormalTok{         dwsuppwt, }\CommentTok{\# Survey weight}
-\NormalTok{         dwyears, }\CommentTok{\# Years worked at lost job}
-\NormalTok{         dwben, }\CommentTok{\# Received unemployment benefits}
-\NormalTok{         dwexben, }\CommentTok{\# Exhausted unemployment benefits}
-\NormalTok{         dwlastwrk, }\CommentTok{\# Time since worked at last job}
-\NormalTok{         dwweekc, }\CommentTok{\# Weekly earnings at current job}
-\NormalTok{         dwweekl, }\CommentTok{\# Weekly earnings at lost job}
-\NormalTok{         dwwagel, }\CommentTok{\# Hourly earnings at lost job}
-\NormalTok{         dwwagec, }\CommentTok{\# Hourly wage at current job}
-\NormalTok{         dwhrswkc, }\CommentTok{\# Hours worked each week at current job}
-\NormalTok{         dwresp, }\CommentTok{\# Eligibility and interview status for Displaced Wrkr Supplement}
-         \CommentTok{\# Interestingly the unemployment duration is not directly linked to }
-         \CommentTok{\# CURRENT job and we cannot see the wage of the start of the next job...}
-        \CommentTok{\# thought this feels problematic, it does indicate more accurately the }
-        \CommentTok{\# ultimate "recovered" wage...will need to declare as a limitation }
-        \CommentTok{\# but also not completely indefensible}
-\NormalTok{         dwwksun) }\SpecialCharTok{\%\textgreater{}\%}  \CommentTok{\# Number of weeks not working between between end of lost}
-         \CommentTok{\# or left job and start of next job}
-  \CommentTok{\# I remove anyone who is Not in Universe (99) and declaring greater than 160 }
-  \CommentTok{\# weeks unemployed between jobs}
-\FunctionTok{filter}\NormalTok{(dwhrswkc }\SpecialCharTok{!=} \DecValTok{99} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{160}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
-  \CommentTok{\# Replacing NIU values with NA values}
-  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{dwwagel =} \FunctionTok{ifelse}\NormalTok{(}\FunctionTok{round}\NormalTok{(dwwagel) }\SpecialCharTok{==} \DecValTok{100}\NormalTok{, }\ConstantTok{NA}\NormalTok{, dwwagel),}
-         \AttributeTok{dwwagec =} \FunctionTok{ifelse}\NormalTok{(}\FunctionTok{round}\NormalTok{(dwwagec) }\SpecialCharTok{==} \DecValTok{100}\NormalTok{, }\ConstantTok{NA}\NormalTok{, dwwagec),}
-         \AttributeTok{dwweekl =} \FunctionTok{ifelse}\NormalTok{(}\FunctionTok{round}\NormalTok{(dwweekl) }\SpecialCharTok{==} \DecValTok{10000}\NormalTok{, }\ConstantTok{NA}\NormalTok{, dwweekl),}
-         \AttributeTok{dwweekc =} \FunctionTok{ifelse}\NormalTok{(}\FunctionTok{round}\NormalTok{(dwweekc) }\SpecialCharTok{==} \DecValTok{10000}\NormalTok{, }\ConstantTok{NA}\NormalTok{, dwweekc),}
-         \CommentTok{\# dwwage\_rec\_l = ifelse(is.na(dwagel) \& !is.na(dweekl) \textasciitilde{} dwweekl),}
-         \CommentTok{\# dwweekc = ifelse(round(dwweekc) == 10000, NA, dwweekc),}
-         \CommentTok{\# Binning educational categories}
-         \AttributeTok{educ\_cat =} \FunctionTok{factor}\NormalTok{(}\FunctionTok{case\_when}\NormalTok{(educ }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{) }\SpecialCharTok{\textasciitilde{}} \ConstantTok{NA}\NormalTok{, }\CommentTok{\# (NIU)}
-\NormalTok{                              educ }\SpecialCharTok{\textgreater{}} \DecValTok{1} \SpecialCharTok{\&}\NormalTok{ educ }\SpecialCharTok{\textless{}=} \DecValTok{71} \SpecialCharTok{\textasciitilde{}} \StringTok{"Less than HS"}\NormalTok{, }\CommentTok{\# Includes }
-                                  \CommentTok{\# "None" {-} Grade 12 no diploma }
-                                  \CommentTok{\# (8 subcategories (grade 1{-}11 etc))}
-\NormalTok{                              educ }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{73}\NormalTok{, }\DecValTok{81}\NormalTok{) }\SpecialCharTok{\textasciitilde{}} \StringTok{"HS Diploma"}\NormalTok{, }\CommentTok{\# Includes }
-                                  \CommentTok{\# "High school Diploma or equivalent" and }
-                                  \CommentTok{\# "some college, but no degree"}
-\NormalTok{                              educ }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{91}\NormalTok{, }\DecValTok{92}\NormalTok{) }\SpecialCharTok{\textasciitilde{}} \StringTok{"Associate\textquotesingle{}s"}\NormalTok{, }\CommentTok{\# Include }
-                                  \CommentTok{\# "[Associate\textquotesingle{}s degree, occupational/vocational }
-                                  \CommentTok{\# program]" and "Associate\textquotesingle{}s }
-                                  \CommentTok{\# [Associate\textquotesingle{}s degree, academic program]"}
-\NormalTok{                              educ }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{111}\NormalTok{) }\SpecialCharTok{\textasciitilde{}} \StringTok{"Bachelor\textquotesingle{}s"}\NormalTok{,}\CommentTok{\#Bachelor\textquotesingle{}s degree}
-\NormalTok{                              educ }\SpecialCharTok{\textgreater{}} \DecValTok{111} \SpecialCharTok{\textasciitilde{}} \StringTok{"Postgraduate Degree"} \CommentTok{\# Includes }
-                                  \CommentTok{\# Master\textquotesingle{}s, Professional School \& Doctorate}
-\NormalTok{                              ), , }\AttributeTok{levels =} \FunctionTok{c}\NormalTok{(}\StringTok{"Less than HS"}\NormalTok{, }\StringTok{"HS Diploma"}\NormalTok{, }
-                                              \StringTok{"Associate\textquotesingle{}s"}\NormalTok{, }\StringTok{"Bachelor\textquotesingle{}s"}\NormalTok{, }
-                                              \StringTok{"Postgraduate Degree"}\NormalTok{)),}
-         \CommentTok{\# Marital status to binary indicator}
-         \AttributeTok{marst =} \FunctionTok{case\_when}\NormalTok{(marst }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{, }\CommentTok{\# Married with a present spouse}
-                           \CommentTok{\# Might consider dividing this differently}
-                           \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \DecValTok{0}\NormalTok{), }\CommentTok{\# Married with absent spouse, separated, }
-                          \CommentTok{\# divorced, widowed, never married/single}
-         
-         \AttributeTok{female =}\NormalTok{ sex }\SpecialCharTok{==} \DecValTok{2}\NormalTok{, }\CommentTok{\# gender to 0,1 values}
-         \AttributeTok{white =}\NormalTok{ race }\SpecialCharTok{==} \DecValTok{100}\NormalTok{, }\CommentTok{\# race to higher{-}level categories w binary values}
-         \AttributeTok{black =}\NormalTok{ race }\SpecialCharTok{==} \DecValTok{200}\NormalTok{,}
-         \AttributeTok{mixed =}\NormalTok{ race }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{801}\NormalTok{, }\DecValTok{802}\NormalTok{, }\DecValTok{803}\NormalTok{, }\DecValTok{804}\NormalTok{, }\DecValTok{805}\NormalTok{, }
-                             \DecValTok{806}\NormalTok{, }\DecValTok{810}\NormalTok{, }\DecValTok{812}\NormalTok{, }\DecValTok{813}\NormalTok{, }\DecValTok{820}\NormalTok{, }\DecValTok{830}\NormalTok{),}
-         \AttributeTok{aapi =}\NormalTok{ race }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\DecValTok{650}\NormalTok{, }\DecValTok{651}\NormalTok{, }\DecValTok{652}\NormalTok{, }\DecValTok{808}\NormalTok{, }\DecValTok{809}\NormalTok{),}
-         \AttributeTok{native =}\NormalTok{ race }\SpecialCharTok{==} \DecValTok{300}
-         \CommentTok{\# age is continuous which seems fine...binning likely unnecessary}
-\NormalTok{         ) }\SpecialCharTok{\%\textgreater{}\%} 
-
-  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{ratio\_wage =}\NormalTok{ dwwagec}\SpecialCharTok{/}\NormalTok{dwwagel, }\CommentTok{\# Ratio of hourly wage current:lost job}
-         \AttributeTok{ratio\_weekly =}\NormalTok{ dwweekc}\SpecialCharTok{/}\NormalTok{dwweekl, }\CommentTok{\# Ratio of wkly wage of current:lost job}
-         \CommentTok{\# Reconciling missing reporting between weekly and hourly wage. }
-         \CommentTok{\# Take either the min, max or mean value. }
-         \AttributeTok{ratio\_reconciled\_min =} \FunctionTok{case\_when}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(ratio\_wage) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ratio\_weekly, }
-                                          \FunctionTok{is.na}\NormalTok{(ratio\_weekly) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ratio\_wage, }
-                                          \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \FunctionTok{pmin}\NormalTok{(ratio\_weekly, ratio\_wage)), }
-         \AttributeTok{ratio\_reconciled\_max =} \FunctionTok{case\_when}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(ratio\_wage) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ratio\_weekly, }
-                                          \FunctionTok{is.na}\NormalTok{(ratio\_weekly) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ratio\_wage, }
-                                          \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \FunctionTok{pmax}\NormalTok{(ratio\_weekly, ratio\_wage)), }
-         \AttributeTok{ratio\_reconciled\_mean =} \FunctionTok{case\_when}\NormalTok{(}\FunctionTok{is.na}\NormalTok{(ratio\_wage) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ratio\_weekly, }
-                                          \FunctionTok{is.na}\NormalTok{(ratio\_weekly) }\SpecialCharTok{\textasciitilde{}}\NormalTok{ ratio\_wage, }
-                                          \ConstantTok{TRUE} \SpecialCharTok{\textasciitilde{}} \FunctionTok{rowMeans}\NormalTok{(}\FunctionTok{across}\NormalTok{(}\FunctionTok{c}\NormalTok{(ratio\_wage, }
-\NormalTok{                                                                   ratio\_weekly)), }
-                                                          \AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{)), }
-         \CommentTok{\# Create monthly unemployment duration for continuous}
-         \AttributeTok{dwmosun =} \FunctionTok{floor}\NormalTok{(dwwksun}\SpecialCharTok{/}\DecValTok{4}\NormalTok{),}
-         \AttributeTok{dwmosun2 =}\NormalTok{ dwmosun}\SpecialCharTok{\^{}}\DecValTok{2}\NormalTok{,}
-         \AttributeTok{dwmosun3 =}\NormalTok{ dwmosun}\SpecialCharTok{\^{}}\DecValTok{3}\NormalTok{,}
-         \CommentTok{\# Unemployment duration:}
-                  \CommentTok{\# (reported as time between lost job and start of next job)}
-         \CommentTok{\# I bin in...}
-           \CommentTok{\# monthly intervals (4 weeks) from 1{-}6 months}
-           \CommentTok{\# quarterly intervals (12 weeks) from 7 mos{-}1 year}
-           \CommentTok{\# half{-}year interval from 1{-}2.5 years}
-           \CommentTok{\# single bin for anyone about 120 weeks}
-         \AttributeTok{dwwksun\_bin =} \FunctionTok{case\_when}\NormalTok{(}
-           \CommentTok{\# Monthly intervals (4 weeks) from 1{-}6 months}
-\NormalTok{           dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{4} \SpecialCharTok{\textasciitilde{}} \DecValTok{1}\NormalTok{, }\CommentTok{\#"Less than 4 weeks",}
-\NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{4} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{8} \SpecialCharTok{\textasciitilde{}} \DecValTok{2}\NormalTok{,}
-\NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{8} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{12} \SpecialCharTok{\textasciitilde{}} \DecValTok{3}\NormalTok{,}
-\NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{12} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{16} \SpecialCharTok{\textasciitilde{}} \DecValTok{4}\NormalTok{, }
-\NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{16} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{20} \SpecialCharTok{\textasciitilde{}} \DecValTok{5}\NormalTok{,}
-\NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{20} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{24} \SpecialCharTok{\textasciitilde{}} \DecValTok{6}\NormalTok{,}
-                                 \CommentTok{\# Quarterly Intervals (12 wks) from 6+ mos{-}1 yr}
-\NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{24} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{36} \SpecialCharTok{\textasciitilde{}} \DecValTok{7}\NormalTok{,}
-\NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{36} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{48} \SpecialCharTok{\textasciitilde{}} \DecValTok{8}\NormalTok{, }
-                                 \CommentTok{\# Half{-}year Intervals (24 weeks) from 1{-}2.5 yrs}
-\NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{48} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{72} \SpecialCharTok{\textasciitilde{}} \DecValTok{9}\NormalTok{, }
-\NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{72} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{96} \SpecialCharTok{\textasciitilde{}} \DecValTok{10}\NormalTok{, }
-\NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{96} \SpecialCharTok{\&}\NormalTok{ dwwksun }\SpecialCharTok{\textless{}=} \DecValTok{120} \SpecialCharTok{\textasciitilde{}} \DecValTok{11}\NormalTok{, }
-                                 \CommentTok{\# Anyone above{-}recall this is capped at 160 wks }
-                                  \CommentTok{\# as per filter above}
-\NormalTok{                                 dwwksun }\SpecialCharTok{\textgreater{}} \DecValTok{120} \SpecialCharTok{\textasciitilde{}} \DecValTok{12}\NormalTok{),}
-         \CommentTok{\# Bin labels}
-         \AttributeTok{dwwksun\_bin\_labs =} \FunctionTok{case\_when}\NormalTok{(dwwksun\_bin }\SpecialCharTok{==} \DecValTok{1} \SpecialCharTok{\textasciitilde{}} \StringTok{"\textless{}= 1 mo."}\NormalTok{, }\CommentTok{\#"\textless{} 4 wks",}
-\NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{2} \SpecialCharTok{\textasciitilde{}} \StringTok{"1{-}2 mos."}\NormalTok{,}
-\NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{3} \SpecialCharTok{\textasciitilde{}} \StringTok{"2{-}3 mos."}\NormalTok{,}
-\NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{4} \SpecialCharTok{\textasciitilde{}} \StringTok{"3{-}4 mos."}\NormalTok{, }
-\NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{5} \SpecialCharTok{\textasciitilde{}} \StringTok{"4{-}5 mos."}\NormalTok{,}
-\NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{6} \SpecialCharTok{\textasciitilde{}} \StringTok{"5{-}6 mos."}\NormalTok{,}
-                                 \CommentTok{\# Quarterly Intervals (12 wks) from 6+ mos{-}1 yr}
-\NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{7} \SpecialCharTok{\textasciitilde{}} \StringTok{"6{-}9 mos."}\NormalTok{,}
-\NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{8} \SpecialCharTok{\textasciitilde{}} \StringTok{"9{-}12 mos."}\NormalTok{, }
-                                 \CommentTok{\# Half{-}year Intervals (24 wks) from 1{-}2.5 years}
-\NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{9} \SpecialCharTok{\textasciitilde{}} \StringTok{"12{-}18 mos."}\NormalTok{, }
-\NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{10} \SpecialCharTok{\textasciitilde{}} \StringTok{"18{-}24 mos."}\NormalTok{, }
-\NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{11} \SpecialCharTok{\textasciitilde{}} \StringTok{"24{-}30 mos."}\NormalTok{, }
-                                 \CommentTok{\# Anyone above{-}recall this is capped at 160 wks}
-                                 \CommentTok{\# as per filter above}
-\NormalTok{                                 dwwksun\_bin }\SpecialCharTok{==} \DecValTok{12} \SpecialCharTok{\textasciitilde{}} \StringTok{"30+ mos."}\NormalTok{),}
-         \AttributeTok{log\_ratio\_wage =} \FunctionTok{log}\NormalTok{(ratio\_wage),}
-         \AttributeTok{log\_ratio\_weekly =} \FunctionTok{log}\NormalTok{(ratio\_weekly),}
-         \CommentTok{\# I clip the sample to an accepted wage ratio between [0.5, 2] }
-         \CommentTok{\# and less than 96 weeks of unemployment}
-         \AttributeTok{clipped\_sample\_hwage =} 
-\NormalTok{           ratio\_wage }\SpecialCharTok{\textgreater{}=} \FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_wage }\SpecialCharTok{\textless{}=} \DecValTok{2} \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin }\SpecialCharTok{\textless{}} \DecValTok{11}\NormalTok{,}
-         \AttributeTok{clipped\_sample\_wwage =} 
-\NormalTok{           ratio\_weekly }\SpecialCharTok{\textgreater{}=} \FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_weekly }\SpecialCharTok{\textless{}=} \DecValTok{2}  \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin }\SpecialCharTok{\textless{}} \DecValTok{11}\NormalTok{,}
-         \AttributeTok{clipped\_sample\_rec\_min =} 
-\NormalTok{           ratio\_reconciled\_min}\SpecialCharTok{\textgreater{}=}\FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_reconciled\_min}\SpecialCharTok{\textless{}=}\DecValTok{2} \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin}\SpecialCharTok{\textless{}}\DecValTok{11}\NormalTok{,}
-         \AttributeTok{clipped\_sample\_rec\_max =} 
-\NormalTok{           ratio\_reconciled\_max}\SpecialCharTok{\textgreater{}=}\FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_reconciled\_max}\SpecialCharTok{\textless{}=}\DecValTok{2} \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin}\SpecialCharTok{\textless{}}\DecValTok{11}\NormalTok{,}
-         \AttributeTok{clipped\_sample\_rec\_mean =} 
-\NormalTok{           ratio\_reconciled\_mean}\SpecialCharTok{\textgreater{}=}\FloatTok{0.5} \SpecialCharTok{\&}\NormalTok{ ratio\_reconciled\_mean}\SpecialCharTok{\textless{}=}\DecValTok{2} \SpecialCharTok{\&}\NormalTok{ dwwksun\_bin}\SpecialCharTok{\textless{}}\DecValTok{11}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
 \section{Descriptives}\label{descriptives}
 
 All descriptives below use the Displaced Worker Sample Weights.
@@ -695,17 +408,17 @@ wage ratio to unemployment duration before using the regression.
 Indicates decline in the wage ratio with unemployment duration that has
 a potentially non-linear fit.
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-24-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-24-2} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives-2} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-24-3} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives-3} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-24-4} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives-4} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-24-5} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives-5} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-25-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_spline-1} \end{center}
 
 \section{Regressions (non-uniform
 sample)}\label{regressions-non-uniform-sample}
@@ -772,7 +485,7 @@ performs fairly well across various diagnostic tests.
 ## [1] "Continuous U Duration. w. UI Control w. demographic controls (clipped sample)"
 \end{verbatim}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-28-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_reg1-1} \end{center}
 
 \subsection{Continuous UE Duration}\label{continuous-ue-duration}
 
@@ -782,7 +495,7 @@ unemployment.
 
 \begin{table}
 \centering\centering
-\caption{\label{tab:unnamed-chunk-29}Continuous UE Duration w.o Wage Level Control}
+\caption{\label{tab:disc_reg2}Continuous UE Duration w.o Wage Level Control}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
 \begin{tabular}[t]{lcccccccccccccccccccccccc}
@@ -830,11 +543,11 @@ RMSE & \num{0.38} & \num{0.24} & \num{0.38} & \num{0.24} & \num{0.37} & \num{0.2
 \end{tabular}}
 \end{table}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-30-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_reg3-1} \end{center}
 
 \begin{table}
 \centering\centering
-\caption{\label{tab:unnamed-chunk-31}Continuous UE Duration w. Wage Level Control}
+\caption{\label{tab:disc_reg4}Continuous UE Duration w. Wage Level Control}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
 \begin{tabular}[t]{lcccccccccccccccccccccccc}
@@ -891,7 +604,7 @@ plots and code cleaning above.
 
 \begin{table}
 \centering\centering
-\caption{\label{tab:unnamed-chunk-32}Binned UE Duration w.o Wage Level Control}
+\caption{\label{tab:disc_reg5}Binned UE Duration w.o Wage Level Control}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
 \begin{tabular}[t]{lcccccccccccc}
@@ -939,7 +652,7 @@ RMSE & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.2
 
 \begin{table}
 \centering\centering
-\caption{\label{tab:unnamed-chunk-33}Binned UE Duration w. Wage Level Control}
+\caption{\label{tab:disc_reg6}Binned UE Duration w. Wage Level Control}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
 \begin{tabular}[t]{lcccccccccccc}
@@ -1035,34 +748,34 @@ stable.
 Entropy balancing simply reweights observations to ensure population
 matching across the key dependent variable.
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-34-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb1-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-35-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb2-1} \end{center}
 
 \subparagraph{Diagnostic Tests for Entropy-balanced Reweighted
 Sample}\label{diagnostic-tests-for-entropy-balanced-reweighted-sample}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-36-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb3-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-37-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb4-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-38-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb5-1} \end{center}
 
 \paragraph{Propensity Score Weighting with GLM
 Estimator}\label{propensity-score-weighting-with-glm-estimator}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-39-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm1-1} \end{center}
 
 \subparagraph{Diagnostic Tests for Propensity Score Matching (GLM)
 Reweighted
 Sample}\label{diagnostic-tests-for-propensity-score-matching-glm-reweighted-sample}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-40-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm2-1} \end{center}
 
 \subparagraph{Predicted Reservation Wage using GLM Reweighted
 Sample}\label{predicted-reservation-wage-using-glm-reweighted-sample}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-41-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm3-1} \end{center}
 
 \paragraph{Heckman Selection}\label{heckman-selection}
 
@@ -1070,7 +783,7 @@ Another option is a Heckman Selection correction though I do not think
 this addresses the particular selection concern we have where there are
 simply less observations in longer unemployment durations.
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-42-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_heckman1-1} \end{center}
 
 \paragraph{Regression Results with Sample
 Reweighting}\label{regression-results-with-sample-reweighting}
@@ -1121,9 +834,9 @@ RMSE & \num{0.37} & \num{0.37} & \num{0.37}\\
 \end{tabular}}
 \end{table}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-44-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_heckman3-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-44-2} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_heckman3-2} \end{center}
 
 \subsubsection{Job Tenure}\label{job-tenure}
 
@@ -1132,7 +845,7 @@ impact the result. This could speak to the ``adaptability'' of
 individuals. Wage ratio seems to decrease (although not sure if
 meaningfully) with tenure at previous job.
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-45-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-1} \end{center}
 
 \subsubsection{Representation}\label{representation}
 
@@ -1152,11 +865,11 @@ concern and confirm a skewed sample in that sense).
 If we wish to pursue this data, I could improve on the below but it will
 have to do for now.
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-46-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_rep-1} \end{center}
 
-\section{OTJ Search}\label{otj-search}
+\subsubsection{OTJ Search}\label{otj-search}
 
-\subsection{Eeckhout et al.~2019 Unemployment
+\paragraph{Eeckhout et al.~2019 Unemployment
 Cycles}\label{eeckhout-et-al.-2019-unemployment-cycles}
 
 \href{https://www.aeaweb.org/articles?id=10.1257/mac.20180105}{Source}
@@ -1167,7 +880,21 @@ Cycles}\label{eeckhout-et-al.-2019-unemployment-cycles}
 \caption{Employed Search Effort Fit}
 \end{figure}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-8-1} \end{center}
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{2}
+\tightlist
+\item
+  \href{https://www.aeaweb.org/articles?id=10.1257/mac.20180105}{Eeckhout
+  et al.~2019 Unemployment Cycles}: We derive the sensitivity of
+  employed job seekers to the business cycle from the
+  employment-to-employment transitions data as used in Eeckhout et
+  al.~Due to unreliable component parts of the Eeckhout analysis, we
+  decided to abandon using their estimated parameters (search intensity
+  for employed workers).
+\end{enumerate}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/eeckhout-1} \end{center}
 
 \begin{table}
 \centering
@@ -1195,18 +922,75 @@ RMSE & \num{0.01} & \num{0.00} & \num{0.00}\\
 \end{tabular}
 \end{table}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-8-2} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/eeckhout-2} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-8-3} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/eeckhout-3} \end{center}
 
-\subsection{Learning Rate}\label{learning-rate}
+\subsection{Supporting Data for
+Validation}\label{supporting-data-for-validation}
 
-\subsubsection{Mueller et al.~Job Seekers' Perceptions and Employment
+\subsubsection{(Validation) Mukoyama et al.~Job Search and the Business
+Cycle}\label{validation-mukoyama-et-al.-job-search-and-the-business-cycle}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{3}
+\tightlist
+\item
+  (Validation) Mukoyama et al.~data on the intensive margin of
+  unemployed search effort (in minutes searched) over the business
+  cycle. We have chosen to include this as a validation exercise of our
+  application effort imposition.
+\end{enumerate}
+
+We use evidence from Mukoyama et al regarding the cyclicality of
+unemployed job search effort to validate the micro behaviour of our
+agents. I will provide more explanation on this\ldots{}
+
+(Replicated with additional data for unemployed jobseekers)
+\href{https://www.aeaweb.org/articles?id=10.1257/mac.20160202}{\textbf{Mukoyama
+et al.~2018: Job Search Over the Business Cycle}}
+
+\emph{They provide a novel measure of job search effort exploiting the
+American Time Use and Current Population Surveys which can be reduced to
+just the intensive margin (changes in search effort by worker!). At the
+moment, I think this will be the most useful input for our model.}
+
+\emph{Abstract: We examine the cyclicality of search effort using
+time-series, cross-state, and individual variation and find that it is
+countercyclical. We then set up a search and matching model with
+endogenous search effort and show that search effort does not amplify
+labor market fluctuations but rather dampens them. Lastly, we examine
+the role of search effort in driving recent unemployment dynamics and
+show that the unemployment rate would have been 0.5 to 1 percentage
+points higher in the 2008--2014 period had search effort not increased.}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mukoyama-1} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mukoyama-2} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mukoyama-3} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mukoyama-4} \end{center}
+
+\subsubsection{Learning Rate}\label{learning-rate}
+
+\paragraph{Mueller et al.~Job Seekers' Perceptions and Employment
 Prospects: Heterogeneity, Duration Dependence and
 Bias}\label{mueller-et-al.-job-seekers-perceptions-and-employment-prospects-heterogeneity-duration-dependence-and-bias}
 
 \href{https://www.aeaweb.org/articles?id=10.1257/aer.20190808}{Mueller
 et al: Job Seekers' Perceptions and Employment Prospects}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{4}
+\tightlist
+\item
+  \href{https://www.aeaweb.org/articles?id=10.1257/aer.20190808}{\textbf{Mueller
+  et al.~2021: Job Seekers' Perceptions and Employment Prospects:
+  Heterogeneity, Duration Dependence and Bias}}
+\end{enumerate}
 
 \emph{The authors claim to disentangle the effects of duration
 dependence and dynamic selection by using job seekers' elicited beliefs
@@ -1228,8 +1012,8 @@ search effort as a learning rate (ie. individuals learn about their
 re-employment probability with repeated failures in the job search).
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Aug
-18, 2025 - 10:53:12
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Jan
+05, 2026 - 12:23:08
 
 \begin{table}[!htbp] \centering 
   \caption{Descriptive Statistics (SCE)} 
@@ -1258,13 +1042,13 @@ UE transition rate: LT & $12.7$ & $12.7$ & $12.3$ \\
 \end{tabular} 
 \end{table}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-2} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-2} \end{center}
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Aug
-18, 2025 - 10:53:13
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Jan
+05, 2026 - 12:23:09
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
@@ -1281,11 +1065,11 @@ Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Aug
  find\_job\_3mon & 0.464$^{***}$ & 0.396$^{***}$ & 0.265$^{***}$ \\ 
   & (0.045) & (0.036) & (0.067) \\ 
   & & & \\ 
- 1 \textbar  userid &  &  &  \\ 
-  &  &  &  \\ 
+ 1 \textbar  userid & $-$0.104 &  & $-$0.136 \\ 
+  & (0.169) &  & (0.267) \\ 
   & & & \\ 
- Constant & $-$0.104 & $-$0.080 & $-$0.136 \\ 
-  & (0.169) & (0.137) & (0.267) \\ 
+ Constant &  & $-$0.080 &  \\ 
+  &  & (0.137) &  \\ 
   & & & \\ 
 \hline \\[-1.8ex] 
 Observations & 1,201 & 1,911 & 673 \\ 
@@ -1299,8 +1083,8 @@ Residual Std. Error & 0.467 (df = 1184) & 0.475 (df = 1894) & 0.478 (df = 656) \
 \end{table}
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Aug
-18, 2025 - 10:53:13
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Jan
+05, 2026 - 12:23:09
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
@@ -1341,8 +1125,8 @@ Residual Std. Error & 0.455 (df = 1182) & 0.464 (df = 1892) & 0.465 (df = 654) \
 \end{table}
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Aug
-18, 2025 - 10:53:13
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Jan
+05, 2026 - 12:23:09
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
@@ -1377,8 +1161,8 @@ Residual Std. Error & 0.398 (df = 457) & 0.436 (df = 781) & 0.447 (df = 283) \\
 \end{table}
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Aug
-18, 2025 - 10:53:13
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Jan
+05, 2026 - 12:23:09
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
@@ -1412,15 +1196,15 @@ Residual Std. Error & 0.400 (df = 457) & 0.437 (df = 781) & 0.450 (df = 283) \\
 \end{tabular} 
 \end{table}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-3} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-3} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-4} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-4} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-5} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-5} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-6} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-6} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-7} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-7} \end{center}
 
 \subsection{Additional Analyses}\label{additional-analyses}
 
@@ -1446,25 +1230,25 @@ Reservation Wages and Wage Expectations.}
 
 {[}1{]} ``Plots of RESERVATION WAGE versus latest, current wage''
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-10-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_res_wage-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-10-2} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_res_wage-2} \end{center}
 
 {[}1{]} ``Plots of EXPECTED OFFER versus latest, current, reservation
 wage''
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-10-3} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_res_wage-3} \end{center}
 
 {[}1{]} ``Plots of ACCEPTED SALARY versus latest, current, reservation
 wage''
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-10-4} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_res_wage-4} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-10-5} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_res_wage-5} \end{center}
 
 \begin{table}
 \centering
-\caption{\label{tab:unnamed-chunk-10}Accepted Wages and Unemployment Duration}
+\caption{\label{tab:sce_res_wage}Accepted Wages and Unemployment Duration}
 \centering
 \begin{tabular}[t]{lcccccc}
 \toprule
@@ -1484,7 +1268,7 @@ RMSE & \num{0.40} & \num{0.35} & \num{0.30} & \num{0.30} & \num{0.34} & \num{0.3
 \end{table}
 \begin{table}
 \centering
-\caption{\label{tab:unnamed-chunk-10}Reservation Wages and Unemployment Duration}
+\caption{\label{tab:sce_res_wage}Reservation Wages and Unemployment Duration}
 \centering
 \begin{tabular}[t]{lcccc}
 \toprule
@@ -1528,7 +1312,7 @@ RMSE & \num{0.98} & \num{0.90} & \num{0.44} & \num{0.44}\\
 \end{table}
 \begin{table}
 \centering
-\caption{\label{tab:unnamed-chunk-10}Accepted Wages and Unemployment Duration}
+\caption{\label{tab:sce_res_wage}Accepted Wages and Unemployment Duration}
 \centering
 \begin{tabular}[t]{lcccc}
 \toprule
@@ -1572,7 +1356,7 @@ RMSE & \num{0.58} & \num{0.53} & \num{0.32} & \num{0.32}\\
 \end{table}
 \begin{table}
 \centering
-\caption{\label{tab:unnamed-chunk-10}Expected Wages and Unemployment Duration}
+\caption{\label{tab:sce_res_wage}Expected Wages and Unemployment Duration}
 \centering
 \begin{tabular}[t]{lcccc}
 \toprule
@@ -1647,12 +1431,12 @@ Year & N Unemployed & N Unemp \& Searching \\
 2021 & 330 & 50 \\
 \end{longtable}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-12-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_job_search2-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-12-2} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_job_search2-2} \end{center}
 
 \subsubsection{On the job search}\label{on-the-job-search}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-13-1} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_otj-1} \end{center}
 
 \end{document}

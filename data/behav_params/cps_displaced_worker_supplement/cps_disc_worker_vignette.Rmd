@@ -9,6 +9,7 @@ header-includes:
 editor_options: 
   markdown: 
     wrap: sentence
+  chunk_output_type: console
 ---
 
 As part of the Current Population Survey, the US Census Bureau conducts an annuaol [Displaced Worker Supplement](https://cps.ipums.org/cps/dw_sample_notes.shtml) in which workers who have lost their job in the last three years are asked additional questions about their unemployment experiences and (if re-employed) their re-employment conditions.
@@ -40,12 +41,12 @@ If we fit this model with a quadratic fit this could inform our reservation wage
 2.  **The reported 'current wage' is not necessarily the the realised wage post-re-employment.** Individuals report the wage at the lost job, the amount of time unemployed until they were re-employed, and the wage they hold at their current job. However, it is not indicated whether the current job is the same job as the first they were re-employed at. Given various comments in the literature about finding "stop-gap" employment, this might not be a problem in the sense that the "current wage" would more accurately indicate the wage an individual has "landed" at post-unemployment spell. But curious what you think about the defensibility of this.
 3.  **Outcome variable:** How do we feel about the outcome variable as the ratio of current to latest held job? Might we want to take the log or consider simply the (log) level regressed on the previous wage. Wondering if a ratio-based outcome variable might muddle interpretation. Curious for your reactions.
 
-```{r, echo = FALSE, warning = FALSE, message = FALSE}
+```{r setup_cps, echo = FALSE, warning = FALSE, message = FALSE}
 
 knitr::opts_chunk$set(
   fig.align = 'center',
-  fig.width = 5.5,
-  fig.height = 4,
+  fig.width = 10,
+  fig.height = 8,
   out.width = '0.9\\linewidth',
   echo = FALSE
 )
@@ -64,16 +65,18 @@ library(survey)
 library(gt)
 library(cobalt)
 library(sampleSelection)
+library(extrafont)
+extrafont::loadfonts(quiet = TRUE)
 source(here('code/formatting/plot_dicts.R'))
 
 ```
 
-## Data cleaning
+<!-- ## Data cleaning -->
 
-Feel free to ignore this code chunk immediately below - included for now for transparency in case you spot issues. 
-I include it for your info on binning and outlier trimming.
+<!-- Feel free to ignore this code chunk immediately below - included for now for transparency in case you spot issues.  -->
+<!-- I include it for your info on binning and outlier trimming. -->
 
-```{r, warning = FALSE, echo = TRUE}
+```{r disc_data, warning = FALSE, echo = FALSE}
 
 # From the original dataset, I include only those that reported having lost a 
 # FT job in the last three years
@@ -233,7 +236,7 @@ In weekly wage reporting, the "satisficing" seems to start earlier in unemployme
 Scatter plot: I fit a linear and spline fit to the scatted plot of the wage ratio to unemployment duration before using the regression.
 Indicates decline in the wage ratio with unemployment duration that has a potentially non-linear fit.
 
-```{r, echo=FALSE, warning = FALSE, fig.height = 10, fig.width = 10, message = FALSE}
+```{r disc_descriptives, echo=FALSE, warning = FALSE, fig.height = 8, fig.width = 10, message = FALSE}
 hist1 <- df %>% 
   filter(clipped_sample_hwage) %>% 
   ggplot() + 
@@ -259,7 +262,7 @@ hist2 <- df %>%
   labs(y = "Count", x = "Continuous Unemployment Duration", title = "Binned Unemployment Duration") +
   common_theme
 
-(hist1 / hist2) + plot_annotation(title = "Reported unemployment duration between lost job and next job", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+(hist1 / hist2) + plot_annotation(title = "Reported unemployment duration between lost job and next job", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = plot_annotation_theme)
 ################################################################################
 ################################################################################
 
@@ -341,17 +344,17 @@ bp_cont <- df %>%
   theme(plot.title=element_text(hjust=0.5)) +
   theme(legend.position = "none")
 
-(bp1 / bp2) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights.\nAnnual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+(bp1 / bp2) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights.\nAnnual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.", theme = plot_annotation_theme)
 
-(bp3 + bp4 + bp5) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights.\nAnnual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.\nIn many cases, only hourly OR weekly wages are reported.\nTo be able to combine information on all workers to one value,we select the present statistic for those missing one and \n retain either the minimum, maximum, or mean of the hourly versus weekly wage for those reporting both.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 14)))
+(bp3 + bp4 + bp5) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights.\nAnnual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.\nIn many cases, only hourly OR weekly wages are reported.\nTo be able to combine information on all workers to one value,we select the present statistic for those missing one and \n retain either the minimum, maximum, or mean of the hourly versus weekly wage for those reporting both.", theme = plot_annotation_theme)
 
-(bp3) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 14)))
+(bp3) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.", theme = plot_annotation_theme)
 
-bp_cont + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights.\nAnnual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+bp_cont + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights.\nAnnual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.", theme = plot_annotation_theme)
 
 ```
 
-```{r, echo=FALSE, warning = FALSE, fig.height = 8, fig.width = 10, message = FALSE}
+```{r disc_spline, echo=FALSE, warning = FALSE, fig.height = 8, fig.width = 10, message = FALSE}
 
 lin <- df %>% 
   filter(clipped_sample_hwage) %>% 
@@ -369,7 +372,7 @@ spline <- df %>%
   labs(title = "Spline fit", y = "Hourly Wage Ratio", x = "Unemployment Duration (mos.)") +
   common_theme
 
-(lin + spline) + plot_annotation(title = "Linear and spline fit to scatter plot of wage ratio vs. unemployment duration in months.", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment and wage ratios below 0.5 and above 2.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+(lin + spline) + plot_annotation(title = "Linear and spline fit to scatter plot of wage ratio vs. unemployment duration in months.", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment and wage ratios below 0.5 and above 2.", theme = plot_annotation_theme)
 
 ```
 
@@ -404,7 +407,7 @@ I include the full set of coefficients (again, apologies for verbose output) in 
 But I highlight in blue our main interest in $\beta_{1}$.
 
 
-```{r, echo=FALSE, warning = FALSE, out.width="75%"}
+```{r disc_non_uniform_regs, echo=FALSE, warning = FALSE, out.width="75%"}
 
 controls <- " + female + age + white + black + mixed + marst + educ_cat"
 reg_forms <- c("Cont." = "dwmosun",
@@ -447,20 +450,6 @@ for(rf in names(reg_forms_full)){
 #     kableExtra::row_spec(row = highlightrows, background = "lightblue") %>% 
 #     kable(format = "latex")
 # }
-options(modelsummary_factory_latex = "kableExtra")
-output_pretty <- function(mods, highlightrows = NULL, title = NULL) {
-  modelsummary(
-    mods,
-    gof_omit = c("Log.Lik.|BIC|AIC"),
-    stars = TRUE,
-    coef_rename = coef_labs,
-    output = "latex",
-    title = title,
-    escape = TRUE
-  ) %>%
-    kableExtra::row_spec(row = highlightrows, background = "yellow!20") %>%
-    kableExtra::kable_styling(latex_options = "scale_down")
-}
 
 coef_labs = c("dwben" = "Received Unemployment Compensation",
                "dwexben" = "Exhausted Unemployment Compensation",
@@ -469,6 +458,7 @@ coef_labs = c("dwben" = "Received Unemployment Compensation",
                "educ_catBachelor's" = "Bachelor's Degree",
                "educ_catHS Diploma" = "High School",
                "educ_catLess than HS" = "Less than HS",
+               "educ_catAssociate’s" = "Associate's Degree",
                "educ_catPostgraduate Degree" = "Postgraduate Degree",
                "whiteTRUE" = "White",
                "blackTRUE" = "Black",
@@ -489,6 +479,7 @@ coef_labs = c("dwben" = "Received Unemployment Compensation",
                "XOeduc_catBachelor's" = "Bachelor's Degree",
                "XOeduc_catHS Diploma" = "High School",
                "XOeduc_catLess than HS" = "Less than HS",
+               "XOeduc_catAssociate’s" = "Associate's Degree",
                "XOeduc_catPostgraduate Degree" = "Postgraduate Degree",
                "XOwhiteTRUE" = "White",
                "XOblackTRUE" = "Black",
@@ -500,6 +491,21 @@ coef_labs = c("dwben" = "Received Unemployment Compensation",
               "imrData$IMR1" = "Inverse Mills Ratio"
                )
 
+
+options(modelsummary_factory_latex = "kableExtra")
+output_pretty <- function(mods, highlightrows = NULL, title = NULL) {
+  modelsummary(
+    mods,
+    gof_omit = c("Log.Lik.|BIC|AIC"),
+    stars = TRUE,
+    coef_rename = coef_labs,
+    output = "latex",
+    title = title,
+    escape = TRUE
+  ) %>%
+    kableExtra::row_spec(row = highlightrows, background = "yellow!20") %>%
+    kableExtra::kable_styling(latex_options = "scale_down")
+}
 
 
 ################################################################################
@@ -530,7 +536,7 @@ for(rf in names(reg_forms_full)){
 
 ```
 
-```{r, echo = FALSE}
+```{r dics_newdata, echo = FALSE}
 # Dataframe needed for predictions
 
 newdata <- data.frame(
@@ -552,7 +558,7 @@ newdata <- data.frame(
 Across all models in the tabs below we see a consistently negative coefficient on unemployment duration (\~0.7-1 percentage point increase in the wage ratio for each additional month spent in unemployment).
 If we look more closely at the performance of our model with continuous unemployment duration, UI use (not exhaustion), all controls, wage levels, and outlier correction we see that the model performs fairly well across various diagnostic tests.
 
-```{r, echo = FALSE}
+```{r disc_reg1, echo = FALSE}
 
 print('Continuous U Duration. w. UI Control w. demographic controls (clipped sample)')
 
@@ -566,14 +572,14 @@ mod_list2[['Cont. w. UI w. controls (clipped)']] %>%
 Continuous UE duration treatment is reported in monthly values.
 A one-unit increase in the treatment variable = 1 additional month of unemployment.
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
+```{r disc_reg2, echo = FALSE, message = FALSE, warning = FALSE}
 
 output_pretty(mod_list[grepl("Cont", names(mod_list))], highlightrows = 3, title = "Continuous UE Duration w.o Wage Level Control")
 
 ```
 
 
-```{r, echo = FALSE, message = FALSE, warning = FALSE}
+```{r disc_reg3, echo = FALSE, message = FALSE, warning = FALSE}
 lm1 <- lm(ratio_wage ~ dwmosun + female + age + white + black + mixed + marst + educ_cat, data = df, weights = dwsuppwt)
 lm2 <- lm(ratio_wage ~ dwmosun + dwmosun2 + female + age + white + black + mixed + marst + educ_cat, data = df, weights = dwsuppwt)
 lm3 <- lm(ratio_wage ~ dwmosun + dwmosun2 + dwmosun3 + female + age + white + black + mixed + marst + educ_cat, data = df, weights = dwsuppwt)
@@ -616,7 +622,7 @@ lm_full %>%
 
 ```
 
-```{r, echo = FALSE}
+```{r disc_reg4, echo = FALSE}
 
 output_pretty(mod_list2[grepl("Cont", names(mod_list))], highlightrows = c(3,5), title = "Continuous UE Duration w. Wage Level Control")
 
@@ -626,13 +632,13 @@ output_pretty(mod_list2[grepl("Cont", names(mod_list))], highlightrows = c(3,5),
 
 Binned UE duration treatment is reported in bins as indicated in the box plots and code cleaning above.
 
-```{r, echo = FALSE}
+```{r disc_reg5, echo = FALSE}
 
 output_pretty(mod_list[grepl("Disc", names(mod_list))], highlightrows = 3, title = "Binned UE Duration w.o Wage Level Control")
 
 ```
 
-```{r, echo = FALSE}
+```{r disc_reg6, echo = FALSE}
 
 output_pretty(mod_list2[grepl("Disc", names(mod_list))], highlightrows = c(3,5), title = "Binned UE Duration w. Wage Level Control")
 
@@ -661,7 +667,7 @@ Open to suggestions and corrections :)
 
 Entropy balancing simply reweights observations to ensure population matching across the key dependent variable.
 
-```{r, warning = FALSE, fig.height = 4, fig.width = 4}
+```{r disc_eb1, warning = FALSE, fig.height = 8, fig.width = 10}
 # Apply entropy balancing using dwsuppwt sample weights
 # Reweight according to observable characteristics using "ebalance" 
 eb <- weightit(
@@ -671,10 +677,24 @@ eb <- weightit(
   s.weights = df$dwsuppwt
 )
 
+var_labs_love = c(
+        "female" = "Female",
+        "age" = "Age",
+        "white" = "White",
+        "black" = "Black",
+        "mixed" = "Mixed",
+        "marst" = "Married",
+               "educ_cat_Bachelor's" = "Bachelor's Degree",
+               "educ_cat_Associate's" = "Associate's Degree",
+               "educ_cat_HS Diploma" = "High School",
+               "educ_cat_Less than HS" = "Less than HS",
+               "educ_cat_Postgraduate Degree" = "Postgraduate Degree"
+               )
+
 # All covariates are balanced at the mean with tight threshold
 #bal.tab(eb, stats = c("m", "v"), thresholds = c(m = .001))
-love.plot(eb, thresholds = .001) + 
-  labs(subtitle = "Love plot of adjusted and unadjusted covariates including relevant mean threshold 0.01 using entropy balancing reweighting. All covariates are balanced at the mean with a threshold of 0.001.") +
+love.plot(eb, thresholds = .001,  var.names = var_labs_love) + 
+  labs(subtitle = str_wrap("Love plot of adjusted and unadjusted covariates including relevant mean threshold 0.01 using entropy balancing reweighting. All covariates are balanced at the mean with a threshold of 0.001.", width = wrap_width_fixed)) +
   common_theme
 
 # Add the new weights to the dataframe
@@ -709,7 +729,7 @@ eb_full <- cbind(eb_preds, eb_preds2, eb_preds3)
 ```
 
 
-```{r, warning = FALSE}
+```{r disc_eb2, warning = FALSE}
 
 eb_full %>% 
   ggplot(aes(x = 0:(nrow(eb_full)-1))) +
@@ -746,7 +766,7 @@ eb_full %>%
 ##### Diagnostic Tests for Entropy-balanced Reweighted Sample
 
 
-```{r, echo = FALSE, warning = FALSE}
+```{r disc_eb3, echo = FALSE, warning = FALSE}
 
 mod_eb_reweight %>% check_model()
 
@@ -754,7 +774,7 @@ mod_eb_reweight %>% check_model()
 
 
 
-```{r, echo = FALSE, warning = FALSE}
+```{r disc_eb4, echo = FALSE, warning = FALSE}
 
 mod_eb_reweight2 %>% check_model()
 
@@ -762,7 +782,7 @@ mod_eb_reweight2 %>% check_model()
 
 
 
-```{r, echo = FALSE, warning = FALSE}
+```{r disc_eb5, echo = FALSE, warning = FALSE}
 
 mod_eb_reweight3 %>% check_model()
 
@@ -771,7 +791,7 @@ mod_eb_reweight3 %>% check_model()
 #### Propensity Score Weighting with GLM Estimator
 
 
-```{r, warning = FALSE, fig.height = 4, fig.width = 4}
+```{r disc_glm1, warning = FALSE, fig.height = 8, fig.width = 10}
 
 # More conventional propensity scoring with a GLM estimator
 glm <- weightit(
@@ -783,8 +803,10 @@ glm <- weightit(
 
 # All covariates are balanced at the mean with less tight threshold (0.001, very few variables pass with glm esimator)
 #bal.tab(glm, stats = c("m", "v"), thresholds = c(m = .01)) 
-love.plot(glm, thresholds = .01) + 
-  labs(subtitle = "Love plot of adjusted and unadjusted covariates including relevant mean threshold 0.01 using a GLM estimator. All covariates are balanced at the mean with a threshold of 0.01 whereas very few variables pass at a tighter threshold 0.001 with the GLM estimator.") +
+love.plot(glm, thresholds = .01, var.names = var_labs_love) + 
+  geom_vline(aes(xintercept = 0.001), linestyle = "dotted", color = "grey70") + 
+    geom_vline(aes(xintercept = -0.001), linestyle = "dotted", color = "grey70") + 
+  labs(subtitle = str_wrap("Love plot of adjusted and unadjusted covariates including relevant mean threshold 0.01 using a GLM estimator.\nAll covariates except the binary indicator for having less than a HS degree level of education\nare balanced at the mean with a threshold of 0.01 (black dashed line)\n whereas very few variables pass at a tighter threshold 0.001 with the GLM estimator.", width = wrap_width_fixed)) +
   common_theme
 
 ```
@@ -793,7 +815,7 @@ love.plot(glm, thresholds = .01) +
 ##### Diagnostic Tests for Propensity Score Matching (GLM) Reweighted Sample
 
 
-```{r, echo = FALSE}
+```{r disc_glm2, echo = FALSE}
 
 df$glm_weight <- glm$weights
 
@@ -819,7 +841,7 @@ mod_glm_reweight %>% check_model()
 
 ##### Predicted Reservation Wage using GLM Reweighted Sample
 
-```{r, echo = FALSE}
+```{r disc_glm3, echo = FALSE}
 # Extract prediction intervals as data frames
 glm_preds  <- as.data.frame(predict(mod_glm_reweight,  newdata = newdata, interval = "confidence")) %>% rename_with(~paste0("glm_preds_",.))
 glm_preds2 <- as.data.frame(predict(mod_glm_reweight2, newdata = newdata, interval = "confidence")) %>% rename_with(~paste0("glm_preds2_",.))
@@ -863,7 +885,7 @@ glm_full %>%
 
 Another option is a Heckman Selection correction though I do not think this addresses the particular selection concern we have where there are simply less observations in longer unemployment durations.              
 
-```{r, warning = FALSE}
+```{r disc_heckman1, warning = FALSE}
 # Create selection indicator (1 if ratio_wage is observed)
 df$observe_wage <- as.numeric(!is.na(df$ratio_wage))
 
@@ -933,14 +955,14 @@ ggplot(newdata, aes(x = dwmosun)) +
 #### Regression Results with Sample Reweighting
 
 
-```{r, echo = FALSE, warning = FALSE}
+```{r disc_heckman2, echo = FALSE, warning = FALSE}
 # All correction models together
 list("Heckman Correction" = heckman_model$lm, "Entropy Balanced Reweight" = mod_eb_reweight, "GLM Reweight" = mod_glm_reweight) %>% output_pretty(highlightrows = 3)
 
 ```
 
 
-```{r, echo = FALSE, warning = FALSE}
+```{r disc_heckman3, echo = FALSE, warning = FALSE}
 
 ggplot() + 
   geom_line(data = lm_full, aes(x = 0:36, y = lm_preds_fit), color = "darkorchid") +
@@ -1015,9 +1037,9 @@ ggplot(sim_all, aes(x = factor(dur_unemp), y = sim_val, fill = model)) +
   )  +
   scale_fill_brewer(palette = 'Dark2')
 
-res_wage_input %>% 
-  select(dur_unemp, contains("_fit"), contains("_se")) %>% 
-  write.csv(here('calibration_remote/data/res_wage_dists.csv'))
+#res_wage_input %>% 
+  #select(dur_unemp, contains("_fit"), contains("_se")) %>% 
+  #write.csv(here('calibration_remote/data/res_wage_dists.csv'))
   #write.csv(here('data/behav_params/cps_displaced_worker_supplement/res_wage_dists.csv'))
 #ggsave(here('data/behav_params/cps_displaced_worker_supplement/res_wage_dists.jpg'), dpi = 300, width = 11, height = 8)
 
@@ -1048,7 +1070,7 @@ tenure2 <- df %>%
   geom_smooth(method = "lm", color = "forestgreen", fill = "forestgreen") +
   common_theme
 
-tenure1 + tenure2 + plot_annotation(title = "Tenure at Lost Job (years)", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 15), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+tenure1 + tenure2 + plot_annotation(title = "Tenure at Lost Job (years)", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = plot_annotation_theme)
 
 ```
 
@@ -1064,7 +1086,7 @@ Individuals with only a HS diploma is strong majority in sample - not sure how a
 
 If we wish to pursue this data, I could improve on the below but it will have to do for now.
 
-```{r, echo=FALSE, warning = FALSE, message = FALSE, fig.height = 14, fig.width = 10}
+```{r disc_rep, echo=FALSE, warning = FALSE, message = FALSE, fig.height = 8, fig.width = 12}
 # Gender
 female_lfpr <- df %>% 
   filter(clipped_sample_hwage) %>% 
@@ -1105,15 +1127,15 @@ gender <- df %>%
   ) +
 common_theme+                              
   theme(
-    legend.position = "none",
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    axis.title.x = element_blank(),   
-    axis.title.y = element_blank(),
-    axis.text.x = element_blank(),
-    axis.ticks = element_blank(),  
-    axis.text.y = element_blank()
-  )
+    legend.position = "none")
+  #   panel.grid.major = element_blank(),
+  #   panel.grid.minor = element_blank(),
+  #   axis.title.x = element_blank(),   
+  #   axis.title.y = element_blank(),
+  #   axis.text.x = element_blank(),
+  #   axis.ticks = element_blank(),  
+  #   axis.text.y = element_blank()
+  # )
 
 # Wage representation 
 mean_wage <- df %>% 
@@ -1187,7 +1209,7 @@ age <- df %>%
   theme(legend.position = "none")
   
 
-((wage + age) /  (educ + gender)) + plot_annotation(title = "Preliminary Look at Sample Composition by Age, Wage, Education, Gender, Occupation", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = theme(plot.title = element_text(hjust = 0.5, size = 18), plot.subtitle = element_text(hjust = 0.5, size = 10)))
+((wage + age) /  (educ + gender)) + plot_annotation(title = "Sample Composition by Age, Wage, Education, Gender, Occupation", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = plot_annotation_theme)
   
 
 # Occupation

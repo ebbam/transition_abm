@@ -20,6 +20,7 @@ library(patchwork)
 library(broom) # For extracting model coefficients
 library(modelsummary)
 library(flextable)
+library(Hmisc)
 
 # Define base directory (replace this with the correct path later)
 base <- here("data/behav_params/Mueller_Replication/")
