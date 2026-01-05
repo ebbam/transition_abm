@@ -1,0 +1,65 @@
+\begin{table}[ht]
+\centering
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{llllll}
+\toprule
+Model & Variable & Mean (Sim) & Mean (Obs) & SSE & Correlation \\
+\midrule
+Non-behavioural & Vacancy Rate & 0.032 & 0.031 & \cellcolor{yellow!25}0.001 & \cellcolor{yellow!25}0.955 \\
+ & Unemployment Rate & 0.056 & 0.060 & 0.034 & \cellcolor{yellow!25}0.956 \\
+ & Long-term Unemployment Rate & 0.065 & 0.264 & 9.778 & 0.781 \\
+ & Hires Rate & 0.029 & 0.036 & 0.015 & 0.486 \\
+ & Separations Rate & 0.031 & 0.036 & 0.008 & 0.394 \\
+ & UE Transition Rate & 0.027 & 0.014 & 0.049 & -0.483 \\
+ & EE Transition Rate & 0.000 & 0.019 & 0.080 & -- \\
+ & Application Effort (U) & -- & -- & -- & -0.802 \\
+ & Seeker Composition & 0.000 & 0.410 & 37.974 & -- \\
+Non-behavioural w. OTJ & Vacancy Rate & \cellcolor{yellow!25}0.031 & 0.031 & \cellcolor{yellow!25}0.001 & \cellcolor{yellow!25}0.957 \\
+ & Unemployment Rate & 0.058 & 0.060 & 0.017 & \cellcolor{yellow!25}0.949 \\
+ & Long-term Unemployment Rate & 0.079 & 0.264 & 8.651 & 0.749 \\
+ & Hires Rate & 0.031 & 0.036 & \cellcolor{yellow!25}0.011 & 0.564 \\
+ & Separations Rate & 0.033 & 0.036 & 0.008 & 0.433 \\
+ & UE Transition Rate & 0.024 & 0.014 & 0.032 & -0.512 \\
+ & EE Transition Rate & 0.005 & 0.019 & 0.046 & 0.009 \\
+ & Application Effort (U) & -- & -- & -- & -0.714 \\
+ & Seeker Composition & 0.496 & 0.410 & 2.394 & \cellcolor{yellow!25}0.817 \\
+Behavioural w. Cyc. OTJ w. RW & Vacancy Rate & 0.037 & 0.031 & 0.010 & \cellcolor{yellow!25}0.962 \\
+ & Unemployment Rate & 0.162 & 0.060 & 2.375 & 0.441 \\
+ & Long-term Unemployment Rate & 0.613 & 0.264 & 27.816 & \cellcolor{yellow!25}0.859 \\
+ & Hires Rate & 0.027 & 0.036 & 0.024 & 0.465 \\
+ & Separations Rate & 0.030 & 0.036 & 0.012 & 0.357 \\
+ & UE Transition Rate & \cellcolor{red!25}0.015 & 0.014 & \cellcolor{red!25}0.004 & -0.479 \\
+ & EE Transition Rate & 0.007 & 0.019 & 0.033 & 0.198 \\
+ & Application Effort (U) & -- & -- & -- & -0.390 \\
+ & Seeker Composition & 0.219 & 0.410 & 8.299 & \cellcolor{yellow!25}0.812 \\
+Behavioural w.o. Cyc. OTJ w. RW & Vacancy Rate & 0.035 & 0.031 & 0.005 & \cellcolor{yellow!25}0.966 \\
+ & Unemployment Rate & 0.059 & 0.060 & 0.046 & 0.613 \\
+ & Long-term Unemployment Rate & 0.536 & 0.264 & 17.119 & \cellcolor{yellow!25}0.820 \\
+ & Hires Rate & 0.018 & 0.036 & 0.075 & \cellcolor{yellow!25}0.598 \\
+ & Separations Rate & 0.020 & 0.036 & 0.053 & \cellcolor{red!25}0.484 \\
+ & UE Transition Rate & 0.008 & 0.014 & 0.009 & \cellcolor{red!25}-0.212 \\
+ & EE Transition Rate & \cellcolor{red!25}0.009 & 0.019 & \cellcolor{red!25}0.023 & \cellcolor{red!25}0.533 \\
+ & Application Effort (U) & -- & -- & -- & \cellcolor{red!25}0.026 \\
+ & Seeker Composition & 0.469 & 0.410 & \cellcolor{yellow!25}1.462 & 0.648 \\
+Behavioural w. Cyc. OTJ w.o RW & Vacancy Rate & \cellcolor{yellow!25}0.031 & 0.031 & \cellcolor{yellow!25}0.001 & \cellcolor{yellow!25}0.957 \\
+ & Unemployment Rate & 0.068 & 0.060 & 0.029 & 0.885 \\
+ & Long-term Unemployment Rate & \cellcolor{yellow!25}0.093 & 0.264 & \cellcolor{red!25}7.665 & 0.673 \\
+ & Hires Rate & \cellcolor{red!25}0.032 & 0.036 & \cellcolor{yellow!25}0.011 & 0.554 \\
+ & Separations Rate & \cellcolor{red!25}0.034 & 0.036 & 0.009 & 0.434 \\
+ & UE Transition Rate & 0.024 & 0.014 & 0.029 & -0.486 \\
+ & EE Transition Rate & 0.006 & 0.019 & 0.043 & 0.075 \\
+ & Application Effort (U) & -- & -- & -- & -0.346 \\
+ & Seeker Composition & \cellcolor{red!25}0.383 & 0.410 & 2.081 & \cellcolor{yellow!25}0.811 \\
+Behavioural w.o. Cyc. OTJ w.o RW & Vacancy Rate & \cellcolor{yellow!25}0.031 & 0.031 & \cellcolor{yellow!25}0.001 & \cellcolor{yellow!25}0.957 \\
+ & Unemployment Rate & \cellcolor{red!25}0.060 & 0.060 & \cellcolor{red!25}0.011 & \cellcolor{yellow!25}0.930 \\
+ & Long-term Unemployment Rate & \cellcolor{yellow!25}0.085 & 0.264 & 8.230 & 0.711 \\
+ & Hires Rate & 0.031 & 0.036 & \cellcolor{yellow!25}0.011 & \cellcolor{yellow!25}0.569 \\
+ & Separations Rate & 0.033 & 0.036 & \cellcolor{red!25}0.007 & 0.438 \\
+ & UE Transition Rate & 0.023 & 0.014 & 0.023 & -0.444 \\
+ & EE Transition Rate & 0.007 & 0.019 & 0.037 & 0.078 \\
+ & Application Effort (U) & -- & -- & -- & -0.283 \\
+ & Seeker Composition & 0.478 & 0.410 & \cellcolor{yellow!25}1.435 & \cellcolor{yellow!25}0.811 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
