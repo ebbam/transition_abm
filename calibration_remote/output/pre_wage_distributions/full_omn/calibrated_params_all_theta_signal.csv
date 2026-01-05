@@ -1,0 +1,13 @@
+Parameter,Value,otj,cyc_otj,cyc_ue,disc,Timestamp,model_cat
+d_u,0.02152438215747226,True,True,False,True,2025-11-12 03:13:01,otj_cyclical_e_disc
+gamma_u,0.09278690622789744,True,True,False,True,2025-11-12 03:13:01,otj_cyclical_e_disc
+theta,0.24704034344408185,True,True,False,True,2025-11-12 03:13:01,otj_cyclical_e_disc
+d_u,0.1035115873772293,True,True,False,True,2025-11-12 06:28:47,otj_cyclical_e_disc_no_rw
+gamma_u,0.762407819913838,True,True,False,True,2025-11-12 06:28:47,otj_cyclical_e_disc_no_rw
+theta,0.10093431181414969,True,True,False,True,2025-11-12 06:28:47,otj_cyclical_e_disc_no_rw
+d_u,0.0703628823338157,True,True,False,True,2025-11-12 15:57:25,otj_cyclical_e_disc
+gamma_u,0.046430284964467904,True,True,False,True,2025-11-12 15:57:25,otj_cyclical_e_disc
+theta,0.19887153734132762,True,True,False,True,2025-11-12 15:57:25,otj_cyclical_e_disc
+d_u,0.10506068632026855,True,True,False,True,2025-11-12 19:03:10,otj_cyclical_e_disc_no_rw
+gamma_u,0.7570151500456181,True,True,False,True,2025-11-12 19:03:10,otj_cyclical_e_disc_no_rw
+theta,0.09580006848870715,True,True,False,True,2025-11-12 19:03:10,otj_cyclical_e_disc_no_rw
