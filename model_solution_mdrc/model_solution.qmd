@@ -1,0 +1,18 @@
+---
+title: "model_solution_mdrc"
+format: html
+---
+
+# All Models {.panel-tabset}
+
+## Introduction 
+
+{{< include 'matching_model_solution_final (1).md' >}}
+
+## Second Section 
+
+{{< include matching_sequential_vs_simultaneous.md >}}
+
+## Third Section
+
+{{< include simultaneous_offers_matching_solution.md >}}
