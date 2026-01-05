@@ -351,3 +351,7 @@ data/behav_params/Eeckhout_Replication/.RData
 /calibration_remote/output/cos_calib/onet_wage_asym/OLD
 /calibration_remote/output/cos_calib/onet/OLD
 /calibration_remote/output/cos_calib/full_omn/OLD
+/calibration_remote/output/pyabc
+/calibration_remote/output/previous_calib_pyabc
+/calibration_remote/output/pyabc_runs
+.RData
