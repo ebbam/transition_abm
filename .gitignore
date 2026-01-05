@@ -351,7 +351,28 @@ data/behav_params/Eeckhout_Replication/.RData
 /calibration_remote/output/cos_calib/onet_wage_asym/OLD
 /calibration_remote/output/cos_calib/onet/OLD
 /calibration_remote/output/cos_calib/full_omn/OLD
+<<<<<<< Updated upstream
 /calibration_remote/output/pyabc
 /calibration_remote/output/previous_calib_pyabc
 /calibration_remote/output/pyabc_runs
 .RData
+=======
+/calibration_remote/output/omn_soc_minor
+/calibration_remote/output/pre_mistake_rate
+/calibration_remote/output/pre_param_adjustment_otj
+/calibration_remote/output/pre_res_wage_implementation
+/calibration_remote/output/pre_wage_distributions
+/calibration_remote/output/previous_calib_pyabc
+/calibration_remote/output/pyabc
+/calibration_remote/output/grid_search_pre_entry_exit
+/calibration_remote/output/grid_seps_rates_total
+/calibration_remote/output/onet
+/calibration_remote/output/single_node
+/calibration_remote/output/steady_state
+/calibration_remote/output/pyabc_runs
+/calibration_remote/output/occ_seps_rates
+.RData
+.Rhistory
+.Rhistory
+>>>>>>> Stashed changes
+*.pkl
