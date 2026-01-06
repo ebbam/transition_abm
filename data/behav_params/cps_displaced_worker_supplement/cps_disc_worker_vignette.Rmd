@@ -13,6 +13,7 @@ header-includes:
   - \usepackage{codehigh}
   - \usepackage[normalem]{ulem}
   - \UseTblrLibrary{booktabs}
+  - \usepackage{placeins}
   - \UseTblrLibrary{siunitx}
   - \newcommand{\tinytableTabularrayUnderline}[1]{\underline{#1}}
   - \newcommand{\tinytableTabularrayStrikeout}[1]{\sout{#1}}
@@ -25,10 +26,11 @@ editor_options:
 
 As part of the Current Population Survey, the US Census Bureau conducts an annual [Displaced Worker Supplement](https://cps.ipums.org/cps/dw_sample_notes.shtml) in which workers who have lost their job in the last three years are asked additional questions about their unemployment experiences and (if re-employed) their re-employment conditions. 
 
-As reported in the survey documentation linked above, "the universe for the Displaced Workers Supplement is civilians 20 or older. Respondents are further categorized as a `displaced worker' if they meet additional characteristics (see DWSTAT). Users should note that there is an important difference in definition of displaced worker across samples. Before 1994, displaced workers are those who lost or left a job during the past 5 years. After 1994, displaced workers are those who lost or left a job due to layoffs or shutdowns within the past 3 years. **For 1998 on, respondents are only considered displaced workers if they had lost or left a job due to layoffs or shutdowns within the past 3 years, were not self-employed, and did not expect to be recalled to work within the next six months. Self-response was not required for this supplement after 1994, so often one individual answered for all household members.**"
+As reported in the survey documentation linked above, "the universe for the Displaced Workers Supplement is civilians 20 or older. Respondents are further categorized as a `displaced worker' if they meet additional characteristics (see DWSTAT). Users should note that there is an important difference in definition of displaced worker across samples. Before 1994, displaced workers are those who lost or left a job during the past 5 years. After 1994, displaced workers are those who lost or left a job due to layoffs or shutdowns within the past 3 years. For 1998 on, respondents are only considered displaced workers if they had lost or left a job due to layoffs or shutdowns within the past 3 years, were not self-employed, and did not expect to be recalled to work within the next six months. Self-response was not required for this supplement after 1994, so often one individual answered for all household members."
 
-We utilize the information reported on an individual's weekly wage at their lost job, wage at their new job, and the time spent unemployed to derive a measure of duration-dependent reservation wage adjustment. More precisely, we regress the ratio of the new wage to the wage at the lost job on unemployment duration and various control variables in a cross-sectional setting. We compare the model fit across linear, quadratic, and cubic specificaitions, with and without various combinations of control variables (whether or not an individual received unemployment compensation, age, race, sex, marital status, education, previous wage level). Note that wages are reported in hourly and weekly values but this reporting is inconsistent across observations. In other words, though most individuals (4600/6198) report their wage in both units, 270 report only hourly and 1328 report only weekly. We reconcile this by converting reported hourly wages to weekly wages, where weekly values are not reported. The data used below is from annual survey responses between 2000-2025. We use the supplement sample weights in all results below. In the 
-We note where the sample has been trimmed for outliers (wage ratio between [0.25, 2] and unemployment duration less than 96 weeks (\~24 months).
+We utilize the information reported on an individual's weekly wage at their lost job, wage at their new job, and the time spent unemployed to derive a measure of duration-dependent reservation wage adjustment. More precisely, we regress the ratio of the new wage to the wage at the lost job on unemployment duration and various control variables in a cross-sectional setting. We compare the model fit across linear, quadratic, and cubic specifications, with and without various combinations of control variables (whether or not an individual received unemployment compensation, age, race, sex, marital status, education, previous wage level). Note that wages are reported in hourly and weekly values but this reporting is inconsistent across observations. In other words, though most individuals (4600/6198) report their wage in both units, 270 report only hourly and 1328 report only weekly. To be able to combine information on all workers to one value, we select the present statistic for those missing one and retain either the minimum, maximum, or mean of the hourly versus weekly wage for those reporting both. We display box plots of these wage ratios across unemployment duration bins for the different methods of reconciling the missing data later in this document. The data used below is from annual survey responses between 2000-2025. We use the supplement sample weights in all results below.
+
+We note where the sample has been trimmed for outliers (wage ratio between [0.25, 2] and unemployment duration less than 96 weeks (\~24 months). All analysis below uses Displaced Worker Sample Weights to ensure appropriate weighting of survey responses and reduce any influence of selection bias.
 
 Below, we outline the data cleaning procedure, provide descriptive figures and statistics, outline the econometric estimation strategy, provide regression results using the raw sample and reweighted samples addressing selection issues and non-uniformity, and provide information on the representativeness of the raw sample. The sample is non-uniform in unemployment duration (less observations are observed for higher values of unemployment duration). We employ three methods of reweighting to address these selection issues (Heckman Selection correction, entropy-balancing, and propensity score matching) to deal with representativeness issues of across values of unemployment durations. These re-weighting and sample balancing methods confirm the directionality of the regression results in the non-uniform sample, providing greater confidence in the triangulated reservation wage adjustment rate.
 
@@ -241,15 +243,7 @@ filter(dwhrswkc != 99 & dwwksun <= 160) %>%
 
 # Descriptives
 
-All descriptives below use the Displaced Worker Sample Weights.
-
-Histogram: sample is skewed (see reweighting alternatives at end of document).
-
-Box plots: Looking at the reported wage ratios in weekly and hourly values, the mean is fixed near 1 until \>12 mos of unemployment in hourly wage reporting.
-In weekly wage reporting, the ``satisficing" seems to start earlier in unemployment duration (sample size is larger for weekly reporting - might be worth focusing on those wages).
-
-Scatter plot: I fit a linear and spline fit to the scatted plot of the wage ratio to unemployment duration before using the regression.
-Indicates decline in the wage ratio with unemployment duration that has a potentially non-linear fit.
+First, we display the distribution of continuous (red) and binned (blue) unemployment duration. The distribution is, as expected, heavily skewed, with more individuals concentrated at low unemployment durations. The binned values in the blue histogram are the binned values later employed as an outcome variable in various regressions.
 
 ```{r disc_descriptives, echo=FALSE, warning = FALSE, fig.height = 8, fig.width = 10, message = FALSE}
 hist1 <- df %>% 
@@ -280,7 +274,9 @@ hist2 <- df %>%
 (hist1 / hist2) + plot_annotation(title = "Reported unemployment duration between lost job and next job", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment.", theme = plot_annotation_theme)
 ################################################################################
 ################################################################################
+```
 
+```{r disc_descriptives1, echo=FALSE, warning = FALSE, fig.height = 8, fig.width = 10, message = FALSE}
 bp1 <- df %>% 
   filter(clipped_sample_hwage) %>% 
   ggplot(aes(x = as.factor(dwwksun_bin), y = ratio_wage)) +
@@ -361,16 +357,30 @@ bp_cont <- df %>%
   ylim(0,2.5) +
   theme(plot.title=element_text(hjust=0.5)) +
   theme(legend.position = "none")
+```
 
+
+Next, looking at the reported wage ratios in weekly and hourly values (without reconciling the missing data), the mean is fixed near 1 until \>12 mos of unemployment in hourly wage reporting. In weekly wage reporting, the ``satisficing" seems to start earlier in unemployment duration, indicating that the relationship is potentially negative and non-linear.
+
+```{r disc_descriptives2, echo=FALSE, warning = FALSE, fig.height = 8, fig.width = 10, message = FALSE}
 (bp1 + bp2) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights.\nAnnual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.", theme = plot_annotation_theme)
+```
 
-(bp3 + bp4 + bp5) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights.\nAnnual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.\nIn many cases, only hourly OR weekly wages are reported.\nTo be able to combine information on all workers to one value,we select the present statistic for those missing one and \n retain either the minimum, maximum, or mean of the hourly versus weekly wage for those reporting both.", theme = plot_annotation_theme)
+Next, we compare the various options for reconciling missing data across survey responses (i.e., when either weekly or hourly wage is reported but not both.) Notably, reconciling the reported data by taking the minimum (left panel) or mean (right panel) across reported wage values for those individuals that report both do not lead to meaningful differences in the distribution, visually. However, reconciling with the max (middle panel) value leads to slightly less dramatic declines in accepted wage ratios than in the other two cases. In the following sections, we proceed with the method that reconciles mutliple reported values using the minimum value of the wage ratio. 
+
+```{r disc_descriptives3, echo=FALSE, warning = FALSE, fig.height = 8, fig.width = 10, message = FALSE}
+(bp3 + bp4 + bp5) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = str_wrap("Observations weighted by Displaced Worker Supplement Weights.\nAnnual data from 2000-2025. Exclude observations reporting > 96 weeks of unemployment. In many cases, only hourly OR weekly wages are reported. To be able to combine information on all workers to one value, we select the present statistic for those missing one and retain either the minimum, maximum, or mean of the hourly versus weekly wage for those reporting both.", width = wrap_width_fixed), theme = plot_annotation_theme)
 
 # (bp3) + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights. Annual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.", theme = plot_annotation_theme)
+```
 
+
+```{r disc_descriptives4, echo=FALSE, warning = FALSE, fig.height = 8, fig.width = 10, message = FALSE}
 bp_cont + plot_annotation(title = "Reported ratio of current wage to lost wage by unemployment duration", subtitle = "Observations weighted by Displaced Worker Supplement Weights.\nAnnual data from 2000-2025.\nExclude observations reporting > 96 weeks of unemployment.", theme = plot_annotation_theme)
 
 ```
+
+Next, we fit a linear and spline fit to the scatted plot of the wage ratio to unemployment duration before employing any regressions. These plots both visually indicate a decline in the wage ratio with unemployment duratio, with the spline fit indicating a potentially non-linear fit (not yet accounting for selection effects).
 
 ```{r disc_spline, echo=FALSE, warning = FALSE, fig.height = 8, fig.width = 10, message = FALSE}
 
@@ -396,9 +406,13 @@ spline <- df %>%
 
 ```
 
+
+\FloatBarrier
+
+
 # Regressions (non-uniform sample)
 
-Next, before correcting for the non-uniformity of the sample (i.e., that there are less observations present for higher unemployment durations), we employ the following econometric specificaitons (with various modifications to sample and control variables).\\
+Next, before correcting for the non-uniformity of the sample (i.e., that there are less observations present for higher unemployment durations), we employ the following cross-sectional econometric specifications (with various modifications to sample and control variables).\
 
 $W_{i} = \alpha_{i} + \beta_{1} d_{i} + \beta_{2}UI_{i} + \beta_{3}X_{i} + \epsilon_{i}$
 
@@ -410,9 +424,11 @@ $UI_{i}$: Control variable for having used or exhausted unemployment benefits.
 
 $X_{i}$: Vector of control variables (sex, age, race, marital status, education level, and previous wage level).
 
-We present and compare 48 variations on the above model present with all combinations of the following:
+We present and compare ~72 variations on the above model present with all combinations of the following:
 
--   **Continuous vs. Discrete Treatment Variable (2 alternatives):** Continuous (monthly) versus binned unemployment duration.
+-   **Continuous vs. Discrete Treatment Variable (2 alternatives):** Continuous (monthly) versus binned unemployment duration. 
+
+- **Linear vs. Quadratic vs. Cubic representation of the principal treatment variable (3 alternatives):** We allow the treatment variable to enter non-linearly by testing the presence of quadratic or cubic relationships (with the lower-order transformations entering in all models). We do not include any non-linear representation of the binned unemployment duration as the bins are uneven and would thus require additional assumptions for validity.
 
 -   **w. UI vs w. Exhausted UI (3 alternatives):** The survey includes a variable for whether individuals USE and/or EXHAUST unemployment benefits. We run the regressions without these UI controls, with the control for having used UI, or with the control for having exhausted UI.
 
@@ -420,7 +436,7 @@ We present and compare 48 variations on the above model present with all combina
 
 -   **w. Wage Level (2 alternatives):** With or without wage level of lost job to control for income and the relationship between wage levels and the outcome wage ratio itself.
 
--   **Outlier clipped sample (2 alternatives):** Either remove outliers where the wage ratio is within [0.25, 2.5] and reported unemployment duration is below 96 weeks (\~ 2 years), or employ the raw sample.
+-   **Outlier clipped sample (2 alternatives):** We either remove outliers where the wage ratio is within [0.25, 2.5] and reported unemployment duration is below 96 weeks (\~ 2 years), or employ the raw sample.
 
 In each regression table, we include the full set of coefficients to allow for examination of the regression coefficients on the controls as well as the principal variables of interest. In each table, we highlight $\beta_{1}$ as this is the main regression coefficient of interest. We employ the *check_model()* function from the *performance* package in R to display visual checks of various model assumptions. 
 
@@ -573,18 +589,12 @@ newdata <- data.frame(
 
 ```
 
-Across all models in the tables below we see a consistently negative coefficient on unemployment duration (\~0.7-1 percentage point increase in the wage ratio for each additional month spent in unemployment). If we look more closely at the performance of our model with continuous unemployment duration, UI use (not exhaustion), all controls, wage levels, and outlier correction we see that the model performs passably across various diagnostic tests.
+Across all models (except those that include a control for having exhausted UI benefits) in the tables below we see a consistently negative coefficient on unemployment duration (\~0.5-1 percentage point increase in the wage ratio for each additional month spent in unemployment). These coefficients are all statistically significant at the 0.1% level. Interestingly, this coefficient loses statistical significance in any model that controls for having exhausted UI benefits. Otherwise, examining the performance of our model with continuous unemployment duration, UI use (not exhaustion), all controls, wage levels, and outlier correction we see that the model performs passably across various diagnostic tests. 
 
-```{r disc_reg1, echo = FALSE, warning = FALSE, message = FALSE, results='hide', fig.keep='last'}
+In the sections that follow, we report all regression results in regression tables. Additionally, we display model diagnostic plots for the specification with continuous unemployment duration, UI control, demographic controls, using the clipped sample, and assuming linearity in the relationship between unemployment duration and the accepted re-employment wage ratio. The quantile-quantile plots below reveal that residuals are approximately normally distributed, though there is evidence of heavy-tailed behavior in the upper quantiles.
 
-p <- invisible({mod_list2[['Cont. w. UI w. controls (clipped)']] %>% 
-  check_model() %>% 
-  plot()})
 
-(p & common_theme) + 
-  plot_annotation(title = 'Continuous U Duration. w. UI Control w. demographic controls (clipped sample)', theme = plot_annotation_theme)
-
-```
+\FloatBarrier
 
 ## Continuous UE Duration 
 
@@ -599,6 +609,16 @@ output_pretty(mod_list[grepl("Cont", names(mod_list)) & !grepl("clipped", names(
 
 ```
 
+```{r disc_reg1, echo = FALSE, warning = FALSE, message = FALSE, results='hide', fig.keep='last'}
+
+p <- invisible({mod_list[['Cont. w. UI w. controls (clipped)']] %>% 
+  check_model() %>% 
+  plot()})
+
+(p & common_theme) + 
+  plot_annotation(title = 'Continuous U Duration. w. UI Control w. demographic controls (clipped sample)', theme = plot_annotation_theme)
+
+```
 
 ```{r disc_reg3, echo = FALSE, message = FALSE, warning = FALSE}
 lm1 <- lm(ratio_wage ~ dwmosun + female + age + white + black + mixed + marst + educ_cat, data = df, weights = dwsuppwt)
@@ -651,6 +671,8 @@ output_pretty(mod_list2[grepl("Cont", names(mod_list2)) & !grepl("clipped", name
 
 ```
 
+\FloatBarrier
+
 ## Binned UE Duration 
 
 Binned UE duration treatment is reported in bins as indicated in the box plots and code cleaning above.
@@ -671,17 +693,18 @@ output_pretty(mod_list2[grepl("Disc", names(mod_list2)) & !grepl("clipped", name
 
 ```
 
-# Additional Considerations 
+
+\FloatBarrier
 
 Next, we provide results for the econometric specifications listed above with better balanced survey samples. We outline the various procedures employed for dealing with selection issues and non-uniformity in the sample.
 
-## Selection Issues with Non-Random Sample 
+# Regressions with Selection Correction of Non-Random Sample 
 
 One of the challenges with this data is that the sample grows significantly smaller for higher reported of unemployment duration (see scatter plots in section above). Therefore, we re-weight our survey sample (beyond the census weights already employed) to ensure population similarity across bins. More precisely, we employ propensity score matching using a generalised linear model, entropy-balancing, and Heckman selection correction.
  
 Overall, we find the econometric results reported earlier to be consistent across these implementations, with the coefficients on unemployment duration remaining somewhat stable. 
 
-### Entropy Balancing
+## Entropy Balancing
 
 First, entropy balancing simply reweights observations to ensure population matching across the key dependent variable.
 
@@ -747,6 +770,8 @@ eb_full <- cbind(eb_preds, eb_preds2, eb_preds3)
 ```
 
 
+\FloatBarrier
+
 ```{r disc_eb2, warning = FALSE}
 
 eb_full %>% 
@@ -781,7 +806,9 @@ eb_full %>%
     
 ```
 
-#### Diagnostic Tests for Entropy-balanced Reweighted Sample
+\FloatBarrier
+
+### Diagnostic Tests for Entropy-balanced Reweighted Sample
 
 
 ```{r disc_eb3, echo = FALSE, warning = FALSE, message = FALSE, results='hide', fig.keep='last'}
@@ -795,28 +822,29 @@ common_theme) +
 
 
 
-```{r disc_eb4, echo = FALSE, warning = FALSE, message = FALSE, results='hide', fig.keep='last'}
+<!-- ```{r disc_eb4, echo = FALSE, warning = FALSE, message = FALSE, results='hide', fig.keep='last'} -->
 
-(mod_eb_reweight2 %>% check_model() %>% 
-  plot() &
-common_theme) +
-  plot_annotation(title = "Quadratic Specification", theme = plot_annotation_theme)
+<!-- (mod_eb_reweight2 %>% check_model() %>%  -->
+<!--   plot() & -->
+<!-- common_theme) + -->
+<!--   plot_annotation(title = "Quadratic Specification", theme = plot_annotation_theme) -->
 
-```
+<!-- ``` -->
 
 
 
-```{r disc_eb5, echo = FALSE, warning = FALSE, message = FALSE, results='hide', fig.keep='last'}
+<!-- ```{r disc_eb5, echo = FALSE, warning = FALSE, message = FALSE, results='hide', fig.keep='last'} -->
 
-(mod_eb_reweight3 %>% check_model() %>% 
-  plot() &
-common_theme) +
-  plot_annotation(title = "Cubic Specification", theme = plot_annotation_theme)
+<!-- (mod_eb_reweight3 %>% check_model() %>%  -->
+<!--   plot() & -->
+<!-- common_theme) + -->
+<!--   plot_annotation(title = "Cubic Specification", theme = plot_annotation_theme) -->
 
-```
+<!-- ``` -->
 
-### Propensity Score Weighting with GLM Estimator
+\FloatBarrier
 
+## Propensity Score Weighting with GLM Estimator
 
 ```{r disc_glm1, warning = FALSE, fig.height = 8, fig.width = 10}
 
@@ -838,8 +866,10 @@ love.plot(glm, thresholds = .01, var.names = var_labs_love) +
 
 ```
 
+\FloatBarrier
 
-#### Diagnostic Tests for Propensity Score Matching (GLM) Reweighted Sample
+
+### Diagnostic Tests for Propensity Score Matching (GLM) Reweighted Sample
 
 
 ```{r disc_glm2, warning = FALSE, message = FALSE, results='hide', fig.keep='last'}
@@ -869,7 +899,9 @@ common_theme) +
 
 ```
 
-#### Predicted Reservation Wage using GLM Reweighted Sample
+\FloatBarrier
+
+### Predicted Reservation Wage using GLM Reweighted Sample
 
 ```{r disc_glm3, echo = FALSE}
 # Extract prediction intervals as data frames
@@ -911,9 +943,11 @@ glm_full %>%
 
 ```
 
-### Heckman Selection
+\FloatBarrier
 
-Another option is a Heckman Selection correction though I do not think this addresses the particular selection concern we have where there are simply less observations in longer unemployment durations.              
+## Heckman Selection
+
+Additionally, we employ a Heckman Selection correction to correct for likely selection effects in the data. We correct for selection effects by balancing across the various control variables (gender, age, race, marital status, and level of eduction).
 
 ```{r disc_heckman1, warning = FALSE}
 # Create selection indicator (1 if ratio_wage is observed)
@@ -982,28 +1016,33 @@ ggplot(newdata, aes(x = dwmosun)) +
 ```
 
 
-### Regression Results with Sample Reweighting
+\FloatBarrier
 
+## Regression Results with Sample Reweighting
+
+Finally, we provide a comparison of the regression coefficients of the unbalanced, Heckman corrected, entropy balanced, and GLM reweighting using propensity score matching. Most importantly, the regression coefficient on unemployment duration is consistent across specifications indicating that the consequences of non-uniformity and selection effects in our sample are minimal. We incorporate the 
 
 ```{r disc_heckman2, echo = FALSE, warning = FALSE}
 # All correction models together
-list("Heckman Correction" = heckman_model$lm, "Entropy Balanced Reweight" = mod_eb_reweight, "GLM Reweight" = mod_glm_reweight) %>% output_pretty(highlightrows = 3)
+list("Unabalanced LM" = mod_list[['Cont. w. UI w. controls']], "Heckman Correction" = heckman_model$lm, "Entropy Balanced Reweight" = mod_eb_reweight, "GLM Reweight" = mod_glm_reweight) %>% output_pretty(highlightrows = 3)
 
 ```
 
+Next, we predict the value of the accepted wage ratio using each of the models, incorporating 95% confidence intervals to allow for stochasticity to enter the behavioral mechanism itself. Essentially, as an agent in our model enters an additional period of unemployment, they will draw their reservation wage ratio from the mean and 95% confidence interval at each unemployment duration value represented in the figure below. We assume a uniform distribution around the regression estimate when drawing these values. 
 
 ```{r disc_heckman3, echo = FALSE, warning = FALSE}
 
-ggplot() + 
-  geom_line(data = lm_full, aes(x = 0:36, y = lm_preds_fit), color = "darkorchid") +
-  geom_ribbon(data = lm_full, aes(x = 0:36, ymin = lm_preds_lwr, ymax = lm_preds_upr), fill = "darkorchid", alpha = 0.2) +
-  geom_line(data = glm_full, aes(x = 0:36, y = glm_preds_fit), color = "darkturquoise") +
-  geom_ribbon(data = glm_full, aes(x = 0:36, ymin = glm_preds_lwr, ymax = glm_preds_upr), fill = "darkturquoise", alpha = 0.2) +
-  geom_line(data = eb_full, aes(x = 0:36, y = eb_preds_fit), color = "orange") +
-  geom_ribbon(data = eb_full, aes(x = 0:36, ymin = eb_preds_lwr, ymax = eb_preds_upr), fill = "orange", alpha = 0.2) +
-  geom_line(data = newdata, aes(x = 0:36, y = predicted_ratio)) +
-  labs(x = "Unemployment Duration (months)", y = "Predicted Wage Ratio", title = "Predicted Wage Ratio vs. Unemployment Duration") +
-  common_theme
+# ggplot() + 
+#   geom_line(data = lm_full, aes(x = 0:36, y = lm_preds_fit), color = "darkorchid") +
+#   geom_ribbon(data = lm_full, aes(x = 0:36, ymin = lm_preds_lwr, ymax = lm_preds_upr), fill = "darkorchid", alpha = 0.2) +
+#   geom_line(data = glm_full, aes(x = 0:36, y = glm_preds_fit), color = "darkturquoise") +
+#   geom_ribbon(data = glm_full, aes(x = 0:36, ymin = glm_preds_lwr, ymax = glm_preds_upr), fill = "darkturquoise", alpha = 0.2) +
+#   geom_line(data = eb_full, aes(x = 0:36, y = eb_preds_fit), color = "orange") +
+#   geom_ribbon(data = eb_full, aes(x = 0:36, ymin = eb_preds_lwr, ymax = eb_preds_upr), fill = "orange", alpha = 0.2) +
+#   geom_line(data = newdata, aes(x = 0:36, y = predicted_ratio)) +
+#   labs(x = "Unemployment Duration (months)", y = "Predicted Wage Ratio", title = "Predicted Wage Ratio vs. Unemployment Duration") +
+#   common_theme + 
+#   theme(legend.position = "bottom")
 
 res_wage_input <- select(lm_full, contains("lm_preds_")) %>% 
   cbind(select(glm_full, contains("glm_preds_"))) %>% 
@@ -1077,7 +1116,11 @@ ggplot(sim_all, aes(x = factor(dur_unemp), y = sim_val, fill = model)) +
 ```
 
 
-### Job Tenure
+\FloatBarrier
+
+# Additional Considerations 
+
+## Job Tenure
 
 We have information on the tenure spent at the last job which could impact the result.
 This could speak to the ``adaptability" of individuals.
@@ -1104,19 +1147,12 @@ tenure1 + tenure2 + plot_annotation(title = "Tenure at Lost Job (years)", subtit
 
 ```
 
-### Representation
+## Representation
 
 Although the survey does provide sample weights which we use above, it's still likely that those who are laid off might be systematically more susceptible to layoffs (lower-wage, low-skill occupation, male, etc).
-Below, some (very rough) graphs to indicate what the sample looks like.
+Below, we provide some descriptive graphs to illustrate what the sample looks like. First, the sample over-represents below-mean wage earners and men. The median age of survey respondents is near the mean age of the US labor force as reported by the Bureau of Labor Statistics in 2024. Individuals with only a HS diploma represent a strong majority in the sample.
 
-**Headline result:** it seems the sample over-represents below-mean wage earners and women.
-Age looks reasonably accurate (in relation to a simple median though....have not checked spread).
-Have not yet checked match to educational attainment.
-Individuals with only a HS diploma is strong majority in sample - not sure how accurate this is (likely correlated with wage however...so this might be cause for concern and confirm a skewed sample in that sense).
-
-If we wish to pursue this data, I could improve on the below but it will have to do for now.
-
-```{r disc_rep, echo=FALSE, warning = FALSE, message = FALSE, fig.height = 8, fig.width = 12}
+```{r disc_rep, echo=FALSE, warning = FALSE, message = FALSE, fig.height = 12, fig.width = 12}
 # Gender
 female_lfpr <- df %>% 
   filter(clipped_sample_hwage) %>% 
@@ -1149,10 +1185,10 @@ gender <- df %>%
   scale_fill_brewer(palette = "Set2", name = "Sex") +
   labs(
     title = "Gender Share of Sample",
-    subtitle = paste0(
+    subtitle = str_wrap(paste0(
       "Female representation (ie. Female LFPR) as calculated in the sample is ", 
       female_lfpr, "%\n",
-      "whereas female LFPR in the US is ~57% and their unemployment rates are roughly equal."
+      "whereas female LFPR in the US is ~57% and their unemployment rates are roughly equal.", width = wrap_width_fixed)
     )
   ) +
 common_theme+                              
@@ -1226,9 +1262,9 @@ age <- df %>%
     #size = 4,
     color = "darkorchid4"
   ) +
-  geom_vline(aes(xintercept = 42.2), color = "darkorange") +
+  geom_vline(aes(xintercept = 41.7), color = "darkorange") +
   annotate("text",
-    x = 42.2, y = 300, label = "Median Labour Force Wage (BLS)",
+    x = 41.7, y = 300, label = "Median Labour Force Age (BLS Reported - 2020)",
     angle = 90,
     vjust = -0.5,
     #size = 4,
