@@ -60,7 +60,8 @@ plot_annotation_theme = theme(
     family = "Latin Modern Roman"),
   plot.title = element_text(family = "LMRoman10-Bold",  # Use the exact bold font name
                             size = 11, 
-                            face = "bold"),
+                            face = "bold",
+                            hjust=0.5),
   plot.subtitle = element_text(size = 10))
 
 # Formatting functions in R

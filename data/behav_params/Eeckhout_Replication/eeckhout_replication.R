@@ -9,6 +9,7 @@ library(seasonal)
 library(openxlsx)
 library(haven)
 library(here)
+library(patchwork)
 library(lubridate)
 library(gridExtra)
 library(modelsummary)
@@ -789,8 +790,10 @@ for(new in c(FALSE, TRUE)){
 }
 # grid.arrange(grobs = p_list, ncol = 4)
 # grid.arrange(grobs = p_list[1:4], ncol = 2)
-grid.arrange(grobs = vars[1:4], ncol = 2, top = "Outcome Metrics from Eeckhout Replication without new data (1996Q1-2016Q3)")
-grid.arrange(grobs = vars[5:8], ncol = 2, top = "Outcome Metrics from Eeckhout Replication without new data (1996Q1-2024Q4)")
+print((vars[[1]] + vars[[2]]) / (vars[[3]] + vars[[4]]) + plot_annotation("Outcome Metrics from Eeckhout Replication without new data (1996Q1-2016Q3)", theme = plot_annotation_theme))
+#grid.arrange(grobs = vars[1:4], ncol = 2, top = "Outcome Metrics from Eeckhout Replication without new data (1996Q1-2016Q3)")
+print((vars[[5]] + vars[[6]]) / (vars[[7]] + vars[[8]]) + plot_annotation("Outcome Metrics from Eeckhout Replication without new data (1996Q1-2024Q4)", theme = plot_annotation_theme))
+#grid.arrange(grobs = vars[5:8], ncol = 2, top = "Outcome Metrics from Eeckhout Replication without new data (1996Q1-2024Q4)")
 
 #ggsave(file.path(destinationpath, "Figures", "comp_employed_workers_perc_dev.pdf"), p2, width = 10, height = 6)
 

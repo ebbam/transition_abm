@@ -34,7 +34,7 @@ Below, we outline the data cleaning procedure, provide descriptive figures and s
 
 Overall, we find that individuals accept a \~1-percentage point decrease in the wage ratio per additional month of unemployment. Variations using model reweighting, different samples, combinations of control variables, reported hourly and weekly wage ratios do not seem to affect the result. However, the data seems to follow a non-linear relationship (we see little satisficing until around \~12 months of unemployment) after which the wage ratio begins to decrease. Individuals seem to accept a below-1 relative wage ratio (current wage:wage at lost job) following a year of unemployment.
 
-**Important Considerations/Limitations:**
+**Potential Limitations:**
 
 1.  **Displaced worker classification as outlined above.** We do not distinguish between workers in our model that are voluntarily or involuntarily separated from their jobs. Therefore, the displaced worker classification outlined above does not represent individuals unemployed voluntarily. 
 2.  **The reported 'current wage' is not necessarily the realised wage post-re-employment.** Individuals report the wage at their lost job, the amount of time unemployed until they were re-employed, and the wage they hold at their current job. However, it is not indicated whether the current job is the same job as the first they were re-employed at. As such, there is uncertainty in the measurement of this outcome as an accepted wage that is relatively low compared to an individual's previous wage might be a temporary reality rather than a true re-employment wage (i.e., an individual finding stop-gap employment).
@@ -645,9 +645,9 @@ lm_full %>%
 
 ```{r disc_reg4, echo = FALSE}
 
-output_pretty(mod_list2[grepl("Cont", names(mod_list)) & grepl("clipped", names(mod_list))], highlightrows = c(3,5), title = "Continuous UE Duration w. Wage Level Control (Clipped Sample)")
+output_pretty(mod_list2[grepl("Cont", names(mod_list2)) & grepl("clipped", names(mod_list2))], highlightrows = c(3,5), title = "Continuous UE Duration w. Wage Level Control (Clipped Sample)")
 
-output_pretty(mod_list2[grepl("Cont", names(mod_list)) & !grepl("clipped", names(mod_list))], highlightrows = c(3,5), title = "Continuous UE Duration w. Wage Level Control (Full Sample)")
+output_pretty(mod_list2[grepl("Cont", names(mod_list2)) & !grepl("clipped", names(mod_list2))], highlightrows = c(3,5), title = "Continuous UE Duration w. Wage Level Control (Full Sample)")
 
 ```
 
@@ -665,9 +665,9 @@ output_pretty(mod_list[grepl("Disc", names(mod_list)) & !grepl("clipped", names(
 
 ```{r disc_reg6, echo = FALSE}
 
-output_pretty(mod_list2[grepl("Disc", names(mod_list)) & grepl("clipped", names(mod_list))], highlightrows = c(3,5), title = "Binned UE Duration w. Wage Level Control (Clipped Sample)")
+output_pretty(mod_list2[grepl("Disc", names(mod_list2)) & grepl("clipped", names(mod_list2))], highlightrows = c(3,5), title = "Binned UE Duration w. Wage Level Control (Clipped Sample)")
 
-output_pretty(mod_list2[grepl("Disc", names(mod_list)) & !grepl("clipped", names(mod_list))], highlightrows = c(3,5), title = "Binned UE Duration w. Wage Level Control (Full Sample)")
+output_pretty(mod_list2[grepl("Disc", names(mod_list2)) & !grepl("clipped", names(mod_list2))], highlightrows = c(3,5), title = "Binned UE Duration w. Wage Level Control (Full Sample)")
 
 ```
 

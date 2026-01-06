@@ -137,41 +137,35 @@ to our decision-making on the job search process.
 In nearly all cases, the results are ``binned'' into intervals (ie.
 number of people sending 81 or more applications or unemployment
 duration of between 5 and 14 weeks) which means that any line plots (or
-linear interpretation of the bar graph) should be done carefully.
-Preliminary results using the raw data are found in the next section.
+linear interpretation of the bar graph) should be done carefully. We
+employ the raw data informing thsee figures. The description of our
+analysis of the raw data is found in the next section.
 
-\begin{itemize}
-\item
-  Figure 1: Shows the proportion of all individuals sending x amount of
-  applications receiving y amount of interviews. The plot indicates a
-  ``consistent'' return to sending more applications, although as
-  demonstrated in Figure 3, the number of interviews received does not
-  necessarily equate to receiving a job offer.
-\item
-  Figure 2: Demonstrates the number of applications sent (red),
-  interviews received (green), average interview:applicaiton ratio
-  (blue), and probability of receiving a job offer (purple) by
-  individuals in each category of unemployment duration. There is some
-  indication (although, again, interpretation is difficult without the
-  raw data) that both effort and success seems to increase and then
-  decline with time spent in unemployment, apart from success as
-  measured by receiving a job offer which seems to consistently decline
-  with time spent in unemployment.
-\item
-  Figure 3: Percentage of jobseekers receiving an offer seems to
-  increase as a function of the number of applications sent, until a
-  certain point.
-\end{itemize}
+In Figure 1, the top left panel shows the proportion of all individuals
+sending X amount of applications receiving Y amount of interviews. The
+plot indicates a ``consistent'' return to sending more applications,
+although as demonstrated in the bottom left plot, the number of
+applications sent is not a linear predictor of job offers received. More
+precisely, the bottom left plot demonstrates that the percentage of
+jobseekers receiving an offer seems to increase as a function of the
+number of applications sent, until a certain point.Next, the right plot
+demonstrates the number of applications sent (red), interviews received
+(green), average interview:application ratio (blue), and probability of
+receiving a job offer (purple) by individuals in each category of
+unemployment duration. There is some indication that both effort and
+success seem to increase and then decline with time spent in
+unemployment, apart from success as measured by receiving a job offer
+which seems to consistently decline with time spent in unemployment.
 
-\begin{verbatim}
-## Processing URL: https://www.bls.gov/opub/btn/volume-9/how-do-jobseekers-search-for-jobs.htm#_edn2
-\end{verbatim}
-
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp1-1.png}}
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cpssupp1-1.png}}
+\caption{Replication of BLS Analysis}
+\end{figure}
 
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp2-1.png}}
 
-Below, I display the results of an exploration of the probability of
+Below, we display the results of an exploration of the probability of
 reporting a specific number of applications sent (in the bins as in the
 survey question above) using various specifications of an ordinal
 logistic regression. I test specifications varying three different model
@@ -350,7 +344,7 @@ months of unemployment) after which the wage ratio begins to decrease.
 Individuals seem to accept a below-1 relative wage ratio (current
 wage:wage at lost job) following a year of unemployment.
 
-\textbf{Important Considerations/Limitations:}
+\textbf{Potential Limitations:}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -462,7 +456,9 @@ combinations of the following:
 In each regression table, we include the full set of coefficients to
 allow for examination of the regression coefficients on the controls as
 well as the principal variables of interest. In each table, we highlight
-\(\beta_{1}\) as this is the main regression coefficient of interest.
+\(\beta_{1}\) as this is the main regression coefficient of interest. We
+employ the \emph{check\_model()} function from the \emph{performance}
+package in R to display visual checks of various model assumptions.
 
 Across all models in the tables below we see a consistently negative
 coefficient on unemployment duration (\textasciitilde0.7-1 percentage
@@ -474,8 +470,6 @@ performs passably across various diagnostic tests.
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_reg1-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_reg1-2} \end{center}
-
 \subsection{Continuous UE Duration}\label{continuous-ue-duration}
 
 Continuous UE duration treatment is reported in monthly values. A
@@ -484,51 +478,100 @@ unemployment.
 
 \begin{table}
 \centering\centering
-\caption{\label{tab:disc_reg2}Continuous UE Duration w.o Wage Level Control}
+\caption{\label{tab:disc_reg2}Continuous UE Duration w.o Wage Level Control (Clipped Sample)}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
-\begin{tabular}[t]{lcccccccccccccccccccccccc}
+\begin{tabular}[t]{lcccccccccccc}
 \toprule
-  & Cont. & Cont. (clipped) & Cont. w. UI & Cont. w. UI (clipped) & Cont. w. exhausted UI & Cont. w. exhausted UI (clipped) & Cont. Sq & Cont. Sq (clipped) & Cont. Sq w. UI & Cont. Sq w. UI (clipped) & Cont. Sq w. exhausted UI & Cont. Sq w. exhausted UI (clipped) & Cont. w. controls & Cont. w. controls (clipped) & Cont. w. UI w. controls & Cont. w. UI w. controls (clipped) & Cont. w. exhausted UI w. controls & Cont. w. exhausted UI w. controls (clipped) & Cont. Sq w. controls & Cont. Sq w. controls (clipped) & Cont. Sq w. UI w. controls & Cont. Sq w. UI w. controls (clipped) & Cont. Sq w. exhausted UI w. controls & Cont. Sq w. exhausted UI w. controls (clipped)\\
+  & Cont. (clipped) & Cont. w. UI (clipped) & Cont. w. exhausted UI (clipped) & Cont. Sq (clipped) & Cont. Sq w. UI (clipped) & Cont. Sq w. exhausted UI (clipped) & Cont. w. controls (clipped) & Cont. w. UI w. controls (clipped) & Cont. w. exhausted UI w. controls (clipped) & Cont. Sq w. controls (clipped) & Cont. Sq w. UI w. controls (clipped) & Cont. Sq w. exhausted UI w. controls (clipped)\\
 \midrule
-Intercept & \num{1.053}*** & \num{1.045}*** & \num{1.053}*** & \num{1.045}*** & \num{1.006}*** & \num{1.006}*** & \num{1.055}*** & \num{1.046}*** & \num{1.055}*** & \num{1.046}*** & \num{1.002}*** & \num{1.001}*** & \num{1.180}*** & \num{1.163}*** & \num{1.180}*** & \num{1.163}*** & \num{1.119}*** & \num{1.113}*** & \num{1.180}*** & \num{1.163}*** & \num{1.180}*** & \num{1.163}*** & \num{1.116}*** & \num{1.108}***\\
- & (\num{0.006}) & (\num{0.004}) & (\num{0.006}) & (\num{0.004}) & (\num{0.010}) & (\num{0.007}) & (\num{0.007}) & (\num{0.005}) & (\num{0.007}) & (\num{0.005}) & (\num{0.011}) & (\num{0.008}) & (\num{0.031}) & (\num{0.021}) & (\num{0.031}) & (\num{0.021}) & (\num{0.033}) & (\num{0.023}) & (\num{0.031}) & (\num{0.021}) & (\num{0.031}) & (\num{0.021}) & (\num{0.033}) & (\num{0.023})\\
-\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.003}} & \cellcolor{yellow!20}{\num{-0.001}} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.008}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.008}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.003}} & \cellcolor{yellow!20}{\num{-0.001}}\\
- & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003}) & (\num{0.002}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003}) & (\num{0.002})\\
-Received Unemployment Compensation &  &  & \num{-0.000} & \num{0.000} &  &  &  &  & \num{-0.000} & \num{0.000} &  &  &  &  & \num{0.000} & \num{0.000} &  &  &  &  & \num{0.000} & \num{0.000} &  & \\
- &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  & \\
-Exhausted Unemployment Compensation &  &  &  &  & \num{0.001}*** & \num{0.001}*** &  &  &  &  & \num{0.001}*** & \num{0.001}*** &  &  &  &  & \num{0.001}*** & \num{0.000}*** &  &  &  &  & \num{0.001}*** & \num{0.001}***\\
- &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000})\\
-dwmosun2 &  &  &  &  &  &  & \num{0.000} & \num{0.000} & \num{0.000} & \num{0.000} & \num{-0.000} & \num{-0.000} &  &  &  &  &  &  & \num{0.000} & \num{0.000} & \num{0.000} & \num{0.000} & \num{-0.000} & \num{-0.000}\\
- &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-Female &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.003} & \num{-0.003} & \num{0.003} & \num{-0.003} & \num{0.003} & \num{-0.003} & \num{0.003} & \num{-0.003} & \num{0.003} & \num{-0.003} & \num{0.003} & \num{-0.003}\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & \vphantom{1} (\num{0.007})\\
-Age &  &  &  &  &  &  &  &  &  &  &  &  & \num{-0.003}*** & \num{-0.002}*** & \num{-0.003}*** & \num{-0.002}*** & \num{-0.003}*** & \num{-0.002}*** & \num{-0.003}*** & \num{-0.002}*** & \num{-0.003}*** & \num{-0.002}*** & \num{-0.003}*** & \num{-0.002}***\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-White &  &  &  &  &  &  &  &  &  &  &  &  & \num{-0.035} & \num{-0.052}** & \num{-0.035} & \num{-0.052}** & \num{-0.033} & \num{-0.051}** & \num{-0.035} & \num{-0.052}** & \num{-0.035} & \num{-0.052}** & \num{-0.033} & \num{-0.051}**\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016})\\
-Black &  &  &  &  &  &  &  &  &  &  &  &  & \num{-0.048}+ & \num{-0.057}** & \num{-0.048}+ & \num{-0.057}** & \num{-0.045}+ & \num{-0.055}** & \num{-0.048}+ & \num{-0.057}** & \num{-0.048}+ & \num{-0.057}** & \num{-0.045}+ & \num{-0.056}**\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018})\\
-Mixed &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.014} & \num{-0.070}** & \num{0.014} & \num{-0.070}* & \num{0.017} & \num{-0.068}* & \num{0.014} & \num{-0.070}** & \num{0.014} & \num{-0.070}* & \num{0.016} & \num{-0.068}*\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.040}) & (\num{0.027}) & (\num{0.040}) & (\num{0.027}) & (\num{0.040}) & (\num{0.027}) & (\num{0.040}) & (\num{0.027}) & (\num{0.040}) & (\num{0.027}) & (\num{0.040}) & (\num{0.027})\\
-Married &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.005} & \num{0.011} & \num{0.005} & \num{0.011} & \num{0.005} & \num{0.012}+ & \num{0.005} & \num{0.011} & \num{0.005} & \num{0.011} & \num{0.005} & \num{0.012}+\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007})\\
-High School &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.005} & \num{0.001} & \num{0.005} & \num{0.001} & \num{0.011} & \num{0.005} & \num{0.006} & \num{0.001} & \num{0.006} & \num{0.001} & \num{0.011} & \num{0.005}\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.016}) & (\num{0.011}) & (\num{0.016}) & (\num{0.011}) & (\num{0.016}) & (\num{0.011}) & (\num{0.016}) & (\num{0.011}) & (\num{0.016}) & (\num{0.011}) & (\num{0.016}) & (\num{0.011})\\
-educ\_catAssociate's &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.032} & \num{-0.009} & \num{0.032} & \num{-0.009} & \num{0.038}+ & \num{-0.005} & \num{0.032} & \num{-0.009} & \num{0.032} & \num{-0.009} & \num{0.037}+ & \num{-0.005}\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014})\\
-Bachelor's Degree &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.079}*** & \num{0.066}*** & \num{0.079}*** & \num{0.066}*** & \num{0.085}*** & \num{0.070}*** & \num{0.080}*** & \num{0.066}*** & \num{0.080}*** & \num{0.066}*** & \num{0.084}*** & \num{0.070}***\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.021}) & (\num{0.015}) & (\num{0.021}) & (\num{0.015}) & (\num{0.021}) & (\num{0.015}) & (\num{0.021}) & (\num{0.015}) & (\num{0.021}) & (\num{0.015}) & (\num{0.021}) & (\num{0.015})\\
-Postgraduate Degree &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.114}* & \num{0.030} & \num{0.114}* & \num{0.030} & \num{0.122}** & \num{0.037} & \num{0.115}* & \num{0.030} & \num{0.115}* & \num{0.030} & \num{0.122}** & \num{0.037}\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031})\\
+Intercept & \num{1.045}*** & \num{1.045}*** & \num{1.006}*** & \num{1.046}*** & \num{1.046}*** & \num{1.001}*** & \num{1.163}*** & \num{1.163}*** & \num{1.113}*** & \num{1.163}*** & \num{1.163}*** & \num{1.108}***\\
+ & (\num{0.004}) & (\num{0.004}) & (\num{0.007}) & (\num{0.005}) & (\num{0.005}) & (\num{0.008}) & (\num{0.021}) & (\num{0.021}) & (\num{0.023}) & (\num{0.021}) & (\num{0.021}) & (\num{0.023})\\
+\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.001}} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.001}}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002})\\
+Received Unemployment Compensation &  & \num{0.000} &  &  & \num{0.000} &  &  & \num{0.000} &  &  & \num{0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted Unemployment Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}*** &  &  & \num{0.000}*** &  &  & \num{0.001}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Unemployment Duration (Months²) &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000} &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000}\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+Female &  &  &  &  &  &  & \num{-0.003} & \num{-0.003} & \num{-0.003} & \num{-0.003} & \num{-0.003} & \num{-0.003}\\
+ &  &  &  &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & \vphantom{1} (\num{0.007})\\
+Age &  &  &  &  &  &  & \num{-0.002}*** & \num{-0.002}*** & \num{-0.002}*** & \num{-0.002}*** & \num{-0.002}*** & \num{-0.002}***\\
+ &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  &  &  &  & \num{-0.052}** & \num{-0.052}** & \num{-0.051}** & \num{-0.052}** & \num{-0.052}** & \num{-0.051}**\\
+ &  &  &  &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
+Black &  &  &  &  &  &  & \num{-0.057}** & \num{-0.057}** & \num{-0.055}** & \num{-0.057}** & \num{-0.057}** & \num{-0.056}**\\
+ &  &  &  &  &  &  & (\num{0.018}) & (\num{0.018}) & (\num{0.018}) & (\num{0.018}) & (\num{0.018}) & (\num{0.018})\\
+Mixed &  &  &  &  &  &  & \num{-0.070}** & \num{-0.070}* & \num{-0.068}* & \num{-0.070}** & \num{-0.070}* & \num{-0.068}*\\
+ &  &  &  &  &  &  & (\num{0.027}) & (\num{0.027}) & (\num{0.027}) & (\num{0.027}) & (\num{0.027}) & (\num{0.027})\\
+Married &  &  &  &  &  &  & \num{0.011} & \num{0.011} & \num{0.012}+ & \num{0.011} & \num{0.011} & \num{0.012}+\\
+ &  &  &  &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007})\\
+High School &  &  &  &  &  &  & \num{0.001} & \num{0.001} & \num{0.005} & \num{0.001} & \num{0.001} & \num{0.005}\\
+ &  &  &  &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+Associate's Degree &  &  &  &  &  &  & \num{-0.009} & \num{-0.009} & \num{-0.005} & \num{-0.009} & \num{-0.009} & \num{-0.005}\\
+ &  &  &  &  &  &  & (\num{0.014}) & (\num{0.014}) & (\num{0.014}) & (\num{0.014}) & (\num{0.014}) & (\num{0.014})\\
+Bachelor's Degree &  &  &  &  &  &  & \num{0.066}*** & \num{0.066}*** & \num{0.070}*** & \num{0.066}*** & \num{0.066}*** & \num{0.070}***\\
+ &  &  &  &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
+Postgraduate Degree &  &  &  &  &  &  & \num{0.030} & \num{0.030} & \num{0.037} & \num{0.030} & \num{0.030} & \num{0.037}\\
+ &  &  &  &  &  &  & (\num{0.031}) & (\num{0.031}) & (\num{0.031}) & (\num{0.031}) & (\num{0.031}) & (\num{0.031})\\
 \midrule
-Num.Obs. & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644}\\
-R2 & \num{0.009} & \num{0.012} & \num{0.009} & \num{0.012} & \num{0.017} & \num{0.022} & \num{0.010} & \num{0.012} & \num{0.010} & \num{0.012} & \num{0.017} & \num{0.023} & \num{0.025} & \num{0.032} & \num{0.025} & \num{0.032} & \num{0.030} & \num{0.040} & \num{0.025} & \num{0.032} & \num{0.025} & \num{0.032} & \num{0.030} & \num{0.040}\\
-R2 Adj. & \num{0.009} & \num{0.012} & \num{0.009} & \num{0.011} & \num{0.016} & \num{0.022} & \num{0.009} & \num{0.011} & \num{0.009} & \num{0.011} & \num{0.016} & \num{0.022} & \num{0.022} & \num{0.029} & \num{0.022} & \num{0.029} & \num{0.028} & \num{0.037} & \num{0.022} & \num{0.029} & \num{0.022} & \num{0.029} & \num{0.027} & \num{0.038}\\
-F & \num{46.344} &  & \num{23.169} &  & \num{41.487} &  & \num{23.546} &  & \num{15.694} &  & \num{27.802} &  & \num{11.151} &  & \num{10.220} &  & \num{12.521} &  & \num{10.252} &  & \num{9.462} &  & \num{11.589} & \\
-RMSE & \num{0.38} & \num{0.24} & \num{0.38} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.38} & \num{0.24} & \num{0.38} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24}\\
+Num.Obs. & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644}\\
+R2 & \num{0.012} & \num{0.012} & \num{0.022} & \num{0.012} & \num{0.012} & \num{0.023} & \num{0.032} & \num{0.032} & \num{0.040} & \num{0.032} & \num{0.032} & \num{0.040}\\
+R2 Adj. & \num{0.012} & \num{0.011} & \num{0.022} & \num{0.011} & \num{0.011} & \num{0.022} & \num{0.029} & \num{0.029} & \num{0.037} & \num{0.029} & \num{0.029} & \num{0.038}\\
+RMSE & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24}\\
 \bottomrule
-\multicolumn{25}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\multicolumn{13}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
+\end{table}
+
+\begin{table}
+\centering\centering
+\caption{\label{tab:disc_reg2}Continuous UE Duration w.o Wage Level Control (Full Sample)}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccccccccc}
+\toprule
+  & Cont. & Cont. w. UI & Cont. w. exhausted UI & Cont. Sq & Cont. Sq w. UI & Cont. Sq w. exhausted UI & Cont. w. controls & Cont. w. UI w. controls & Cont. w. exhausted UI w. controls & Cont. Sq w. controls & Cont. Sq w. UI w. controls & Cont. Sq w. exhausted UI w. controls\\
+\midrule
+Intercept & \num{1.053}*** & \num{1.053}*** & \num{1.006}*** & \num{1.055}*** & \num{1.055}*** & \num{1.002}*** & \num{1.180}*** & \num{1.180}*** & \num{1.119}*** & \num{1.180}*** & \num{1.180}*** & \num{1.116}***\\
+ & (\num{0.006}) & (\num{0.006}) & (\num{0.010}) & (\num{0.007}) & (\num{0.007}) & (\num{0.011}) & (\num{0.031}) & (\num{0.031}) & (\num{0.033}) & (\num{0.031}) & (\num{0.031}) & (\num{0.033})\\
+\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.003}} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.008}**} & \cellcolor{yellow!20}{\num{-0.008}**} & \cellcolor{yellow!20}{\num{-0.003}}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003})\\
+Received Unemployment Compensation &  & \num{-0.000} &  &  & \num{-0.000} &  &  & \num{0.000} &  &  & \num{0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted Unemployment Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}*** &  &  & \num{0.001}*** &  &  & \num{0.001}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Unemployment Duration (Months²) &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000} &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000}\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+Female &  &  &  &  &  &  & \num{0.003} & \num{0.003} & \num{0.003} & \num{0.003} & \num{0.003} & \num{0.003}\\
+ &  &  &  &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & \vphantom{1} (\num{0.011})\\
+Age &  &  &  &  &  &  & \num{-0.003}*** & \num{-0.003}*** & \num{-0.003}*** & \num{-0.003}*** & \num{-0.003}*** & \num{-0.003}***\\
+ &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  &  &  &  & \num{-0.035} & \num{-0.035} & \num{-0.033} & \num{-0.035} & \num{-0.035} & \num{-0.033}\\
+ &  &  &  &  &  &  & (\num{0.023}) & (\num{0.023}) & (\num{0.023}) & (\num{0.023}) & (\num{0.023}) & (\num{0.023})\\
+Black &  &  &  &  &  &  & \num{-0.048}+ & \num{-0.048}+ & \num{-0.045}+ & \num{-0.048}+ & \num{-0.048}+ & \num{-0.045}+\\
+ &  &  &  &  &  &  & (\num{0.026}) & (\num{0.026}) & (\num{0.026}) & (\num{0.026}) & (\num{0.026}) & (\num{0.026})\\
+Mixed &  &  &  &  &  &  & \num{0.014} & \num{0.014} & \num{0.017} & \num{0.014} & \num{0.014} & \num{0.016}\\
+ &  &  &  &  &  &  & (\num{0.040}) & (\num{0.040}) & (\num{0.040}) & (\num{0.040}) & (\num{0.040}) & (\num{0.040})\\
+Married &  &  &  &  &  &  & \num{0.005} & \num{0.005} & \num{0.005} & \num{0.005} & \num{0.005} & \num{0.005}\\
+ &  &  &  &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+High School &  &  &  &  &  &  & \num{0.005} & \num{0.005} & \num{0.011} & \num{0.006} & \num{0.006} & \num{0.011}\\
+ &  &  &  &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
+Associate's Degree &  &  &  &  &  &  & \num{0.032} & \num{0.032} & \num{0.038}+ & \num{0.032} & \num{0.032} & \num{0.037}+\\
+ &  &  &  &  &  &  & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & \vphantom{1} (\num{0.021})\\
+Bachelor's Degree &  &  &  &  &  &  & \num{0.079}*** & \num{0.079}*** & \num{0.085}*** & \num{0.080}*** & \num{0.080}*** & \num{0.084}***\\
+ &  &  &  &  &  &  & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021})\\
+Postgraduate Degree &  &  &  &  &  &  & \num{0.114}* & \num{0.114}* & \num{0.122}** & \num{0.115}* & \num{0.115}* & \num{0.122}**\\
+ &  &  &  &  &  &  & (\num{0.045}) & (\num{0.045}) & (\num{0.045}) & (\num{0.045}) & (\num{0.045}) & (\num{0.045})\\
+\midrule
+Num.Obs. & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870}\\
+R2 & \num{0.009} & \num{0.009} & \num{0.017} & \num{0.010} & \num{0.010} & \num{0.017} & \num{0.025} & \num{0.025} & \num{0.030} & \num{0.025} & \num{0.025} & \num{0.030}\\
+R2 Adj. & \num{0.009} & \num{0.009} & \num{0.016} & \num{0.009} & \num{0.009} & \num{0.016} & \num{0.022} & \num{0.022} & \num{0.028} & \num{0.022} & \num{0.022} & \num{0.027}\\
+F & \num{46.344} & \num{23.169} & \num{41.487} & \num{23.546} & \num{15.694} & \num{27.802} & \num{11.151} & \num{10.220} & \num{12.521} & \num{10.252} & \num{9.462} & \num{11.589}\\
+RMSE & \num{0.38} & \num{0.38} & \num{0.37} & \num{0.38} & \num{0.38} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37}\\
+\bottomrule
+\multicolumn{13}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
 \end{tabular}}
 \end{table}
 
@@ -536,53 +579,104 @@ RMSE & \num{0.38} & \num{0.24} & \num{0.38} & \num{0.24} & \num{0.37} & \num{0.2
 
 \begin{table}
 \centering\centering
-\caption{\label{tab:disc_reg4}Continuous UE Duration w. Wage Level Control}
+\caption{\label{tab:disc_reg4}Continuous UE Duration w. Wage Level Control (Clipped Sample)}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
-\begin{tabular}[t]{lcccccccccccccccccccccccc}
+\begin{tabular}[t]{lcccccccccccc}
 \toprule
-  & Cont. & Cont. (clipped) & Cont. w. UI & Cont. w. UI (clipped) & Cont. w. exhausted UI & Cont. w. exhausted UI (clipped) & Cont. Sq & Cont. Sq (clipped) & Cont. Sq w. UI & Cont. Sq w. UI (clipped) & Cont. Sq w. exhausted UI & Cont. Sq w. exhausted UI (clipped) & Cont. w. controls & Cont. w. controls (clipped) & Cont. w. UI w. controls & Cont. w. UI w. controls (clipped) & Cont. w. exhausted UI w. controls & Cont. w. exhausted UI w. controls (clipped) & Cont. Sq w. controls & Cont. Sq w. controls (clipped) & Cont. Sq w. UI w. controls & Cont. Sq w. UI w. controls (clipped) & Cont. Sq w. exhausted UI w. controls & Cont. Sq w. exhausted UI w. controls (clipped)\\
+  & Cont. (clipped) & Cont. w. UI (clipped) & Cont. w. exhausted UI (clipped) & Cont. Sq (clipped) & Cont. Sq w. UI (clipped) & Cont. Sq w. exhausted UI (clipped) & Cont. w. controls (clipped) & Cont. w. UI w. controls (clipped) & Cont. w. exhausted UI w. controls (clipped) & Cont. Sq w. controls (clipped) & Cont. Sq w. UI w. controls (clipped) & Cont. Sq w. exhausted UI w. controls (clipped)\\
 \midrule
-Intercept & \num{1.185}*** & \num{1.131}*** & \num{1.186}*** & \num{1.130}*** & \num{1.145}*** & \num{1.094}*** & \num{1.186}*** & \num{1.131}*** & \num{1.187}*** & \num{1.131}*** & \num{1.141}*** & \num{1.090}*** & \num{1.263}*** & \num{1.217}*** & \num{1.263}*** & \num{1.217}*** & \num{1.213}*** & \num{1.173}*** & \num{1.263}*** & \num{1.217}*** & \num{1.263}*** & \num{1.217}*** & \num{1.210}*** & \num{1.169}***\\
- & (\num{0.011}) & (\num{0.008}) & (\num{0.011}) & (\num{0.008}) & (\num{0.014}) & (\num{0.010}) & (\num{0.012}) & (\num{0.008}) & (\num{0.012}) & (\num{0.008}) & (\num{0.015}) & (\num{0.011}) & (\num{0.031}) & (\num{0.021}) & (\num{0.031}) & (\num{0.021}) & (\num{0.033}) & (\num{0.022}) & (\num{0.031}) & (\num{0.021}) & (\num{0.031}) & (\num{0.021}) & (\num{0.033}) & (\num{0.023})\\
-\cellcolor{yellow!20}{Hourly Wage of Lost Job} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
- & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000})\\
-\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.003}} & \cellcolor{yellow!20}{\num{-0.002}} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.003}} & \cellcolor{yellow!20}{\num{-0.002}}\\
- & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003}) & (\num{0.002}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003}) & (\num{0.002})\\
-Received Unemployment Compensation &  &  & \num{-0.000} & \num{0.000} &  &  &  &  & \num{-0.000} & \num{0.000} &  &  &  &  & \num{-0.000} & \num{0.000} &  &  &  &  & \num{-0.000} & \num{0.000} &  & \\
- &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  & \\
-Exhausted Unemployment Compensation &  &  &  &  & \num{0.001}*** & \num{0.000}*** &  &  &  &  & \num{0.001}*** & \num{0.000}*** &  &  &  &  & \num{0.000}*** & \num{0.000}*** &  &  &  &  & \num{0.000}*** & \num{0.000}***\\
- &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000})\\
-dwmosun2 &  &  &  &  &  &  & \num{0.000} & \num{0.000} & \num{0.000} & \num{0.000} & \num{-0.000} & \num{-0.000} &  &  &  &  &  &  & \num{0.000} & \num{0.000} & \num{0.000} & \num{0.000} & \num{-0.000} & \num{-0.000}\\
- &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-Female &  &  &  &  &  &  &  &  &  &  &  &  & \num{-0.028}** & \num{-0.023}** & \num{-0.028}** & \num{-0.023}** & \num{-0.028}** & \num{-0.023}** & \num{-0.028}** & \num{-0.023}** & \num{-0.028}** & \num{-0.023}** & \num{-0.028}** & \num{-0.023}**\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007})\\
-Age &  &  &  &  &  &  &  &  &  &  &  &  & \num{-0.002}*** & \num{-0.001}*** & \num{-0.002}*** & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}*** & \num{-0.002}*** & \num{-0.001}*** & \num{-0.002}*** & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}***\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-White &  &  &  &  &  &  &  &  &  &  &  &  & \num{-0.034} & \num{-0.050}** & \num{-0.034} & \num{-0.050}** & \num{-0.032} & \num{-0.049}** & \num{-0.034} & \num{-0.050}** & \num{-0.034} & \num{-0.050}** & \num{-0.032} & \num{-0.050}**\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016})\\
-Black &  &  &  &  &  &  &  &  &  &  &  &  & \num{-0.058}* & \num{-0.061}*** & \num{-0.058}* & \num{-0.061}*** & \num{-0.055}* & \num{-0.060}*** & \num{-0.057}* & \num{-0.061}*** & \num{-0.057}* & \num{-0.061}*** & \num{-0.055}* & \num{-0.060}***\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018})\\
-Mixed &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.016} & \num{-0.067}* & \num{0.016} & \num{-0.067}* & \num{0.019} & \num{-0.065}* & \num{0.016} & \num{-0.067}* & \num{0.016} & \num{-0.067}* & \num{0.018} & \num{-0.066}*\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.039}) & (\num{0.027}) & (\num{0.039}) & (\num{0.027}) & (\num{0.039}) & (\num{0.026}) & (\num{0.039}) & (\num{0.027}) & (\num{0.039}) & (\num{0.027}) & (\num{0.039}) & (\num{0.026})\\
-Married &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.013} & \num{0.018}* & \num{0.013} & \num{0.018}* & \num{0.013} & \num{0.018}* & \num{0.013} & \num{0.018}* & \num{0.013} & \num{0.018}* & \num{0.014} & \num{0.018}*\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.010}) & (\num{0.007}) & (\num{0.010}) & (\num{0.007}) & (\num{0.010}) & (\num{0.007}) & (\num{0.010}) & (\num{0.007}) & (\num{0.010}) & (\num{0.007}) & (\num{0.010}) & (\num{0.007})\\
-High School &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.033}* & \num{0.019}+ & \num{0.033}* & \num{0.019}+ & \num{0.037}* & \num{0.022}* & \num{0.033}* & \num{0.019}+ & \num{0.033}* & \num{0.019}+ & \num{0.037}* & \num{0.022}*\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.015}) & (\num{0.011}) & (\num{0.015}) & (\num{0.011}) & (\num{0.015}) & (\num{0.011}) & (\num{0.015}) & (\num{0.011}) & (\num{0.015}) & (\num{0.011}) & (\num{0.015}) & (\num{0.011})\\
-educ\_catAssociate's &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.084}*** & \num{0.027}+ & \num{0.084}*** & \num{0.027}+ & \num{0.088}*** & \num{0.029}* & \num{0.084}*** & \num{0.027}+ & \num{0.084}*** & \num{0.027}+ & \num{0.087}*** & \num{0.030}*\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014})\\
-Bachelor's Degree &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.161}*** & \num{0.121}*** & \num{0.161}*** & \num{0.121}*** & \num{0.164}*** & \num{0.123}*** & \num{0.161}*** & \num{0.121}*** & \num{0.161}*** & \num{0.121}*** & \num{0.163}*** & \num{0.123}***\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.022}) & (\num{0.015}) & (\num{0.022}) & (\num{0.015}) & (\num{0.022}) & (\num{0.015}) & (\num{0.022}) & (\num{0.015}) & (\num{0.022}) & (\num{0.015}) & (\num{0.022}) & (\num{0.015})\\
-Postgraduate Degree &  &  &  &  &  &  &  &  &  &  &  &  & \num{0.244}*** & \num{0.120}*** & \num{0.244}*** & \num{0.120}*** & \num{0.248}*** & \num{0.123}*** & \num{0.245}*** & \num{0.120}*** & \num{0.245}*** & \num{0.120}*** & \num{0.248}*** & \num{0.123}***\\
- &  &  &  &  &  &  &  &  &  &  &  &  & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031})\\
+Intercept & \num{1.131}*** & \num{1.130}*** & \num{1.094}*** & \num{1.131}*** & \num{1.131}*** & \num{1.090}*** & \num{1.217}*** & \num{1.217}*** & \num{1.173}*** & \num{1.217}*** & \num{1.217}*** & \num{1.169}***\\
+ & (\num{0.008}) & (\num{0.008}) & (\num{0.010}) & (\num{0.008}) & (\num{0.008}) & (\num{0.011}) & (\num{0.021}) & (\num{0.021}) & (\num{0.022}) & (\num{0.021}) & (\num{0.021}) & (\num{0.023})\\
+\cellcolor{yellow!20}{Hourly Wage of Lost Job} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
+ & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.002}} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.002}}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002})\\
+Received Unemployment Compensation &  & \num{0.000} &  &  & \num{0.000} &  &  & \num{0.000} &  &  & \num{0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted Unemployment Compensation &  &  & \num{0.000}*** &  &  & \num{0.000}*** &  &  & \num{0.000}*** &  &  & \num{0.000}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Unemployment Duration (Months²) &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000} &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000}\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+Female &  &  &  &  &  &  & \num{-0.023}** & \num{-0.023}** & \num{-0.023}** & \num{-0.023}** & \num{-0.023}** & \num{-0.023}**\\
+ &  &  &  &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & \vphantom{1} (\num{0.007})\\
+Age &  &  &  &  &  &  & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}***\\
+ &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  &  &  &  & \num{-0.050}** & \num{-0.050}** & \num{-0.049}** & \num{-0.050}** & \num{-0.050}** & \num{-0.050}**\\
+ &  &  &  &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
+Black &  &  &  &  &  &  & \num{-0.061}*** & \num{-0.061}*** & \num{-0.060}*** & \num{-0.061}*** & \num{-0.061}*** & \num{-0.060}***\\
+ &  &  &  &  &  &  & (\num{0.018}) & (\num{0.018}) & (\num{0.018}) & (\num{0.018}) & (\num{0.018}) & (\num{0.018})\\
+Mixed &  &  &  &  &  &  & \num{-0.067}* & \num{-0.067}* & \num{-0.065}* & \num{-0.067}* & \num{-0.067}* & \num{-0.066}*\\
+ &  &  &  &  &  &  & (\num{0.027}) & (\num{0.027}) & (\num{0.026}) & (\num{0.027}) & (\num{0.027}) & (\num{0.026})\\
+Married &  &  &  &  &  &  & \num{0.018}* & \num{0.018}* & \num{0.018}* & \num{0.018}* & \num{0.018}* & \num{0.018}*\\
+ &  &  &  &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007})\\
+High School &  &  &  &  &  &  & \num{0.019}+ & \num{0.019}+ & \num{0.022}* & \num{0.019}+ & \num{0.019}+ & \num{0.022}*\\
+ &  &  &  &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+Associate's Degree &  &  &  &  &  &  & \num{0.027}+ & \num{0.027}+ & \num{0.029}* & \num{0.027}+ & \num{0.027}+ & \num{0.030}*\\
+ &  &  &  &  &  &  & (\num{0.014}) & (\num{0.014}) & (\num{0.014}) & (\num{0.014}) & (\num{0.014}) & (\num{0.014})\\
+Bachelor's Degree &  &  &  &  &  &  & \num{0.121}*** & \num{0.121}*** & \num{0.123}*** & \num{0.121}*** & \num{0.121}*** & \num{0.123}***\\
+ &  &  &  &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
+Postgraduate Degree &  &  &  &  &  &  & \num{0.120}*** & \num{0.120}*** & \num{0.123}*** & \num{0.120}*** & \num{0.120}*** & \num{0.123}***\\
+ &  &  &  &  &  &  & (\num{0.031}) & (\num{0.031}) & (\num{0.031}) & (\num{0.031}) & (\num{0.031}) & (\num{0.031})\\
 \midrule
-Num.Obs. & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644}\\
-R2 & \num{0.048} & \num{0.046} & \num{0.048} & \num{0.046} & \num{0.052} & \num{0.053} & \num{0.048} & \num{0.046} & \num{0.048} & \num{0.046} & \num{0.052} & \num{0.053} & \num{0.069} & \num{0.073} & \num{0.069} & \num{0.073} & \num{0.073} & \num{0.079} & \num{0.069} & \num{0.073} & \num{0.069} & \num{0.073} & \num{0.073} & \num{0.079}\\
-R2 Adj. & \num{0.047} & \num{0.046} & \num{0.047} & \num{0.046} & \num{0.051} & \num{0.053} & \num{0.047} & \num{0.046} & \num{0.047} & \num{0.045} & \num{0.051} & \num{0.053} & \num{0.067} & \num{0.071} & \num{0.067} & \num{0.071} & \num{0.070} & \num{0.077} & \num{0.067} & \num{0.071} & \num{0.067} & \num{0.071} & \num{0.070} & \num{0.077}\\
-F & \num{121.551} &  & \num{81.034} &  & \num{88.352} &  & \num{81.047} &  & \num{60.784} &  & \num{66.451} &  & \num{30.216} &  & \num{27.890} &  & \num{29.347} &  & \num{27.893} &  & \num{25.899} &  & \num{27.287} & \\
-RMSE & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.23} & \num{0.37} & \num{0.23} & \num{0.37} & \num{0.23} & \num{0.37} & \num{0.23} & \num{0.37} & \num{0.23} & \num{0.37} & \num{0.23}\\
+Num.Obs. & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644}\\
+R2 & \num{0.046} & \num{0.046} & \num{0.053} & \num{0.046} & \num{0.046} & \num{0.053} & \num{0.073} & \num{0.073} & \num{0.079} & \num{0.073} & \num{0.073} & \num{0.079}\\
+R2 Adj. & \num{0.046} & \num{0.046} & \num{0.053} & \num{0.046} & \num{0.045} & \num{0.053} & \num{0.071} & \num{0.071} & \num{0.077} & \num{0.071} & \num{0.071} & \num{0.077}\\
+RMSE & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.23} & \num{0.23} & \num{0.23} & \num{0.23} & \num{0.23} & \num{0.23}\\
 \bottomrule
-\multicolumn{25}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\multicolumn{13}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
+\end{table}
+
+\begin{table}
+\centering\centering
+\caption{\label{tab:disc_reg4}Continuous UE Duration w. Wage Level Control (Full Sample)}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccccccccc}
+\toprule
+  & Cont. & Cont. w. UI & Cont. w. exhausted UI & Cont. Sq & Cont. Sq w. UI & Cont. Sq w. exhausted UI & Cont. w. controls & Cont. w. UI w. controls & Cont. w. exhausted UI w. controls & Cont. Sq w. controls & Cont. Sq w. UI w. controls & Cont. Sq w. exhausted UI w. controls\\
+\midrule
+Intercept & \num{1.185}*** & \num{1.186}*** & \num{1.145}*** & \num{1.186}*** & \num{1.187}*** & \num{1.141}*** & \num{1.263}*** & \num{1.263}*** & \num{1.213}*** & \num{1.263}*** & \num{1.263}*** & \num{1.210}***\\
+ & (\num{0.011}) & (\num{0.011}) & (\num{0.014}) & (\num{0.012}) & (\num{0.012}) & (\num{0.015}) & (\num{0.031}) & (\num{0.031}) & (\num{0.033}) & (\num{0.031}) & (\num{0.031}) & (\num{0.033})\\
+\cellcolor{yellow!20}{Hourly Wage of Lost Job} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
+\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.003}} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.003}}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003})\\
+Received Unemployment Compensation &  & \num{-0.000} &  &  & \num{-0.000} &  &  & \num{-0.000} &  &  & \num{-0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted Unemployment Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}*** &  &  & \num{0.000}*** &  &  & \num{0.000}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Unemployment Duration (Months²) &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000} &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000}\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+Female &  &  &  &  &  &  & \num{-0.028}** & \num{-0.028}** & \num{-0.028}** & \num{-0.028}** & \num{-0.028}** & \num{-0.028}**\\
+ &  &  &  &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+Age &  &  &  &  &  &  & \num{-0.002}*** & \num{-0.002}*** & \num{-0.001}*** & \num{-0.002}*** & \num{-0.002}*** & \num{-0.001}***\\
+ &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  &  &  &  & \num{-0.034} & \num{-0.034} & \num{-0.032} & \num{-0.034} & \num{-0.034} & \num{-0.032}\\
+ &  &  &  &  &  &  & (\num{0.023}) & (\num{0.023}) & (\num{0.023}) & (\num{0.023}) & (\num{0.023}) & (\num{0.023})\\
+Black &  &  &  &  &  &  & \num{-0.058}* & \num{-0.058}* & \num{-0.055}* & \num{-0.057}* & \num{-0.057}* & \num{-0.055}*\\
+ &  &  &  &  &  &  & (\num{0.026}) & (\num{0.026}) & (\num{0.026}) & (\num{0.026}) & (\num{0.026}) & (\num{0.026})\\
+Mixed &  &  &  &  &  &  & \num{0.016} & \num{0.016} & \num{0.019} & \num{0.016} & \num{0.016} & \num{0.018}\\
+ &  &  &  &  &  &  & (\num{0.039}) & (\num{0.039}) & (\num{0.039}) & (\num{0.039}) & (\num{0.039}) & (\num{0.039})\\
+Married &  &  &  &  &  &  & \num{0.013} & \num{0.013} & \num{0.013} & \num{0.013} & \num{0.013} & \num{0.014}\\
+ &  &  &  &  &  &  & (\num{0.010}) & (\num{0.010}) & (\num{0.010}) & (\num{0.010}) & (\num{0.010}) & (\num{0.010})\\
+High School &  &  &  &  &  &  & \num{0.033}* & \num{0.033}* & \num{0.037}* & \num{0.033}* & \num{0.033}* & \num{0.037}*\\
+ &  &  &  &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
+Associate's Degree &  &  &  &  &  &  & \num{0.084}*** & \num{0.084}*** & \num{0.088}*** & \num{0.084}*** & \num{0.084}*** & \num{0.087}***\\
+ &  &  &  &  &  &  & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021})\\
+Bachelor's Degree &  &  &  &  &  &  & \num{0.161}*** & \num{0.161}*** & \num{0.164}*** & \num{0.161}*** & \num{0.161}*** & \num{0.163}***\\
+ &  &  &  &  &  &  & (\num{0.022}) & (\num{0.022}) & (\num{0.022}) & (\num{0.022}) & (\num{0.022}) & (\num{0.022})\\
+Postgraduate Degree &  &  &  &  &  &  & \num{0.244}*** & \num{0.244}*** & \num{0.248}*** & \num{0.245}*** & \num{0.245}*** & \num{0.248}***\\
+ &  &  &  &  &  &  & (\num{0.045}) & (\num{0.045}) & (\num{0.045}) & (\num{0.045}) & (\num{0.045}) & (\num{0.045})\\
+\midrule
+Num.Obs. & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870}\\
+R2 & \num{0.048} & \num{0.048} & \num{0.052} & \num{0.048} & \num{0.048} & \num{0.052} & \num{0.069} & \num{0.069} & \num{0.073} & \num{0.069} & \num{0.069} & \num{0.073}\\
+R2 Adj. & \num{0.047} & \num{0.047} & \num{0.051} & \num{0.047} & \num{0.047} & \num{0.051} & \num{0.067} & \num{0.067} & \num{0.070} & \num{0.067} & \num{0.067} & \num{0.070}\\
+F & \num{121.551} & \num{81.034} & \num{88.352} & \num{81.047} & \num{60.784} & \num{66.451} & \num{30.216} & \num{27.890} & \num{29.347} & \num{27.893} & \num{25.899} & \num{27.287}\\
+RMSE & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37}\\
+\bottomrule
+\multicolumn{13}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
 \end{tabular}}
 \end{table}
 
@@ -593,188 +687,255 @@ plots and code cleaning above.
 
 \begin{table}
 \centering\centering
-\caption{\label{tab:disc_reg5}Binned UE Duration w.o Wage Level Control}
+\caption{\label{tab:disc_reg5}Binned UE Duration w.o Wage Level Control (Clipped Sample)}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
-\begin{tabular}[t]{lcccccccccccc}
+\begin{tabular}[t]{lcccccc}
 \toprule
-  & Disc. & Disc. (clipped) & Disc. w. UI & Disc. w. UI (clipped) & Disc. w. exhausted UI & Disc. w. exhausted UI (clipped) & Disc. w. controls & Disc. w. controls (clipped) & Disc. w. UI w. controls & Disc. w. UI w. controls (clipped) & Disc. w. exhausted UI w. controls & Disc. w. exhausted UI w. controls (clipped)\\
+  & Disc. (clipped) & Disc. w. UI (clipped) & Disc. w. exhausted UI (clipped) & Disc. w. controls (clipped) & Disc. w. UI w. controls (clipped) & Disc. w. exhausted UI w. controls (clipped)\\
 \midrule
-Intercept & \num{1.069}*** & \num{1.055}*** & \num{1.069}*** & \num{1.055}*** & \num{1.016}*** & \num{1.010}*** & \num{1.190}*** & \num{1.170}*** & \num{1.190}*** & \num{1.170}*** & \num{1.127}*** & \num{1.116}***\\
- & (\num{0.008}) & (\num{0.005}) & (\num{0.008}) & (\num{0.005}) & (\num{0.012}) & (\num{0.008}) & (\num{0.031}) & (\num{0.021}) & (\num{0.031}) & (\num{0.021}) & (\num{0.034}) & (\num{0.023})\\
-\cellcolor{yellow!20}{Unemployment Duration (Binned)} & \cellcolor{yellow!20}{\num{-0.013}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.013}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.005}***}\\
- & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001})\\
-Received Unemployment Compensation &  &  & \num{-0.000} & \num{0.000} &  &  &  &  & \num{0.000} & \num{0.000} &  & \\
- &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  & \\
-Exhausted Unemployment Compensation &  &  &  &  & \num{0.001}*** & \num{0.001}*** &  &  &  &  & \num{0.001}*** & \num{0.001}***\\
- &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000})\\
-Female &  &  &  &  &  &  & \num{0.003} & \num{-0.003} & \num{0.003} & \num{-0.003} & \num{0.003} & \num{-0.003}\\
- &  &  &  &  &  &  & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & \vphantom{1} (\num{0.007})\\
-Age &  &  &  &  &  &  & \num{-0.003}*** & \num{-0.002}*** & \num{-0.003}*** & \num{-0.002}*** & \num{-0.003}*** & \num{-0.002}***\\
- &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-White &  &  &  &  &  &  & \num{-0.035} & \num{-0.052}** & \num{-0.035} & \num{-0.052}** & \num{-0.033} & \num{-0.050}**\\
- &  &  &  &  &  &  & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016})\\
-Black &  &  &  &  &  &  & \num{-0.047}+ & \num{-0.056}** & \num{-0.047}+ & \num{-0.056}** & \num{-0.045}+ & \num{-0.055}**\\
- &  &  &  &  &  &  & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018})\\
-Mixed &  &  &  &  &  &  & \num{0.014} & \num{-0.070}** & \num{0.014} & \num{-0.070}* & \num{0.017} & \num{-0.068}*\\
- &  &  &  &  &  &  & (\num{0.040}) & (\num{0.027}) & (\num{0.040}) & (\num{0.027}) & (\num{0.040}) & (\num{0.027})\\
-Married &  &  &  &  &  &  & \num{0.004} & \num{0.011} & \num{0.004} & \num{0.011} & \num{0.005} & \num{0.012}\\
- &  &  &  &  &  &  & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007})\\
-High School &  &  &  &  &  &  & \num{0.006} & \num{0.001} & \num{0.006} & \num{0.001} & \num{0.012} & \num{0.005}\\
- &  &  &  &  &  &  & (\num{0.016}) & (\num{0.011}) & (\num{0.016}) & (\num{0.011}) & (\num{0.016}) & (\num{0.011})\\
-educ\_catAssociate's &  &  &  &  &  &  & \num{0.033} & \num{-0.009} & \num{0.033} & \num{-0.009} & \num{0.038}+ & \num{-0.005}\\
- &  &  &  &  &  &  & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014})\\
-Bachelor's Degree &  &  &  &  &  &  & \num{0.082}*** & \num{0.067}*** & \num{0.082}*** & \num{0.067}*** & \num{0.087}*** & \num{0.071}***\\
- &  &  &  &  &  &  & (\num{0.021}) & (\num{0.015}) & (\num{0.021}) & (\num{0.015}) & (\num{0.021}) & (\num{0.015})\\
-Postgraduate Degree &  &  &  &  &  &  & \num{0.116}** & \num{0.030} & \num{0.116}** & \num{0.030} & \num{0.124}** & \num{0.038}\\
- &  &  &  &  &  &  & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031})\\
+Intercept & \num{1.055}*** & \num{1.055}*** & \num{1.010}*** & \num{1.170}*** & \num{1.170}*** & \num{1.116}***\\
+ & (\num{0.005}) & (\num{0.005}) & (\num{0.008}) & (\num{0.021}) & (\num{0.021}) & (\num{0.023})\\
+\cellcolor{yellow!20}{Unemployment Duration (Binned)} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.005}***}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
+Received Unemployment Compensation &  & \num{0.000} &  &  & \num{0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted Unemployment Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Female &  &  &  & \num{-0.003} & \num{-0.003} & \num{-0.003}\\
+ &  &  &  & (\num{0.007}) & (\num{0.007}) & \vphantom{1} (\num{0.007})\\
+Age &  &  &  & \num{-0.002}*** & \num{-0.002}*** & \num{-0.002}***\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  & \num{-0.052}** & \num{-0.052}** & \num{-0.050}**\\
+ &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
+Black &  &  &  & \num{-0.056}** & \num{-0.056}** & \num{-0.055}**\\
+ &  &  &  & (\num{0.018}) & (\num{0.018}) & (\num{0.018})\\
+Mixed &  &  &  & \num{-0.070}** & \num{-0.070}* & \num{-0.068}*\\
+ &  &  &  & (\num{0.027}) & (\num{0.027}) & (\num{0.027})\\
+Married &  &  &  & \num{0.011} & \num{0.011} & \num{0.012}\\
+ &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007})\\
+High School &  &  &  & \num{0.001} & \num{0.001} & \num{0.005}\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+Associate's Degree &  &  &  & \num{-0.009} & \num{-0.009} & \num{-0.005}\\
+ &  &  &  & (\num{0.014}) & (\num{0.014}) & (\num{0.014})\\
+Bachelor's Degree &  &  &  & \num{0.067}*** & \num{0.067}*** & \num{0.071}***\\
+ &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
+Postgraduate Degree &  &  &  & \num{0.030} & \num{0.030} & \num{0.038}\\
+ &  &  &  & (\num{0.031}) & (\num{0.031}) & (\num{0.031})\\
 \midrule
-Num.Obs. & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644}\\
-R2 & \num{0.010} & \num{0.011} & \num{0.010} & \num{0.011} & \num{0.016} & \num{0.021} & \num{0.025} & \num{0.031} & \num{0.025} & \num{0.031} & \num{0.030} & \num{0.039}\\
-R2 Adj. & \num{0.009} & \num{0.011} & \num{0.009} & \num{0.010} & \num{0.016} & \num{0.021} & \num{0.022} & \num{0.028} & \num{0.022} & \num{0.028} & \num{0.027} & \num{0.036}\\
-F & \num{47.638} &  & \num{23.816} &  & \num{40.199} &  & \num{11.165} &  & \num{10.232} &  & \num{12.314} & \\
-RMSE & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24}\\
+Num.Obs. & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644}\\
+R2 & \num{0.011} & \num{0.011} & \num{0.021} & \num{0.031} & \num{0.031} & \num{0.039}\\
+R2 Adj. & \num{0.011} & \num{0.010} & \num{0.021} & \num{0.028} & \num{0.028} & \num{0.036}\\
+RMSE & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24}\\
 \bottomrule
-\multicolumn{13}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\multicolumn{7}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
 \end{tabular}}
 \end{table}
 
 \begin{table}
 \centering\centering
-\caption{\label{tab:disc_reg6}Binned UE Duration w. Wage Level Control}
+\caption{\label{tab:disc_reg5}Binned UE Duration w.o Wage Level Control (Full Sample)}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
-\begin{tabular}[t]{lcccccccccccc}
+\begin{tabular}[t]{lcccccc}
 \toprule
-  & Disc. & Disc. (clipped) & Disc. w. UI & Disc. w. UI (clipped) & Disc. w. exhausted UI & Disc. w. exhausted UI (clipped) & Disc. w. controls & Disc. w. controls (clipped) & Disc. w. UI w. controls & Disc. w. UI w. controls (clipped) & Disc. w. exhausted UI w. controls & Disc. w. exhausted UI w. controls (clipped)\\
+  & Disc. & Disc. w. UI & Disc. w. exhausted UI & Disc. w. controls & Disc. w. UI w. controls & Disc. w. exhausted UI w. controls\\
 \midrule
-Intercept & \num{1.198}*** & \num{1.139}*** & \num{1.199}*** & \num{1.139}*** & \num{1.154}*** & \num{1.098}*** & \num{1.272}*** & \num{1.224}*** & \num{1.272}*** & \num{1.224}*** & \num{1.220}*** & \num{1.176}***\\
- & (\num{0.012}) & (\num{0.008}) & (\num{0.012}) & (\num{0.008}) & (\num{0.016}) & (\num{0.011}) & (\num{0.031}) & (\num{0.021}) & (\num{0.031}) & (\num{0.021}) & (\num{0.034}) & (\num{0.023})\\
-\cellcolor{yellow!20}{Hourly Wage of Lost Job} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
- & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000}) & (\num{0.001}) & (\num{0.000})\\
-\cellcolor{yellow!20}{Unemployment Duration (Binned)} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.010}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.005}***}\\
- & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001}) & (\num{0.002}) & (\num{0.001})\\
-Received Unemployment Compensation &  &  & \num{-0.000} & \num{0.000} &  &  &  &  & \num{-0.000} & \num{-0.000} &  & \\
- &  &  & (\num{0.001}) & (\num{0.001}) &  &  &  &  & (\num{0.001}) & (\num{0.001}) &  & \\
-Exhausted Unemployment Compensation &  &  &  &  & \num{0.000}*** & \num{0.000}*** &  &  &  &  & \num{0.000}*** & \num{0.000}***\\
- &  &  &  &  & (\num{0.000}) & (\num{0.000}) &  &  &  &  & (\num{0.000}) & (\num{0.000})\\
-Female &  &  &  &  &  &  & \num{-0.028}** & \num{-0.023}** & \num{-0.028}** & \num{-0.023}** & \num{-0.028}** & \num{-0.023}**\\
- &  &  &  &  &  &  & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007}) & (\num{0.011}) & (\num{0.007})\\
-Age &  &  &  &  &  &  & \num{-0.002}*** & \num{-0.001}*** & \num{-0.002}*** & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}***\\
- &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-White &  &  &  &  &  &  & \num{-0.034} & \num{-0.050}** & \num{-0.034} & \num{-0.050}** & \num{-0.032} & \num{-0.049}**\\
- &  &  &  &  &  &  & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016}) & (\num{0.023}) & (\num{0.016})\\
-Black &  &  &  &  &  &  & \num{-0.057}* & \num{-0.061}*** & \num{-0.057}* & \num{-0.061}*** & \num{-0.054}* & \num{-0.059}***\\
- &  &  &  &  &  &  & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018}) & (\num{0.026}) & (\num{0.018})\\
-Mixed &  &  &  &  &  &  & \num{0.017} & \num{-0.067}* & \num{0.017} & \num{-0.067}* & \num{0.019} & \num{-0.065}*\\
- &  &  &  &  &  &  & (\num{0.039}) & (\num{0.027}) & (\num{0.039}) & (\num{0.027}) & (\num{0.039}) & (\num{0.026})\\
-Married &  &  &  &  &  &  & \num{0.013} & \num{0.017}* & \num{0.013} & \num{0.017}* & \num{0.013} & \num{0.018}*\\
- &  &  &  &  &  &  & (\num{0.010}) & (\num{0.007}) & (\num{0.010}) & (\num{0.007}) & (\num{0.010}) & (\num{0.007})\\
-High School &  &  &  &  &  &  & \num{0.034}* & \num{0.019}+ & \num{0.034}* & \num{0.019}+ & \num{0.038}* & \num{0.022}*\\
- &  &  &  &  &  &  & (\num{0.015}) & (\num{0.011}) & (\num{0.015}) & (\num{0.011}) & (\num{0.015}) & (\num{0.011})\\
-educ\_catAssociate's &  &  &  &  &  &  & \num{0.085}*** & \num{0.027}+ & \num{0.085}*** & \num{0.027}+ & \num{0.088}*** & \num{0.030}*\\
- &  &  &  &  &  &  & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014}) & (\num{0.021}) & (\num{0.014})\\
-Bachelor's Degree &  &  &  &  &  &  & \num{0.163}*** & \num{0.122}*** & \num{0.163}*** & \num{0.122}*** & \num{0.166}*** & \num{0.124}***\\
- &  &  &  &  &  &  & (\num{0.022}) & (\num{0.015}) & (\num{0.022}) & (\num{0.015}) & (\num{0.022}) & (\num{0.015})\\
-Postgraduate Degree &  &  &  &  &  &  & \num{0.246}*** & \num{0.120}*** & \num{0.246}*** & \num{0.120}*** & \num{0.250}*** & \num{0.124}***\\
- &  &  &  &  &  &  & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031}) & (\num{0.045}) & (\num{0.031})\\
+Intercept & \num{1.069}*** & \num{1.069}*** & \num{1.016}*** & \num{1.190}*** & \num{1.190}*** & \num{1.127}***\\
+ & (\num{0.008}) & (\num{0.008}) & (\num{0.012}) & (\num{0.031}) & (\num{0.031}) & (\num{0.034})\\
+\cellcolor{yellow!20}{Unemployment Duration (Binned)} & \cellcolor{yellow!20}{\num{-0.013}***} & \cellcolor{yellow!20}{\num{-0.013}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
+ & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002})\\
+Received Unemployment Compensation &  & \num{-0.000} &  &  & \num{0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted Unemployment Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Female &  &  &  & \num{0.003} & \num{0.003} & \num{0.003}\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & \vphantom{1} (\num{0.011})\\
+Age &  &  &  & \num{-0.003}*** & \num{-0.003}*** & \num{-0.003}***\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  & \num{-0.035} & \num{-0.035} & \num{-0.033}\\
+ &  &  &  & (\num{0.023}) & (\num{0.023}) & (\num{0.023})\\
+Black &  &  &  & \num{-0.047}+ & \num{-0.047}+ & \num{-0.045}+\\
+ &  &  &  & (\num{0.026}) & (\num{0.026}) & (\num{0.026})\\
+Mixed &  &  &  & \num{0.014} & \num{0.014} & \num{0.017}\\
+ &  &  &  & (\num{0.040}) & (\num{0.040}) & (\num{0.040})\\
+Married &  &  &  & \num{0.004} & \num{0.004} & \num{0.005}\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+High School &  &  &  & \num{0.006} & \num{0.006} & \num{0.012}\\
+ &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
+Associate's Degree &  &  &  & \num{0.033} & \num{0.033} & \num{0.038}+\\
+ &  &  &  & (\num{0.021}) & (\num{0.021}) & \vphantom{1} (\num{0.021})\\
+Bachelor's Degree &  &  &  & \num{0.082}*** & \num{0.082}*** & \num{0.087}***\\
+ &  &  &  & (\num{0.021}) & (\num{0.021}) & (\num{0.021})\\
+Postgraduate Degree &  &  &  & \num{0.116}** & \num{0.116}** & \num{0.124}**\\
+ &  &  &  & (\num{0.045}) & (\num{0.045}) & (\num{0.045})\\
 \midrule
-Num.Obs. & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644} & \num{4870} & \num{4644}\\
-R2 & \num{0.047} & \num{0.045} & \num{0.047} & \num{0.045} & \num{0.051} & \num{0.052} & \num{0.069} & \num{0.072} & \num{0.069} & \num{0.072} & \num{0.072} & \num{0.078}\\
-R2 Adj. & \num{0.047} & \num{0.045} & \num{0.047} & \num{0.045} & \num{0.050} & \num{0.051} & \num{0.067} & \num{0.070} & \num{0.067} & \num{0.070} & \num{0.070} & \num{0.076}\\
-F & \num{120.632} &  & \num{80.422} &  & \num{86.995} &  & \num{30.090} &  & \num{27.774} &  & \num{29.084} & \\
-RMSE & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.24} & \num{0.37} & \num{0.23} & \num{0.37} & \num{0.23} & \num{0.37} & \num{0.23}\\
+Num.Obs. & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870}\\
+R2 & \num{0.010} & \num{0.010} & \num{0.016} & \num{0.025} & \num{0.025} & \num{0.030}\\
+R2 Adj. & \num{0.009} & \num{0.009} & \num{0.016} & \num{0.022} & \num{0.022} & \num{0.027}\\
+F & \num{47.638} & \num{23.816} & \num{40.199} & \num{11.165} & \num{10.232} & \num{12.314}\\
+RMSE & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37}\\
 \bottomrule
-\multicolumn{13}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\multicolumn{7}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
 \end{tabular}}
 \end{table}
 
-\subsection{Additional Considerations}\label{additional-considerations}
+\begin{table}
+\centering\centering
+\caption{\label{tab:disc_reg6}Binned UE Duration w. Wage Level Control (Clipped Sample)}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccc}
+\toprule
+  & Disc. (clipped) & Disc. w. UI (clipped) & Disc. w. exhausted UI (clipped) & Disc. w. controls (clipped) & Disc. w. UI w. controls (clipped) & Disc. w. exhausted UI w. controls (clipped)\\
+\midrule
+Intercept & \num{1.139}*** & \num{1.139}*** & \num{1.098}*** & \num{1.224}*** & \num{1.224}*** & \num{1.176}***\\
+ & (\num{0.008}) & (\num{0.008}) & (\num{0.011}) & (\num{0.021}) & (\num{0.021}) & (\num{0.023})\\
+\cellcolor{yellow!20}{Hourly Wage of Lost Job} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
+ & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+\cellcolor{yellow!20}{Unemployment Duration (Binned)} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.005}***}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
+Received Unemployment Compensation &  & \num{0.000} &  &  & \num{-0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted Unemployment Compensation &  &  & \num{0.000}*** &  &  & \num{0.000}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Female &  &  &  & \num{-0.023}** & \num{-0.023}** & \num{-0.023}**\\
+ &  &  &  & (\num{0.007}) & (\num{0.007}) & \vphantom{1} (\num{0.007})\\
+Age &  &  &  & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}***\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  & \num{-0.050}** & \num{-0.050}** & \num{-0.049}**\\
+ &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
+Black &  &  &  & \num{-0.061}*** & \num{-0.061}*** & \num{-0.059}***\\
+ &  &  &  & (\num{0.018}) & (\num{0.018}) & (\num{0.018})\\
+Mixed &  &  &  & \num{-0.067}* & \num{-0.067}* & \num{-0.065}*\\
+ &  &  &  & (\num{0.027}) & (\num{0.027}) & (\num{0.026})\\
+Married &  &  &  & \num{0.017}* & \num{0.017}* & \num{0.018}*\\
+ &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007})\\
+High School &  &  &  & \num{0.019}+ & \num{0.019}+ & \num{0.022}*\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+Associate's Degree &  &  &  & \num{0.027}+ & \num{0.027}+ & \num{0.030}*\\
+ &  &  &  & (\num{0.014}) & (\num{0.014}) & (\num{0.014})\\
+Bachelor's Degree &  &  &  & \num{0.122}*** & \num{0.122}*** & \num{0.124}***\\
+ &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
+Postgraduate Degree &  &  &  & \num{0.120}*** & \num{0.120}*** & \num{0.124}***\\
+ &  &  &  & (\num{0.031}) & (\num{0.031}) & (\num{0.031})\\
+\midrule
+Num.Obs. & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644}\\
+R2 & \num{0.045} & \num{0.045} & \num{0.052} & \num{0.072} & \num{0.072} & \num{0.078}\\
+R2 Adj. & \num{0.045} & \num{0.045} & \num{0.051} & \num{0.070} & \num{0.070} & \num{0.076}\\
+RMSE & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.23} & \num{0.23} & \num{0.23}\\
+\bottomrule
+\multicolumn{7}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
+\end{table}
 
-Below I:
+\begin{table}
+\centering\centering
+\caption{\label{tab:disc_reg6}Binned UE Duration w. Wage Level Control (Full Sample)}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccc}
+\toprule
+  & Disc. & Disc. w. UI & Disc. w. exhausted UI & Disc. w. controls & Disc. w. UI w. controls & Disc. w. exhausted UI w. controls\\
+\midrule
+Intercept & \num{1.198}*** & \num{1.199}*** & \num{1.154}*** & \num{1.272}*** & \num{1.272}*** & \num{1.220}***\\
+ & (\num{0.012}) & (\num{0.012}) & (\num{0.016}) & (\num{0.031}) & (\num{0.031}) & (\num{0.034})\\
+\cellcolor{yellow!20}{Hourly Wage of Lost Job} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
+\cellcolor{yellow!20}{Unemployment Duration (Binned)} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.010}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
+ & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002})\\
+Received Unemployment Compensation &  & \num{-0.000} &  &  & \num{-0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted Unemployment Compensation &  &  & \num{0.000}*** &  &  & \num{0.000}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Female &  &  &  & \num{-0.028}** & \num{-0.028}** & \num{-0.028}**\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+Age &  &  &  & \num{-0.002}*** & \num{-0.002}*** & \num{-0.001}***\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  & \num{-0.034} & \num{-0.034} & \num{-0.032}\\
+ &  &  &  & (\num{0.023}) & (\num{0.023}) & (\num{0.023})\\
+Black &  &  &  & \num{-0.057}* & \num{-0.057}* & \num{-0.054}*\\
+ &  &  &  & (\num{0.026}) & (\num{0.026}) & (\num{0.026})\\
+Mixed &  &  &  & \num{0.017} & \num{0.017} & \num{0.019}\\
+ &  &  &  & (\num{0.039}) & (\num{0.039}) & (\num{0.039})\\
+Married &  &  &  & \num{0.013} & \num{0.013} & \num{0.013}\\
+ &  &  &  & (\num{0.010}) & (\num{0.010}) & (\num{0.010})\\
+High School &  &  &  & \num{0.034}* & \num{0.034}* & \num{0.038}*\\
+ &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
+Associate's Degree &  &  &  & \num{0.085}*** & \num{0.085}*** & \num{0.088}***\\
+ &  &  &  & (\num{0.021}) & (\num{0.021}) & (\num{0.021})\\
+Bachelor's Degree &  &  &  & \num{0.163}*** & \num{0.163}*** & \num{0.166}***\\
+ &  &  &  & (\num{0.022}) & (\num{0.022}) & (\num{0.022})\\
+Postgraduate Degree &  &  &  & \num{0.246}*** & \num{0.246}*** & \num{0.250}***\\
+ &  &  &  & (\num{0.045}) & (\num{0.045}) & (\num{0.045})\\
+\midrule
+Num.Obs. & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870}\\
+R2 & \num{0.047} & \num{0.047} & \num{0.051} & \num{0.069} & \num{0.069} & \num{0.072}\\
+R2 Adj. & \num{0.047} & \num{0.047} & \num{0.050} & \num{0.067} & \num{0.067} & \num{0.070}\\
+F & \num{120.632} & \num{80.422} & \num{86.995} & \num{30.090} & \num{27.774} & \num{29.084}\\
+RMSE & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37}\\
+\bottomrule
+\multicolumn{7}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
+\end{table}
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  Show results from some sample reweighting to address the
-  non-uniformity of our cross-sectional data.
-\item
-  Histogram of an additional explanatory variable that might be
-  interesting - the tenure of the lost job. How long (in years) did the
-  individual hold the job they lost.
-\item
-  Additionally, I show some rough graphs/figures about the sample
-  population (age, education, gender, wage distributions). I am still
-  working on an occupational distribution graph to understand the
-  ``skills''/occupational distribution of the sample.
-\end{enumerate}
+\section{Additional Considerations}\label{additional-considerations}
 
-\subsubsection{Selection Issues with Non-Random
+Next, we provide results for the econometric specifications listed above
+with better balanced survey samples. We outline the various procedures
+employed for dealing with selection issues and non-uniformity in the
+sample.
+
+\subsection{Selection Issues with Non-Random
 Sample}\label{selection-issues-with-non-random-sample}
-
-NOTE: Skip ahead to ``Regression Results with Sample Reweighting for
-Regression Results if you don't wish to look at the reweighting details
-below.
 
 One of the challenges with this data is that the sample grows
 significantly smaller for higher reported of unemployment duration (see
-scatter plots in Descriptives section). One option is a sample
-reweighting (beyond the census weights) to ensure population similarity
-across bins (below I choose GLM propensity score matching \&
-entropy-balancing) or a Heckman Selection. Again, I include the code
-below (apologies for verbose output), mainly because I am not yet 100\%
-sure of the implementation as I have never implemented such sample
-correction in a cross-sectional study). Open to suggestions and
-corrections :)
+scatter plots in section above). Therefore, we re-weight our survey
+sample (beyond the census weights already employed) to ensure population
+similarity across bins. More precisely, we employ propensity score
+matching using a generalised linear model, entropy-balancing, and
+Heckman selection correction.
 
-\textbf{Conclusion:} With this implementation (which may very well be
-wrong for now!), the coefficients on unemployment duration remain
-stable.
+Overall, we find the econometric results reported earlier to be
+consistent across these implementations, with the coefficients on
+unemployment duration remaining somewhat stable.
 
-\paragraph{Entropy Balancing}\label{entropy-balancing}
+\subsubsection{Entropy Balancing}\label{entropy-balancing}
 
-Entropy balancing simply reweights observations to ensure population
-matching across the key dependent variable.
+First, entropy balancing simply reweights observations to ensure
+population matching across the key dependent variable.
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb1-1} \end{center}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb2-1} \end{center}
 
-\subparagraph{Diagnostic Tests for Entropy-balanced Reweighted
+\paragraph{Diagnostic Tests for Entropy-balanced Reweighted
 Sample}\label{diagnostic-tests-for-entropy-balanced-reweighted-sample}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb3-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb3-2} \end{center}
-
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb4-1} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb4-2} \end{center}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb5-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb5-2} \end{center}
-
-\paragraph{Propensity Score Weighting with GLM
+\subsubsection{Propensity Score Weighting with GLM
 Estimator}\label{propensity-score-weighting-with-glm-estimator}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm1-1} \end{center}
 
-\subparagraph{Diagnostic Tests for Propensity Score Matching (GLM)
+\paragraph{Diagnostic Tests for Propensity Score Matching (GLM)
 Reweighted
 Sample}\label{diagnostic-tests-for-propensity-score-matching-glm-reweighted-sample}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm2-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm2-2} \end{center}
-
-\subparagraph{Predicted Reservation Wage using GLM Reweighted
+\paragraph{Predicted Reservation Wage using GLM Reweighted
 Sample}\label{predicted-reservation-wage-using-glm-reweighted-sample}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm3-1} \end{center}
 
-\paragraph{Heckman Selection}\label{heckman-selection}
+\subsubsection{Heckman Selection}\label{heckman-selection}
 
 Another option is a Heckman Selection correction though I do not think
 this addresses the particular selection concern we have where there are
@@ -782,7 +943,7 @@ simply less observations in longer unemployment durations.
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_heckman1-1} \end{center}
 
-\paragraph{Regression Results with Sample
+\subsubsection{Regression Results with Sample
 Reweighting}\label{regression-results-with-sample-reweighting}
 
 \begin{table}
@@ -810,16 +971,14 @@ Married & \num{0.003} & \num{0.005} & \num{0.004}\\
  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
 High School & \num{-0.014} & \num{-0.014} & \num{-0.014}\\
  & (\num{0.019}) & (\num{0.017}) & (\num{0.017})\\
-XOeduc\_catAssociate's & \num{-0.078} &  & \\
- & (\num{0.064}) &  & \\
+Associate's Degree & \num{-0.078} & \num{0.007} & \num{0.006}\\
+ & (\num{0.064}) & (\num{0.022}) & (\num{0.022})\\
 Bachelor's Degree & \num{-0.217} & \num{0.054}* & \num{0.054}*\\
  & (\num{0.165}) & (\num{0.023}) & (\num{0.023})\\
 Postgraduate Degree & \num{-0.479} & \num{0.083}+ & \num{0.086}+\\
  & (\num{0.330}) & (\num{0.048}) & (\num{0.047})\\
 Inverse Mills Ratio & \num{0.870}+ &  & \\
  & (\num{0.479}) &  & \\
-educ\_catAssociate's &  & \num{0.007} & \num{0.006}\\
- &  & (\num{0.022}) & (\num{0.022})\\
 \midrule
 Num.Obs. & \num{4870} & \num{4870} & \num{4870}\\
 R2 & \num{0.893} & \num{0.014} & \num{0.015}\\
@@ -1008,7 +1167,7 @@ re-employment probability with repeated failures in the job search).
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 02:30:52
+06, 2026 - 04:10:45
 
 \begin{table}[!htbp] \centering 
   \caption{Descriptive Statistics (SCE)} 
@@ -1043,7 +1202,7 @@ UE transition rate: LT & $12.7$ & $12.7$ & $12.3$ \\
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 02:30:53
+06, 2026 - 04:10:47
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
@@ -1079,7 +1238,7 @@ Residual Std. Error & 0.467 (df = 1184) & 0.475 (df = 1894) & 0.478 (df = 656) \
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 02:30:53
+06, 2026 - 04:10:47
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
@@ -1121,7 +1280,7 @@ Residual Std. Error & 0.455 (df = 1182) & 0.464 (df = 1892) & 0.465 (df = 654) \
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 02:30:53
+06, 2026 - 04:10:47
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
@@ -1157,7 +1316,7 @@ Residual Std. Error & 0.398 (df = 457) & 0.436 (df = 781) & 0.447 (df = 283) \\
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 02:30:53
+06, 2026 - 04:10:47
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
