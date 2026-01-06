@@ -99,9 +99,6 @@
 
 \begin{document}
 
-\section{Calibrating Behavioural
-Mechanisms}\label{calibrating-behavioural-mechanisms}
-
 The model's central functionality relies on a variety of behavioural
 mechanisms that are parametrised econometrically using micro data.
 Furthermore, the model relies on additional sources of micro data for
@@ -1077,49 +1074,70 @@ RMSE & \num{0.01} & \num{0.00} & \num{0.00}\\
 \section{Supporting Data for
 Validation}\label{supporting-data-for-validation}
 
-\subsection{Mukoyama et al.~Job Search and the Business
-Cycle}\label{mukoyama-et-al.-job-search-and-the-business-cycle}
+\subsection{\texorpdfstring{Intensive Search Effort: Mukoyama et
+al.~2018 \emph{Job Search and the Business
+Cycle}}{Intensive Search Effort: Mukoyama et al.~2018 Job Search and the Business Cycle}}\label{intensive-search-effort-mukoyama-et-al.-2018-job-search-and-the-business-cycle}
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\setcounter{enumi}{3}
-\tightlist
-\item
-  (Validation) Mukoyama et al.~data on the intensive margin of
-  unemployed search effort (in minutes searched) over the business
-  cycle. We have chosen to include this as a validation exercise of our
-  application effort imposition.
-\end{enumerate}
+We use evidence from
+\href{https://www.aeaweb.org/articles?id=10.1257/mac.20160202}{Mukoyama
+et al.~2018} regarding the cyclicality of unemployed job search effort
+to validate the micro behaviour of our agents. This is a foundational
+paper within the literature that explores the relationship between
+search effort and business cycles. The authors provide new data on the
+intensive margin of unemployed search effort (in minutes searched) over
+the business cycle by linking date from the American Time Use Survey
+(ATUS) and Current Population Survey (CPS). We employ the methods and
+data presented in their work in a validation exercise of the emergent
+micro behavior of unemployed job-seekers. Note that the figures and code
+immediately below are drawn from the replication code provided by the
+authors. We have translated the code from Stata to R, but all figures
+and regression tables provided rely on the methodology outlined by
+Mukoyama et al.~We indicate where we have incorporated new data by
+extending the time series to include additional years or applied an
+alternative weighting scheme to the data to account for missing data.
+The citation for this work can be found in the bibliography of the main
+text.
 
-We use evidence from Mukoyama et al regarding the cyclicality of
-unemployed job search effort to validate the micro behaviour of our
-agents. I will provide more explanation on this\ldots{}
+More specifically, the authors provide a novel measure of job search
+effort exploiting the American Time Use and Current Population Surveys
+which can be reduced to just the intensive margin (changes in search
+effort by worker). Typically, this is an extremely challenging measure
+to approximate due to data availability and survey design. In general,
+surveys measure actions taken (i.e., applications sent, interviews
+completed) but these indicators can abstract from the fundamental
+intensive margin of search effort. In other words, the most common
+metrics that measure search effort can result from passive search or
+intrinsic advantageous worker characteristics, obscuring any sense of
+real search ``effort'' or urgency with which individuals apply their
+search strategies. This intensive margin underlies the motivation behind
+our dynamic search effort rule, making this data a valuable source of
+validation data for the model's output.
 
-(Replicated with additional data for unemployed jobseekers)
-\href{https://www.aeaweb.org/articles?id=10.1257/mac.20160202}{\textbf{Mukoyama
-et al.~2018: Job Search Over the Business Cycle}}
+Methodologically, the authors construct this time series measure of job
+search intensity by linking the American Time Use Survey (ATUS) and
+Current Population Survey (CPS). While the ATUS directly measures
+minutes spent on job search activities but has limited sample size and
+coverage (2003-2014), the CPS reports the number and types of search
+methods used over larger samples beginning in 1994. Both surveys ask
+similar questions about search methods employed in the previous month.
+The authors exploit this overlap by first estimating the relationship
+between reported search time and search methods in the ATUS using a
+Heckman selection model---estimating both the probability of positive
+search time and the number of minutes conditional on searching,
+controlling for demographics, occupation, and unemployment duration.
+They then apply these estimated coefficients to impute daily search time
+for all CPS unemployed respondents based on their reported search
+methods, generating a monthly intensive margin series from 1994-2014.
+This approach weights each search method by its estimated time intensity
+and allows baseline search effort to vary by demographic
+characteristics, producing a more nuanced measure than simply counting
+the number of methods used.
 
-\emph{They provide a novel measure of job search effort exploiting the
-American Time Use and Current Population Surveys which can be reduced to
-just the intensive margin (changes in search effort by worker!). At the
-moment, I think this will be the most useful input for our model.}
-
-\emph{Abstract: We examine the cyclicality of search effort using
-time-series, cross-state, and individual variation and find that it is
-countercyclical. We then set up a search and matching model with
-endogenous search effort and show that search effort does not amplify
-labor market fluctuations but rather dampens them. Lastly, we examine
-the role of search effort in driving recent unemployment dynamics and
-show that the unemployment rate would have been 0.5 to 1 percentage
-points higher in the 2008--2014 period had search effort not increased.}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mukoyama-1} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mukoyama-2} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mukoyama-3} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mukoyama-4} \end{center}
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio]{Mukoyama_Replication/intensive_search_margin.png}}
+\caption{Mukoyama Validation Series}
+\end{figure}
 
 \subsection{Learning Rate - Mueller et al.~Job Seekers' Perceptions and
 Employment Prospects: Heterogeneity, Duration Dependence and
@@ -1159,7 +1177,7 @@ re-employment probability with repeated failures in the job search).
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 04:21:21
+06, 2026 - 12:54:46
 
 \begin{table}[!htbp] \centering 
   \caption{Descriptive Statistics (SCE)} 
@@ -1194,7 +1212,7 @@ UE transition rate: LT & $12.7$ & $12.7$ & $12.3$ \\
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 04:21:22
+06, 2026 - 12:54:47
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
@@ -1230,7 +1248,7 @@ Residual Std. Error & 0.467 (df = 1184) & 0.475 (df = 1894) & 0.478 (df = 656) \
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 04:21:22
+06, 2026 - 12:54:47
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
@@ -1272,7 +1290,7 @@ Residual Std. Error & 0.455 (df = 1182) & 0.464 (df = 1892) & 0.465 (df = 654) \
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 04:21:22
+06, 2026 - 12:54:47
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
@@ -1308,7 +1326,7 @@ Residual Std. Error & 0.398 (df = 457) & 0.436 (df = 781) & 0.447 (df = 283) \\
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 04:21:22
+06, 2026 - 12:54:47
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
