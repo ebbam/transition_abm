@@ -1188,8 +1188,7 @@ gender <- df %>%
     subtitle = str_wrap(paste0(
       "Female representation (ie. Female LFPR) as calculated in the sample is ", 
       female_lfpr, "%\n",
-      "whereas female LFPR in the US is ~57% and their unemployment rates are roughly equal.", width = wrap_width_fixed)
-    )
+      "whereas female LFPR in the US is ~57% and their unemployment rates are roughly equal."), width = wrap_width_fixed)
   ) +
 common_theme+                              
   theme(
@@ -1264,7 +1263,7 @@ age <- df %>%
   ) +
   geom_vline(aes(xintercept = 41.7), color = "darkorange") +
   annotate("text",
-    x = 41.7, y = 300, label = "Median Labour Force Age (BLS Reported - 2020)",
+    x = 41.7, y = 200, label = "Median Labor Force Age (BLS Reported - 2020)",
     angle = 90,
     vjust = -0.5,
     #size = 4,
