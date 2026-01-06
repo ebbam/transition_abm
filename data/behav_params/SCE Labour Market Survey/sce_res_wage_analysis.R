@@ -431,7 +431,7 @@ t4 <- data_fig1 %>%
 print((t1a + t1b + t4) / (t2 + t3) + 
         plot_annotation("Ratio of Expected Best Offer to Various Benchmarks (Reservation, Current, Latest Held Wage",
                         caption = "Notes: Regressions are estimated in the Survey of Consumer Expectations between 2014-2022. \nObservations are weighted by their SCE sample weight.",
-                        theme=theme(plot.title=element_text(hjust=0.5))))
+                        theme=plot_annotation_theme))
 
 
 ##############################################################################################
@@ -567,10 +567,11 @@ final_plot <- (t1 | t2 | t3) +
   plot_annotation(
     title = "Ratio of Accepted Salary to Reservation Wages by Unemployment Duration",
     caption = "Notes: Data from the Survey of Consumer Expectations Labour Market Survey (2014–2022).\nOnly valid responses used. Boxplots are weighted by SCE sample weights.",
-    theme = theme(
-      plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
-      plot.caption = element_text(size = 10, hjust = 0.5, margin = margin(t = 10))
-    )
+    theme = plot_annotation_theme
+    #   theme(
+    #   plot.title = element_text(hjust = 0.5, face = "bold", size = 16),
+    #   plot.caption = element_text(size = 10, hjust = 0.5, margin = margin(t = 10))
+    # )
   )
 
 print(final_plot)

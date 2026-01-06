@@ -12,7 +12,7 @@ url <- "https://www.bls.gov/opub/btn/volume-9/how-do-jobseekers-search-for-jobs.
 x <- GET(url, add_headers('user-agent' = 'Oxford University Student web scraper ([[ebba.mark@gmail.com]])'))
 
 # Print progress
-cat("Processing URL:", url, "\n")
+#cat("Processing URL:", url, "\n")
 
 # Read the content of the webpage
 webpage <- tryCatch({

@@ -364,7 +364,7 @@ fig2b <- add_recession(fig2b)
 
 print(fig2a + fig2b + plot_annotation("Figure 2. Actual and Imputed Average Search Time (minutes per day) \nfor All Nonemployed Workers ( panel A) and Unemployed Workers ( panel B)",
                                 caption = "Notes: Regressions are estimated in the ATUS from 2003–2014. \nWhile both panels A and B plot the fitted values from the sample regression, panel A plots the actual and imputed search time for all nonemployed, while panel B plots them for just the unemployed. \nObservations are weighted by their ATUS sample weight.",
-                                theme=theme(plot.title=element_text(hjust=0.5))))
+                                theme=plot_annotation_theme))
 
 ##################################
 ############ Figures 3a-b ########
@@ -441,12 +441,12 @@ fig3bb_plot <- add_recession(fig3bb_plot)
 print(fig3a_plot + fig3b_plot + plot_annotation(
   "Figure 3. The Time Series of the Extensive Margin (U/(U + N )) ( panel A)\nand the Intensive Margin ( panel B), \nMeasured by the Average Minutes of Search per Day for Unemployed Workers",
   caption = "Red data is new data. Notes: Panel A plots the monthly ratio of the number of unemployed (U) to the total number of unemployed (U + N ) in the CPS from 1994–2014.", #\nPanel B plots the average minutes of search per day, constructed as described in the text. Each observation is weighted by its CPS sample weight.",
-  theme=theme(plot.title=element_text(hjust=0.5))))
+  theme=plot_annotation_theme))
 
 print(fig3b_plot + fig3bb_plot + plot_annotation(
   "Intensive Margin Measured by the Average Minutes of Search per Day for Unemployed Workers",
   caption = "Plots the average minutes of search per day,using the imputed minutes as a function of search methods used.\nEach observation is weighted by its CPS sample weight.",
-  theme=theme(plot.title=element_text(hjust=0.5))))
+  theme=plot_annotation_theme))
 
 ggplot() +
   geom_line(data = filter(fig3b_base, date > 1999.9 & name == "time_create_new_2023"), aes(x = date, y = value, color = label), size = 0.5) +
@@ -543,7 +543,7 @@ fig4b <- ggplot() +
 fig4b <- add_recession(fig4b)
 
 print(fig4a + fig4b + plot_annotation('Figure 4. Time Series of (Panel A) Total Search Effort and \n(Panel B) Total Search Effort Using the Search Time of\nUnemployed Workers [solid: (s*(U/(E + U + N))] versus \nUsing the Number of Unemployed Workers [dashed: U/(E + U + N)) (panel B)',
-                                theme=theme(plot.title=element_text(hjust=0.5))))
+                                theme=plot_annotation_theme))
 
 # # Save figures as PDFs
 # ggsave("Figure2a.pdf", fig2a, width = 10.5, height = 8, units = "in")
