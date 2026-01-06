@@ -1,0 +1,17 @@
+\begin{table}[h!]
+\centering
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{|l|l|c|c|c|c|c|c|c|c|}
+\hline
+\textbf{Parameter} & \textbf{Prior Distribution} & \multicolumn{8}{c|}{\textbf{Model Category}} \\
+\cline{3-10}
+& & \textbf{Non-behavioural} & \textbf{\shortstack{Non-behavioural \\ w. OTJ}} & \textbf{\shortstack{Behavioural \\ w. Cyc. OTJ \\ w.o RW}} & \textbf{\shortstack{Behavioural \\ w.o. Cyc. OTJ \\ w.o RW}} & \textbf{\shortstack{Behavioural \\ w. Cyc. OTJ \\ w. RW}} & \textbf{\shortstack{Behavioural \\ w.o. Cyc. OTJ \\ w. RW}} & \textbf{\shortstack{Behavioural \\ w. Cyc. OTJ \\ w. Strict RW}} & \textbf{\shortstack{Behavioural \\ w.o. Cyc. OTJ \\ w. Strict RW}} \\
+\hline
+d\_u & $U(0.0001,0.9)$ & 0.02 & 0.018 & 0.016 & 0.017 & 0.017 & 0.018 & 0.007 & 0.015 \\ \hline
+gamma\_u & $U(0.0001,0.9)$ & 0.851 & 0.786 & 0.747 & 0.729 & 0.783 & 0.774 & 0.195 & 0.028 \\ \hline
+theta & $U(0.0001,0.9)$ &  &  & 0.092 &  & 0.119 &  & 0.345 &  \\ \hline
+\end{tabular}
+\end{adjustbox}
+\caption{Prior distribution and parameter estimates for all models. $U(a, b)$ denotes a uniform distribution on $[a,b]$.}
+\label{tab:priors_posteriors}
+\end{table}

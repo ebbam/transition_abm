@@ -64,13 +64,13 @@ suffix = ""
 
 complete_nw = False
 steady_state_run = False
-dropbox = True
+dropbox = False
 
 # ============================================================================
 # MULTI-SIMULATION CONFIGURATION
 # ============================================================================
 # REDUCED from 25 to 10 for lower CPU usage
-N_SIMULATIONS = 25 # Reduced from 25 to 10
+N_SIMULATIONS = 1 # Reduced from 25 to 10
 CONFIDENCE_LEVEL = 0.95  # For confidence intervals when N_SIMULATIONS is not None
 
 # Add throttling delay between simulations (in seconds)

@@ -99,8 +99,8 @@
 
 \begin{document}
 
-\section{A Calibrating Behavioural
-Mechanisms}\label{a-calibrating-behavioural-mechanisms}
+\section{Calibrating Behavioural
+Mechanisms}\label{calibrating-behavioural-mechanisms}
 
 The model's central functionality relies on a variety of behavioural
 mechanisms that are parametrised econometrically using micro data.
@@ -113,10 +113,7 @@ authors. We conclude with an inventory of other data sources considered
 for behavioral parameter calibration ultimately disregarded due to lack
 of statistical power.
 
-\subsection{Behavioural Mechanism
-Calibration}\label{behavioural-mechanism-calibration}
-
-\subsubsection{Application Effort and Learning Dynamics: Applications
+\subsection{Application Effort and Learning Dynamics: Applications
 Sent}\label{application-effort-and-learning-dynamics-applications-sent}
 
 In 2018 (May, September) and 2020 (February, May), the Bureau of Labor
@@ -273,7 +270,7 @@ across all specifications at the 0.1\% level.
 
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-1-1.png}}
 
-\subsubsection{Wage Expectations and Satisficing: Reservation Wage
+\subsection{Wage Expectations and Satisficing: Reservation Wage
 Adjustment}\label{wage-expectations-and-satisficing-reservation-wage-adjustment}
 
 As part of the Current Population Survey, the US Census Bureau conducts
@@ -287,80 +284,71 @@ that typically confound studies of duration-dependent employment
 outcomes.
 
 As part of the Current Population Survey, the US Census Bureau conducts
-an annuaol
+an annual
 \href{https://cps.ipums.org/cps/dw_sample_notes.shtml}{Displaced Worker
 Supplement} in which workers who have lost their job in the last three
 years are asked additional questions about their unemployment
 experiences and (if re-employed) their re-employment conditions.
 
-``The universe for the Displaced Workers Supplement is civilians 20 or
-older. Respondents are further categorized as a''displaced worker'' if
-they meet additional characteristics (see DWSTAT). After 1998, displaced
-workers are those who lost or left a job due to layoffs or shutdowns
-within the past 3 years\ldots were not self-employed, and did not expect
-to be recalled to work within the next six months.
+As reported in the survey documentation linked above, ``the universe for
+the Displaced Workers Supplement is civilians 20 or older. Respondents
+are further categorized as a `displaced worker' if they meet additional
+characteristics (see DWSTAT). Users should note that there is an
+important difference in definition of displaced worker across samples.
+Before 1994, displaced workers are those who lost or left a job during
+the past 5 years. After 1994, displaced workers are those who lost or
+left a job due to layoffs or shutdowns within the past 3 years.
+\textbf{For 1998 on, respondents are only considered displaced workers
+if they had lost or left a job due to layoffs or shutdowns within the
+past 3 years, were not self-employed, and did not expect to be recalled
+to work within the next six months. Self-response was not required for
+this supplement after 1994, so often one individual answered for all
+household members.}''
 
-The data used below is from annual survey responses between 2000-2025. I
-use the supplement sample weights in all results below. I note where I
-have clipped the sample for outliers (wage ratio between {[}0.25, 2{]}
-and unemployment duration less than 96 weeks (\textasciitilde24 months).
+We utilize the information reported on an individual's weekly wage at
+their lost job, wage at their new job, and the time spent unemployed to
+derive a measure of duration-dependent reservation wage adjustment. More
+precisely, we regress the ratio of the new wage to the wage at the lost
+job on unemployment duration and various control variables in a
+cross-sectional setting. We compare the model fit across linear,
+quadratic, and cubic specificaitions, with and without various
+combinations of control variables (whether or not an individual received
+unemployment compensation, age, race, sex, marital status, education,
+previous wage level). Note that wages are reported in hourly and weekly
+values but this reporting is inconsistent across observations. In other
+words, though most individuals (4600/6198) report their wage in both
+units, 270 report only hourly and 1328 report only weekly. We reconcile
+this by converting reported hourly wages to weekly wages, where weekly
+values are not reported. The data used below is from annual survey
+responses between 2000-2025. We use the supplement sample weights in all
+results below. In the We note where the sample has been trimmed for
+outliers (wage ratio between {[}0.25, 2{]} and unemployment duration
+less than 96 weeks (\textasciitilde24 months).
 
-Below I:
+Below, we outline the data cleaning procedure, provide descriptive
+figures and statistics, outline the econometric estimation strategy,
+provide regression results using the raw sample and reweighted samples
+addressing selection issues and non-uniformity, and provide information
+on the representativeness of the raw sample. The sample is non-uniform
+in unemployment duration (less observations are observed for higher
+values of unemployment duration). We employ three methods of reweighting
+to address these selection issues (Heckman Selection correction,
+entropy-balancing, and propensity score matching) to deal with
+representativeness issues of across values of unemployment durations.
+These re-weighting and sample balancing methods confirm the
+directionality of the regression results in the non-uniform sample,
+providing greater confidence in the triangulated reservation wage
+adjustment rate.
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{Data Cleaning Procedure:} Show data cleaning just for
-  reference (feel free to ignore)!.
-\item
-  \textbf{Descriptives:} Show some descriptives about the data itself.
-\item
-  \textbf{Regression Results on Non-Uniform Sample:} Regression results
-  with ratio of new wage to wage at the lost job (\(W_{h}\) and
-  \(W_{w}\)) regressed (cross-sectionally) on unemployment duration with
-  and without various combinations of control variables (whether or not
-  an individual received unemployment compensation, age, race, sex,
-  marital status, education, previous wage level. ) Note that the wages
-  are reported in hourly and weekly values but. this reporting is
-  inconsistent across observations. In other words, though most
-  individuals (4600/6198) report their wage in both units, 270 report
-  only hourly and 1328 report only weekly. I have not reconciled the
-  inconsistency so I use hourly wage ratios in majority of the below
-  document. I could try to reconcile this.
-\item
-  Outline some considerations for further improvement of the analysis:
-
-  \begin{enumerate}
-  \def\labelenumii{\arabic{enumii}.}
-  \tightlist
-  \item
-    \textbf{Reweighted Samples:} The sample is non-uniform in
-    unemployment duration (less observations as unemployment duration
-    increases). Try two methods of reweighting to address selection
-    issues (Heckman Selection correction - though I think this is
-    inappropriate for this particular selection issue) and non-uniform
-    (entropy-balancing to deal with representativeness of population
-    over unemployment durations) sample confirm regression results in
-    non-uniform sample.
-  \item
-    \textbf{Representativeness of the Sample (Education, Age, Gender,
-    and Wage):} Representativeness of the data to motivate data
-    limitations and inform the ultimate reweighting scheme.
-  \end{enumerate}
-\end{enumerate}
-
-\textbf{Overall result (at the moment):} Individuals accept a
-\textasciitilde1-percentage point change in the wage ratio per
-additional month of unemployment. Variations using model reweighting,
-different samples, combinations of control variables, reported hourly
-and weekly wage ratios do not seem to affect the result. However, the
-data seems to follow a non-linear relationship (we see little
-satisficing until around \textasciitilde12 months of unemployment) after
-which the wage ratio begins to decrease. Individuals seem to accept a
-below-1 relative wage ratio (current wage:wage at lost job) following a
-year of unemployment. If we fit this model with a quadratic fit this
-could inform our reservation wage adjustment parameter in the model.
+Overall, we find that individuals accept a \textasciitilde1-percentage
+point decrease in the wage ratio per additional month of unemployment.
+Variations using model reweighting, different samples, combinations of
+control variables, reported hourly and weekly wage ratios do not seem to
+affect the result. However, the data seems to follow a non-linear
+relationship (we see little satisficing until around \textasciitilde12
+months of unemployment) after which the wage ratio begins to decrease.
+Individuals seem to accept a below-1 relative wage ratio (current
+wage:wage at lost job) following a year of unemployment.
 
 \textbf{Important Considerations/Limitations:}
 
@@ -368,25 +356,29 @@ could inform our reservation wage adjustment parameter in the model.
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  \textbf{Displaced worker classification as outlined above.} Can we
-  generalise from this definition to all unemployed workers?
+  \textbf{Displaced worker classification as outlined above.} We do not
+  distinguish between workers in our model that are voluntarily or
+  involuntarily separated from their jobs. Therefore, the displaced
+  worker classification outlined above does not represent individuals
+  unemployed voluntarily.
 \item
-  \textbf{The reported `current wage' is not necessarily the the
-  realised wage post-re-employment.} Individuals report the wage at the
-  lost job, the amount of time unemployed until they were re-employed,
-  and the wage they hold at their current job. However, it is not
-  indicated whether the current job is the same job as the first they
-  were re-employed at. Given various comments in the literature about
-  finding ``stop-gap'' employment, this might not be a problem in the
-  sense that the ``current wage'' would more accurately indicate the
-  wage an individual has ``landed'' at post-unemployment spell. But
-  curious what you think about the defensibility of this.
+  \textbf{The reported `current wage' is not necessarily the realised
+  wage post-re-employment.} Individuals report the wage at their lost
+  job, the amount of time unemployed until they were re-employed, and
+  the wage they hold at their current job. However, it is not indicated
+  whether the current job is the same job as the first they were
+  re-employed at. As such, there is uncertainty in the measurement of
+  this outcome as an accepted wage that is relatively low compared to an
+  individual's previous wage might be a temporary reality rather than a
+  true re-employment wage (i.e., an individual finding stop-gap
+  employment).
 \item
-  \textbf{Outcome variable:} How do we feel about the outcome variable
-  as the ratio of current to latest held job? Might we want to take the
-  log or consider simply the (log) level regressed on the previous wage.
-  Wondering if a ratio-based outcome variable might muddle
-  interpretation. Curious for your reactions.
+  \textbf{Outcome variable:} The outcome variable does not adequately
+  handle fundamentally different wage scales (i.e., a 10\% wage increase
+  would likely be more or less devastating depending on the initial wage
+  level). We control for wage levels in various specifications listed
+  below. We find that controlling for wage levels does not significantly
+  impact our results.
 \end{enumerate}
 
 \section{Descriptives}\label{descriptives}
@@ -416,76 +408,73 @@ a potentially non-linear fit.
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives-4} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives-5} \end{center}
-
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_spline-1} \end{center}
 
 \section{Regressions (non-uniform
 sample)}\label{regressions-non-uniform-sample}
 
-Next, (ignoring for now the non-uniformity of the sample ie. that there
-are less observations present for higher unemployment durations) I run
-the following regression (with various modifications to sample and
-control variables).
+Next, before correcting for the non-uniformity of the sample (i.e., that
+there are less observations present for higher unemployment durations),
+we employ the following econometric specificaitons (with various
+modifications to sample and control variables).\textbackslash{}
+
 \(W_{i} = \alpha_{i} + \beta_{1} d_{i} + \beta_{2}UI_{i} + \beta_{3}X_{i} + \epsilon_{i}\)
 
 where \(W_{i}\): Ratio of accepted wage to wage at lost job (hourly
 values).
 
-\(d_{i}\): Unemployment duration (continuous or binned).
+\(d_{i}\): Unemployment duration in continuous (months) or binned
+values.
 
 \(UI_{i}\): Control variable for having used or exhausted unemployment
 benefits.
 
-\(X_{i}\): Vector of control variables (sex, age, race (white, black,
-mixed), marital status (married or not), whether individual used UI
-benefits, whether individual exhausted UI benefits, education level, and
-previous wage level).
+\(X_{i}\): Vector of control variables (sex, age, race, marital status,
+education level, and previous wage level).
 
-There are 48 models present with all combinations of the following:
+We present and compare 48 variations on the above model present with all
+combinations of the following:
 
 \begin{itemize}
 \item
   \textbf{Continuous vs.~Discrete Treatment Variable (2 alternatives):}
   Continuous (monthly) versus binned unemployment duration.
 \item
-  \textbf{w. UI vs w. Exhausted UI (3 alternatives):} The data includes
-  a variable for whether individuals USE and/or EXHAUST unemployment
-  benefits. I run the regressions without these UI controls, with
-  control for having used UI, with control for having exhausted UI.
+  \textbf{w. UI vs w. Exhausted UI (3 alternatives):} The survey
+  includes a variable for whether individuals USE and/or EXHAUST
+  unemployment benefits. We run the regressions without these UI
+  controls, with the control for having used UI, or with the control for
+  having exhausted UI.
 \item
   \textbf{w. Controls (2 alternatives):} With or without additional
-  demographic controls (sex, age, race, married, education)
+  demographic controls (sex, age, race, married, education).
 \item
   \textbf{w. Wage Level (2 alternatives):} With or without wage level of
-  lost job to control for income. The level of the previous wage likely
-  affects the wage ratio.
+  lost job to control for income and the relationship between wage
+  levels and the outcome wage ratio itself.
 \item
-  \textbf{Outlier clipped sample (2 alternatives):} (As described in the
-  intro section) Remove outliers where the wage ratio is within {[}0.25,
-  2.5{]} and reported unemploymetn duration is below 96 weeks
-  (\textasciitilde{} 2 years).
+  \textbf{Outlier clipped sample (2 alternatives):} Either remove
+  outliers where the wage ratio is within {[}0.25, 2.5{]} and reported
+  unemployment duration is below 96 weeks (\textasciitilde{} 2 years),
+  or employ the raw sample.
 \end{itemize}
 
-I include the full set of coefficients (again, apologies for verbose
-output) in case you find the coefficients on the controls interesting (I
-think the coefficient on age and holding a Bachelor's degree
-particularly interesting). But I highlight in blue our main interest in
-\(\beta_{1}\).
+In each regression table, we include the full set of coefficients to
+allow for examination of the regression coefficients on the controls as
+well as the principal variables of interest. In each table, we highlight
+\(\beta_{1}\) as this is the main regression coefficient of interest.
 
-Across all models in the tabs below we see a consistently negative
+Across all models in the tables below we see a consistently negative
 coefficient on unemployment duration (\textasciitilde0.7-1 percentage
 point increase in the wage ratio for each additional month spent in
 unemployment). If we look more closely at the performance of our model
 with continuous unemployment duration, UI use (not exhaustion), all
 controls, wage levels, and outlier correction we see that the model
-performs fairly well across various diagnostic tests.
-
-\begin{verbatim}
-## [1] "Continuous U Duration. w. UI Control w. demographic controls (clipped sample)"
-\end{verbatim}
+performs passably across various diagnostic tests.
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_reg1-1} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_reg1-2} \end{center}
 
 \subsection{Continuous UE Duration}\label{continuous-ue-duration}
 
@@ -757,9 +746,15 @@ Sample}\label{diagnostic-tests-for-entropy-balanced-reweighted-sample}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb3-1} \end{center}
 
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb3-2} \end{center}
+
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb4-1} \end{center}
 
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb4-2} \end{center}
+
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb5-1} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb5-2} \end{center}
 
 \paragraph{Propensity Score Weighting with GLM
 Estimator}\label{propensity-score-weighting-with-glm-estimator}
@@ -771,6 +766,8 @@ Reweighted
 Sample}\label{diagnostic-tests-for-propensity-score-matching-glm-reweighted-sample}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm2-1} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm2-2} \end{center}
 
 \subparagraph{Predicted Reservation Wage using GLM Reweighted
 Sample}\label{predicted-reservation-wage-using-glm-reweighted-sample}
@@ -867,9 +864,9 @@ have to do for now.
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_rep-1} \end{center}
 
-\subsubsection{OTJ Search}\label{otj-search}
+\subsection{OTJ Search}\label{otj-search}
 
-\paragraph{Eeckhout et al.~2019 Unemployment
+\subsubsection{Eeckhout et al.~2019 Unemployment
 Cycles}\label{eeckhout-et-al.-2019-unemployment-cycles}
 
 \href{https://www.aeaweb.org/articles?id=10.1257/mac.20180105}{Source}
@@ -926,11 +923,11 @@ RMSE & \num{0.01} & \num{0.00} & \num{0.00}\\
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/eeckhout-3} \end{center}
 
-\subsection{Supporting Data for
+\section{Supporting Data for
 Validation}\label{supporting-data-for-validation}
 
-\subsubsection{(Validation) Mukoyama et al.~Job Search and the Business
-Cycle}\label{validation-mukoyama-et-al.-job-search-and-the-business-cycle}
+\subsection{Mukoyama et al.~Job Search and the Business
+Cycle}\label{mukoyama-et-al.-job-search-and-the-business-cycle}
 
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
@@ -973,11 +970,9 @@ points higher in the 2008--2014 period had search effort not increased.}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mukoyama-4} \end{center}
 
-\subsubsection{Learning Rate}\label{learning-rate}
-
-\paragraph{Mueller et al.~Job Seekers' Perceptions and Employment
-Prospects: Heterogeneity, Duration Dependence and
-Bias}\label{mueller-et-al.-job-seekers-perceptions-and-employment-prospects-heterogeneity-duration-dependence-and-bias}
+\subsection{Learning Rate - Mueller et al.~Job Seekers' Perceptions and
+Employment Prospects: Heterogeneity, Duration Dependence and
+Bias}\label{learning-rate---mueller-et-al.-job-seekers-perceptions-and-employment-prospects-heterogeneity-duration-dependence-and-bias}
 
 \href{https://www.aeaweb.org/articles?id=10.1257/aer.20190808}{Mueller
 et al: Job Seekers' Perceptions and Employment Prospects}
@@ -1012,8 +1007,8 @@ search effort as a learning rate (ie. individuals learn about their
 re-employment probability with repeated failures in the job search).
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Jan
-05, 2026 - 12:23:08
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
+06, 2026 - 02:30:52
 
 \begin{table}[!htbp] \centering 
   \caption{Descriptive Statistics (SCE)} 
@@ -1047,8 +1042,8 @@ UE transition rate: LT & $12.7$ & $12.7$ & $12.3$ \\
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-2} \end{center}
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Jan
-05, 2026 - 12:23:09
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
+06, 2026 - 02:30:53
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
@@ -1083,8 +1078,8 @@ Residual Std. Error & 0.467 (df = 1184) & 0.475 (df = 1894) & 0.478 (df = 656) \
 \end{table}
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Jan
-05, 2026 - 12:23:09
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
+06, 2026 - 02:30:53
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
@@ -1125,8 +1120,8 @@ Residual Std. Error & 0.455 (df = 1182) & 0.464 (df = 1892) & 0.465 (df = 654) \
 \end{table}
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Jan
-05, 2026 - 12:23:09
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
+06, 2026 - 02:30:53
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
@@ -1161,8 +1156,8 @@ Residual Std. Error & 0.398 (df = 457) & 0.436 (df = 781) & 0.447 (df = 283) \\
 \end{table}
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Mon, Jan
-05, 2026 - 12:23:09
+Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
+06, 2026 - 02:30:53
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
@@ -1206,9 +1201,9 @@ Residual Std. Error & 0.400 (df = 457) & 0.437 (df = 781) & 0.450 (df = 283) \\
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-7} \end{center}
 
-\subsection{Additional Analyses}\label{additional-analyses}
+\section{Additional Analyses}\label{additional-analyses}
 
-\subsubsection{SCE Labor Market Survey: Reservation
+\subsection{SCE Labor Market Survey: Reservation
 Wages}\label{sce-labor-market-survey-reservation-wages}
 
 \textbf{Survey of Consumer Expectations Reservation Wages, Accepted
@@ -1399,8 +1394,7 @@ RMSE & \num{0.34} & \num{0.34} & \num{0.46} & \num{0.45}\\
 \end{tabular}
 \end{table}
 
-\subsubsection{SCE Job Search
-Supplement:}\label{sce-job-search-supplement}
+\subsection{SCE Job Search Supplement:}\label{sce-job-search-supplement}
 
 The Federal Reserve Bank of New York compiles the nationally
 representative Survey on Consumer Expectations annually in October.
@@ -1435,7 +1429,7 @@ Year & N Unemployed & N Unemp \& Searching \\
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_job_search2-2} \end{center}
 
-\subsubsection{On the job search}\label{on-the-job-search}
+\subsection{On-the-Job Search}\label{on-the-job-search}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_otj-1} \end{center}
 
