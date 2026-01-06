@@ -39,7 +39,7 @@ rename_fun <- function(x){
 
 ```
 
-# A Calibrating Behavioural Mechanisms {.tabset}
+# Calibrating Behavioural Mechanisms {.tabset}
 
 The model's central functionality relies on a variety of behavioural
 mechanisms that are parametrised econometrically using micro data.
@@ -51,8 +51,6 @@ where we make use of methodology employed or constructed by other authors.
 We conclude with an inventory of other data sources considered for
 behavioral parameter calibration ultimately disregarded due to lack of
 statistical power.
-
-## Behavioural Mechanism Calibration
 
 <!-- **Goals:** -->
 
@@ -82,7 +80,7 @@ statistical power.
 
 <!-- **Current idea:** If we view *dynamic selection* simply as worker heterogeneity, *duration dependence* as an endogenous process of skill deterioration or signal to employers (up to a certain point), and *search effort* as responsive to labour market conditions, we will have quasi-independent elements in the job-finding probability of workers in the model! -->
 
-### Application Effort and Learning Dynamics: Applications Sent {.tabset}
+## Application Effort and Learning Dynamics: Applications Sent {.tabset}
 
 In 2018 (May, September) and 2020 (February, May), the Bureau of Labor
 Statistics ran the "Unemployment Insurance Nonfilers" supplemental
@@ -611,7 +609,7 @@ ggsave(here("data/figures/application_effort.png"))
 
 ```
 
-### Wage Expectations and Satisficing: Reservation Wage Adjustment
+## Wage Expectations and Satisficing: Reservation Wage Adjustment
 
 As part of the Current Population Survey, the US Census Bureau conducts an annual Displaced Worker Supplement in which workers who have lost their job in the last three years are asked additional questions about their unemployment experiences and (if re-employed) their re-employment conditions. From this we draw a reservation wage adjustment rate as a function of unemployment duration. We compare various econometric specifications across several samples that correct for selection effects that typically confound studies of duration-dependent employment outcomes. 
 
@@ -620,9 +618,9 @@ As part of the Current Population Survey, the US Census Bureau conducts an annua
 ```{r cps_disc_vignette_input, child = "cps_displaced_worker_supplement/cps_disc_worker_vignette.Rmd"}
 ```
 
-### OTJ Search
+## OTJ Search
 
-#### Eeckhout et al. 2019 Unemployment Cycles
+### Eeckhout et al. 2019 Unemployment Cycles
 
 [Source](https://www.aeaweb.org/articles?id=10.1257/mac.20180105)
 
@@ -643,9 +641,9 @@ source(here('data/behav_params/Eeckhout_Replication/eeckhout_extended_replicatio
 
 ```
 
-## Supporting Data for Validation
+# Supporting Data for Validation
 
-### (Validation) Mukoyama et al. Job Search and the Business Cycle
+## Mukoyama et al. Job Search and the Business Cycle
 
 4.  (Validation) Mukoyama et al. data on the intensive margin of
     unemployed search effort (in minutes searched) over the business
@@ -680,9 +678,8 @@ source(here("data/behav_params/Mukoyama_Replication/mukoyama_replication_analysi
 
 ```
 
-### Learning Rate {.tabset}
 
-#### Mueller et al. Job Seekers' Perceptions and Employment Prospects: Heterogeneity, Duration Dependence and Bias
+## Learning Rate - Mueller et al. Job Seekers' Perceptions and Employment Prospects: Heterogeneity, Duration Dependence and Bias {.tabset}
 
 [Mueller et al: Job Seekers' Perceptions and Employment
 Prospects](https://www.aeaweb.org/articles?id=10.1257/aer.20190808)
@@ -715,7 +712,7 @@ source(here("data/behav_params/Mueller_Replication/mueller_repl_analysis_extende
 
 ```
 
-## Additional Analyses {.tabset}
+# Additional Analyses {.tabset}
 
 <!-- I first focus on replicating and extending the empirical analysis that speaks to the three determinants above (dynamic selection, duration dependence, search effort) -->
 
@@ -723,7 +720,7 @@ source(here("data/behav_params/Mueller_Replication/mueller_repl_analysis_extende
 
 <!-- *Abstract: We explore the role of composition, duration dependence, and labor force nonparticipation in accounting for the sharp increase in the incidence of long-term unemployment (LTU) during the Great Recession. We show that compositional shifts account for very little of the observed increase in LTU. Using panel data from the Current Population Survey for 2002–7, we calibrate a matching model that allows for duration dependence in unemployment and transitions between employment, unemployment, and nonpartici- pation. The calibrated model accounts for almost all of the increase in LTU and much of the observed outward shift in the Beveridge curve between 2008 and 2013.* -->
 
-### SCE Labor Market Survey: Reservation Wages
+## SCE Labor Market Survey: Reservation Wages
 
 **Survey of Consumer Expectations Reservation Wages, Accepted Wages, and
 Wage Expectations** The data is unfortunately sparse and linking
@@ -758,7 +755,7 @@ source(here("data/behav_params/SCE Labour Market Survey/sce_res_wage_analysis.R"
 
 <!-- ## Own work on microdata... {.tabset} -->
 
-### SCE Job Search Supplement:
+## SCE Job Search Supplement:
 
 The Federal Reserve Bank of New York compiles the nationally
 representative Survey on Consumer Expectations annually in October.
@@ -860,7 +857,7 @@ sce_job_search_free %>%
 
 ```
 
-### On the job search
+## On-the-Job Search
 
 ```{r sce_otj, echo=FALSE, cache = FALSE}
 
