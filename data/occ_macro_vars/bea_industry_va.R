@@ -132,20 +132,20 @@ final %>%
        color = "Series") +
   common_theme -> p5
 
-print(p4/p5)
-
-cat("\n")
-cat("\n")
-cat("\n")
-print(p3)
-cat("\n")
-cat("\n")
-cat("\n")
-
-print(p2)
-cat("\n")
-cat("\n")
-cat("\n")
+#print(p4/p5)
+# 
+# cat("\n")
+# cat("\n")
+# cat("\n")
+# print(p3)
+# cat("\n")
+# cat("\n")
+# cat("\n")
+# 
+# print(p2)
+# cat("\n")
+# cat("\n")
+# cat("\n")
 
 ind_va_for_abm <- final %>% 
   filter(tolower(industry) %in% tolower(names(rel_inds))) %>% 
@@ -205,7 +205,7 @@ final %>%
        y = "Real Value Added in 2017-chained USD", color = "Industry Level of Aggregation") +
   common_theme -> p1
 
-print(p1)
+#print(p1)
 cat("\n")
 
 
@@ -223,10 +223,40 @@ ind_va_for_abm_full <- ind_va_for_abm %>%
   rbind(q_ind_va_for_abm)
 
 ind_va_for_abm_full %>% 
+  filter(date >= '2000-01-01' & date <= '2024-10-01') %>% 
   ggplot() +
   geom_line(aes(x = date, y = log_real_VA, group = industry)) +
+  labs(title = "Quarterly Real VA by Industry 2005-2024", 
+       subtitle = "Data from Bureau of Economic Analysis Economic Accounts", 
+       caption = "Annual data prior to 2005 is linearly interpolated to achieve a quarterly frequency matching the later portion of each time series.",
+       x = "Year-Quarter", 
+       y = "Real Value Added in 2017-chained USD", color = "Industry Level of Aggregation") +
+  #xlim(as.Date(2000-01-01), as.Date(2024-10-01)) +
               facet_wrap_custom(~industry, scales = "free") +
-              common_theme
+              common_theme -> p_final
+
+ind_va_for_abm_full %>% 
+  filter(date >= '2000-01-01' & date <= '2024-10-01') %>% 
+  group_by(date) %>% 
+  summarise(total_VA = sum(real_VA, na.rm = TRUE)) %>% 
+  ggplot(aes(x = date, y = total_VA, color = "Sum of Real Value Added by Industry (BEA Series)")) + 
+  geom_line() +
+  geom_line(data = filter(real_gdp, date >= '2000-01-01' & date <= '2024-10-01'), aes(x = date, y = GDPC1, color = "Real GDP (FRED Series)")) +
+  theme_minimal() +
+  theme(legend.position = "bottom") +
+  labs(x = "Year", y = "VA or GDP Value", 
+       title = "Comparison of Quarterly GDP\nSeries and Real Value Added\nas Reported by Industry", 
+       color = "Series") +
+  common_theme -> p_final_gdp_comp
+
+print(p_final)
+
+cat("\n")
+cat("\n")
+cat("\n")
+
+print(p_final_gdp_comp)
+
 
 
 
