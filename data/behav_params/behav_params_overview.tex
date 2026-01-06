@@ -65,6 +65,7 @@
 \setlength{\emergencystretch}{3em} % prevent overfull lines
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{placeins}
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
@@ -113,30 +114,49 @@ of statistical power.
 \subsection{Application Effort and Learning Dynamics: Applications
 Sent}\label{application-effort-and-learning-dynamics-applications-sent}
 
-In 2018 (May, September) and 2020 (February, May), the Bureau of Labor
-Statistics ran the ``Unemployment Insurance Nonfilers'' supplemental
-survey to the monthly Current Population Survey run by the US Census
-Bureau. The survey's stated intent was to ``obtain information on the
-characteristics of people who do not file for Unemployment Insurance
-benefits as well as their reasons for not doing so.'' The survey was
-conducted for all person responding the the monthly Current Population
-Survey which encompasses ``all persons in the civilian non-institutional
-population of the United States living in households. The probability
-sample selected to represent the universe consists of approximately
-54,000 households.''
+First, we employ data from the US Bureau of Labor Statistics and the
+Curren Population Survey on the application effort of unemployed
+job-seekers to discipline our behavioral mechanism for search. More
+specifically, in 2018 (May, September) and 2020 (February, May), the
+Bureau of Labor Statistics ran the ``Unemployment Insurance Nonfilers''
+supplemental survey to the monthly Current Population Survey run by the
+US Census Bureau. The survey's stated intent was to ``obtain information
+on the characteristics of people who do not file for Unemployment
+Insurance benefits as well as their reasons for not doing so.'' The
+survey was conducted for all persons responding the the monthly Current
+Population Survey which encompasses ``all persons in the civilian
+non-institutional population of the United States living in households.
+The probability sample selected to represent the universe consists of
+approximately 54,000 households.''
 
-This 2020
+Relevant to our work, survey respondents were asked the following two
+questions:
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio]{CPS_BLS_Supplement_18_22/prunedur_q.png}}
+\caption{Survey Question: Unemployment Duration}
+\end{figure}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio]{CPS_BLS_Supplement_18_22/applications_sent_q.png}}
+\caption{Survey Question: Applications Sent}
+\end{figure}
+
+\subsubsection{Overview of Survey
+Results}\label{overview-of-survey-results}
+
+First, we replicate figures produced for a 2020 Bureau of Labor
+Statistics ``Beyond the Numbers'' issue 2020
 \href{https://www.bls.gov/opub/btn/volume-9/how-do-jobseekers-search-for-jobs.htm\#_edn5}{``Beyond
-the Numbers'' issue} distills insights from a 2018 Supplement to the
-Current Population Survey. The below plots show the highlights relevant
-to our decision-making on the job search process.
-
-In nearly all cases, the results are ``binned'' into intervals (ie.
+the Numbers'' issue}, illustrating some high-level results from the
+survey, prior to describing the econometric specifications employed
+using the raw survey data. As seen in the image above, the survey
+responses regarding applications sent are ``binned'' into intervals (ie.
 number of people sending 81 or more applications or unemployment
 duration of between 5 and 14 weeks) which means that any line plots (or
-linear interpretation of the bar graph) should be done carefully. We
-employ the raw data informing thsee figures. The description of our
-analysis of the raw data is found in the next section.
+linear interpretation of the bar graph) should be done with caution.
 
 In Figure 1, the top left panel shows the proportion of all individuals
 sending X amount of applications receiving Y amount of interviews. The
@@ -160,12 +180,42 @@ which seems to consistently decline with time spent in unemployment.
 \caption{Replication of BLS Analysis}
 \end{figure}
 
+\subsubsection{Econometric Specification Using Raw
+Data}\label{econometric-specification-using-raw-data}
+
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp2-1.png}}
+
+To inform our agent behavior, we derive an unemployment-duration
+dependent measure of application effort, reporting in applications sent.
+More precisely, we estimate the probability distribution over reported
+job application intensity during unemployment using pooled micro data
+from the 2018 and 2022 waves of the CPS in which the Bureau of Labor
+Statistics conducted a Job Search Supplement. The survey asks unemployed
+respondents who are actively searching for work the amount of job
+applications they have sent. Respondents report job application counts
+in ordinal bins:
+\texttt{0\textquotesingle{}\textquotesingle{},}1--10'\,`,
+\texttt{11–20\textquotesingle{}\textquotesingle{},}21--80'`, and ``81 or
+more'\,'. To account for the lack of a continuous dependent variable, we
+estimate a series of ordinal logistic regression models to recover the
+conditional probability of each response bin as a function of
+unemployment duration and various demographic characteristics. We test
+model specifications along three dimensions: (i) link function,
+comparing logistic, probit, complementary log-log (cloglog), and log-log
+links; (ii) linear, quadratic, and cubic specifications of unemployment
+duration; and (iii) models with and without demographic covariates
+(education, gender, age, and family income; race was excluded due to
+lack of statistical significance across models). Formally, the model
+estimates \(\Pr(Y_i \leq j \mid X_i)\), the cumulative probability of
+observing response category \(Y_i\) for individual \(i\) below \(j\)
+where \(j\) represents the five ordinal bins given various
+transformations of the vector \(X_i\) of independent variables
+(unemployment duration and demographic controls).
 
 Below, we display the results of an exploration of the probability of
 reporting a specific number of applications sent (in the bins as in the
 survey question above) using various specifications of an ordinal
-logistic regression. I test specifications varying three different model
+logistic regression. Wetest specifications varying three different model
 parameters:\\
 1. link function\\
 2. linear vs.~quadratic unemploymentduration,\\
@@ -213,43 +263,51 @@ probable.\\
 - \emph{Log-log:} When early categories are of more importance or more
 probable.
 
-\emph{Preliminary hypothesis:} Best fit will be with a complementary
-log-log as we care more about distinguishing between lower-level bins
-and there are few observations in the highest-level bins.
-
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp3-1.png}}
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp3-2.png}}
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp3-3.png}}
 
 Using an AIC information criterion to compare the fit across all models,
-the following results are clear:\\
-1. Models with control variables consistently perform better than those
-without.\\
-2. Looking at the plots above, the relationship between unemployment
-duration and the predicted probability of reporting each application
-effort bin is very consistent except in the case of the log-log link
-function (blue in the panels above). In the plot below comparing the AIC
-the log-log link function (represented by the square symbol below) is
-consistently worse than all other link functions. This indicates
-consistency in the results reported above. Intuitively, the log-log link
-function is likely to be an unreasonable fit for the latent variable as
-we care more about shifts in the lower-level categories than
-higher-level categories.\\
-3. A complementary log-log specification for the latent variable is most
-suitable. This follows logically from the fact that the probability of
-being in the highest-level categories is relatively low.\\
-4. Finally, a specification with a linear and quadratic estimator is
-consistently better than either the specification with simply a linear
-OR quadratic unemployment duration estimator indicating that the
-probability distributions represented in the final panel above are
-likely to be the best fit.
+clear results emerge. Models including socio-demographic controls
+consistently outperform unadjusted models (blue versus red dots in the
+figure below) and the inclusion of a quadratic transformation (labelled
+``Lin-Quadratic'' in the plot below) of unemployment duration better
+captures the non-linear relationship between unemployment duration and
+application effort. Among link functions, the complementary log-log
+specification performs best across model comparisons. Though the
+logistic link function emerges as slightly superior in the specification
+incorporating a linear and quadratic term, we choose to employ the
+complementary log-log link function to align with the hypothesis that
+fine-grained resolution is needed among low application effort
+categories, which dominate the data. Thus, employing a complementary
+log-log link function, quadratic unemployment duration, and full
+demographic controls, we generate predicted probabilities over the five
+application bins for unemployment spells ranging from 0 to 36 months.
+These fitted probabilities serve as the empirical foundation for
+modeling job search effort in the agent-based simulation. In our chosen
+specification, the odds of reporting a lower application bin increase by
+approximately 0.1\% per additional month unemployed, a relationship
+statistically significant at the 0.1\% level. However, the inclusion of
+a quadratic term allows for a concave shape to emerge, better fitting
+the non-linearity of this relationship between unemployment duration and
+applications sent.
 
-\emph{Result:} For each additional quarter of unemployment, an
+\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp4-1.png}}
+
+The figure below demonstrates the predicted probability distribution of
+application effort by unemployment duration indicating a non-linear
+concave search effort. We believe this contributes to an open debate in
+the job search literature regarding the shape of search effort over the
+unemployment spell. The concave application effort emerging from this
+data aligns with previous observations about unemployed workers engaging
+in delayed search while either grieving job loss or engaging in job
+search planning and adjusting expectations about their re-employment
+prospects, as described in the main text.
+
+The final result is that for each additional quarter of unemployment, an
 individual's odds of dropping to a lower-level application category
 decreases by \textasciitilde.1\%. This is statistically significant
 across all specifications at the 0.1\% level.
-
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp4-1.png}}
 
 \pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-1-1.png}}
 
@@ -280,13 +338,13 @@ characteristics (see DWSTAT). Users should note that there is an
 important difference in definition of displaced worker across samples.
 Before 1994, displaced workers are those who lost or left a job during
 the past 5 years. After 1994, displaced workers are those who lost or
-left a job due to layoffs or shutdowns within the past 3 years.
-\textbf{For 1998 on, respondents are only considered displaced workers
-if they had lost or left a job due to layoffs or shutdowns within the
-past 3 years, were not self-employed, and did not expect to be recalled
-to work within the next six months. Self-response was not required for
-this supplement after 1994, so often one individual answered for all
-household members.}''
+left a job due to layoffs or shutdowns within the past 3 years. For 1998
+on, respondents are only considered displaced workers if they had lost
+or left a job due to layoffs or shutdowns within the past 3 years, were
+not self-employed, and did not expect to be recalled to work within the
+next six months. Self-response was not required for this supplement
+after 1994, so often one individual answered for all household
+members.''
 
 We utilize the information reported on an individual's weekly wage at
 their lost job, wage at their new job, and the time spent unemployed to
@@ -294,19 +352,26 @@ derive a measure of duration-dependent reservation wage adjustment. More
 precisely, we regress the ratio of the new wage to the wage at the lost
 job on unemployment duration and various control variables in a
 cross-sectional setting. We compare the model fit across linear,
-quadratic, and cubic specificaitions, with and without various
+quadratic, and cubic specifications, with and without various
 combinations of control variables (whether or not an individual received
 unemployment compensation, age, race, sex, marital status, education,
 previous wage level). Note that wages are reported in hourly and weekly
 values but this reporting is inconsistent across observations. In other
 words, though most individuals (4600/6198) report their wage in both
-units, 270 report only hourly and 1328 report only weekly. We reconcile
-this by converting reported hourly wages to weekly wages, where weekly
-values are not reported. The data used below is from annual survey
-responses between 2000-2025. We use the supplement sample weights in all
-results below. In the We note where the sample has been trimmed for
-outliers (wage ratio between {[}0.25, 2{]} and unemployment duration
-less than 96 weeks (\textasciitilde24 months).
+units, 270 report only hourly and 1328 report only weekly. To be able to
+combine information on all workers to one value, we select the present
+statistic for those missing one and retain either the minimum, maximum,
+or mean of the hourly versus weekly wage for those reporting both. We
+display box plots of these wage ratios across unemployment duration bins
+for the different methods of reconciling the missing data later in this
+document. The data used below is from annual survey responses between
+2000-2025. We use the supplement sample weights in all results below.
+
+We note where the sample has been trimmed for outliers (wage ratio
+between {[}0.25, 2{]} and unemployment duration less than 96 weeks
+(\textasciitilde24 months). All analysis below uses Displaced Worker
+Sample Weights to ensure appropriate weighting of survey responses and
+reduce any influence of selection bias.
 
 Below, we outline the data cleaning procedure, provide descriptive
 figures and statistics, outline the econometric estimation strategy,
@@ -366,40 +431,55 @@ wage:wage at lost job) following a year of unemployment.
 
 \section{Descriptives}\label{descriptives}
 
-All descriptives below use the Displaced Worker Sample Weights.
-
-Histogram: sample is skewed (see reweighting alternatives at end of
-document).
-
-Box plots: Looking at the reported wage ratios in weekly and hourly
-values, the mean is fixed near 1 until \textgreater12 mos of
-unemployment in hourly wage reporting. In weekly wage reporting, the
-``satisficing'' seems to start earlier in unemployment duration (sample
-size is larger for weekly reporting - might be worth focusing on those
-wages).
-
-Scatter plot: I fit a linear and spline fit to the scatted plot of the
-wage ratio to unemployment duration before using the regression.
-Indicates decline in the wage ratio with unemployment duration that has
-a potentially non-linear fit.
+First, we display the distribution of continuous (red) and binned (blue)
+unemployment duration. The distribution is, as expected, heavily skewed,
+with more individuals concentrated at low unemployment durations. The
+binned values in the blue histogram are the binned values later employed
+as an outcome variable in various regressions.
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives-2} \end{center}
+Next, looking at the reported wage ratios in weekly and hourly values
+(without reconciling the missing data), the mean is fixed near 1 until
+\textgreater12 mos of unemployment in hourly wage reporting. In weekly
+wage reporting, the ``satisficing'' seems to start earlier in
+unemployment duration, indicating that the relationship is potentially
+negative and non-linear.
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives-3} \end{center}
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives2-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives-4} \end{center}
+Next, we compare the various options for reconciling missing data across
+survey responses (i.e., when either weekly or hourly wage is reported
+but not both.) Notably, reconciling the reported data by taking the
+minimum (left panel) or mean (right panel) across reported wage values
+for those individuals that report both do not lead to meaningful
+differences in the distribution, visually. However, reconciling with the
+max (middle panel) value leads to slightly less dramatic declines in
+accepted wage ratios than in the other two cases. In the following
+sections, we proceed with the method that reconciles mutliple reported
+values using the minimum value of the wage ratio.
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives3-1} \end{center}
+
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives4-1} \end{center}
+
+Next, we fit a linear and spline fit to the scatted plot of the wage
+ratio to unemployment duration before employing any regressions. These
+plots both visually indicate a decline in the wage ratio with
+unemployment duratio, with the spline fit indicating a potentially
+non-linear fit (not yet accounting for selection effects).
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_spline-1} \end{center}
+
+\FloatBarrier
 
 \section{Regressions (non-uniform
 sample)}\label{regressions-non-uniform-sample}
 
 Next, before correcting for the non-uniformity of the sample (i.e., that
 there are less observations present for higher unemployment durations),
-we employ the following econometric specificaitons (with various
-modifications to sample and control variables).\textbackslash{}
+we employ the following cross-sectional econometric specifications (with
+various modifications to sample and control variables).\\
 
 \(W_{i} = \alpha_{i} + \beta_{1} d_{i} + \beta_{2}UI_{i} + \beta_{3}X_{i} + \epsilon_{i}\)
 
@@ -415,13 +495,21 @@ benefits.
 \(X_{i}\): Vector of control variables (sex, age, race, marital status,
 education level, and previous wage level).
 
-We present and compare 48 variations on the above model present with all
-combinations of the following:
+We present and compare \textasciitilde72 variations on the above model
+present with all combinations of the following:
 
 \begin{itemize}
 \item
   \textbf{Continuous vs.~Discrete Treatment Variable (2 alternatives):}
   Continuous (monthly) versus binned unemployment duration.
+\item
+  \textbf{Linear vs.~Quadratic vs.~Cubic representation of the principal
+  treatment variable (3 alternatives):} We allow the treatment variable
+  to enter non-linearly by testing the presence of quadratic or cubic
+  relationships (with the lower-order transformations entering in all
+  models). We do not include any non-linear representation of the binned
+  unemployment duration as the bins are uneven and would thus require
+  additional assumptions for validity.
 \item
   \textbf{w. UI vs w. Exhausted UI (3 alternatives):} The survey
   includes a variable for whether individuals USE and/or EXHAUST
@@ -436,7 +524,7 @@ combinations of the following:
   lost job to control for income and the relationship between wage
   levels and the outcome wage ratio itself.
 \item
-  \textbf{Outlier clipped sample (2 alternatives):} Either remove
+  \textbf{Outlier clipped sample (2 alternatives):} We either remove
   outliers where the wage ratio is within {[}0.25, 2.5{]} and reported
   unemployment duration is below 96 weeks (\textasciitilde{} 2 years),
   or employ the raw sample.
@@ -449,15 +537,28 @@ well as the principal variables of interest. In each table, we highlight
 employ the \emph{check\_model()} function from the \emph{performance}
 package in R to display visual checks of various model assumptions.
 
-Across all models in the tables below we see a consistently negative
-coefficient on unemployment duration (\textasciitilde0.7-1 percentage
-point increase in the wage ratio for each additional month spent in
-unemployment). If we look more closely at the performance of our model
-with continuous unemployment duration, UI use (not exhaustion), all
-controls, wage levels, and outlier correction we see that the model
-performs passably across various diagnostic tests.
+Across all models (except those that include a control for having
+exhausted UI benefits) in the tables below we see a consistently
+negative coefficient on unemployment duration (\textasciitilde0.5-1
+percentage point increase in the wage ratio for each additional month
+spent in unemployment). These coefficients are all statistically
+significant at the 0.1\% level. Interestingly, this coefficient loses
+statistical significance in any model that controls for having exhausted
+UI benefits. Otherwise, examining the performance of our model with
+continuous unemployment duration, UI use (not exhaustion), all controls,
+wage levels, and outlier correction we see that the model performs
+passably across various diagnostic tests.
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_reg1-1} \end{center}
+In the sections that follow, we report all regression results in
+regression tables. Additionally, we display model diagnostic plots for
+the specification with continuous unemployment duration, UI control,
+demographic controls, using the clipped sample, and assuming linearity
+in the relationship between unemployment duration and the accepted
+re-employment wage ratio. The quantile-quantile plots below reveal that
+residuals are approximately normally distributed, though there is
+evidence of heavy-tailed behavior in the upper quantiles.
+
+\FloatBarrier
 
 \subsection{Continuous UE Duration}\label{continuous-ue-duration}
 
@@ -564,6 +665,8 @@ RMSE & \num{0.38} & \num{0.38} & \num{0.37} & \num{0.38} & \num{0.38} & \num{0.3
 \end{tabular}}
 \end{table}
 
+\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_reg1-1} \end{center}
+
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_reg3-1} \end{center}
 
 \begin{table}
@@ -668,6 +771,8 @@ RMSE & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.3
 \multicolumn{13}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
 \end{tabular}}
 \end{table}
+
+\FloatBarrier
 
 \subsection{Binned UE Duration}\label{binned-ue-duration}
 
@@ -868,15 +973,15 @@ RMSE & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.3
 \end{tabular}}
 \end{table}
 
-\section{Additional Considerations}\label{additional-considerations}
+\FloatBarrier
 
 Next, we provide results for the econometric specifications listed above
 with better balanced survey samples. We outline the various procedures
 employed for dealing with selection issues and non-uniformity in the
 sample.
 
-\subsection{Selection Issues with Non-Random
-Sample}\label{selection-issues-with-non-random-sample}
+\section{Regressions with Selection Correction of Non-Random
+Sample}\label{regressions-with-selection-correction-of-non-random-sample}
 
 One of the challenges with this data is that the sample grows
 significantly smaller for higher reported of unemployment duration (see
@@ -890,100 +995,131 @@ Overall, we find the econometric results reported earlier to be
 consistent across these implementations, with the coefficients on
 unemployment duration remaining somewhat stable.
 
-\subsubsection{Entropy Balancing}\label{entropy-balancing}
+\subsection{Entropy Balancing}\label{entropy-balancing}
 
 First, entropy balancing simply reweights observations to ensure
 population matching across the key dependent variable.
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb1-1} \end{center}
 
+\FloatBarrier
+
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb2-1} \end{center}
 
-\paragraph{Diagnostic Tests for Entropy-balanced Reweighted
+\FloatBarrier
+
+\subsubsection{Diagnostic Tests for Entropy-balanced Reweighted
 Sample}\label{diagnostic-tests-for-entropy-balanced-reweighted-sample}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb3-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb4-1} \end{center}
+\FloatBarrier
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb5-1} \end{center}
-
-\subsubsection{Propensity Score Weighting with GLM
+\subsection{Propensity Score Weighting with GLM
 Estimator}\label{propensity-score-weighting-with-glm-estimator}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm1-1} \end{center}
 
-\paragraph{Diagnostic Tests for Propensity Score Matching (GLM)
+\FloatBarrier
+
+\subsubsection{Diagnostic Tests for Propensity Score Matching (GLM)
 Reweighted
 Sample}\label{diagnostic-tests-for-propensity-score-matching-glm-reweighted-sample}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm2-1} \end{center}
 
-\paragraph{Predicted Reservation Wage using GLM Reweighted
+\FloatBarrier
+
+\subsubsection{Predicted Reservation Wage using GLM Reweighted
 Sample}\label{predicted-reservation-wage-using-glm-reweighted-sample}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm3-1} \end{center}
 
-\subsubsection{Heckman Selection}\label{heckman-selection}
+\FloatBarrier
 
-Another option is a Heckman Selection correction though I do not think
-this addresses the particular selection concern we have where there are
-simply less observations in longer unemployment durations.
+\subsection{Heckman Selection}\label{heckman-selection}
+
+Additionally, we employ a Heckman Selection correction to correct for
+likely selection effects in the data. We correct for selection effects
+by balancing across the various control variables (gender, age, race,
+marital status, and level of eduction).
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_heckman1-1} \end{center}
 
-\subsubsection{Regression Results with Sample
+\FloatBarrier
+
+\subsection{Regression Results with Sample
 Reweighting}\label{regression-results-with-sample-reweighting}
+
+Finally, we provide a comparison of the regression coefficients of the
+unbalanced, Heckman corrected, entropy balanced, and GLM reweighting
+using propensity score matching. Most importantly, the regression
+coefficient on unemployment duration is consistent across specifications
+indicating that the consequences of non-uniformity and selection effects
+in our sample are minimal. We incorporate the
 
 \begin{table}
 \centering\centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
-\begin{tabular}[t]{lccc}
+\begin{tabular}[t]{lcccc}
 \toprule
-  & Heckman Correction & Entropy Balanced Reweight & GLM Reweight\\
+  & Unabalanced LM & Heckman Correction & Entropy Balanced Reweight & GLM Reweight\\
 \midrule
-Intercept & \num{1.131}*** & \num{1.147}*** & \num{1.143}***\\
- & (\num{0.041}) & (\num{0.033}) & (\num{0.033})\\
-\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***}\\
- & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
-Female & \num{0.018} & \num{0.001} & \num{0.001}\\
- & (\num{0.014}) & (\num{0.011}) & (\num{0.011})\\
-Age & \num{-0.007}*** & \num{-0.002}*** & \num{-0.002}***\\
- & (\num{0.002}) & (\num{0.000}) & (\num{0.000})\\
-White & \num{-0.162}* & \num{-0.027} & \num{-0.023}\\
- & (\num{0.074}) & (\num{0.025}) & (\num{0.025})\\
-Black & \num{-0.125}* & \num{-0.040} & \num{-0.036}\\
- & (\num{0.050}) & (\num{0.030}) & (\num{0.030})\\
-Mixed & \num{-0.054} & \num{0.003} & \num{0.007}\\
- & (\num{0.055}) & (\num{0.044}) & (\num{0.044})\\
-Married & \num{0.003} & \num{0.005} & \num{0.004}\\
- & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
-High School & \num{-0.014} & \num{-0.014} & \num{-0.014}\\
- & (\num{0.019}) & (\num{0.017}) & (\num{0.017})\\
-Associate's Degree & \num{-0.078} & \num{0.007} & \num{0.006}\\
- & (\num{0.064}) & (\num{0.022}) & (\num{0.022})\\
-Bachelor's Degree & \num{-0.217} & \num{0.054}* & \num{0.054}*\\
- & (\num{0.165}) & (\num{0.023}) & (\num{0.023})\\
-Postgraduate Degree & \num{-0.479} & \num{0.083}+ & \num{0.086}+\\
- & (\num{0.330}) & (\num{0.048}) & (\num{0.047})\\
-Inverse Mills Ratio & \num{0.870}+ &  & \\
- & (\num{0.479}) &  & \\
+Intercept & \num{1.180}*** & \num{1.131}*** & \num{1.147}*** & \num{1.143}***\\
+ & (\num{0.031}) & (\num{0.041}) & (\num{0.033}) & (\num{0.033})\\
+\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
+Received Unemployment Compensation & \num{0.000} &  &  & \\
+ & (\num{0.001}) &  &  & \\
+Female & \num{0.003} & \num{0.018} & \num{0.001} & \num{0.001}\\
+ & (\num{0.011}) & (\num{0.014}) & (\num{0.011}) & (\num{0.011})\\
+Age & \num{-0.003}*** & \num{-0.007}*** & \num{-0.002}*** & \num{-0.002}***\\
+ & (\num{0.000}) & (\num{0.002}) & (\num{0.000}) & (\num{0.000})\\
+White & \num{-0.035} & \num{-0.162}* & \num{-0.027} & \num{-0.023}\\
+ & (\num{0.023}) & (\num{0.074}) & (\num{0.025}) & (\num{0.025})\\
+Black & \num{-0.048}+ & \num{-0.125}* & \num{-0.040} & \num{-0.036}\\
+ & (\num{0.026}) & (\num{0.050}) & (\num{0.030}) & (\num{0.030})\\
+Mixed & \num{0.014} & \num{-0.054} & \num{0.003} & \num{0.007}\\
+ & (\num{0.040}) & (\num{0.055}) & (\num{0.044}) & (\num{0.044})\\
+Married & \num{0.005} & \num{0.003} & \num{0.005} & \num{0.004}\\
+ & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+High School & \num{0.005} & \num{-0.014} & \num{-0.014} & \num{-0.014}\\
+ & (\num{0.016}) & (\num{0.019}) & (\num{0.017}) & (\num{0.017})\\
+Associate's Degree & \num{0.032} & \num{-0.078} & \num{0.007} & \num{0.006}\\
+ & (\num{0.021}) & (\num{0.064}) & (\num{0.022}) & (\num{0.022})\\
+Bachelor's Degree & \num{0.079}*** & \num{-0.217} & \num{0.054}* & \num{0.054}*\\
+ & (\num{0.021}) & (\num{0.165}) & (\num{0.023}) & (\num{0.023})\\
+Postgraduate Degree & \num{0.114}* & \num{-0.479} & \num{0.083}+ & \num{0.086}+\\
+ & (\num{0.045}) & (\num{0.330}) & (\num{0.048}) & (\num{0.047})\\
+Inverse Mills Ratio &  & \num{0.870}+ &  & \\
+ &  & (\num{0.479}) &  & \\
 \midrule
-Num.Obs. & \num{4870} & \num{4870} & \num{4870}\\
-R2 & \num{0.893} & \num{0.014} & \num{0.015}\\
-R2 Adj. & \num{0.893} & \num{0.012} & \num{0.013}\\
-F &  & \num{6.487} & \num{6.798}\\
-RMSE & \num{0.37} & \num{0.37} & \num{0.37}\\
+Num.Obs. & \num{4870} & \num{4870} & \num{4870} & \num{4870}\\
+R2 & \num{0.025} & \num{0.893} & \num{0.014} & \num{0.015}\\
+R2 Adj. & \num{0.022} & \num{0.893} & \num{0.012} & \num{0.013}\\
+F & \num{10.220} &  & \num{6.487} & \num{6.798}\\
+RMSE & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37}\\
 \bottomrule
-\multicolumn{4}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\multicolumn{5}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
 \end{tabular}}
 \end{table}
 
+Next, we predict the value of the accepted wage ratio using each of the
+models, incorporating 95\% confidence intervals to allow for
+stochasticity to enter the behavioral mechanism itself. Essentially, as
+an agent in our model enters an additional period of unemployment, they
+will draw their reservation wage ratio from the mean and 95\% confidence
+interval at each unemployment duration value represented in the figure
+below. We assume a uniform distribution around the regression estimate
+when drawing these values.
+
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_heckman3-1} \end{center}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_heckman3-2} \end{center}
+\FloatBarrier
 
-\subsubsection{Job Tenure}\label{job-tenure}
+\section{Additional Considerations}\label{additional-considerations}
+
+\subsection{Job Tenure}\label{job-tenure}
 
 We have information on the tenure spent at the last job which could
 impact the result. This could speak to the ``adaptability'' of
@@ -992,32 +1128,33 @@ meaningfully) with tenure at previous job.
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-1} \end{center}
 
-\subsubsection{Representation}\label{representation}
+\subsection{Representation}\label{representation}
 
 Although the survey does provide sample weights which we use above, it's
 still likely that those who are laid off might be systematically more
 susceptible to layoffs (lower-wage, low-skill occupation, male, etc).
-Below, some (very rough) graphs to indicate what the sample looks like.
-
-\textbf{Headline result:} it seems the sample over-represents below-mean
-wage earners and women. Age looks reasonably accurate (in relation to a
-simple median though\ldots.have not checked spread). Have not yet
-checked match to educational attainment. Individuals with only a HS
-diploma is strong majority in sample - not sure how accurate this is
-(likely correlated with wage however\ldots so this might be cause for
-concern and confirm a skewed sample in that sense).
-
-If we wish to pursue this data, I could improve on the below but it will
-have to do for now.
+Below, we provide some descriptive graphs to illustrate what the sample
+looks like. First, the sample over-represents below-mean wage earners
+and men. The median age of survey respondents is near the mean age of
+the US labor force as reported by the Bureau of Labor Statistics in
+2024. Individuals with only a HS diploma represent a strong majority in
+the sample.
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_rep-1} \end{center}
 
-\subsection{OTJ Search}\label{otj-search}
+\subsection{OTJ Search Propensity}\label{otj-search-propensity}
 
-\subsubsection{Eeckhout et al.~2019 Unemployment
-Cycles}\label{eeckhout-et-al.-2019-unemployment-cycles}
-
-\href{https://www.aeaweb.org/articles?id=10.1257/mac.20180105}{Source}
+A key improvement in this model is the incorporation of on-the-job
+seekers. Eeckhout et al.~2019 demonstrate that the flow of employed
+job-seekers into the pool of job-seekers can generate increased
+competition in boom periods. Therefore, we triangulate a mean value for
+the propensity of employed job-seekers to engage in search using the
+methodology and data presented in Eeckhout et al.~2019. In other words,
+we derive the sensitivity of employed job seekers to the business cycle
+from the employment-to-employment transitions data as used in Eeckhout
+et al.~Due to unreliable component parts of the Eeckhout analysis, we
+decided to abandon using their estimated parameters (search intensity
+for employed workers), and instead rely on their series of the
 
 \begin{figure}
 \centering
@@ -1031,12 +1168,7 @@ Cycles}\label{eeckhout-et-al.-2019-unemployment-cycles}
 \tightlist
 \item
   \href{https://www.aeaweb.org/articles?id=10.1257/mac.20180105}{Eeckhout
-  et al.~2019 Unemployment Cycles}: We derive the sensitivity of
-  employed job seekers to the business cycle from the
-  employment-to-employment transitions data as used in Eeckhout et
-  al.~Due to unreliable component parts of the Eeckhout analysis, we
-  decided to abandon using their estimated parameters (search intensity
-  for employed workers).
+  et al.~2019 Unemployment Cycles}:
 \end{enumerate}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/eeckhout-1} \end{center}
@@ -1071,10 +1203,10 @@ RMSE & \num{0.01} & \num{0.00} & \num{0.00}\\
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/eeckhout-3} \end{center}
 
-\section{Supporting Data for
+\subsection{Supporting Data for
 Validation}\label{supporting-data-for-validation}
 
-\subsection{\texorpdfstring{Intensive Search Effort: Mukoyama et
+\subsubsection{\texorpdfstring{Intensive Search Effort: Mukoyama et
 al.~2018 \emph{Job Search and the Business
 Cycle}}{Intensive Search Effort: Mukoyama et al.~2018 Job Search and the Business Cycle}}\label{intensive-search-effort-mukoyama-et-al.-2018-job-search-and-the-business-cycle}
 
@@ -1088,15 +1220,7 @@ intensive margin of unemployed search effort (in minutes searched) over
 the business cycle by linking date from the American Time Use Survey
 (ATUS) and Current Population Survey (CPS). We employ the methods and
 data presented in their work in a validation exercise of the emergent
-micro behavior of unemployed job-seekers. Note that the figures and code
-immediately below are drawn from the replication code provided by the
-authors. We have translated the code from Stata to R, but all figures
-and regression tables provided rely on the methodology outlined by
-Mukoyama et al.~We indicate where we have incorporated new data by
-extending the time series to include additional years or applied an
-alternative weighting scheme to the data to account for missing data.
-The citation for this work can be found in the bibliography of the main
-text.
+micro behavior of unemployed job-seekers.
 
 More specifically, the authors provide a novel measure of job search
 effort exploiting the American Time Use and Current Population Surveys
@@ -1133,14 +1257,24 @@ and allows baseline search effort to vary by demographic
 characteristics, producing a more nuanced measure than simply counting
 the number of methods used.
 
+The figure below represents the intensive search margin time series as
+calculated by the authors. This data is drawn from the replication code
+provided by the authors. We have translated the code from Stata to R,
+and the time series represented in the figure below relies on the
+methodology outlined by Mukoyama et al.~We indicate in the caption and
+legend where we have incorporated new data by extending the time series
+to include additional years or applied an alternative weighting scheme
+to the data to account for missing data. The citation for this work can
+be found in the bibliography of the main text.
+
 \begin{figure}
 \centering
 \pandocbounded{\includegraphics[keepaspectratio]{Mukoyama_Replication/intensive_search_margin.png}}
 \caption{Mukoyama Validation Series}
 \end{figure}
 
-\subsection{Learning Rate - Mueller et al.~Job Seekers' Perceptions and
-Employment Prospects: Heterogeneity, Duration Dependence and
+\subsubsection{Learning Rate - Mueller et al.~Job Seekers' Perceptions
+and Employment Prospects: Heterogeneity, Duration Dependence and
 Bias}\label{learning-rate---mueller-et-al.-job-seekers-perceptions-and-employment-prospects-heterogeneity-duration-dependence-and-bias}
 
 \href{https://www.aeaweb.org/articles?id=10.1257/aer.20190808}{Mueller
@@ -1177,7 +1311,7 @@ re-employment probability with repeated failures in the job search).
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 12:54:46
+06, 2026 - 17:43:35
 
 \begin{table}[!htbp] \centering 
   \caption{Descriptive Statistics (SCE)} 
@@ -1212,7 +1346,7 @@ UE transition rate: LT & $12.7$ & $12.7$ & $12.3$ \\
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 12:54:47
+06, 2026 - 17:43:36
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
@@ -1248,7 +1382,7 @@ Residual Std. Error & 0.467 (df = 1184) & 0.475 (df = 1894) & 0.478 (df = 656) \
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 12:54:47
+06, 2026 - 17:43:36
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
@@ -1290,7 +1424,7 @@ Residual Std. Error & 0.455 (df = 1182) & 0.464 (df = 1892) & 0.465 (df = 654) \
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 12:54:47
+06, 2026 - 17:43:36
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
@@ -1326,7 +1460,7 @@ Residual Std. Error & 0.398 (df = 457) & 0.436 (df = 781) & 0.447 (df = 283) \\
 
 \% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
 Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 12:54:47
+06, 2026 - 17:43:36
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
@@ -1370,27 +1504,24 @@ Residual Std. Error & 0.400 (df = 457) & 0.437 (df = 781) & 0.450 (df = 283) \\
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-7} \end{center}
 
-\section{Additional Analyses}\label{additional-analyses}
+\subsection{Additional Analyses}\label{additional-analyses}
 
-\subsection{SCE Labor Market Survey: Reservation
+\subsubsection{SCE Labor Market Survey: Reservation
 Wages}\label{sce-labor-market-survey-reservation-wages}
 
 \textbf{Survey of Consumer Expectations Reservation Wages, Accepted
 Wages, and Wage Expectations} The data is unfortunately sparse and
-linking outcomes to reservation wages is difficult. However, in a
-cross-sectional setting we are able to deduce some weak relationships
-between Unemployment Duration and Absolute Reservation Wages and Wage
-Expectations.*
+linking outcomes to reservation wages is difficult which is why this
+data was ultimately excluded from the analysis in the main text.
+However, in a cross-sectional setting we are able to deduce some weak
+relationships between Unemployment Duration and Absolute Reservation
+Wages and Wage Expectations. These relationships weakly support the
+deduced negative relationship between unemployment duration and
+reservation wages found using the Displaced Worker Supplement of the
+Current Population Survey, as described above.
 
 Exploring the effect of unemployment duration on reservation wages,
 accepted wages, and expected wage offers.
-
-\textbf{Survey of Consumer Expectations Reservation Wages, Accepted
-Wages, and Wage Expectations} (2014-2022) \emph{The data is
-unfortunately sparse and linking outcomes to reservation wages is
-difficult. However, in a cross-sectional setting we are able to deduce
-some weak relationships between Unemployment Duration and Absolute
-Reservation Wages and Wage Expectations.}
 
 {[}1{]} ``Plots of RESERVATION WAGE versus latest, current wage''
 
@@ -1563,16 +1694,16 @@ RMSE & \num{0.34} & \num{0.34} & \num{0.46} & \num{0.45}\\
 \end{tabular}
 \end{table}
 
-\subsection{SCE Job Search Supplement:}\label{sce-job-search-supplement}
+\subsubsection{SCE Job Search
+Supplement}\label{sce-job-search-supplement}
 
 The Federal Reserve Bank of New York compiles the nationally
 representative Survey on Consumer Expectations annually in October.
 Since 2013, they have run a Job Search Supplement which includes
 questions on the time spent searching for work, and unemployment
-duration. The job search supplement has plenty more questions that we
-can look at incorporating, listed
+duration. The job search supplement's questions are listed
 \href{https://www.newyorkfed.org/medialibrary/Interactives/sce/sce/downloads/data/SCE-Labor-Market-Survey-Data-Codebook.pdf?sc_lang=en}{here}.
-For now, I plot the relationship between time spent searching and time
+Below, we plot the relationship between time spent searching and time
 out of work. The table below also indicates the number of people
 unemployed in the dataset and the number of people unemployed and
 searching.
@@ -1597,9 +1728,5 @@ Year & N Unemployed & N Unemp \& Searching \\
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_job_search2-1} \end{center}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_job_search2-2} \end{center}
-
-\subsection{On-the-Job Search}\label{on-the-job-search}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_otj-1} \end{center}
 
 \end{document}
