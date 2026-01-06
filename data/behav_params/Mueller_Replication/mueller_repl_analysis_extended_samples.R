@@ -165,6 +165,7 @@ stargazer(
   type = "latex",
   summary = FALSE,
   rownames = FALSE,
+  header = FALSE,
   title = "Descriptive Statistics (SCE)",
   digits = 1
 )
@@ -462,6 +463,7 @@ for(panel in c("A", "B")){
               star.cutoffs = c(0.1, 0.05, 0.01),
               digits = 3,
               column.labels = names(tab2_data), 
+              header = FALSE,
               dep.var.labels = "T+3 UE Transitions (3-Months)",
               title = paste0("Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): ", ttl),
               #covariate.labels = c("Current Job-Finding Probability", "Lagged Job-Finding Probability"), # Switched order of these labels...still not quite sure about the lagging here

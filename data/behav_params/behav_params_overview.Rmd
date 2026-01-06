@@ -42,16 +42,13 @@ rename_fun <- function(x){
 ```
 
 
-The model's central functionality relies on a variety of behavioural
+The model's central functionality relies on a variety of behavioral
 mechanisms that are parametrised econometrically using micro data.
 Furthermore, the model relies on additional sources of micro data for
 validation. In the following section we outline, first, the data and
 analysis used to derive the model's behavioral parameters, followed by
 an inventory of the data used to validate various model outputs. We note
 where we make use of methodology employed or constructed by other authors.
-We conclude with an inventory of other data sources considered for
-behavioral parameter calibration ultimately disregarded due to lack of
-statistical power.
 
 ## Application Effort and Learning Dynamics: Applications Sent {.tabset}
 
@@ -568,16 +565,13 @@ As part of the Current Population Survey, the US Census Bureau conducts an annua
 
 ## OTJ Search Propensity
 
-A key improvement in this model is the incorporation of on-the-job seekers. Eeckhout et al. 2019 demonstrate that the flow of employed job-seekers into the pool of job-seekers can generate increased competition in boom periods. Therefore, we triangulate a mean value for the propensity of employed job-seekers to engage in search using the methodology and data presented in Eeckhout et al. 2019. In other words, we derive the sensitivity of employed job seekers to the business cycle from the employment-to-employment transitions data as used in Eeckhout et al. Due to unreliable component parts of the Eeckhout analysis, we decided to abandon using their estimated parameters (search intensity for employed workers), and instead rely on their series of the 
+A key improvement in this model is the incorporation of on-the-job seekers. Eeckhout et al. 2019 demonstrate that the flow of employed job-seekers into the pool of job-seekers can generate increased competition in boom periods. Therefore, we derive a mean value for the propensity of employed job-seekers to engage in search using the methodology and data presented in Eeckhout et al. 2019. In other words, we derive the sensitivity of employed job seekers to the business cycle from the employment-to-employment transitions data as used in Eeckhout et al. Due to unreliable component parts of the Eeckhout analysis, we decided to abandon using their estimated parameters (search intensity for employed workers), and instead rely on their series of employment-to-employment (EE) transition rate which resulted in wage increases. This series is plotted in the top panel of the following figure. We draw the mean propensity to search from the average EE transition rate ~6%, represented by the dark blue dashed line in the top panel.
 
+We provide additional indicators of the cyclicality of this series by plotting fitted values of the EE transition rate as a function of national real GDP. These fitted values are derived from a linear regression in which the EE transition rate is regressed on national real GDP, optionally incorporated a deterministic linear trend. Furthermore, we provide the Hodrick-Prescott filtered series in the bottom panel, both as the raw de-trended series, and as a fitted series to real GDP.
 
-![Employed Search Effort
-Fit](Eeckhout_Replication/emp_search_effort.png)
+![Employed Search Effort Fit](Eeckhout_Replication/EE_transition_rate.png)
 
-3.  [Eeckhout et al. 2019 Unemployment
-    Cycles](https://www.aeaweb.org/articles?id=10.1257/mac.20180105): 
-
-```{r eeckhout, echo = FALSE, fig.height = 8, fig.width = 10, cache = TRUE, results = 'asis'}
+```{r eeckhout, echo = FALSE, include = FALSE, fig.height = 8, fig.width = 10, cache = TRUE, results = 'asis'}
 
 source(here('data/behav_params/Eeckhout_Replication/eeckhout_extended_replication.R'))
 
@@ -587,7 +581,7 @@ source(here('data/behav_params/Eeckhout_Replication/eeckhout_extended_replicatio
 
 ### Intensive Search Effort: Mukoyama et al. 2018 *Job Search and the Business Cycle*
 
-We use evidence from [Mukoyama et al. 2018](https://www.aeaweb.org/articles?id=10.1257/mac.20160202) regarding the cyclicality of unemployed job search effort to validate the micro behaviour of our
+We use evidence from [Mukoyama et al. 2018](https://www.aeaweb.org/articles?id=10.1257/mac.20160202) regarding the cyclicality of unemployed job search effort to validate the micro behavior of our
 agents. This is a foundational paper within the literature that explores the relationship between search effort and business cycles. The authors provide new data on the intensive margin of unemployed search effort (in minutes searched) over the business cycle by linking date from the American Time Use Survey (ATUS) and Current Population Survey (CPS). We employ the methods and data presented in their work in a validation exercise of the emergent micro behavior of unemployed job-seekers. 
 
 More specifically, the authors provide a novel measure of job search effort exploiting the American Time Use and Current Population Surveys which can be reduced to
@@ -608,28 +602,19 @@ source(here("data/behav_params/Mukoyama_Replication/mukoyama_replication_analysi
 
 ### Learning Rate - Mueller et al. Job Seekers' Perceptions and Employment Prospects: Heterogeneity, Duration Dependence and Bias {.tabset}
 
-[Mueller et al: Job Seekers' Perceptions and Employment
-Prospects](https://www.aeaweb.org/articles?id=10.1257/aer.20190808)
+Given, the theoretical job search model presented in the main text relies additionally on a learning rate. We consider drawing this learning rate from work by Mueller et al, though this has not been incorporated in the main text thus far.
 
-5.  [**Mueller et al. 2021: Job Seekers' Perceptions and Employment
-    Prospects: Heterogeneity, Duration Dependence and
-    Bias**](https://www.aeaweb.org/articles?id=10.1257/aer.20190808)
-
-*The authors claim to disentangle the effects of duration dependence and
+In this work, the authors claim to disentangle the effects of duration dependence and
 dynamic selection by using job seekers' elicited beliefs about
 job-finding. Assuming (and confirming empirically) that job-seekers have
 realistic initial beliefs about job-finding they isolate the
 heterogeneity in job-seekers from true duration dependence. Ultimately,
 they find that dynamic selection selection explains most of the negative
-duration dependence (rather than pure, true duration dependence).*
+duration dependence (rather than pure, true duration dependence).
 
-*Findings: Results are remarkably consistent even when including
-additional data from 2019-2024.* The below results replicate the
-findings in Mueller et al and extend the analysis to include a longer
-time series. Plot and regression table titles have been maintained for
-easy comparison.
+We replicate and extend the analysis using replication code made available by the autors. The figures and econometric specification choices are crafted by Mueller et al, and several of the below plots are present in the main text of their work as well. Plot and regression table titles have been maintained for easy comparison. We provide additional evidence regarding the stability of their estimates across a longer time series that includes six additional years of data from 2019-2024.
 
-We aim to include this information in our theoretical model of the job
+We find that their results are remarkably consistent even when including additional data from 2019-2024. We aim to include this information in our theoretical model of the job
 search effort as a learning rate (ie. individuals learn about their
 re-employment probability with repeated failures in the job search).
 
@@ -639,200 +624,202 @@ source(here("data/behav_params/Mueller_Replication/mueller_repl_analysis_extende
 
 ```
 
-## Additional Analyses {.tabset}
+<!-- ## Additional Analyses {.tabset} -->
 
-<!-- Wefirst focus on replicating and extending the empirical analysis that speaks to the three determinants above (dynamic selection, duration dependence, search effort) -->
+<!-- We considered various other data sources to draw the data basis of our behavioral mechanisms from. We provide a brief inventory of these source below. They were ultimately excluded due to poor data quality or lack of statistical power. -->
 
-<!-- 3. (Forthcoming) **[Kroft et al. 2016: Long-Term Unemployment and the Great Recession: The Role of Composition, Duration Dependence, and Nonparticipation](https://www.jstor.org/stable/26588430)** -->
+<!-- <!-- Wefirst focus on replicating and extending the empirical analysis that speaks to the three determinants above (dynamic selection, duration dependence, search effort)-->
 
-<!-- *Abstract: We explore the role of composition, duration dependence, and labor force nonparticipation in accounting for the sharp increase in the incidence of long-term unemployment (LTU) during the Great Recession. We show that compositional shifts account for very little of the observed increase in LTU. Using panel data from the Current Population Survey for 2002–7, we calibrate a matching model that allows for duration dependence in unemployment and transitions between employment, unemployment, and nonpartici- pation. The calibrated model accounts for almost all of the increase in LTU and much of the observed outward shift in the Beveridge curve between 2008 and 2013.* -->
+<!-- <!-- 3. (Forthcoming) **[Kroft et al. 2016: Long-Term Unemployment and the Great Recession: The Role of Composition, Duration Dependence, and Nonparticipation](https://www.jstor.org/stable/26588430)**-->
 
-### SCE Labor Market Survey: Reservation Wages
+<!-- <!-- *Abstract: We explore the role of composition, duration dependence, and labor force nonparticipation in accounting for the sharp increase in the incidence of long-term unemployment (LTU) during the Great Recession. We show that compositional shifts account for very little of the observed increase in LTU. Using panel data from the Current Population Survey for 2002–7, we calibrate a matching model that allows for duration dependence in unemployment and transitions between employment, unemployment, and nonpartici- pation. The calibrated model accounts for almost all of the increase in LTU and much of the observed outward shift in the Beveridge curve between 2008 and 2013.*-->
 
-**Survey of Consumer Expectations Reservation Wages, Accepted Wages, and
-Wage Expectations** The data is unfortunately sparse and linking
-outcomes to reservation wages is difficult which is why this data was ultimately excluded from the analysis in the main text. However, in a
-cross-sectional setting we are able to deduce some weak relationships
-between Unemployment Duration and Absolute Reservation Wages and Wage
-Expectations. These relationships weakly support the deduced negative relationship between unemployment duration and reservation wages found using the Displaced Worker Supplement of the Current Population Survey, as described above.
+<!-- ### SCE Labor Market Survey: Reservation Wages -->
 
-Exploring the effect of unemployment duration on reservation wages,
-accepted wages, and expected wage offers.
+<!-- **Survey of Consumer Expectations Reservation Wages, Accepted Wages, and -->
+<!-- Wage Expectations** The data is unfortunately sparse and linking -->
+<!-- outcomes to reservation wages is difficult which is why this data was ultimately excluded from the analysis in the main text. However, in a -->
+<!-- cross-sectional setting we are able to deduce some weak relationships -->
+<!-- between Unemployment Duration and Absolute Reservation Wages and Wage -->
+<!-- Expectations. These relationships weakly support the deduced negative relationship between unemployment duration and reservation wages found using the Displaced Worker Supplement of the Current Population Survey, as described above. -->
 
-```{r sce_res_wage, fig.height = 8, fig.width = 10, results = 'asis'}
+<!-- Exploring the effect of unemployment duration on reservation wages, -->
+<!-- accepted wages, and expected wage offers. -->
 
-source(here("data/behav_params/SCE Labour Market Survey/sce_res_wage_analysis.R"))
+<!-- ```{r sce_res_wage, fig.height = 8, fig.width = 10, results = 'asis'} -->
 
-```
-
-<!-- ## Kroft et al. Long-Term Unemployment and the Great Recession: The Role of Composition, Duration Dependence, and Nonparticipation -->
-
-<!-- [Kroft et al. Long-Term Unemployment and the Great Recession](https://www.jstor.org/stable/26588430) -->
-
-<!-- ```{r, echo = FALSE} -->
+<!-- source(here("data/behav_params/SCE Labour Market Survey/sce_res_wage_analysis.R")) -->
 
 <!-- ``` -->
 
-<!-- ## Own work on microdata... {.tabset} -->
+<!-- <!-- ## Kroft et al. Long-Term Unemployment and the Great Recession: The Role of Composition, Duration Dependence, and Nonparticipation-->
 
-### SCE Job Search Supplement
+<!-- <!-- [Kroft et al. Long-Term Unemployment and the Great Recession](https://www.jstor.org/stable/26588430)-->
 
-The Federal Reserve Bank of New York compiles the nationally
-representative Survey on Consumer Expectations annually in October.
-Since 2013, they have run a Job Search Supplement which includes
-questions on the time spent searching for work, and unemployment
-duration. The job search supplement's questions are listed 
-[here](https://www.newyorkfed.org/medialibrary/Interactives/sce/sce/downloads/data/SCE-Labor-Market-Survey-Data-Codebook.pdf?sc_lang=en).
-Below, we plot the relationship between time spent searching and time
-out of work. The table below also indicates the number of people
-unemployed in the dataset and the number of people unemployed and
-searching.
+<!-- <!-- ```{r, echo = FALSE}-->
 
-```{r sce_job_search1, echo=FALSE, results = 'asis', cache = FALSE}
+<!-- <!-- ```-->
 
-source(here('data/behav_params/SCE Job Search Survey/sce_job_search_cleaning.R'))
+<!-- <!-- ## Own work on microdata... {.tabset}-->
 
-# Extract question types
-categories <- sce_job_search_full %>%
-  names %>%
-  grep("[0-9]", ., value = TRUE) %>%
-  lapply(., function(x) str_split_i(x, "(?=\\d)", i = 1)) %>%
-  unlist %>%
-  unique %>%
-  grep("under", ., value = TRUE, invert = TRUE)
+<!-- ### SCE Job Search Supplement -->
 
-codebook <- pdf_text(here('data/behav_params/SCE Job Search Survey/SCE-Labor-Market-Survey-Data-Codebook.pdf')) %>%
-  lapply(., function(x) str_split(x, "\n")) %>%
-  unlist %>%
-  .[.!="" & !grepl("                                                      ", .)]
+<!-- The Federal Reserve Bank of New York compiles the nationally -->
+<!-- representative Survey on Consumer Expectations annually in October. -->
+<!-- Since 2013, they have run a Job Search Supplement which includes -->
+<!-- questions on the time spent searching for work, and unemployment -->
+<!-- duration. The job search supplement's questions are listed  -->
+<!-- [here](https://www.newyorkfed.org/medialibrary/Interactives/sce/sce/downloads/data/SCE-Labor-Market-Survey-Data-Codebook.pdf?sc_lang=en). -->
+<!-- Below, we plot the relationship between time spent searching and time -->
+<!-- out of work. The table below also indicates the number of people -->
+<!-- unemployed in the dataset and the number of people unemployed and -->
+<!-- searching. -->
 
-# Creates list of categories of questions in job search survey
-labels = list("l" = "GENERAL LABOR MARKET QUESTIONS",
-              "jh" = "JOB SEARCH FOR MOST RECENT JOB",
-              "ec" = "ADDITIONAL EMPLOYMENT INFORMATION",
-              "es" = "ADDITIONAL INFORMATION FOR THE SELF EMPLOYED",
-              "eo" = "ADDITIONAL INFORMATION FOR THE NON-EMPLOYED",
-              "el" = "ADDITIONAL INFORMATION ON THE MOST RECENT JOB",
-              "js" = "JOB SEARCH BEHAVIOR",
-              "rw" = "RESERVATION WAGE ELICITATION",
-              "tp" = "BENEFITS AND TRANSFER PAYMENTS HISTORY",
-              "hh" = "SPOUSE/PARTNER EMPLOYMENT STATUS")
+<!-- ```{r sce_job_search1, echo=FALSE, results = 'asis', cache = FALSE} -->
 
-# Split the codebook based on the 10 higher-level categories present in the Job Search Survey
-list_splitters <- lapply(categories, toupper) %>% unlist %>% paste0(., ". ", labels)
-is_start <- codebook %in% list_splitters
-group_index <- cumsum(is_start)
+<!-- source(here('data/behav_params/SCE Job Search Survey/sce_job_search_cleaning.R')) -->
 
-# Split the list into sublists based on the grouping index
-sublists <- split(codebook, group_index)
+<!-- # Extract question types -->
+<!-- categories <- sce_job_search_full %>% -->
+<!--   names %>% -->
+<!--   grep("[0-9]", ., value = TRUE) %>% -->
+<!--   lapply(., function(x) str_split_i(x, "(?=\\d)", i = 1)) %>% -->
+<!--   unlist %>% -->
+<!--   unique %>% -->
+<!--   grep("under", ., value = TRUE, invert = TRUE) -->
 
+<!-- codebook <- pdf_text(here('data/behav_params/SCE Job Search Survey/SCE-Labor-Market-Survey-Data-Codebook.pdf')) %>% -->
+<!--   lapply(., function(x) str_split(x, "\n")) %>% -->
+<!--   unlist %>% -->
+<!--   .[.!="" & !grepl("                                                      ", .)] -->
 
-```
+<!-- # Creates list of categories of questions in job search survey -->
+<!-- labels = list("l" = "GENERAL LABOR MARKET QUESTIONS", -->
+<!--               "jh" = "JOB SEARCH FOR MOST RECENT JOB", -->
+<!--               "ec" = "ADDITIONAL EMPLOYMENT INFORMATION", -->
+<!--               "es" = "ADDITIONAL INFORMATION FOR THE SELF EMPLOYED", -->
+<!--               "eo" = "ADDITIONAL INFORMATION FOR THE NON-EMPLOYED", -->
+<!--               "el" = "ADDITIONAL INFORMATION ON THE MOST RECENT JOB", -->
+<!--               "js" = "JOB SEARCH BEHAVIOR", -->
+<!--               "rw" = "RESERVATION WAGE ELICITATION", -->
+<!--               "tp" = "BENEFITS AND TRANSFER PAYMENTS HISTORY", -->
+<!--               "hh" = "SPOUSE/PARTNER EMPLOYMENT STATUS") -->
 
-```{r sce_job_search2, echo=FALSE, cache = FALSE}
+<!-- # Split the codebook based on the 10 higher-level categories present in the Job Search Survey -->
+<!-- list_splitters <- lapply(categories, toupper) %>% unlist %>% paste0(., ". ", labels) -->
+<!-- is_start <- codebook %in% list_splitters -->
+<!-- group_index <- cumsum(is_start) -->
 
-library(ggbreak)
-
-sce_job_search_free <- sce_job_search %>%
-  select(responseid,
-         year,
-         l7_days_spent_searching,
-         l7_days_spent_searching_transformed,
-         l8_months_no_work) %>%
-   # Removes one extreme outlier at 600
-  filter(l8_months_no_work < 400,
-         l7_days_spent_searching_transformed < 2000)
+<!-- # Split the list into sublists based on the grouping index -->
+<!-- sublists <- split(codebook, group_index) -->
 
 
-sce_job_search %>%
-  group_by(year) %>%
-  summarise(n_obs_unemployed = n()) %>%
-  left_join(., summarise(group_by(sce_job_search_free, year), n_obs_unemp_searching = n()), by = "year") %>%
-  rename('Year' = year,
-         'N Unemployed' = n_obs_unemployed,
-         'N Unemp & Searching' = n_obs_unemp_searching) %>%
-  kable()
+<!-- ``` -->
 
-sce_job_search_free %>%
-    pivot_longer(!c(responseid, year)) %>%
-  filter(name != "l7_days_spent_searching_transformed") %>%
-  ggplot() +
-  geom_histogram(aes(x = value, fill = name)) +
-  facet_wrap(~name, scales = "free_x", ncol = 1, labeller = labeller(name = rename_fun)) +
-  #scale_x_break(c(3000, 15000)) +
-  common_theme +
-  theme(legend.position = "none") +
-  labs(title = "Histogram of time spent searching and out of work.", x = "Time (days or months)", y = "Count", caption = "N = 366")
+<!-- ```{r sce_job_search2, echo=FALSE, cache = FALSE} -->
+
+<!-- library(ggbreak) -->
+
+<!-- sce_job_search_free <- sce_job_search %>% -->
+<!--   select(responseid, -->
+<!--          year, -->
+<!--          l7_days_spent_searching, -->
+<!--          l7_days_spent_searching_transformed, -->
+<!--          l8_months_no_work) %>% -->
+<!--    # Removes one extreme outlier at 600 -->
+<!--   filter(l8_months_no_work < 400, -->
+<!--          l7_days_spent_searching_transformed < 2000) -->
 
 
-sce_job_search_free %>%
-  mutate(l8_days_no_work = l8_months_no_work*30.5) %>%
-  ggplot(aes(x = log(l8_days_no_work), y = log(l7_days_spent_searching))) +
-  geom_jitter(aes(color = as.factor(year))) +
-  geom_abline(intercept = 0, slope = 1, size = 0.5, linetype = "dashed", color = "darkgrey") +
-  labs(x = "Total time out of work (log days)", y = "Total time spent searching (log days)", title = "Time dedicated to searching versus time spent unemployed",
-       subtitle = "Blue line indicates best fit line. Grey dashed line indicates 45 degree line. N = 366") +
-  common_theme
+<!-- sce_job_search %>% -->
+<!--   group_by(year) %>% -->
+<!--   summarise(n_obs_unemployed = n()) %>% -->
+<!--   left_join(., summarise(group_by(sce_job_search_free, year), n_obs_unemp_searching = n()), by = "year") %>% -->
+<!--   rename('Year' = year, -->
+<!--          'N Unemployed' = n_obs_unemployed, -->
+<!--          'N Unemp & Searching' = n_obs_unemp_searching) %>% -->
+<!--   kable() -->
 
-```
-
-<!-- ## On-the-Job Search -->
-
-<!-- ```{r sce_otj, echo=FALSE, cache = FALSE} -->
-
-<!-- sce_job_search_emp %>% -->
+<!-- sce_job_search_free %>% -->
+<!--     pivot_longer(!c(responseid, year)) %>% -->
+<!--   filter(name != "l7_days_spent_searching_transformed") %>% -->
 <!--   ggplot() + -->
-<!--   geom_density(aes(x = l7_days_spent_searching, fill = as.factor(l1a_text)), alpha = 0.5) + -->
-<!--   labs(x = "Days spent searching", y = "Count", -->
-<!--        title = "Histogram of Days Spent Searching by Unemployment Status") + -->
+<!--   geom_histogram(aes(x = value, fill = name)) + -->
+<!--   facet_wrap(~name, scales = "free_x", ncol = 1, labeller = labeller(name = rename_fun)) + -->
+<!--   #scale_x_break(c(3000, 15000)) + -->
+<!--   common_theme + -->
+<!--   theme(legend.position = "none") + -->
+<!--   labs(title = "Histogram of time spent searching and out of work.", x = "Time (days or months)", y = "Count", caption = "N = 366") -->
+
+
+<!-- sce_job_search_free %>% -->
+<!--   mutate(l8_days_no_work = l8_months_no_work*30.5) %>% -->
+<!--   ggplot(aes(x = log(l8_days_no_work), y = log(l7_days_spent_searching))) + -->
+<!--   geom_jitter(aes(color = as.factor(year))) + -->
+<!--   geom_abline(intercept = 0, slope = 1, size = 0.5, linetype = "dashed", color = "darkgrey") + -->
+<!--   labs(x = "Total time out of work (log days)", y = "Total time spent searching (log days)", title = "Time dedicated to searching versus time spent unemployed", -->
+<!--        subtitle = "Blue line indicates best fit line. Grey dashed line indicates 45 degree line. N = 366") + -->
 <!--   common_theme -->
 
 <!-- ``` -->
 
-<!-- ### (TBD) American Time Use Survey -->
+<!-- <!-- ## On-the-Job Search -->
 
-<!-- The American Time Use Survey gives no indication of time spent in -->
+<!-- <!-- ```{r sce_otj, echo=FALSE, cache = FALSE} -->
 
-<!-- unemployment. It shows how much time is spent searching but does not -->
+<!-- <!-- sce_job_search_emp %>% -->
+<!-- <!--   ggplot() + -->
+<!-- <!--   geom_density(aes(x = l7_days_spent_searching, fill = as.factor(l1a_text)), alpha = 0.5) + -->
+<!-- <!--   labs(x = "Days spent searching", y = "Count", --> 
+<!-- <!--        title = "Histogram of Days Spent Searching by Unemployment Status") + --> 
+<!-- <!--   common_theme --> 
 
-<!-- link to time spent in unemployment. Therefore, We prioritised the -->
+<!-- <!-- ``` --> 
 
-<!-- datasets above. [Krueger & Mueller -->
+<!-- <!-- ### (TBD) American Time Use Survey --> 
 
-<!-- 2010](https://www.sciencedirect.com/science/article/abs/pii/S0047272709001625) -->
+<!-- <!-- The American Time Use Survey gives no indication of time spent in --> 
 
-<!-- impute duration spent unemployed from the ATUS in the following way -->
+<!-- <!-- unemployment. It shows how much time is spent searching but does not --> 
 
-<!-- which could be worth considering. -->
+<!-- <!-- link to time spent in unemployment. Therefore, We prioritised the --> 
 
-<!-- "Unfortunately, the ATUS interview does not collect information on -->
+<!-- <!-- datasets above. [Krueger & Mueller -->
 
-<!-- unemployment duration. Consequently, we derive unemployment duration by -->
+<!-- <!-- 2010](https://www.sciencedirect.com/science/article/abs/pii/S0047272709001625) --> 
 
-<!-- taking the unemployment duration reported in the last CPS interview and -->
+<!-- <!-- impute duration spent unemployed from the ATUS in the following way -->
 
-<!-- adding the number of weeks that elapsed between the CPS interview and -->
+<!-- <!-- which could be worth considering. --> 
 
-<!-- the ATUS interview. Eighty-six percent of the ATUS interviews were -->
+<!-- <!-- "Unfortunately, the ATUS interview does not collect information on -->
 
-<!-- conducted within 3 months of the last CPS interview. For those who were -->
+<!-- <!-- unemployment duration. Consequently, we derive unemployment duration by --> 
 
-<!-- not unemployed at the time of the CPS interview, we impute duration of -->
+<!-- <!-- taking the unemployment duration reported in the last CPS interview and -->
 
-<!-- unemployment by taking half the number of weeks between the CPS and the -->
+<!-- <!-- adding the number of weeks that elapsed between the CPS interview and -->
 
-<!-- ATUS interviews. We do not show the weekly LOWESS plot for 13 weeks or -->
+<!-- <!-- the ATUS interview. Eighty-six percent of the ATUS interviews were -->
 
-<!-- less, but simply report the average time allocated to search, as the -->
+<!-- <!-- conducted within 3 months of the last CPS interview. For those who were -->
 
-<!-- imputed unemployment duration are quite noisy for those who become -->
+<!-- <!-- not unemployed at the time of the CPS interview, we impute duration of -->
 
-<!-- unemployed after their last CPS interview." -->
+<!-- <!-- unemployment by taking half the number of weeks between the CPS and the -->
 
-<!-- ### Occupational Restructuring -->
+<!-- <!-- ATUS interviews. We do not show the weekly LOWESS plot for 13 weeks or -->
 
-<!-- ```{r, cache = FALSE} -->
+<!-- <!-- less, but simply report the average time allocated to search, as the -->
 
-<!-- #read.xls(here("data/macro_vars/OEWS/") -->
+<!-- <!-- imputed unemployment duration are quite noisy for those who become -->
 
-<!-- ``` -->
+<!-- <!-- unemployed after their last CPS interview." -->
+
+<!-- <!-- ### Occupational Restructuring -->
+
+<!-- <!-- ```{r, cache = FALSE} -->
+
+<!-- <!-- #read.xls(here("data/macro_vars/OEWS/") -->
+
+<!-- <!-- ``` -->

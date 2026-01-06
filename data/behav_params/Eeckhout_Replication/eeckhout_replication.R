@@ -891,11 +891,50 @@ ggplot(plot_data, aes(x = x)) +
        x = "Date",
        color = "Model",  # Unifies the legend title for both color & fill
        fill = "Model",
-       caption = "The above are predicted values of EE transitions as a function of the HP-filtered GDP cycle.\nThe black line represents the real (left) and de-trended (right) EE transition rate (EE/employment)\nusing the Current Population Survey and tabulation method from Eeckhout et al.\nThe green and blue lines represent the fitted/predicted values using a linear predictar and linear predictor with a linear trend component, respectively.\nThe red line demonstrates the fitted values of the HP filtered EE series using a linear predictor on the HP-filtered GDP series.") +
+       caption = str_wrap("The above are predicted values of EE transitions as a function of the HP-filtered GDP cycle. The black line represents the real (left) and de-trended (right) EE transition rate (EE/employment) using the Current Population Survey and tabulation method from Eeckhout et al. The green and blue lines represent the fitted/predicted values using a linear predictar and linear predictor with a linear trend component, respectively. The red line demonstrates the fitted values of the HP filtered EE series using a linear predictor on the HP-filtered GDP series.", width = wrap_width_fixed)) +
   facet_wrap(~hp, scales = "free") +
   common_theme
 
 modelsummary(res_list, gof_omit = 'AIC|BIC|Lik|RMSE')
+
+plot_data %>% 
+  mutate(hp_text = case_when(hp ~ "Hodrick–Prescott Filter Applied", 
+                        !hp ~ "Raw Data"),
+         hp_text = factor(hp_text, levels = c("Raw Data", "Hodrick–Prescott Filter Applied")),
+         selected_value = ifelse(hp, NA, 0.06)) %>% 
+    ggplot(aes(x = x)) +
+  geom_line(aes(y = actual, color = "Actual"), size = 0.8, color = "black", linewidth = 0.75, alpha = 0.7) +  # Actual values
+  geom_line(aes(y = predicted, color = group), size = 0.8, linetype = "dotted") +  # Predicted values
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = group), alpha = 0.2) +  # Confidence interval
+  geom_line(aes(y = selected_value, fill ="Selected Mean Propensity", color = "Selected Mean Propensity"), linetype = "dashed", size = 1) +
+  #geom_line(aes(y = -input_x*10, color = "Input X"), size = 1) +  # Input X on secondary axis
+  scale_y_continuous(
+    name = "EE Transition Rate",
+    sec.axis = sec_axis(~ .*30+63, name = "De-trended Search Intensity")  # Secondary axis for input_x
+  ) +
+  scale_color_manual(
+    values = c(
+      "Actual" = "black",
+      "Selected Mean Propensity" = "darkblue",
+      "HP Filter" = "maroon",
+      "Linear" = "darkgreen",
+      "Linear with Trend" = "slateblue"
+      # Add your other group colors here, e.g.:
+      # "Group1" = "green",
+      # "Group2" = "blue"
+    )
+  ) +
+  labs(title = "Employed Search Intensity", 
+       y = "Employment-Employment Transition Rate", 
+       x = "Date",
+       color = "Model",  # Unifies the legend title for both color & fill
+       fill = "Model",
+       caption = str_wrap("The above are predicted values of employment-employment (EE) transitions as a function of the HP-filtered GDP cycle. The grey line represents the real and de-trended EE transition rate (calculated as the ratio of EE transitions to number of employed persons in the labor force) using the Current Population Survey and tabulation method from Eeckhout et al. 2019. The green and blue lines represent the fitted/predicted values using a linear predictor and linear predictor with a linear trend component, respectively. The red line demonstrates the fitted values of the HP filtered EE series using a linear predictor on the HP-filtered GDP series.", width = 120)) +
+  facet_wrap(~hp_text, scales = "free", ncol = 1) +
+  xlim(2000, 2019) +
+  common_theme
+
+ggsave(here("data/behav_params/Eeckhout_Replication/EE_transition_rate.png"), width = 10, height = 9)
 
 
 # SAVE RELEVANT PLOT

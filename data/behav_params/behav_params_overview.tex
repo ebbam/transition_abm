@@ -37,16 +37,6 @@
 }{% if KOMA class
   \KOMAoptions{parskip=half}}
 \makeatother
-\usepackage{longtable,booktabs,array}
-\usepackage{calc} % for calculating minipage widths
-% Correct order of tables after \paragraph or \subparagraph
-\usepackage{etoolbox}
-\makeatletter
-\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
-\makeatother
-% Allow footnotes in longtable head/foot
-\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
-\makesavenoteenv{longtable}
 \usepackage{graphicx}
 \makeatletter
 \newsavebox\pandoc@box
@@ -100,16 +90,14 @@
 
 \begin{document}
 
-The model's central functionality relies on a variety of behavioural
+The model's central functionality relies on a variety of behavioral
 mechanisms that are parametrised econometrically using micro data.
 Furthermore, the model relies on additional sources of micro data for
 validation. In the following section we outline, first, the data and
 analysis used to derive the model's behavioral parameters, followed by
 an inventory of the data used to validate various model outputs. We note
 where we make use of methodology employed or constructed by other
-authors. We conclude with an inventory of other data sources considered
-for behavioral parameter calibration ultimately disregarded due to lack
-of statistical power.
+authors.
 
 \subsection{Application Effort and Learning Dynamics: Applications
 Sent}\label{application-effort-and-learning-dynamics-applications-sent}
@@ -1147,61 +1135,33 @@ the sample.
 A key improvement in this model is the incorporation of on-the-job
 seekers. Eeckhout et al.~2019 demonstrate that the flow of employed
 job-seekers into the pool of job-seekers can generate increased
-competition in boom periods. Therefore, we triangulate a mean value for
-the propensity of employed job-seekers to engage in search using the
+competition in boom periods. Therefore, we derive a mean value for the
+propensity of employed job-seekers to engage in search using the
 methodology and data presented in Eeckhout et al.~2019. In other words,
 we derive the sensitivity of employed job seekers to the business cycle
 from the employment-to-employment transitions data as used in Eeckhout
 et al.~Due to unreliable component parts of the Eeckhout analysis, we
 decided to abandon using their estimated parameters (search intensity
-for employed workers), and instead rely on their series of the
+for employed workers), and instead rely on their series of
+employment-to-employment (EE) transition rate which resulted in wage
+increases. This series is plotted in the top panel of the following
+figure. We draw the mean propensity to search from the average EE
+transition rate \textasciitilde6\%, represented by the dark blue dashed
+line in the top panel.
+
+We provide additional indicators of the cyclicality of this series by
+plotting fitted values of the EE transition rate as a function of
+national real GDP. These fitted values are derived from a linear
+regression in which the EE transition rate is regressed on national real
+GDP, optionally incorporated a deterministic linear trend. Furthermore,
+we provide the Hodrick-Prescott filtered series in the bottom panel,
+both as the raw de-trended series, and as a fitted series to real GDP.
 
 \begin{figure}
 \centering
-\pandocbounded{\includegraphics[keepaspectratio]{Eeckhout_Replication/emp_search_effort.png}}
+\pandocbounded{\includegraphics[keepaspectratio]{Eeckhout_Replication/EE_transition_rate.png}}
 \caption{Employed Search Effort Fit}
 \end{figure}
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\setcounter{enumi}{2}
-\tightlist
-\item
-  \href{https://www.aeaweb.org/articles?id=10.1257/mac.20180105}{Eeckhout
-  et al.~2019 Unemployment Cycles}:
-\end{enumerate}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/eeckhout-1} \end{center}
-
-\begin{table}
-\centering
-\begin{tabular}[t]{lccc}
-\toprule
-  & Linear & Linear with Trend & HP Filter\\
-\midrule
-(Intercept) & \num{-0.174}*** & \num{-0.053}** & \num{-0.049}***\\
- & (\num{0.035}) & (\num{0.018}) & (\num{0.008})\\
-x & \num{0.233}*** & \num{0.129}*** & \num{0.049}***\\
- & (\num{0.035}) & (\num{0.017}) & (\num{0.008})\\
-trend &  & \num{-0.000}*** & \\
- &  & (\num{0.000}) & \\
-\midrule
-Num.Obs. & \num{95} & \num{95} & \num{95}\\
-R2 & \num{0.323} & \num{0.854} & \num{0.282}\\
-R2 Adj. & \num{0.315} & \num{0.851} & \num{0.275}\\
-AIC & \num{-594.7} & \num{-738.3} & \num{-872.6}\\
-BIC & \num{-587.0} & \num{-728.1} & \num{-865.0}\\
-Log.Lik. & \num{300.334} & \num{373.173} & \num{439.307}\\
-F & \num{44.309} & \num{268.734} & \num{36.593}\\
-RMSE & \num{0.01} & \num{0.00} & \num{0.00}\\
-\bottomrule
-\multicolumn{4}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
-\end{tabular}
-\end{table}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/eeckhout-2} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/eeckhout-3} \end{center}
 
 \subsection{Supporting Data for
 Validation}\label{supporting-data-for-validation}
@@ -1213,7 +1173,7 @@ Cycle}}{Intensive Search Effort: Mukoyama et al.~2018 Job Search and the Busines
 We use evidence from
 \href{https://www.aeaweb.org/articles?id=10.1257/mac.20160202}{Mukoyama
 et al.~2018} regarding the cyclicality of unemployed job search effort
-to validate the micro behaviour of our agents. This is a foundational
+to validate the micro behavior of our agents. This is a foundational
 paper within the literature that explores the relationship between
 search effort and business cycles. The authors provide new data on the
 intensive margin of unemployed search effort (in minutes searched) over
@@ -1277,41 +1237,34 @@ be found in the bibliography of the main text.
 and Employment Prospects: Heterogeneity, Duration Dependence and
 Bias}\label{learning-rate---mueller-et-al.-job-seekers-perceptions-and-employment-prospects-heterogeneity-duration-dependence-and-bias}
 
-\href{https://www.aeaweb.org/articles?id=10.1257/aer.20190808}{Mueller
-et al: Job Seekers' Perceptions and Employment Prospects}
+Given, the theoretical job search model presented in the main text
+relies additionally on a learning rate. We consider drawing this
+learning rate from work by Mueller et al, though this has not been
+incorporated in the main text thus far.
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\setcounter{enumi}{4}
-\tightlist
-\item
-  \href{https://www.aeaweb.org/articles?id=10.1257/aer.20190808}{\textbf{Mueller
-  et al.~2021: Job Seekers' Perceptions and Employment Prospects:
-  Heterogeneity, Duration Dependence and Bias}}
-\end{enumerate}
-
-\emph{The authors claim to disentangle the effects of duration
+In this work, the authors claim to disentangle the effects of duration
 dependence and dynamic selection by using job seekers' elicited beliefs
 about job-finding. Assuming (and confirming empirically) that
 job-seekers have realistic initial beliefs about job-finding they
-isolate the heterogeneity in jobseekers from true duration dependence.
+isolate the heterogeneity in job-seekers from true duration dependence.
 Ultimately, they find that dynamic selection selection explains most of
 the negative duration dependence (rather than pure, true duration
-dependence).}
+dependence).
 
-\emph{Findings: Results are remarkably consistent even when including
-additional data from 2019-2024.} The below results replicate the
-findings in Mueller et al and extend the analysis to include a longer
-time series. Plot and regression table titles have been maintained for
-easy comparison.
+We replicate and extend the analysis using replication code made
+available by the autors. The figures and econometric specification
+choices are crafted by Mueller et al, and several of the below plots are
+present in the main text of their work as well. Plot and regression
+table titles have been maintained for easy comparison. We provide
+additional evidence regarding the stability of their estimates across a
+longer time series that includes six additional years of data from
+2019-2024.
 
-We aim to include this information in our theoretical model of the job
-search effort as a learning rate (ie. individuals learn about their
-re-employment probability with repeated failures in the job search).
-
-\% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 17:43:35
+We find that their results are remarkably consistent even when including
+additional data from 2019-2024. We aim to include this information in
+our theoretical model of the job search effort as a learning rate (ie.
+individuals learn about their re-employment probability with repeated
+failures in the job search).
 
 \begin{table}[!htbp] \centering 
   \caption{Descriptive Statistics (SCE)} 
@@ -1344,10 +1297,6 @@ UE transition rate: LT & $12.7$ & $12.7$ & $12.3$ \\
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-2} \end{center}
 
-\% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 17:43:36
-
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
   \label{} 
@@ -1379,10 +1328,6 @@ Residual Std. Error & 0.467 (df = 1184) & 0.475 (df = 1894) & 0.478 (df = 656) \
 \textit{Note:}  & \multicolumn{3}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
 \end{tabular} 
 \end{table}
-
-\% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 17:43:36
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
@@ -1422,10 +1367,6 @@ Residual Std. Error & 0.455 (df = 1182) & 0.464 (df = 1892) & 0.465 (df = 654) \
 \end{tabular} 
 \end{table}
 
-\% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 17:43:36
-
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
   \label{} 
@@ -1457,10 +1398,6 @@ Residual Std. Error & 0.398 (df = 457) & 0.436 (df = 781) & 0.447 (df = 283) \\
 \textit{Note:}  & \multicolumn{3}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
 \end{tabular} 
 \end{table}
-
-\% Table created by stargazer v.5.2.3 by Marek Hlavac, Social Policy
-Institute. E-mail: marek.hlavac at gmail.com \% Date and time: Tue, Jan
-06, 2026 - 17:43:36
 
 \begin{table}[!htbp] \centering 
   \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
@@ -1503,230 +1440,5 @@ Residual Std. Error & 0.400 (df = 457) & 0.437 (df = 781) & 0.450 (df = 283) \\
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-6} \end{center}
 
 \begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-7} \end{center}
-
-\subsection{Additional Analyses}\label{additional-analyses}
-
-\subsubsection{SCE Labor Market Survey: Reservation
-Wages}\label{sce-labor-market-survey-reservation-wages}
-
-\textbf{Survey of Consumer Expectations Reservation Wages, Accepted
-Wages, and Wage Expectations} The data is unfortunately sparse and
-linking outcomes to reservation wages is difficult which is why this
-data was ultimately excluded from the analysis in the main text.
-However, in a cross-sectional setting we are able to deduce some weak
-relationships between Unemployment Duration and Absolute Reservation
-Wages and Wage Expectations. These relationships weakly support the
-deduced negative relationship between unemployment duration and
-reservation wages found using the Displaced Worker Supplement of the
-Current Population Survey, as described above.
-
-Exploring the effect of unemployment duration on reservation wages,
-accepted wages, and expected wage offers.
-
-{[}1{]} ``Plots of RESERVATION WAGE versus latest, current wage''
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_res_wage-1} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_res_wage-2} \end{center}
-
-{[}1{]} ``Plots of EXPECTED OFFER versus latest, current, reservation
-wage''
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_res_wage-3} \end{center}
-
-{[}1{]} ``Plots of ACCEPTED SALARY versus latest, current, reservation
-wage''
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_res_wage-4} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_res_wage-5} \end{center}
-
-\begin{table}
-\centering
-\caption{\label{tab:sce_res_wage}Accepted Wages and Unemployment Duration}
-\centering
-\begin{tabular}[t]{lcccccc}
-\toprule
-  & Accpt:Latest & AccptWage w.c & Accpt:ResWage & AccptWage:ResWage w.c & Accpt:EffResWage & AccptWage:EffResWage w.c\\
-\midrule
-(Intercept) & \num{0.826}*** & \num{1.743}*** & \num{0.933}*** & \num{1.199}*** & \num{0.826}*** & \num{1.002}***\\
- & (\num{0.108}) & (\num{0.260}) & (\num{0.045}) & (\num{0.141}) & (\num{0.051}) & (\num{0.177})\\
-udur\_bins & \num{0.050} & \num{-0.005} & \num{-0.048}* & \num{-0.053}** & \num{0.008} & \num{-0.001}\\
- & (\num{0.045}) & (\num{0.048}) & (\num{0.019}) & (\num{0.020}) & (\num{0.023}) & (\num{0.024})\\
-\midrule
-Num.Obs. & \num{56} & \num{56} & \num{160} & \num{159} & \num{184} & \num{183}\\
-R2 & \num{0.022} & \num{0.430} & \num{0.040} & \num{0.118} & \num{0.001} & \num{0.042}\\
-RMSE & \num{0.40} & \num{0.35} & \num{0.30} & \num{0.30} & \num{0.34} & \num{0.34}\\
-\bottomrule
-\multicolumn{7}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
-\end{tabular}
-\end{table}
-\begin{table}
-\centering
-\caption{\label{tab:sce_res_wage}Reservation Wages and Unemployment Duration}
-\centering
-\begin{tabular}[t]{lcccc}
-\toprule
-  & ResWage & ResWage w.c & ResWage/LastWage & ResWage/LastWage w.c\\
-\midrule
-(Intercept) & \num{10.173}*** & \num{9.945}*** & \num{0.825}*** & \num{0.750}***\\
- & (\num{0.044}) & (\num{0.071}) & (\num{0.022}) & (\num{0.040})\\
-udur\_bins & \num{0.107}*** & \num{0.083}*** & \num{0.027}*** & \num{0.023}***\\
- & (\num{0.012}) & (\num{0.011}) & (\num{0.006}) & (\num{0.006})\\
-female &  & \num{-0.275}*** &  & \num{0.009}\\
- &  & (\num{0.022}) &  & (\num{0.012})\\
-age &  & \num{0.005}*** &  & \num{0.001}*\\
- &  & (\num{0.001}) &  & (\num{0.000})\\
-hhinc\_2 &  & \num{0.230}*** &  & \num{-0.008}\\
- &  & (\num{0.026}) &  & (\num{0.014})\\
-hhinc\_3 &  & \num{0.427}*** &  & \num{-0.017}\\
- &  & (\num{0.030}) &  & (\num{0.017})\\
-hhinc\_4 &  & \num{0.759}*** &  & \num{-0.008}\\
- &  & (\num{0.033}) &  & (\num{0.019})\\
-education\_2 &  & \num{-0.247}*** &  & \num{0.050}+\\
- &  & (\num{0.045}) &  & (\num{0.026})\\
-education\_3 &  & \num{-0.122}** &  & \num{0.007}\\
- &  & (\num{0.047}) &  & (\num{0.027})\\
-education\_4 &  & \num{-0.046} &  & \num{0.052}+\\
- &  & (\num{0.051}) &  & (\num{0.029})\\
-education\_5 &  & \num{0.027} &  & \num{0.008}\\
- &  & (\num{0.049}) &  & (\num{0.028})\\
-education\_6 &  & \num{0.111}* &  & \num{0.054}+\\
- &  & (\num{0.054}) &  & (\num{0.031})\\
-\midrule
-Num.Obs. & \num{7937} & \num{7824} & \num{6294} & \num{6224}\\
-R2 & \num{0.010} & \num{0.169} & \num{0.003} & \num{0.007}\\
-R2 Adj. & \num{0.010} & \num{0.168} & \num{0.003} & \num{0.005}\\
-AIC & \num{191435.4} & \num{187281.4} & \num{9054.4} & \num{8961.7}\\
-BIC & \num{191456.4} & \num{187372.0} & \num{9074.6} & \num{9049.3}\\
-Log.Lik. & \num{-11923.451} & \num{-11075.843} & \num{-4524.195} & \num{-4467.857}\\
-RMSE & \num{0.98} & \num{0.90} & \num{0.44} & \num{0.44}\\
-\bottomrule
-\multicolumn{5}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
-\end{tabular}
-\end{table}
-\begin{table}
-\centering
-\caption{\label{tab:sce_res_wage}Accepted Wages and Unemployment Duration}
-\centering
-\begin{tabular}[t]{lcccc}
-\toprule
-  & AccptWage & AccptWage w.c & AccptWage/ResWage & AccptWage/ResWage w.c\\
-\midrule
-(Intercept) & \num{10.568}*** & \num{11.705}*** & \num{0.924}*** & \num{1.303}***\\
- & (\num{0.106}) & (\num{0.255}) & (\num{0.048}) & (\num{0.132})\\
-udur\_bins & \num{-0.006} & \num{-0.037} & \num{-0.031}+ & \num{-0.036}+\\
- & (\num{0.040}) & (\num{0.037}) & (\num{0.018}) & (\num{0.018})\\
-female &  & \num{-0.164} &  & \num{-0.073}\\
- &  & (\num{0.102}) &  & (\num{0.050})\\
-age &  & \num{-0.008}* &  & \num{-0.005}**\\
- &  & (\num{0.004}) &  & (\num{0.002})\\
-hhinc\_2 &  & \num{0.260}+ &  & \num{0.043}\\
- &  & (\num{0.139}) &  & (\num{0.067})\\
-hhinc\_3 &  & \num{0.272}+ &  & \num{0.042}\\
- &  & (\num{0.138}) &  & (\num{0.069})\\
-hhinc\_4 &  & \num{0.377}* &  & \num{-0.052}\\
- &  & (\num{0.150}) &  & (\num{0.075})\\
-education\_2 &  & \num{-0.996}*** &  & \num{-0.043}\\
- &  & (\num{0.224}) &  & (\num{0.122})\\
-education\_3 &  & \num{-0.940}*** &  & \num{-0.128}\\
- &  & (\num{0.223}) &  & (\num{0.122})\\
-education\_4 &  & \num{-1.036}*** &  & \num{-0.176}\\
- &  & (\num{0.226}) &  & (\num{0.123})\\
-education\_5 &  & \num{-0.827}*** &  & \num{-0.141}\\
- &  & (\num{0.224}) &  & (\num{0.124})\\
-education\_6 &  & \num{-0.551}* &  & \num{-0.095}\\
- &  & (\num{0.228}) &  & (\num{0.127})\\
-\midrule
-Num.Obs. & \num{127} & \num{126} & \num{164} & \num{163}\\
-R2 & \num{0.000} & \num{0.299} & \num{0.017} & \num{0.133}\\
-R2 Adj. & \num{-0.008} & \num{0.232} & \num{0.011} & \num{0.070}\\
-AIC & \num{2933.2} & \num{2884.9} & \num{110.6} & \num{109.9}\\
-BIC & \num{2941.7} & \num{2921.7} & \num{119.9} & \num{150.1}\\
-Log.Lik. & \num{-123.204} & \num{-99.911} & \num{-52.283} & \num{-41.957}\\
-RMSE & \num{0.58} & \num{0.53} & \num{0.32} & \num{0.32}\\
-\bottomrule
-\multicolumn{5}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
-\end{tabular}
-\end{table}
-\begin{table}
-\centering
-\caption{\label{tab:sce_res_wage}Expected Wages and Unemployment Duration}
-\centering
-\begin{tabular}[t]{lcccc}
-\toprule
-  & ExpWage/ResWage & ExpWage/ResWage w.c & ExpWage/LastWage & ExpWage/LastWage w.c\\
-\midrule
-(Intercept) & \num{1.057}*** & \num{1.226}*** & \num{1.087}*** & \num{1.257}***\\
- & (\num{0.020}) & (\num{0.040}) & (\num{0.029}) & (\num{0.059})\\
-udur\_bins & \num{-0.022}*** & \num{-0.009} & \num{-0.024}** & \num{-0.008}\\
- & (\num{0.006}) & (\num{0.006}) & (\num{0.008}) & (\num{0.009})\\
-female &  & \num{-0.022}+ &  & \num{0.064}***\\
- &  & (\num{0.013}) &  & (\num{0.019})\\
-age &  & \num{-0.003}*** &  & \num{-0.004}***\\
- &  & (\num{0.000}) &  & (\num{0.001})\\
-hhinc\_2 &  & \num{0.004} &  & \num{-0.038}\\
- &  & (\num{0.016}) &  & (\num{0.023})\\
-hhinc\_3 &  & \num{0.004} &  & \num{-0.001}\\
- &  & (\num{0.018}) &  & (\num{0.026})\\
-hhinc\_4 &  & \num{0.000} &  & \num{-0.005}\\
- &  & (\num{0.019}) &  & (\num{0.027})\\
-education\_2 &  & \num{-0.035} &  & \num{-0.032}\\
- &  & (\num{0.027}) &  & (\num{0.040})\\
-education\_3 &  & \num{-0.008} &  & \num{-0.056}\\
- &  & (\num{0.028}) &  & (\num{0.041})\\
-education\_4 &  & \num{0.004} &  & \num{-0.031}\\
- &  & (\num{0.030}) &  & (\num{0.044})\\
-education\_5 &  & \num{0.011} &  & \num{-0.090}*\\
- &  & (\num{0.029}) &  & (\num{0.042})\\
-education\_6 &  & \num{0.021} &  & \num{0.002}\\
- &  & (\num{0.032}) &  & (\num{0.046})\\
-\midrule
-Num.Obs. & \num{3114} & \num{3070} & \num{2721} & \num{2690}\\
-R2 & \num{0.005} & \num{0.028} & \num{0.003} & \num{0.029}\\
-R2 Adj. & \num{0.005} & \num{0.024} & \num{0.003} & \num{0.025}\\
-AIC & \num{2803.9} & \num{2733.2} & \num{4079.4} & \num{3986.5}\\
-BIC & \num{2822.1} & \num{2811.6} & \num{4097.2} & \num{4063.1}\\
-Log.Lik. & \num{-1398.968} & \num{-1353.588} & \num{-2036.722} & \num{-1980.241}\\
-RMSE & \num{0.34} & \num{0.34} & \num{0.46} & \num{0.45}\\
-\bottomrule
-\multicolumn{5}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
-\end{tabular}
-\end{table}
-
-\subsubsection{SCE Job Search
-Supplement}\label{sce-job-search-supplement}
-
-The Federal Reserve Bank of New York compiles the nationally
-representative Survey on Consumer Expectations annually in October.
-Since 2013, they have run a Job Search Supplement which includes
-questions on the time spent searching for work, and unemployment
-duration. The job search supplement's questions are listed
-\href{https://www.newyorkfed.org/medialibrary/Interactives/sce/sce/downloads/data/SCE-Labor-Market-Survey-Data-Codebook.pdf?sc_lang=en}{here}.
-Below, we plot the relationship between time spent searching and time
-out of work. The table below also indicates the number of people
-unemployed in the dataset and the number of people unemployed and
-searching.
-
-\begin{longtable}[]{@{}rrr@{}}
-\toprule\noalign{}
-Year & N Unemployed & N Unemp \& Searching \\
-\midrule\noalign{}
-\endhead
-\bottomrule\noalign{}
-\endlastfoot
-2014 & 383 & 70 \\
-2015 & 321 & 44 \\
-2016 & 339 & 46 \\
-2017 & 350 & 38 \\
-2018 & 354 & 41 \\
-2019 & 343 & 32 \\
-2020 & 304 & 45 \\
-2021 & 330 & 50 \\
-\end{longtable}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_job_search2-1} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/sce_job_search2-2} \end{center}
 
 \end{document}
