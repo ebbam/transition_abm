@@ -7,6 +7,7 @@ library(haven) # To read .dta files
 library(patchwork)
 library(urca)
 library(zoo)
+source(here('code/formatting/plot_dicts.R'))
 
 # Set this to false or true depending on if you wish to recompile the input data to figures 3 and 4 based on updated data
 first = FALSE
@@ -48,9 +49,9 @@ p1 <- ggplot(collapsed_data_2014, aes(x = as.factor(numsearch), y = time_less8))
   labs(
     x = "Number of Search Methods",
     y = "Average Search Time Per Day",
-    title = "Figure 1. The Average Minutes (per day) Spent on Job Search Activities by the Number of Search Methods",
+    title = str_wrap("Figure 1. The Average Minutes (per day) Spent on Job Search Activities by the Number of Search Methods", width = wrap_width_fixed),
     subtitle = "2003-2014",
-    caption = "Notes: Each bin reflects the average search time in minutes per day\nby the number of search methods that the individual reports using in the previous month.\nData is pooled from 2003–2014 and observations are weighted by the individual sample weight."
+    caption = str_wrap("Notes: Each bin reflects the average search time in minutes per day by the number of search methods that the individual reports using in the previous month. Data is pooled from 2003–2014 and observations are weighted by the individual sample weight.", width = wrap_width_fixed)
   ) +
   theme_minimal(base_size = 15) +
   theme(
@@ -65,9 +66,9 @@ p2 <- ggplot(collapsed_data_2023, aes(x = as.factor(numsearch), y = time_less8))
   labs(
     x = "Number of Search Methods",
     y = "Average Search Time Per Day",
-    title = "Figure 1. The Average Minutes (per day) Spent on Job Search Activities by the Number of Search Methods",
+    title = str_wrap("Figure 1. The Average Minutes (per day) Spent on Job Search Activities by the Number of Search Methods", width = wrap_width_fixed),
     subtitle = "2015-2023",
-    caption = "Notes: Each bin reflects the average search time in minutes per day\nby the number of search methods that the individual reports using in the previous month.\nData is pooled from 2003–2014 and observations are weighted by the individual sample weight."
+    caption = str_wrap("Notes: Each bin reflects the average search time in minutes per day by the number of search methods that the individual reports using in the previous month. Data is pooled from 2003–2014 and observations are weighted by the individual sample weight.", width = wrap_width_fixed)
   ) +
   theme_minimal(base_size = 15) +
   theme(
@@ -85,7 +86,7 @@ p3 <- ggplot(collapsed_data_all, aes(x = as.factor(numsearch), y = time_less8)) 
     y = "Average Search Time Per Day",
     title = "Figure 1. The Average Minutes (per day) Spent on Job Search Activities by the Number of Search Methods",
     subtitle = "2003-2023",
-    caption = "Notes: Each bin reflects the average search time in minutes per day\nby the number of search methods that the individual reports using in the previous month.\nData is pooled from 2003–2014 and observations are weighted by the individual sample weight."
+    caption = str_wrap("Notes: Each bin reflects the average search time in minutes per day by the number of search methods that the individual reports using in the previous month. Data is pooled from 2003–2014 and observations are weighted by the individual sample weight.", width = wrap_width_fixed)
   ) +
   theme_minimal(base_size = 15) +
   theme(
@@ -362,8 +363,8 @@ fig2b <- ggplot() +
   common_theme
 fig2b <- add_recession(fig2b)
 
-print(fig2a + fig2b + plot_annotation("Figure 2. Actual and Imputed Average Search Time (minutes per day) \nfor All Nonemployed Workers ( panel A) and Unemployed Workers ( panel B)",
-                                caption = "Notes: Regressions are estimated in the ATUS from 2003–2014. \nWhile both panels A and B plot the fitted values from the sample regression, panel A plots the actual and imputed search time for all nonemployed, while panel B plots them for just the unemployed. \nObservations are weighted by their ATUS sample weight.",
+print(fig2a + fig2b + plot_annotation(title = str_wrap("Figure 2. Actual and Imputed Average Search Time (minutes per day) for All Nonemployed Workers ( panel A) and Unemployed Workers ( panel B)", width = wrap_width_fixed),
+                                caption = str_wrap("Notes: Regressions are estimated in the ATUS from 2003–2014. While both panels A and B plot the fitted values from the sample regression, panel A plots the actual and imputed search time for all nonemployed, while panel B plots them for just the unemployed. Observations are weighted by their ATUS sample weight.", width = wrap_width_fixed),
                                 theme=plot_annotation_theme))
 
 ##################################
@@ -424,6 +425,53 @@ fig3b_plot <- ggplot() +
   guides(color=guide_legend(ncol=2))+
   common_theme
 
+# Define the highlight period
+highlight_start <- 2000.9
+highlight_end <- 2019.5
+
+# Add a column to indicate if point is in highlight period
+fig3b_base_for_manuscript <- fig3b_base %>%
+  mutate(in_highlight = date >= highlight_start & date <= highlight_end,
+  label_long = gsub("Ext.", "Extended", gsub("Orig.", "Original", label, fixed = TRUE), fixed = TRUE))
+
+# Define the highlight period
+highlight_start <- 2000.9
+highlight_end <- 2019.5
+
+fig3b_for_manuscript <- ggplot() +
+  # Add grey background for periods outside the highlight range
+  annotate("rect", 
+           xmin = 2000, 
+           xmax = highlight_start,
+           ymin = -Inf, ymax = Inf, 
+           fill = "grey90", alpha = 0.5) +
+  annotate("rect", 
+           xmin = highlight_end, 
+           xmax = 2025,
+           ymin = -Inf, ymax = Inf, 
+           fill = "grey90", alpha = 0.5) +
+  # Draw ALL lines dimmed (base layer)
+  geom_line(data = filter(fig3b_base_for_manuscript, date >= 2000),
+            aes(x = date, y = value, color = label_long), 
+            size = 0.5, alpha = 0.3) +
+  # Draw highlighted portion with full opacity (overlay)
+  geom_line(data = filter(fig3b_base_for_manuscript, date >= highlight_start & date <= highlight_end),
+            aes(x = date, y = value, color = label_long), 
+            size = 0.5, alpha = 1.0) +
+  scale_x_continuous(limits = c(2000, 2025), breaks = seq(2000, 2024, by = 2)) +
+  scale_y_continuous(limits = c(10, 45), breaks = seq(0, 45, by = 5)) +
+  theme_minimal() +
+  labs(x = "Date", y = "Intensive Margin", 
+       subtitle = "Period: 2000-2024", 
+       color = "Weights and Input Data",
+       title = str_wrap("Intensive Search Margin Measured by the Average Minutes of Search per Day for Unemployed Workers", width = wrap_width_fixed),
+       caption = str_wrap("Plots the average minutes of search per day per unemployed worker, using the imputation method from Mukoyama et al. 2018. Each observation is weighted by its CPS sample weight. We extend the data imputed in the original paper (labelled 'Extended TS' versus 'Original TS'). The weights applied in the imputation process have been improved to account for missing data in the CPS and ATUS inputs (New Weights versus Original Weights). The greyed out portions indicate data outside of the time period to which the ABM is calibrated and simulated.", width = 125)) +
+  theme(legend.position = "bottom") +
+  guides(color = guide_legend(ncol = 2)) +
+  common_theme
+
+ggsave(here('data/behav_params/Mukoyama_Replication/intensive_search_margin.png'))
+
 fig3bb_plot <- ggplot() +
   geom_line(data = filter(fig3b_base, date > 1999.9 & date < 2020), aes(x = date, y = value, color = label), size = 0.5) +
   theme_minimal() +
@@ -439,13 +487,13 @@ fig3b_plot <- add_recession(fig3b_plot)
 fig3bb_plot <- add_recession(fig3bb_plot)
 
 print(fig3a_plot + fig3b_plot + plot_annotation(
-  "Figure 3. The Time Series of the Extensive Margin (U/(U + N )) ( panel A)\nand the Intensive Margin ( panel B), \nMeasured by the Average Minutes of Search per Day for Unemployed Workers",
-  caption = "Red data is new data. Notes: Panel A plots the monthly ratio of the number of unemployed (U) to the total number of unemployed (U + N ) in the CPS from 1994–2014.", #\nPanel B plots the average minutes of search per day, constructed as described in the text. Each observation is weighted by its CPS sample weight.",
+  title = str_wrap("Figure 3. The Time Series of the Extensive Margin (U/(U + N )) (panel A) and the Intensive Margin (panel B), Measured by the Average Minutes of Search per Day for Unemployed Workers", width = wrap_width_fixed),
+  caption = str_wrap("Red data is new data. Notes: Panel A plots the monthly ratio of the number of unemployed (U) to the total number of unemployed (U + N ) in the CPS from 1994–2014.", width = wrap_width_fixed), #Panel B plots the average minutes of search per day, constructed as described in the text. Each observation is weighted by its CPS sample weight.",
   theme=plot_annotation_theme))
 
 print(fig3b_plot + fig3bb_plot + plot_annotation(
-  "Intensive Margin Measured by the Average Minutes of Search per Day for Unemployed Workers",
-  caption = "Plots the average minutes of search per day,using the imputed minutes as a function of search methods used.\nEach observation is weighted by its CPS sample weight.",
+  title = str_wrap("Intensive Margin Measured by the Average Minutes of Search per Day for Unemployed Workers", width = wrap_width_fixed),
+  caption = str_wrap("Plots the average minutes of search per day,using the imputed minutes as a function of search methods used.Each observation is weighted by its CPS sample weight.", width = wrap_width_fixed),
   theme=plot_annotation_theme))
 
 ggplot() +
@@ -489,8 +537,8 @@ ggplot() +
   geom_line(data = quart_data, aes(x = year + quarter/4, y = value_smooth, color = "Quarterly"),  size = 1) +  # Smoothed data
   geom_line(data = monthly_data, aes(x = year + month/12, y = value, color = "Monthly"), alpha = 0.5) +  # Original data
   geom_line(data = monthly_data, aes(x = year + month/12, y = value_smooth, color = "Monthly"), size = 1) +  # Smoothed data
-  labs(title = "Smoothed Quarterly & Monthly Search Effort Data for Calibration", 
-       subtitle = "Thin lines represent the observed data whereas the thicker lines represent a smoothing \nof each series using a LOESS fit with 0.1 span.", x = "Year", y = "Value (Minutes Searched per Day", color = "Frequency") +
+  labs(title = str_wrap("Smoothed Quarterly & Monthly Search Effort Data for Calibration", width = wrap_width_fixed), 
+       subtitle = str_wrap("Thin lines represent the observed data whereas the thicker lines represent a smoothing of each series using a LOESS fit with 0.1 span.", width = wrap_width_fixed), x = "Year", y = "Value (Minutes Searched per Day", color = "Frequency") +
   common_theme
   #mutate(month = date%%round(date)) 
 
@@ -535,14 +583,14 @@ fig4b <- ggplot() +
   scale_color_manual(values = c("Original Weights on Orig. TS" = "blue", "New Weights from Orig. TS" = "green", "New Weights from Ext. TS" = "purple", "Original Weights on Ext. TS" = "darkgreen")) + 
   labs(x = "Date", 
        y = "Total Search Effort (Extensive x Intensive Margin)") + 
-       #title ="Panel B: Time Series of Total Search Effort \n Using the Search Time of Unemployed Workers \n s*(U/(E + U + N)) (blue) \n vs. Using the Number of Unemployed Workers\nU/(E + U + N) (red)") +
+       #title =str_wrap("Panel B: Time Series of Total Search Effort  Using the Search Time of Unemployed Workers s*(U/(E + U + N)) (blue) vs. Using the Number of Unemployed Workers U/(E + U + N) (red)", width = wrap_width_fixed)) +
   theme_minimal() +
   theme(legend.position = "bottom") +
   guides(color=guide_legend(ncol=1)) +
   common_theme
 fig4b <- add_recession(fig4b)
 
-print(fig4a + fig4b + plot_annotation('Figure 4. Time Series of (Panel A) Total Search Effort and \n(Panel B) Total Search Effort Using the Search Time of\nUnemployed Workers [solid: (s*(U/(E + U + N))] versus \nUsing the Number of Unemployed Workers [dashed: U/(E + U + N)) (panel B)',
+print(fig4a + fig4b + plot_annotation(title = str_wrap('Figure 4. Time Series of (Panel A) Total Search Effort and (Panel B) Total Search Effort Using the Search Time of Unemployed Workers [solid: (s*(U/(E + U + N))] versus Using the Number of Unemployed Workers [dashed: U/(E + U + N)) (panel B)', width = wrap_width_fixed),
                                 theme=plot_annotation_theme))
 
 # # Save figures as PDFs
@@ -644,7 +692,7 @@ ggplot(plot_data, aes(x = x)) +
        x = "Date",
        color = "Functional Form", 
        fill = "Functional Form",
-       caption = "The above are predicted values of search effort as a function of the HP-filtered GDP cycle.\nThe dark blue line represents the 'real' search effort in minutes per day calculated using the methodlogy from Mukoyama et al.\nThe red and green represent the fitted or predicted values using a linear predictar and linear predictor with a linear trend component, respectively.") +
+       caption = str_wrap("The above are predicted values of search effort as a function of the HP-filtered GDP cycle. The dark blue line represents the 'real' search effort in minutes per day calculated using the methodlogy from Mukoyama et al. The red and green represent the fitted or predicted values using a linear predictar and linear predictor with a linear trend component, respectively.", width = wrap_width_fixed)) +
   theme_minimal() +
   theme(
     axis.title.y.right = element_text(color = "red")  # Different color for secondary axis

@@ -39,7 +39,6 @@ rename_fun <- function(x){
 
 ```
 
-# Calibrating Behavioural Mechanisms {.tabset}
 
 The model's central functionality relies on a variety of behavioural
 mechanisms that are parametrised econometrically using micro data.
@@ -616,7 +615,7 @@ Fit](Eeckhout_Replication/emp_search_effort.png)
     analysis, we decided to abandon using their estimated parameters
     (search intensity for employed workers).
 
-```{r eeckhout, echo = FALSE, fig.height = 8, fig.width = 10, cache = FALSE, results = 'asis'}
+```{r eeckhout, echo = FALSE, fig.height = 8, fig.width = 10, cache = TRUE, results = 'asis'}
 
 source(here('data/behav_params/Eeckhout_Replication/eeckhout_extended_replication.R'))
 
@@ -624,36 +623,21 @@ source(here('data/behav_params/Eeckhout_Replication/eeckhout_extended_replicatio
 
 # Supporting Data for Validation
 
-## Mukoyama et al. Job Search and the Business Cycle
+## Intensive Search Effort: Mukoyama et al. 2018 *Job Search and the Business Cycle*
 
-4.  (Validation) Mukoyama et al. data on the intensive margin of
-    unemployed search effort (in minutes searched) over the business
-    cycle. We have chosen to include this as a validation exercise of
-    our application effort imposition.
+We use evidence from [Mukoyama et al. 2018](https://www.aeaweb.org/articles?id=10.1257/mac.20160202) regarding the cyclicality of unemployed job search effort to validate the micro behaviour of our
+agents. This is a foundational paper within the literature that explores the relationship between search effort and business cycles. The authors provide new data on the intensive margin of unemployed search effort (in minutes searched) over the business cycle by linking date from the American Time Use Survey (ATUS) and Current Population Survey (CPS). We employ the methods and data presented in their work in a validation exercise of the emergent micro behavior of unemployed job-seekers. 
 
-We use evidence from Mukoyama et al regarding the cyclicality of
-unemployed job search effort to validate the micro behaviour of our
-agents. I will provide more explanation on this...
+More specifically, the authors provide a novel measure of job search effort exploiting the American Time Use and Current Population Surveys which can be reduced to
+just the intensive margin (changes in search effort by worker). Typically, this is an extremely challenging measure to approximate due to data availability and survey design. In general, surveys measure actions taken (i.e., applications sent, interviews completed) but these indicators can abstract from the fundamental intensive margin of search effort. In other words, the most common metrics that measure search effort can result from passive search or intrinsic advantageous worker characteristics, obscuring any sense of real search "effort" or urgency with which individuals apply their search strategies. This intensive margin underlies the motivation behind our dynamic search effort rule, making this data a valuable source of validation data for the model's output. 
 
-(Replicated with additional data for unemployed jobseekers) [**Mukoyama
-et al. 2018: Job Search Over the Business
-Cycle**](https://www.aeaweb.org/articles?id=10.1257/mac.20160202)
+Methodologically, the authors construct this time series measure of job search intensity by linking the American Time Use Survey (ATUS) and Current Population Survey (CPS). While the ATUS directly measures minutes spent on job search activities but has limited sample size and coverage (2003-2014), the CPS reports the number and types of search methods used over larger samples beginning in 1994. Both surveys ask similar questions about search methods employed in the previous month. The authors exploit this overlap by first estimating the relationship between reported search time and search methods in the ATUS using a Heckman selection model—estimating both the probability of positive search time and the number of minutes conditional on searching, controlling for demographics, occupation, and unemployment duration. They then apply these estimated coefficients to impute daily search time for all CPS unemployed respondents based on their reported search methods, generating a monthly intensive margin series from 1994-2014. This approach weights each search method by its estimated time intensity and allows baseline search effort to vary by demographic characteristics, producing a more nuanced measure than simply counting the number of methods used.
 
-*They provide a novel measure of job search effort exploiting the
-American Time Use and Current Population Surveys which can be reduced to
-just the intensive margin (changes in search effort by worker!). At the
-moment, I think this will be the most useful input for our model.*
+The figure below represents the intensive search margin time series as calculated by the authors. This data is drawn from the replication code provided by the authors. We have translated the code from Stata to R, and the time series represented in the figure below relies on the methodology outlined by Mukoyama et al. We indicate in the caption and legend where we have incorporated new data by extending the time series to include additional years or applied an alternative weighting scheme to the data to account for missing data. The citation for this work can be found in the bibliography of the main text.
 
-*Abstract: We examine the cyclicality of search effort using
-time-series, cross-state, and individual variation and find that it is
-countercyclical. We then set up a search and matching model with
-endogenous search effort and show that search effort does not amplify
-labor market fluctuations but rather dampens them. Lastly, we examine
-the role of search effort in driving recent unemployment dynamics and
-show that the unemployment rate would have been 0.5 to 1 percentage
-points higher in the 2008–2014 period had search effort not increased.*
+![Mukoyama Validation Series](Mukoyama_Replication/intensive_search_margin.png)
 
-```{r mukoyama, echo = FALSE, fig.height = 8, fig.width = 10, cache = FALSE}
+```{r mukoyama, echo = FALSE, include = FALSE, fig.height = 8, fig.width = 10}
 
 source(here("data/behav_params/Mukoyama_Replication/mukoyama_replication_analysis.R"))
 
