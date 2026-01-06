@@ -50,7 +50,7 @@ if(new_data){
     df <- readRDS(here("data/occ_macro_vars/OEWS/occ_ind_employment_compiled.RDS"))
   }
 
-print(paste0("Calculating occupational TD for ", nx,"."))
+#print(paste0("Calculating occupational TD for ", nx,"."))
 
 # ABM gets input from occ_td_setting
 
@@ -82,7 +82,7 @@ temp %>%
   common_theme +
   theme(legend.position = "none") -> p1
 
-print(p1)
+#print(p1)
 
 temp %>% 
   group_by(occ_code, naics, naics_title) %>% 
@@ -212,7 +212,7 @@ mean_shares %>%
     x = "Industry (NAICS title)",
     y = "Occupation (SOC code)",
     title = "Occupation–Industry Employment Shares",
-    subtitle = "The colors display the share of total occupational employment in each industry.\nIndustries are ordered by the total number of occupations they employ in ascending order.\nDisplay only those occupations whose industrial-level employment share is at least 5%."
+    subtitle = "The colors display the share of total occupational employment in each industry.\nIndustries are ordered by the total number of occupations they employ in ascending order.\nWe display only those occupations whose industrial-level employment share is at least 5%."
   ) -> p6
 
 print(p6)
@@ -243,5 +243,5 @@ mean_shares_for_bind <- mean_shares %>%
   ungroup %>% 
   left_join(., codes, by = "naics_title") 
 
-print(abm %>% filter(!(SOC2010 %in% c(mean_shares_for_bind$occ_code))))
+#print(abm %>% filter(!(SOC2010 %in% c(mean_shares_for_bind$occ_code))))
 
