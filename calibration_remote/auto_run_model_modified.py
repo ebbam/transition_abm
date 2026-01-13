@@ -64,7 +64,7 @@ suffix = ""
 
 complete_nw = False
 steady_state_run = False
-dropbox = False
+dropbox = True
 
 # ============================================================================
 # MULTI-SIMULATION CONFIGURATION
@@ -200,7 +200,7 @@ else:
     cached_output_path = 'output/cos_calib/'
 
 
-for nw in ["full_omn", "single_node", "onet", "onet_wage_asym"]: 
+for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]: 
     print(nw)  
     which_params = f'cos_calib/{nw}/'
     for run in ["base", "covid_oos"]:#, "steady_state"]:

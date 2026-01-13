@@ -35,6 +35,7 @@ def run_single_local(d_u,
                     theta,
                     mistake_rate,
                     strict_rw,
+                    dumb_hire,
                     simple_res = False):
 
     """ Runs the model once
@@ -224,18 +225,24 @@ def run_single_local(d_u,
         ### HIRING
         # Ordering of hiring randomised to ensure list order does not matter in filling vacancies...
         for v_open in sorted(vacs_temp,key=lambda _: random.random()):
-            # Removes any applicants that have already been hired in another vacancy
-            v_open.applicants[:] = [app for app in v_open.applicants if not(app.hired)]
+            if dumb_hire:
+                # Removes any applicants that have already been hired in another vacancy
+                v_open.applicants[:] = [app for app in v_open.applicants if not(app.hired)]
+            
             v_open.time_open += 1
             if len(v_open.applicants) > 0:
-                ret = v_open.hire(net)
-                v_open.filled = True
-                assert(len(v_open.applicants) == 0)
+                ret = v_open.hire(net, dumb_hire)
+                # If hire() succeeded (didn't return None on first line)
                 if ret is not None:
+                    # Hire was successful
+                    v_open.filled = True
+                    
+                    # Record UE spell only if this was a UE→E hire (not EE→E)
                     origin_occ, dest_occ, ue_dur = ret
-                    ue_spell_records.append((t+1, origin_occ, dest_occ, ue_dur))
-            else:
-                pass
+                    if origin_occ is not None and dest_occ is not None and ue_dur is not None:
+                        ue_spell_records.append((t+1, origin_occ, dest_occ, ue_dur))
+            assert(len(v_open.applicants) == 0)
+
 
         # Close a vacancy after it's been open for 6 months
         vacs_temp = [v for v in vacs_temp if not(v.filled) and v.time_open < 6] 
