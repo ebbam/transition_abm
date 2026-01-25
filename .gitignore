@@ -370,3 +370,4 @@ data/behav_params/Eeckhout_Replication/.RData
 /calibration_remote/output/occ_seps_rates
 *.pkl
 .RData
+/calibration_remote/output/cos_calib_smart_hire_2

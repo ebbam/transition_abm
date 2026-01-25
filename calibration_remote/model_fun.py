@@ -144,11 +144,13 @@ def run_single_local(d_u,
                             age=e.age,
                             # Taken from calculated competition metric for occupation
                             comp=occ.competition_last,
-                            alpha=-1.58,     # tune baseline
-                            beta_A=-0.05,  # age effect
+                            alpha=-4,     # tune baseline
+                            beta_A=0,  # age effect
                             beta_C=theta,    # competition effect
                             A0=40.0
                         )
+                        if occ.competition_last > 1:
+                            raise KeyError("competition value > 1")
                         #print(f'Search Probability: {prob}')
                         if np.random.random() < prob:
                             emp_seekers += 1
@@ -183,6 +185,7 @@ def run_single_local(d_u,
             (t+1, v.occupation_id, 
              # All applicants
              len(v.applicants), 
+            1.0 / len(v.applicants) if len(v.applicants) > 0 else 1.0,  # ADD THIS: VacsPerApp for each vacancy
              # Only unemployed applicants
             len([app for app in v.applicants if app.time_unemployed != 0]), 
             # Only employed applicants
@@ -190,23 +193,30 @@ def run_single_local(d_u,
             for v in vacs_temp
         ]
         if app_load_rows:  # only if there are vacancies
-            app_load_step = pd.DataFrame(app_load_rows, columns=['Time Step', 'Occupation', 'ApplicantsPerVac', 'UnempApplicantsPerVac', 'EmpApplicantsPerVac'])
+            app_load_step = pd.DataFrame(app_load_rows, columns=['Time Step', 'Occupation', 'ApplicantsPerVac', 'VacsPerApp', 'UnempApplicantsPerVac', 'EmpApplicantsPerVac'])
             app_load_agg = app_load_step.groupby(['Time Step', 'Occupation']).agg(
                 OpenVacs=('ApplicantsPerVac', 'size'),
                 TotalApplicants=('ApplicantsPerVac', 'sum'),
                 MeanAppsPerVac=('ApplicantsPerVac', 'mean'),
                 MedianAppsPerVac=('ApplicantsPerVac', 'median'),
-                TotalUnempAppsPerVac=('UnempApplicantsPerVac', 'sum')
-            ).reset_index()
-            app_load_agg['MeanUnempAppsPerVac'] = app_load_agg['TotalUnempAppsPerVac'] / app_load_agg['TotalApplicants']
+                TotalUnempAppsPerVac=('UnempApplicantsPerVac', 'sum'),
+                MeanVacsPerApp=('VacsPerApp', 'mean')  # ADD THIS: Mean of 1/applicants
 
-            # Find level of competition in neighboring occupations in the network
-            app_load_agg['AppsPerVac'] = app_load_agg.apply(
-                lambda r: (r['TotalApplicants'] / r['OpenVacs'])
-                        if r['OpenVacs'] > 0 else np.nan,
-                axis=1
-            )
-            comp_map = dict(zip(app_load_agg['Occupation'], app_load_agg['AppsPerVac']))
+            ).reset_index()
+            # app_load_agg['MeanUnempAppsPerVac'] = app_load_agg['TotalUnempAppsPerVac'] / app_load_agg['TotalApplicants']
+
+            # # Find level of competition in neighboring occupations in the network
+            # app_load_agg['AppsPerVac'] = app_load_agg.apply(
+            #     lambda r: (r['TotalApplicants'] / r['OpenVacs'])
+            #             if r['OpenVacs'] > 0 else np.nan,
+            #     axis=1
+            # )
+            # app_load_agg['VacsPerApp'] = app_load_agg.apply(
+            #     lambda r: (r['OpenVacs'] / r['TotalApplicants'])
+            #             if r['TotalApplicants'] > 0 else 0.99,
+            #     axis=1)
+            
+            comp_map = dict(zip(app_load_agg['Occupation'], app_load_agg['MeanVacsPerApp']))
 
             # Assign to occupations for use in next step
             for occ in net:

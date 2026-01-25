@@ -14,11 +14,21 @@ import pyabc
 from network_input_builder import *
 path = "~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/"
 dropbox = True
+
 if dropbox:
-    dropbox_path = "~/Dropbox/Apps/Overleaf/ABM_Transitions/new_figures/"
+    dropbox_path = f"~/Dropbox/Apps/Overleaf/ABM_Transitions/new_figures/"
 else:
     dropbox_path = ""
 
+prefix = "cos_calib_smart_hire_3/"
+if "smart_hire" in prefix:
+    add_suffix = "smart_hire"
+    print(add_suffix)
+else:
+    add_suffix = ""
+
+if add_suffix != "smart_hire":
+    raise KeyError
 
 # %%
 
@@ -37,8 +47,11 @@ def load_model_distribution(db_path):
     w: 1D numpy array of weights aligned with df.index
     """
     # --- PLACEHOLDER: replace with your actual loader ---
-    history = pyabc.History("sqlite:///" + f"output/{prefix}{which_params}/{name}.db")
-    print(f"output/{prefix}{which_params}/{name}.db")
+    #history1 = pyabc.History("sqlite:///" + f"output/{prefix}{which_params}/{name}{add_suffix}.db")
+    #latest_run_id = history1._find_latest_id()
+    #print(latest_run_id)
+    history = pyabc.History("sqlite:///" + f"output/{prefix}{which_params}/{name}{add_suffix}.db")
+    print(f"output/{prefix}{which_params}/{name}{add_suffix}.db")
     df, w = history.get_distribution(t=history.max_t)
     if len(df) == 0:
         print(f'{name} empty')
@@ -113,8 +126,8 @@ models = [
     "otj_cyclical_e_disc_no_rw",
     "otj_disc",
     "otj_cyclical_e_disc",
-    "otj_disc_strict_rw",
-    "otj_cyclical_e_disc_strict_rw"
+    #"otj_disc_strict_rw",
+    #"otj_cyclical_e_disc_strict_rw"
 ]
 
 name_map = {
@@ -122,17 +135,15 @@ name_map = {
         "otj_nonbehav": "Non-behavioural w. OTJ",
         "otj_cyclical_e_disc": "Behavioural w. Cyc. OTJ w. RW",
         "otj_disc": "Behavioural w.o. Cyc. OTJ w. RW",
-        "otj_disc_strict_rw": "Behavioural w.o. Cyc. OTJ w. Strict RW",
-        "otj_cyclical_e_disc_strict_rw": "Behavioural w. Cyc. OTJ w. Strict RW",
+       # "otj_disc_strict_rw": "Behavioural w.o. Cyc. OTJ w. Strict RW",
+       # "otj_cyclical_e_disc_strict_rw": "Behavioural w. Cyc. OTJ w. Strict RW",
         "otj_cyclical_e_disc_no_rw": "Behavioural w. Cyc. OTJ w.o RW",
         "otj_disc_no_rw": "Behavioural w.o. Cyc. OTJ w.o RW"
     }
 
 colors = dict(zip(models, my_colors))
 
-prefix = "cos_calib/"
-
-for which_params in ["full_omn", "single_node", "onet", "onet_wage_asym"]: 
+for which_params in ["full_omn", "single_node"]:#, "onet", "onet_wage_asym"]: 
     if which_params == "onet":
         nw_label = "ONET"
     elif which_params == "full_omn":
@@ -168,7 +179,7 @@ for which_params in ["full_omn", "single_node", "onet", "onet_wage_asym"]:
     theta_max += limit_buffer
     
     if dropbox:
-        out_dir = os.path.expanduser(f"~/Dropbox/Apps/Overleaf/ABM_Transitions/new_figures/{which_params}")
+        out_dir = os.path.expanduser(f"~/Dropbox/Apps/Overleaf/ABM_Transitions/new_figures/{prefix}{which_params}")
     else:
         out_dir = f'output/{prefix}{which_params}/figures/calib_figures/'
         os.makedirs(out_dir, exist_ok=True)
@@ -196,7 +207,7 @@ for which_params in ["full_omn", "single_node", "onet", "onet_wage_asym"]:
     ax.set_title(f"KDE: $\\delta_u$ vs. $\\gamma_u$ (all models)\nNetwork: {nw_label}", fontsize = 16)
     fig.legend(loc="lower center", ncol = 3)
     plt.tight_layout(rect=[0, 0.08, 1, 1])  # leave space at bottom for legend
-    #plt.tight_layout()
+    #plt.tight_layout()dash
     plt.savefig(os.path.join(out_dir, "all_models_du_vs_gu.png"), dpi=300)
     #plt.show()
     plt.close(fig)
@@ -283,6 +294,7 @@ for which_params in ["full_omn", "single_node", "onet", "onet_wage_asym"]:
         elif var == "gamma_u":
             ax.set_title(r"$\gamma_u$", fontsize = 16)
         elif var == "theta":
+            print(np.average(df[var].values, weights=w))
             ax.set_title(r"$\beta_C$", fontsize = 16)
         ax.set_xlabel(None)
         ax.set_xlim()

@@ -65,6 +65,15 @@ suffix = ""
 complete_nw = False
 steady_state_run = False
 dropbox = True
+calib_source_folder = "cos_calib_smart_hire_3"
+if calib_source_folder == "cos_calib_smart_hire_3":
+    suffix = "smart_hire"
+    dumb_hire_spec = False
+elif calib_source_folder == "cos_calib":
+    suffix = ""
+    dumb_hire_spec = True
+else: 
+    raise KeyError("Need to specify a dumb_hire_spec with the param source folder!.")
 
 # ============================================================================
 # MULTI-SIMULATION CONFIGURATION
@@ -193,17 +202,17 @@ def run_model_multiple_times(model_name, base_params, calib_params,
 
 # Rest of the file continues exactly as before...
 if dropbox:
-    output_prefix = "~/Dropbox/Apps/Overleaf/ABM_Transitions/new_figures/"
-    cached_output_path = 'output/cos_calib/'
+    output_prefix = f"~/Dropbox/Apps/Overleaf/ABM_Transitions/new_figures/{calib_source_folder}/"
+    cached_output_path = f'output/{calib_source_folder}/'
 else:
-    output_prefix = 'output/cos_calib/'
-    cached_output_path = 'output/cos_calib/'
+    output_prefix = f'output/{calib_source_folder}/'
+    cached_output_path = f'output/{calib_source_folder}/'
 
 
-for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]: 
+for nw in ["full_omn","single_node"]: #, "onet", "onet_wage_asym"]: 
     print(nw)  
-    which_params = f'cos_calib/{nw}/'
-    for run in ["base", "covid_oos"]:#, "steady_state"]:
+    which_params = f'{calib_source_folder}/{nw}/'
+    for run in ["base", 'covid_oos']:
         print(run)
         if run == "covid_oos":
            calib_date = ["2000-12-01", "2024-05-01"]
@@ -246,8 +255,8 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
             "otj_nonbehav": "Non-behavioural w. OTJ",
             "otj_cyclical_e_disc": "Behavioural w. Cyc. OTJ w. RW",
             "otj_disc": "Behavioural w.o. Cyc. OTJ w. RW",
-            "otj_disc_strict_rw": "Behavioural w.o. Cyc. OTJ w. Strict RW",
-            "otj_cyclical_e_disc_strict_rw": "Behavioural w. Cyc. OTJ w. Strict RW",
+            #"otj_disc_strict_rw": "Behavioural w.o. Cyc. OTJ w. Strict RW",
+            #"otj_cyclical_e_disc_strict_rw": "Behavioural w. Cyc. OTJ w. Strict RW",
             "otj_cyclical_e_disc_no_rw": "Behavioural w. Cyc. OTJ w.o RW",
             "otj_disc_no_rw": "Behavioural w.o. Cyc. OTJ w.o RW"
         }
@@ -258,26 +267,28 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
             "Behavioural w. Cyc. OTJ w.o RW",
             "Behavioural w.o. Cyc. OTJ w.o RW",
             "Behavioural w. Cyc. OTJ w. RW",
-            "Behavioural w.o. Cyc. OTJ w. RW",
-            "Behavioural w. Cyc. OTJ w. Strict RW",
-            "Behavioural w.o. Cyc. OTJ w. Strict RW"
+            "Behavioural w.o. Cyc. OTJ w. RW"#,
+            #"Behavioural w. Cyc. OTJ w. Strict RW",
+            #"Behavioural w.o. Cyc. OTJ w. Strict RW"
         ]
 
-
-        params_to_latex(
-            param_df,
-            out_tex_path=f"{output_path}params_table.tex",
-            param_col="Parameter",
-            value_col="Value",
-            model_col="model_cat",
-            timestamp_col="Timestamp",
-            model_name_map=name_map,
-            desired_model_order=desired_order,
-            decimals=3
-        )
+        if run == "base":
+            params_to_latex(
+                param_df,
+                out_tex_path=f"{output_path}params_table.tex",
+                param_col="Parameter",
+                value_col="Value",
+                model_col="model_cat",
+                timestamp_col="Timestamp",
+                model_name_map=name_map,
+                desired_model_order=desired_order,
+                decimals=3,
+                label_suffix = nw
+            )
 
         params = {
             'mod_data': mod_data,
+            'dumb_hire': dumb_hire_spec,
             'net_temp': net_temp,
             'vacs': vacs,
             'time_steps': occ_shocks_dat.shape[1],
@@ -424,16 +435,16 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
                                     "bus_confidence_dat": gdp_dat,
                                     "vac_data": vac_dat,
                                     'strict_rw': False},
-                        "otj_cyclical_e_disc_strict_rw": {"otj": True,
-                                    "cyc_otj": True, 
-                                    "cyc_ue": False, 
-                                    "disc": True,
-                                    "delay": 25,
-                                    'emp_apps': 1,
-                                    'wage_prefs': True,
-                                    "bus_confidence_dat": gdp_dat,
-                                    "vac_data": vac_dat,
-                                    'strict_rw': True},
+                        # "otj_cyclical_e_disc_strict_rw": {"otj": True,
+                        #             "cyc_otj": True, 
+                        #             "cyc_ue": False, 
+                        #             "disc": True,
+                        #             "delay": 25,
+                        #             'emp_apps': 1,
+                        #             'wage_prefs': True,
+                        #             "bus_confidence_dat": gdp_dat,
+                        #             "vac_data": vac_dat,
+                        #             'strict_rw': True},
                         "otj_cyclical_e_disc_no_rw": {"otj": True,
                                     "cyc_otj": True, 
                                     "cyc_ue": False, 
@@ -454,16 +465,16 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
                                     "bus_confidence_dat": gdp_dat,
                                     "vac_data": vac_dat,
                                     'strict_rw': False},
-                        "otj_disc_strict_rw": {"otj": True,
-                                    "cyc_otj": False, 
-                                    "cyc_ue": False, 
-                                    "disc": True,
-                                    "delay": 25,
-                                    'emp_apps': 1,
-                                    'wage_prefs': True,
-                                    "bus_confidence_dat": gdp_dat,
-                                    "vac_data": vac_dat,
-                                    'strict_rw': True},
+                        # "otj_disc_strict_rw": {"otj": True,
+                        #             "cyc_otj": False, 
+                        #             "cyc_ue": False, 
+                        #             "disc": True,
+                        #             "delay": 25,
+                        #             'emp_apps': 1,
+                        #             'wage_prefs': True,
+                        #             "bus_confidence_dat": gdp_dat,
+                        #             "vac_data": vac_dat,
+                        #             'strict_rw': True},
                         "otj_disc_no_rw": {"otj": True,
                                     "cyc_otj": False, 
                                     "cyc_ue": False, 
@@ -751,6 +762,36 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
                     suffix = "single")
 
         else:
+            seekers_comp_obs_full = pd.read_csv('../data/behav_params/Eeckhout_Replication/comp_searchers_s_series_abm_validation.csv')
+
+            # Map quarters to first day of quarter
+            quarter_map = {"Q1": "-01-01", "Q2": "-04-01", "Q3": "-07-01", "Q4": "-10-01"}
+
+            # Convert quarterly to monthly time series and interpolate missing values
+
+            # Replace and convert
+            seekers_comp_obs_full['DATE'] = (
+                seekers_comp_obs_full['date']
+                .replace(quarter_map, regex=True)
+                .pipe(pd.to_datetime)
+            )
+
+            # Set DATE as index for resampling
+            seekers_comp_obs_full = seekers_comp_obs_full.set_index('DATE')
+
+            # Resample to monthly frequency, keeping the value at the start of each quarter
+            monthly = seekers_comp_obs_full.resample('MS').asfreq()
+
+            # Interpolate missing values linearly
+            monthly['comp_searchers_s'] = monthly['comp_searchers_s'].interpolate(method='linear')
+
+            # Reset index to restore DATE as a column
+            seekers_comp_obs_full = monthly.reset_index()
+
+            seekers_comp_obs_full = seekers_comp_obs_full.rename(columns={"comp_searchers_s": "Seeker Composition"})
+            seekers_comp_obs_full['DATE'] = pd.to_datetime(seekers_comp_obs_full['DATE'])
+            seekers_comp_obs = seekers_comp_obs_full[(seekers_comp_obs_full['DATE'] >= calib_date[0]) & (seekers_comp_obs_full['DATE'] <= calib_date[1])]
+
             ###############################################################################################################
             #################### UER-Vac w Error ##########################################################################
             ###############################################################################################################
@@ -779,8 +820,8 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
             #################### Beveridge Curve ##########################################################################
             ###############################################################################################################
             plot_bev_curve_color(filtered_model_results, observation, 
-                    sep_strings=sep_strings_filtered, 
-                        sep=True, save=save_button, path=output_path, smooth = 3, viridis_color = 'magma')
+                    #sep_strings=sep_strings_filtered, 
+                        sep=False, save=save_button, path=output_path, smooth = 3, viridis_color = 'magma')
             
 
             ###############################################################################################################
@@ -873,12 +914,16 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
                 # Load your yearly survey data
                 survey_df = pd.read_csv("data/ltuer_cps_data.csv")
 
+                if run == "covid_oos":
+                    survey_reference_year = 2024
+                elif run == "base":
+                    survey_reference_year = 2019
                 # Use specific year
                 plot_ltuer_cdf_with_observed(
                     net_dict=filtered_net_results,
                     names=list(filtered_net_results.keys()),
                     survey_df=survey_df,
-                    survey_year=2020,  # Changed from survey_date
+                    survey_year=survey_reference_year,  # Changed from survey_date
                     save=True,
                     path=output_path,
                     colors=plot_colors
@@ -1322,7 +1367,7 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
                 ###############################################################################################################
                 #################### TS Metrics Table #########################################################################
                 ###############################################################################################################
-                if run == "base":
+                if run in ["base", "covid_oos"]:
                     mukoyama_obs_full = pd.read_csv('../data/behav_params/Mukoyama_Replication/monthly_search_ts.csv')
                     mukoyama_obs_full['DATE'] = mukoyama_obs_full['year'].astype(str) + "-" + mukoyama_obs_full['month'].astype(str).str.zfill(2)  + "-01"
 
@@ -1335,7 +1380,6 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
                     plt.title("Mukoyama Imputed Search Effort - Raw & Smoothed Minutes")
                     plt.close()
 
-
                     # %%
                     comp_series = observation
                     jolts_obs = jolts[(jolts['DATE'] >= calib_date[0]) & (jolts['DATE'] <= calib_date[1])].reset_index()
@@ -1346,14 +1390,30 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
                     comp_series = comp_series.merge(mukoyama_obs, on = 'DATE')
                     comp_series = comp_series.merge(seekers_comp_obs, on = 'DATE', how = 'left')
 
-                    def compute_time_series_metrics(res_dict, seekers_info_dict, obs_dict, variables):
+
+                    def compute_time_series_metrics(res_dict, seekers_info_dict, obs_dict, variables, oos = False):
+                        if oos:
+                            obs_dict = obs_dict[(obs_dict['DATE'] >= "2019-05-01") & (obs_dict['DATE'] <= calib_date[1])].reset_index()
+                            print(len(obs_dict))
                         rows = []
                         for model_name, sim_df in res_dict.items():
+                            if oos:
+                                sim_df = sim_df[(sim_df['DATE'] >= "2019-05-01") & (sim_df['DATE'] <= calib_date[1])].reset_index()
+                                print(len(sim_df))
                             for var in variables:
+                                print(var)
                                 if var == "Application Effort (U)":
-                                    sim_series = seekers_info_dict[model_name][var].values if var in seekers_info_dict[model_name] else None
+                                    if oos:
+                                        sim_df_temp = seekers_info_dict[model_name]
+                                        sim_df_temp = sim_df_temp[(sim_df_temp['DATE'] >= "2019-05-01") & (sim_df_temp['DATE'] <= calib_date[1])].reset_index()
+                                        print(len(sim_df_temp))
+                                    else:
+                                        sim_df_temp = seekers_info_dict[model_name]
+                                    sim_series = sim_df_temp[var].values if var in sim_df_temp else None
                                 else:
+                                    print(sim_df.columns)
                                     sim_series = sim_df[var].values if var in sim_df else None
+                                print(sim_series)
                                 obs_series = obs_dict[var].values if var in obs_dict else None
                                 # TRIM ALL SIMULATED SERIES TO MATCH OBSERVED LENGTH
                                 if sim_series is not None and obs_series is not None and len(sim_series) != len(obs_series):
@@ -1377,8 +1437,8 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
                                     row = {
                                         'Model': model_name,
                                         'Variable': var,
-                                        'Mean (Sim)': round(float(np.mean(sim_series)), 3),
-                                        'Mean (Obs)': round(float(np.mean(obs_series)), 3),
+                                        'Sim. Mean': round(float(np.mean(sim_series)), 3),
+                                        'Obs. Mean': round(float(np.mean(obs_series)), 3),
                                         #'Variance (Sim)': round(float(np.var(sim_series)), 3),
                                         #'Variance (Obs)': round(float(np.var(obs_series)), 3),
                                         'SSE': round(float(np.sum((sim_series - obs_series) ** 2)), 3),
@@ -1390,6 +1450,10 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
 
                     BEST_COLOR = "yellow!25"
                     EXCELLENT_COLOR = "red!25"
+                    BEST_GREY = "black!30"
+                    EXCELLENT_GREY = "black!15"
+
+
 
                     def _fmt_num(x):
                         return "--" if pd.isna(x) else f"{x:.3f}"
@@ -1414,7 +1478,7 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
 
                         # columns we may format
                         metric_cols = [
-                            "Mean (Sim)", "Mean (Obs)",
+                            "Sim. Mean", "Obs. Mean",
                             "Variance (Sim)", "Variance (Obs)",
                             "SSE", "Correlation"
                         ]
@@ -1445,19 +1509,28 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
                                 
                                     # Color the best
                                     raw_val = mean_sim.loc[best_idx]
-                                    df.loc[best_idx, "Mean (Sim)"] = _color_val(raw_val, EXCELLENT_COLOR if is_excellent else BEST_COLOR)
-                                
+                                    if var == "UER" or var == 'Unemployment Rate':
+                                        df.loc[best_idx, "Mean (Sim)"] = _color_val(raw_val, EXCELLENT_GREY if is_excellent else BEST_GREY)
+                                    else:
+                                        df.loc[best_idx, "Mean (Sim)"] = _color_val(raw_val, EXCELLENT_COLOR if is_excellent else BEST_COLOR)
+
                                     # Color others within threshold (yellow only)
                                     threshold = best_diff * (1 + threshold_pct)
                                     for idx in valid_diffs.index:
                                         if idx != best_idx and diffs.loc[idx] <= threshold:
                                             raw_val = mean_sim.loc[idx]
-                                            df.loc[idx, "Mean (Sim)"] = _color_val(raw_val, BEST_COLOR)
+                                            if var == "UER" or var == 'Unemployment Rate':
+                                                df.loc[idx, "Mean (Sim)"] = _color_val(raw_val, BEST_GREY)
+                                            else:
+                                                df.loc[idx, "Mean (Sim)"] = _color_val(raw_val, BEST_COLOR)
                                 elif len(valid_diffs) == 1:
                                     # Only one value - make it yellow
                                     idx = valid_diffs.index[0]
                                     raw_val = mean_sim.loc[idx]
-                                    df.loc[idx, "Mean (Sim)"] = _color_val(raw_val, BEST_COLOR)
+                                    if var == "UER" or var == 'Unemployment Rate':
+                                        df.loc[idx, "Mean (Sim)"] = _color_val(raw_val, BEST_GREY)
+                                    else:
+                                        df.loc[idx, "Mean (Sim)"] = _color_val(raw_val, BEST_COLOR)
 
                             # Variance difference -> color Variance (Sim)
                             if {"Variance (Sim)", "Variance (Obs)"}.issubset(sub.columns):
@@ -1474,17 +1547,26 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
                                     is_excellent = second_best > best_diff * (1 + threshold_pct)
                                 
                                     raw_val = var_sim.loc[best_idx]
-                                    df.loc[best_idx, "Variance (Sim)"] = _color_val(raw_val, EXCELLENT_COLOR if is_excellent else BEST_COLOR)
+                                    if var == 'UER':
+                                        df.loc[best_idx, "Variance (Sim)"] = _color_val(raw_val, EXCELLENT_GREY if is_excellent else BEST_GREY)
+                                    else:
+                                        df.loc[best_idx, "Variance (Sim)"] = _color_val(raw_val, EXCELLENT_COLOR if is_excellent else BEST_COLOR)
                                 
                                     threshold = best_diff * (1 + threshold_pct)
                                     for idx in valid_diffs.index:
                                         if idx != best_idx and diffs.loc[idx] <= threshold:
                                             raw_val = var_sim.loc[idx]
-                                            df.loc[idx, "Variance (Sim)"] = _color_val(raw_val, BEST_COLOR)
+                                            if var == "UER" or var == 'Unemployment Rate':
+                                                df.loc[idx, "Variance (Sim)"] = _color_val(raw_val, BEST_GREY)
+                                            else:
+                                                df.loc[idx, "Variance (Sim)"] = _color_val(raw_val, BEST_COLOR)
                                 elif len(valid_diffs) == 1:
                                     idx = valid_diffs.index[0]
                                     raw_val = var_sim.loc[idx]
-                                    df.loc[idx, "Variance (Sim)"] = _color_val(raw_val, BEST_COLOR)
+                                    if var == "UER" or var == 'Unemployment Rate':
+                                        df.loc[idx, "Variance (Sim)"] = _color_val(raw_val, BEST_GREY)
+                                    else:
+                                        df.loc[idx, "Variance (Sim)"] = _color_val(raw_val, BEST_COLOR)
 
                             # SSE -> lowest wins
                             if "SSE" in sub.columns:
@@ -1501,18 +1583,27 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
                                 
                                     # Color the best
                                     raw_val = float(sse.loc[best_idx])
-                                    df.loc[best_idx, "SSE"] = _color_val(raw_val, EXCELLENT_COLOR if is_excellent else BEST_COLOR)
+                                    if var == "UER" or var == 'Unemployment Rate':
+                                        df.loc[best_idx, "SSE"] = _color_val(raw_val, EXCELLENT_GREY if is_excellent else BEST_GREY)
+                                    else:
+                                        df.loc[best_idx, "SSE"] = _color_val(raw_val, EXCELLENT_COLOR if is_excellent else BEST_COLOR)
                                 
                                     # Color others within threshold (yellow only)
                                     threshold = best_sse * (1 + threshold_pct)
                                     for idx in valid_sse.index:
                                         if idx != best_idx and sse.loc[idx] <= threshold:
                                             raw_val = float(sse.loc[idx])
-                                            df.loc[idx, "SSE"] = _color_val(raw_val, BEST_COLOR)
+                                            if var == "UER" or var == 'Unemployment Rate':
+                                                df.loc[idx, "SSE"] = _color_val(raw_val, BEST_GREY)
+                                            else:
+                                                df.loc[idx, "SSE"] = _color_val(raw_val, BEST_COLOR)
                                 elif len(valid_sse) == 1:
                                     idx = valid_sse.index[0]
                                     raw_val = float(sse.loc[idx])
-                                    df.loc[idx, "SSE"] = _color_val(raw_val, BEST_COLOR)
+                                    if var == "UER" or var == 'Unemployment Rate':
+                                        df.loc[idx, "SSE"] = _color_val(raw_val, BEST_GREY)
+                                    else:
+                                        df.loc[idx, "SSE"] = _color_val(raw_val, BEST_COLOR)
 
                             # Correlation -> highest wins
                             if "Correlation" in sub.columns:
@@ -1529,27 +1620,36 @@ for nw in ["single_node"]:#, #"full_omn", "onet", "onet_wage_asym"]:
                                 
                                     # Color the best
                                     raw_val = float(corr.loc[best_idx])
-                                    df.loc[best_idx, "Correlation"] = _color_val(raw_val, EXCELLENT_COLOR if is_excellent else BEST_COLOR)
+                                    if var == "UER" or var == 'Unemployment Rate':
+                                        df.loc[best_idx, "Correlation"] = _color_val(raw_val, EXCELLENT_GREY if is_excellent else BEST_GREY)
+                                    else:
+                                        df.loc[best_idx, "Correlation"] = _color_val(raw_val, EXCELLENT_COLOR if is_excellent else BEST_COLOR)
                                 
                                     # Color others within threshold (yellow only)
                                     threshold = best_corr * (1 - threshold_pct)
                                     for idx in valid_corr.index:
                                         if idx != best_idx and corr.loc[idx] >= threshold:
                                             raw_val = float(corr.loc[idx])
-                                            df.loc[idx, "Correlation"] = _color_val(raw_val, BEST_COLOR)
+                                            if var == "UER" or var == 'Unemployment Rate':
+                                                df.loc[idx, "Correlation"] = _color_val(raw_val, BEST_GREY)
+                                            else:
+                                                df.loc[idx, "Correlation"] = _color_val(raw_val, BEST_COLOR)
                                 elif len(valid_corr) == 1:
                                     idx = valid_corr.index[0]
                                     raw_val = float(corr.loc[idx])
-                                    df.loc[idx, "Correlation"] = _color_val(raw_val, BEST_COLOR)
+                                    if var == "UER" or var == 'Unemployment Rate':
+                                        df.loc[idx, "Correlation"] = _color_val(raw_val, BEST_GREY)
+                                    else:
+                                        df.loc[idx, "Correlation"] = _color_val(raw_val, BEST_COLOR)
 
                         return df
 
-                    print(filtered_model_results['Non-behavioural']['VACRATE'])
                     # ---- use it ----
                     ts_table = compute_time_series_metrics(
                         filtered_model_results, seekers_recs, comp_series,
-                        ['VACRATE','UER','LTUER',"Hires Rate","Separations Rate",
-                        'UE_Trans_Rate','EE_Trans_Rate','Application Effort (U)','Seeker Composition']
+                        ['LTUER',"Hires Rate","Separations Rate", # 'VACRATE','UER',
+                        'UE_Trans_Rate','EE_Trans_Rate','Application Effort (U)','Seeker Composition'], 
+                        oos = run == "covid_oos"
                     )
 
                     # Map raw variable names to pretty/display names (minimal change)

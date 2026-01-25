@@ -298,7 +298,7 @@ def network_input_builder(nx, complete, calib_date):
         plt.title("Occupation-Specific Demand Shocks")
         plt.xticks(rotation=45)
         plt.grid()
-        plt.savefig(os.path.expanduser("~/Dropbox/Apps/Overleaf/ABM_Transitions/new_figures/full_omn/figures/occupational_va_shocks.png"), bbox_inches='tight', 
+        plt.savefig(os.path.expanduser("~/Dropbox/Apps/Overleaf/ABM_Transitions/new_figures/cos_calib_cached/full_omn/figures/occupational_va_shocks.png"), bbox_inches='tight', 
             pad_inches=0.1, dpi=300)
         plt.close()
 
