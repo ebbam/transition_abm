@@ -763,5 +763,116 @@ def p_search_logit(age, comp, *, alpha=0.0, beta_A=0.05, beta_C=-0.8, beta_CA=0.
     """
     logit_val = (alpha
                  + beta_A * (age - A0)
-                 - beta_C * comp)
+                 + beta_C * comp)
     return _sigmoid(logit_val)
+
+def test_p_search_logit():
+    """Unit test for search probability function"""
+    age = 40
+    beta_C_positive = 0.8  # Positive effect (new model)
+    
+    # Test 1: Higher comp → higher probability (with positive beta_C)
+    prob_low = p_search_logit(age, comp=0.1, alpha=-1.58, beta_A=-0.05, beta_C=beta_C_positive)
+    prob_high = p_search_logit(age, comp=0.5, alpha=-1.58, beta_A=-0.05, beta_C=beta_C_positive)
+    assert prob_high > prob_low, f"Higher comp should increase prob: {prob_low:.4f} vs {prob_high:.4f}"
+    
+    # Test 2: Edge cases
+    prob_zero = p_search_logit(age, comp=0.0, alpha=-1.58, beta_A=-0.05, beta_C=beta_C_positive)
+    prob_one = p_search_logit(age, comp=1.0, alpha=-1.58, beta_A=-0.05, beta_C=beta_C_positive)
+    assert prob_one > prob_zero, "comp=1.0 should give higher prob than comp=0.0"
+    
+    # Test 3: Probability bounds
+    assert 0 <= prob_low <= 1, "Probability must be in [0,1]"
+    assert 0 <= prob_high <= 1, "Probability must be in [0,1]"
+    
+    print("search function test passed!")
+
+# Run test
+test_p_search_logit()
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+def _sigmoid(x):
+    if x < -709:
+        return 0.0
+    elif x > 709:
+        return 1.0
+    else:
+        return 1.0 / (1.0 + np.exp(-x))
+
+def p_search_logit(age, comp, *, alpha=0.0, beta_A=0.05, beta_C=-0.8, beta_CA=0.0, A0=40.0):
+    """
+    Logit p = alpha + beta_A*(age-A0) + beta_C*comp + beta_CA*comp*(age-A0)
+    """
+    logit_val = (alpha + beta_A * (age - A0) + beta_C * comp)
+    return _sigmoid(logit_val)
+
+# Parameters from your model
+alpha = -4
+beta_A = 0
+A0 = 40.0
+
+# Competition range (VacsPerApp: 0 to 1)
+comp_range = np.linspace(0, 1, 100)
+
+# Different theta (beta_C) values to test
+theta_values = [1.0, 1.5, 2.0, 2.5, 3, 3.5, 4, 5.0]
+#theta_values = [0.1, 0.25, 0.5, 0.75, 0.9]
+
+
+# Different ages to show age effects
+ages = [30, 40, 50]
+
+# Create figure with two subplots
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+# Panel 1: Different theta values (fixed age=40)
+ax1 = axes[0]
+for theta in theta_values:
+    probs = [p_search_logit(40, comp, alpha=alpha, beta_A=beta_A, beta_C=theta, A0=A0) 
+             for comp in comp_range]
+    ax1.plot(comp_range, probs, linewidth=2, label=f'θ={theta}')
+
+ax1.axhline(y=0.07, color='red', linestyle='--', linewidth=1, alpha=0.5, label='7% target')
+ax1.axvspan(0.033, 0.333, alpha=0.15, color='blue', label='Expected range\n(3-30 apps/vac)')
+ax1.set_xlabel('Competition (VacsPerApp)', fontsize=12)
+ax1.set_ylabel('Search Probability', fontsize=12)
+ax1.set_title('Effect of θ on Search Behavior (Age=40)', fontsize=13, fontweight='bold')
+ax1.legend(fontsize=10)
+ax1.grid(True, alpha=0.3)
+ax1.set_xlim([0, 1])
+ax1.set_ylim([0, 1])
+
+# Panel 2: Different ages (fixed theta=5.0)
+ax2 = axes[1]
+theta_fixed = 5.0
+for age in ages:
+    probs = [p_search_logit(age, comp, alpha=alpha, beta_A=beta_A, beta_C=theta_fixed, A0=A0) 
+             for comp in comp_range]
+    ax2.plot(comp_range, probs, linewidth=2, label=f'Age {age}')
+
+ax2.axhline(y=0.07, color='red', linestyle='--', linewidth=1, alpha=0.5, label='7% target')
+ax2.axvspan(0.033, 0.333, alpha=0.15, color='blue', label='Expected range')
+ax2.set_xlabel('Competition (VacsPerApp)', fontsize=12)
+ax2.set_ylabel('Search Probability', fontsize=12)
+ax2.set_title(f'Age Effects on Search Behavior (θ={theta_fixed})', fontsize=13, fontweight='bold')
+ax2.legend(fontsize=10)
+ax2.grid(True, alpha=0.3)
+ax2.set_xlim([0, 1])
+ax2.set_ylim([0, 1])
+
+plt.tight_layout()
+plt.savefig('search_probability_vs_competition.png', dpi=150, bbox_inches='tight')
+plt.close()
+
+print("✓ Plot saved as 'search_probability_vs_competition.png'")
+
+# Print some specific values for verification
+print("\n" + "="*60)
+print("SAMPLE VALUES (Age=40, θ=5.0):")
+print("="*60)
+test_comps = [0.0, 0.033, 0.1, 0.333, 0.5, 1.0]
+for comp in test_comps:
+    prob = p_search_logit(40, comp, alpha=alpha, beta_A=beta_A, beta_C=5.0, A0=A0)
+    print(f"VacsPerApp = {comp:.3f} → Search Probability = {prob:.4f} ({prob*100:.2f}%)")
