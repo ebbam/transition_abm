@@ -832,13 +832,13 @@ ax1 = axes[0]
 for theta in theta_values:
     probs = [p_search_logit(40, comp, alpha=alpha, beta_A=beta_A, beta_C=theta, A0=A0) 
              for comp in comp_range]
-    ax1.plot(comp_range, probs, linewidth=2, label=f'θ={theta}')
+    ax1.plot(comp_range, probs, linewidth=2, label=rf'$\beta_c$={theta}')
 
 ax1.axhline(y=0.07, color='red', linestyle='--', linewidth=1, alpha=0.5, label='7% target')
-ax1.axvspan(0.033, 0.333, alpha=0.15, color='blue', label='Expected range\n(3-30 apps/vac)')
-ax1.set_xlabel('Competition (VacsPerApp)', fontsize=12)
+ax1.axvspan(0.033, 0.5, alpha=0.15, color='blue', label='Expected range\n(2-30 Seekers per Vac.)')
+ax1.set_xlabel('Competition Metric', fontsize=12)
 ax1.set_ylabel('Search Probability', fontsize=12)
-ax1.set_title('Effect of θ on Search Behavior (Age=40)', fontsize=13, fontweight='bold')
+ax1.set_title(r'Effect of $\beta_c$ on Search Behavior (Age=40)', fontsize=13, fontweight='bold')
 ax1.legend(fontsize=10)
 ax1.grid(True, alpha=0.3)
 ax1.set_xlim([0, 1])
@@ -856,7 +856,7 @@ ax2.axhline(y=0.07, color='red', linestyle='--', linewidth=1, alpha=0.5, label='
 ax2.axvspan(0.033, 0.333, alpha=0.15, color='blue', label='Expected range')
 ax2.set_xlabel('Competition (VacsPerApp)', fontsize=12)
 ax2.set_ylabel('Search Probability', fontsize=12)
-ax2.set_title(f'Age Effects on Search Behavior (θ={theta_fixed})', fontsize=13, fontweight='bold')
+ax2.set_title(rf'Age Effects on Search Behavior ($\beta_c$={theta_fixed})', fontsize=13, fontweight='bold')
 ax2.legend(fontsize=10)
 ax2.grid(True, alpha=0.3)
 ax2.set_xlim([0, 1])

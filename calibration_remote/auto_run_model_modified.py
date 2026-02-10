@@ -64,7 +64,7 @@ suffix = ""
 
 complete_nw = False
 steady_state_run = False
-dropbox = True
+dropbox = False
 calib_source_folder = "cos_calib_smart_hire_3"
 if calib_source_folder == "cos_calib_smart_hire_3":
     suffix = "smart_hire"
@@ -209,10 +209,10 @@ else:
     cached_output_path = f'output/{calib_source_folder}/'
 
 
-for nw in ["full_omn","single_node"]: #, "onet", "onet_wage_asym"]: 
+for nw in ["full_omn","single_node", "onet", "onet_wage_asym"]: 
     print(nw)  
     which_params = f'{calib_source_folder}/{nw}/'
-    for run in ["base", 'covid_oos']:
+    for run in ["base", 'covid_oos', "steady_state"]:
         print(run)
         if run == "covid_oos":
            calib_date = ["2000-12-01", "2024-05-01"]
