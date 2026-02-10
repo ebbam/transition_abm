@@ -107,9 +107,44 @@ def search_effort_ts(t_unemp, se):
 
 #### Reservation Wage Adjustment Rate ######
 # Load the data
+# res_wage_dat = pd.read_csv(path + "res_wage_dists.csv")
+
+# # Main function: given duration and bin probabilities, return application count
+# def reservation_wage(duration_months,
+#                              res_wage_data,
+#                              expectation=False,
+#                              # Either lm (no sample balancing), glm, eb (entropy balancing)
+#                              balancing_method='lm'):
+#     """
+#     If expectation=True return the expected value (float);
+#     otherwise return a random draw (int).
+#     """
+#     if duration_months not in res_wage_data['dur_unemp'].values:
+#         #raise ValueError(f"No probability distribution for duration {duration_months}")
+#         res_wage = np.random.normal(loc=0.5, scale=np.max(res_wage_data[f'{balancing_method}_se']), size=1)[0]
+#         if expectation:
+#             res_wage = 0.5
+#     else:
+#         mean_val = res_wage_data[f'{balancing_method}_preds_fit'][res_wage_data['dur_unemp'] == duration_months]
+#         se_val = res_wage_data[f'{balancing_method}_se'][res_wage_data['dur_unemp'] == duration_months]
+
+#         if expectation:
+#             res_wage = mean_val.iloc[0]  # Extract scalar from Series
+#         else:
+#             res_wage = np.random.normal(loc=mean_val.iloc[0], scale=se_val.iloc[0], size=1)[0]
+    
+#     return res_wage
+
 res_wage_dat = pd.read_csv(path + "res_wage_dists.csv")
 
-# Main function: given duration and bin probabilities, return application count
+# Pre-build lookup dict to avoid per-call pandas indexing in search_and_apply
+_res_wage_lookup = {
+    int(row['dur_unemp']): (float(row['lm_preds_fit']), float(row['lm_se']))
+    for _, row in res_wage_dat.iterrows()
+}
+_res_wage_fallback_se = float(res_wage_dat['lm_se'].max())
+
+# Main function: given duration, return reservation wage multiplier
 def reservation_wage(duration_months,
                              res_wage_data,
                              expectation=False,
@@ -119,21 +154,13 @@ def reservation_wage(duration_months,
     If expectation=True return the expected value (float);
     otherwise return a random draw (int).
     """
-    if duration_months not in res_wage_data['dur_unemp'].values:
-        #raise ValueError(f"No probability distribution for duration {duration_months}")
-        res_wage = np.random.normal(loc=0.5, scale=np.max(res_wage_data[f'{balancing_method}_se']), size=1)[0]
-        if expectation:
-            res_wage = 0.5
-    else:
-        mean_val = res_wage_data[f'{balancing_method}_preds_fit'][res_wage_data['dur_unemp'] == duration_months]
-        se_val = res_wage_data[f'{balancing_method}_se'][res_wage_data['dur_unemp'] == duration_months]
+    dur = int(duration_months)
+    if dur not in _res_wage_lookup:
+        return 0.5 if expectation else np.random.normal(loc=0.5, scale=_res_wage_fallback_se)
+    mean_val, se_val = _res_wage_lookup[dur]
+    return mean_val if expectation else np.random.normal(loc=mean_val, scale=se_val)
 
-        if expectation:
-            res_wage = mean_val.iloc[0]  # Extract scalar from Series
-        else:
-            res_wage = np.random.normal(loc=mean_val.iloc[0], scale=se_val.iloc[0], size=1)[0]
-    
-    return res_wage
+
 
 ## Defining classes
 # Potentially redundant use of IDs in the below classes...to check
@@ -190,8 +217,8 @@ class worker:
         rand = random.random
         r_choice = random.choice
         r_sample = random.sample
-        neigh_probs = net[wrkr_occ].list_of_neigh_weights
-        occ_count = len(neigh_probs)
+        #neigh_probs = net[wrkr_occ].list_of_neigh_weights
+        #occ_count = len(neigh_probs)
 
         # Build (vacancy, weight) pairs in one pass
         all_vacs = []
@@ -203,16 +230,24 @@ class worker:
         else:
             res_wage = np.nan
 
-        for occ_id, occ_prob in enumerate(neigh_probs):
-            if occ_prob == 0:
-                continue
+
+        for occ_id, occ_prob in net[wrkr_occ].neigh_nonzero:
             vacs = vacancies_by_occ.get(occ_id)
             if not vacs:
                 continue
-            
-            # Include all vacancies (no filtering here yet)
             all_vacs.extend(vacs)
             weights.extend([occ_prob] * len(vacs))
+
+        # for occ_id, occ_prob in enumerate(neigh_probs):
+        #     if occ_prob == 0:
+        #         continue
+        #     vacs = vacancies_by_occ.get(occ_id)
+        #     if not vacs:
+        #         continue
+            
+        #     # Include all vacancies (no filtering here yet)
+        #     all_vacs.extend(vacs)
+        #     weights.extend([occ_prob] * len(vacs))
 
         if not all_vacs:
             wrkr.apps_sent = 0
@@ -222,7 +257,8 @@ class worker:
         n_to_sample = min(MAX_VACS, len(all_vacs))
 
         # Sampling logic
-        use_weights = any(w != weights[0] for w in weights) if weights else False
+        use_weights = not net[wrkr_occ].uniform_weights
+        #use_weights = any(w != weights[0] for w in weights) if weights else False
 
         if use_weights:
             found_vacs = random.choices(all_vacs, weights=weights, k=n_to_sample)
@@ -234,7 +270,7 @@ class worker:
 
         # *** APPLY STRICT RESERVATION WAGE FILTER IF REQUESTED ***
         if wage_prefs and not np.isnan(res_wage) and strict_reservation_wage:
-            found_vacs = [v for v in found_vacs if getattr(v, "wage", 0.0) >= res_wage]
+            found_vacs = [v for v in found_vacs if v.wage >= res_wage]
             
             # If no vacancies pass the filter, return early
             if not found_vacs:
@@ -243,7 +279,7 @@ class worker:
                 return 0
 
         # mean wage of sampled pool (after potential filtering)
-        wages_iter = (getattr(v, "wage", 0.0) for v in found_vacs)
+        wages_iter = (v.wage for v in found_vacs)
         try:
             mean_wage_sampled = float(np.mean(list(wages_iter))) if found_vacs else 0.0
         except Exception:
@@ -257,7 +293,7 @@ class worker:
                 above_resw = []
                 below_resw = []
                 for v in found_vacs:
-                    v_wage = getattr(v, "wage", 0.0)
+                    v_wage = v.wage #getattr(v, "wage", 0.0)
                     if v_wage >= res_wage:
                         above_resw.append(v)
                     else:
@@ -290,9 +326,10 @@ class worker:
 
             # Rank and select from ABOVE reservation wage vacancies using util()
             # Use lambda to call util() with the right parameters
+            len_neigh_weights = len(neigh_weights)
             def utility_key(v):
-                v_wage = getattr(v, "wage", 0.0)
-                occ_w = neigh_weights[v.occupation_id] if v.occupation_id < len(neigh_weights) else 0.0
+                v_wage = v.wage #getattr(v, "wage", 0.0)
+                occ_w = neigh_weights[v.occupation_id] if v.occupation_id < len_neigh_weights else 0.0
                 return util(wrkr.wage, v_wage, occ_w)
             
             top_k = heapq.nlargest(want_k, above_resw, key=utility_key) if want_k > 0 else []
@@ -348,18 +385,28 @@ class worker:
         # found_vacs = random.sample(vac_list, min(len(vac_list), 30))
         MAX_VACS = 30
         wrkr_occ = wrkr.occupation_id
-        neigh_probs = net[wrkr_occ].list_of_neigh_weights  # Already normalized
-        occ_ids = list(range(len(neigh_probs)))
+        # neigh_probs = net[wrkr_occ].list_of_neigh_weights  # Already normalized
+        # occ_ids = list(range(len(neigh_probs)))
+
+        # # Build a flat list of vacancies and their weights
+        # all_vacs = []
+        # weights = []
+
+        # for occ_id, occ_prob in zip(occ_ids, neigh_probs):
+        #     vacs = vac_list.get(occ_id, [])
+        #     for v in vacs:
+        #         all_vacs.append(v)
+        #         weights.append(occ_prob)
 
         # Build a flat list of vacancies and their weights
         all_vacs = []
         weights = []
 
-        for occ_id, occ_prob in zip(occ_ids, neigh_probs):
+        for occ_id, occ_prob in net[wrkr_occ].neigh_nonzero:
             vacs = vac_list.get(occ_id, [])
-            for v in vacs:
-                all_vacs.append(v)
-                weights.append(occ_prob)
+            all_vacs.extend(vacs)
+            weights.extend([occ_prob] * len(vacs))
+
 
         if not all_vacs:
             wrkr.apps_sent = 0
@@ -410,7 +457,7 @@ class worker:
 class occupation:
     def __init__(occ, occupation_id, list_of_employed, list_of_unemployed, 
                  list_of_neigh_bool, list_of_neigh_weights, current_demand, 
-                 target_demand, wage, wage_mu, wage_sigma, separated, hired, entry_level_bool, experience_age, seps_rate, competition_last):
+                 target_demand, wage, wage_mu, wage_sigma, separated, hired, entry_level_bool, experience_age, seps_rate, competition_last, neigh_nonzero, uniform_weights):
         occ.occupation_id = occupation_id
         occ.list_of_employed = list_of_employed
         occ.list_of_unemployed = list_of_unemployed
@@ -427,17 +474,24 @@ class occupation:
         occ.experience_age = experience_age
         occ.seps_rate = seps_rate
         occ.competition_last = competition_last
+        occ.neigh_nonzero = neigh_nonzero
+        occ.uniform_weights = uniform_weights
+
 
     def separate_workers(occ, delta_u, gam, bus_cy):
-        if(len(occ.list_of_employed) != 0):
-            sep_prob_base = delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
-            sep_prob_gamma = delta_u + occ.seps_rate*(1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
-            sep_prob_delta = occ.seps_rate*delta_u + (1-delta_u)*((gam * max(0, len(occ.list_of_employed) - (occ.target_demand*bus_cy)))/(len(occ.list_of_employed) + 1))
-            w = np.random.binomial(len(occ.list_of_employed), sep_prob_base) #sep_prob_delta) #sep_prob_base) #sep_prob_delta) # sep_prob_base
+        n_emp = len(occ.list_of_employed)
+        if(n_emp != 0):
+            sep_prob_base = delta_u + (1-delta_u)*((gam * max(0, n_emp - (occ.target_demand*bus_cy)))/(n_emp + 1))
+            sep_prob_gamma = delta_u + occ.seps_rate*(1-delta_u)*((gam * max(0, n_emp - (occ.target_demand*bus_cy)))/(n_emp + 1))
+            sep_prob_delta = occ.seps_rate*delta_u + (1-delta_u)*((gam * max(0, n_emp - (occ.target_demand*bus_cy)))/(n_emp + 1))
+            w = np.random.binomial(n_emp, sep_prob_base) #sep_prob_delta) #sep_prob_base) #sep_prob_delta) # sep_prob_base
             occ.separated = int(w)
             separated_workers = random.sample(occ.list_of_employed, int(w))
-            occ.list_of_unemployed = occ.list_of_unemployed + separated_workers
-            occ.list_of_employed = list(set(occ.list_of_employed) - set(separated_workers))
+            occ.list_of_unemployed.extend(separated_workers)
+            #occ.list_of_unemployed = occ.list_of_unemployed + separated_workers
+            #occ.list_of_employed = list(set(occ.list_of_employed) - set(separated_workers))
+            sep_ids = {id(s) for s in separated_workers}
+            occ.list_of_employed = [e for e in occ.list_of_employed if id(e) not in sep_ids]
 
     
     def update_workers(occ):
@@ -448,7 +502,7 @@ class occupation:
             # We call update_workers before we tally LTUE people so time spent unemployed will be 1 greater than actual time spent "applying"
             # Given unemployed individuals are given one time period of unemployment from the moment they are fired (ie. they have not navigated the market as unemployed yet)
             # we set the threshold for LTUER at 7 (not 6)
-            w.longterm_unemp = True if w.time_unemployed >= 7 else False
+            w.longterm_unemp = w.time_unemployed >= 7
             w.ue_rel_wage = None
             w.ee_rel_wage = None
             w.hired = False
@@ -476,7 +530,7 @@ class occupation:
         if entry_tot <= 0 or not occ.entry_level:
             return
 
-        occ.list_of_employed.sort(key=lambda x: x.wage, reverse=True)
+        #occ.list_of_employed.sort(key=lambda x: x.wage, reverse=True)
         emp_no = len(occ.list_of_employed)
 
         # Wage offered to new entrants: avg of bottom 5% employed (or 95% of mean wage if empty)
@@ -485,7 +539,9 @@ class occupation:
             fem_prob = 0.5
         else:
             bottom_5 = max(1, int(emp_no * 0.05))
-            new_wage = np.mean([wrkr.wage for wrkr in occ.list_of_employed[-bottom_5:]])
+            new_wage = np.mean([w.wage for w in heapq.nsmallest(bottom_5, occ.list_of_employed, key=lambda x: x.wage)])
+            # bottom_5 = max(1, int(emp_no * 0.05))
+            # new_wage = np.mean([wrkr.wage for wrkr in occ.list_of_employed[-bottom_5:]])
             fem_prob = float(np.mean([wrkr.female for wrkr in occ.list_of_employed]))
 
         for _ in range(entry_tot):
@@ -678,7 +734,9 @@ def initialise(n_occ, employment, unemployment, vacancies, demand_target, A, wag
             
         occ = occupation(i, [], [], list(A[i] > 0), list(A[i]),
                          (employment[i,0] + vacancies[i,0]), 
-                         demand_target[i,0], wages[i], wage_mu[i], wage_sigma[i], 0, 0, entry_level[i], experience_age[i], sep_rates[i], np.nan)
+                         demand_target[i,0], wages[i], wage_mu[i], wage_sigma[i], 0, 0, entry_level[i], experience_age[i], sep_rates[i], np.nan, 
+                         [(i, w) for i, w in enumerate(list(A[i])) if w > 0], 
+                         len(set(w for w in list(A[i]) if w > 0)) == 1)
         
     
         # creating the workers of occupation i and attaching to occupation
@@ -754,7 +812,7 @@ def _sigmoid(x):
     elif x > 709:  # Prevent overflow in exp for large positive x
         return 1.0
     else:
-        return 1.0 / (1.0 + np.exp(-x))
+        return 1.0 / (1.0 + math.exp(-x))
 
 def p_search_logit(age, comp, *, alpha=0.0, beta_A=0.05, beta_C=-0.8, beta_CA=0.0, A0=40.0):
     """
@@ -799,7 +857,7 @@ def _sigmoid(x):
     elif x > 709:
         return 1.0
     else:
-        return 1.0 / (1.0 + np.exp(-x))
+        return 1.0 / (1.0 + math.exp(-x))
 
 def p_search_logit(age, comp, *, alpha=0.0, beta_A=0.05, beta_C=-0.8, beta_CA=0.0, A0=40.0):
     """
