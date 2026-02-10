@@ -12,7 +12,8 @@ def params_to_latex(
     prior_col_candidates=("Prior", "prior", "Prior Distribution", "prior_distribution"),
     model_name_map=None,
     desired_model_order=None,
-    decimals=3
+    decimals=3,
+    label_suffix = None
 ):
     """
     Takes a dataframe of parameter estimates and produces a LaTeX table.
@@ -33,6 +34,7 @@ def params_to_latex(
 
     # Optionally remap model_cat names to pretty names
     if model_name_map:
+        df_latest = df_latest[df_latest[model_col].isin(model_name_map.keys())].copy()
         df_latest[model_col] = df_latest[model_col].replace(model_name_map)
 
     # detect prior column if present
@@ -84,7 +86,22 @@ def params_to_latex(
 
     # escape underscores in parameters for LaTeX
     def escape_param(p):
-        return str(p).replace("_", "\\_")
+        if p == "d_u":
+            p = "$\delta_u$"
+        elif p == "gamma_u":
+            p = "$\gamma_u$"
+        elif p == "theta":
+            p = "$\\beta_c$"
+        return p #str(p).replace("_", "\\_")
+    
+    def get_prior(p):
+        if p in ["d_u", "gamma_u"]:
+            prior = f"$U(0.0001, 0.9)$"
+        elif p == "theta":
+            prior = f"$U(0.01, 5)$"
+        else:
+            raise KeyError
+        return prior 
 
     # ------------------------------
     # NEW: split model names before every "w."
@@ -131,7 +148,7 @@ def params_to_latex(
     # data rows
     for param in latex_df.index:
         p_escaped = escape_param(param)
-        prior = latex_df.loc[param, "Prior Distribution"].replace("%", "\\%")
+        prior = get_prior(param)#latex_df.loc[param, "Prior Distribution"].replace("%", "\\%")
         values = [latex_df.loc[param, col] for col in ordered_models]
         row = f"{p_escaped} & {prior} & " + " & ".join(values) + " \\\\ \\hline"
         lines.append(row)
@@ -139,7 +156,7 @@ def params_to_latex(
     lines.append("\\end{tabular}")
     lines.append("\\end{adjustbox}")
     lines.append("\\caption{Prior distribution and parameter estimates for all models. $U(a, b)$ denotes a uniform distribution on $[a,b]$.}")
-    lines.append("\\label{tab:priors_posteriors}")
+    lines.append(f"\\label{{tab:priors_posteriors_{label_suffix}}}")
     lines.append("\\end{table}")
 
     tex = "\n".join(lines)
