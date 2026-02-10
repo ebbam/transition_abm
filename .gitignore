@@ -371,3 +371,11 @@ data/behav_params/Eeckhout_Replication/.RData
 *.pkl
 .RData
 /calibration_remote/output/cos_calib_smart_hire_2
+/calibration_remote/output/cos_calib
+/calibration_remote/output/cos_calib
+/calibration_remote/output/cos_calib_smart_hire
+/calibration_remote/output/cos_calib_smart_hire_3
+/calibration_remote/output/cos_calib
+/calibration_remote/output/cos_calib
+/calibration_remote/output/cos_calib
+.RDataTmp
