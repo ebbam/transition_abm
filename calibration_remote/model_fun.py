@@ -161,14 +161,14 @@ def run_single_local(d_u,
                         e_apps += e.emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp)
 
             u_apps += sum(wrkr.apps_sent for wrkr in occ.list_of_unemployed if wrkr.apps_sent is not None)
-
-            d_wage_offers = [w.d_wage_offer for w in occ.list_of_unemployed if hasattr(w, 'd_wage_offer')]
-            avg_diff = np.mean(d_wage_offers) if d_wage_offers else np.nan
-            avg_wage_offer_diff_records.append({
-                'Time Step': t+1,
-                'Occupation': occ.occupation_id,
-                'Avg_Wage_Offer_Diff': avg_diff
-            })
+            if not simple_res:
+                d_wage_offers = [w.d_wage_offer for w in occ.list_of_unemployed if hasattr(w, 'd_wage_offer')]
+                avg_diff = np.mean(d_wage_offers) if d_wage_offers else np.nan
+                avg_wage_offer_diff_records.append({
+                    'Time Step': t+1,
+                    'Occupation': occ.occupation_id,
+                    'Avg_Wage_Offer_Diff': avg_diff
+                })
 
             ### SEPARATIONS
             try:
@@ -179,54 +179,85 @@ def run_single_local(d_u,
             
                     
         seekers_rec.append([t+1, unemp_seekers, u_apps, emp_seekers, e_apps])
-
-        # Collect application flow per occupation
-        app_load_rows = [
-            (t+1, v.occupation_id, 
-             # All applicants
-             len(v.applicants), 
-            1.0 / len(v.applicants) if len(v.applicants) > 0 else 1.0,  # ADD THIS: VacsPerApp for each vacancy
-             # Only unemployed applicants
-            len([app for app in v.applicants if app.time_unemployed != 0]), 
-            # Only employed applicants
-            len([app for app in v.applicants if app.time_unemployed == 0]))
-            for v in vacs_temp
-        ]
-        if app_load_rows:  # only if there are vacancies
-            app_load_step = pd.DataFrame(app_load_rows, columns=['Time Step', 'Occupation', 'ApplicantsPerVac', 'VacsPerApp', 'UnempApplicantsPerVac', 'EmpApplicantsPerVac'])
-            app_load_agg = app_load_step.groupby(['Time Step', 'Occupation']).agg(
-                OpenVacs=('ApplicantsPerVac', 'size'),
-                TotalApplicants=('ApplicantsPerVac', 'sum'),
-                MeanAppsPerVac=('ApplicantsPerVac', 'mean'),
-                MedianAppsPerVac=('ApplicantsPerVac', 'median'),
-                TotalUnempAppsPerVac=('UnempApplicantsPerVac', 'sum'),
-                MeanVacsPerApp=('VacsPerApp', 'mean')  # ADD THIS: Mean of 1/applicants
-
-            ).reset_index()
-            # app_load_agg['MeanUnempAppsPerVac'] = app_load_agg['TotalUnempAppsPerVac'] / app_load_agg['TotalApplicants']
-
-            # # Find level of competition in neighboring occupations in the network
-            # app_load_agg['AppsPerVac'] = app_load_agg.apply(
-            #     lambda r: (r['TotalApplicants'] / r['OpenVacs'])
-            #             if r['OpenVacs'] > 0 else np.nan,
-            #     axis=1
-            # )
-            # app_load_agg['VacsPerApp'] = app_load_agg.apply(
-            #     lambda r: (r['OpenVacs'] / r['TotalApplicants'])
-            #             if r['TotalApplicants'] > 0 else 0.99,
-            #     axis=1)
-            
-            comp_map = dict(zip(app_load_agg['Occupation'], app_load_agg['MeanVacsPerApp']))
-
-            # Assign to occupations for use in next step
+        # Compute competition metric directly from vacancies_by_occ (no DataFrame needed)
+        if vacs_temp:
+            comp_map = {
+                occ_id: np.mean([1.0 / len(v.applicants) if v.applicants else 1.0 for v in vacs])
+                for occ_id, vacs in vacancies_by_occ.items()
+            }
             for occ in net:
                 val = comp_map.get(occ.occupation_id, np.nan)
                 if np.isnan(val):
-                    # fallback if no vacancies: keep last known
                     val = getattr(occ, "competition_last", 0.0)
                 occ.competition_last = val
 
-            app_load_records.append(app_load_agg)
+            if not simple_res:
+                app_load_rows = [
+                    (t+1, v.occupation_id,
+                     len(v.applicants),
+                     1.0 / len(v.applicants) if len(v.applicants) > 0 else 1.0,
+                     len([app for app in v.applicants if app.time_unemployed != 0]),
+                     len([app for app in v.applicants if app.time_unemployed == 0]))
+                    for v in vacs_temp
+                ]
+                app_load_step = pd.DataFrame(app_load_rows, columns=['Time Step', 'Occupation', 'ApplicantsPerVac', 'VacsPerApp', 'UnempApplicantsPerVac', 'EmpApplicantsPerVac'])
+                app_load_agg = app_load_step.groupby(['Time Step', 'Occupation']).agg(
+                    OpenVacs=('ApplicantsPerVac', 'size'),
+                    TotalApplicants=('ApplicantsPerVac', 'sum'),
+                    MeanAppsPerVac=('ApplicantsPerVac', 'mean'),
+                    MedianAppsPerVac=('ApplicantsPerVac', 'median'),
+                    TotalUnempAppsPerVac=('UnempApplicantsPerVac', 'sum'),
+                    MeanVacsPerApp=('VacsPerApp', 'mean')
+                ).reset_index()
+                app_load_records.append(app_load_agg)
+
+        # # Collect application flow per occupation
+        # app_load_rows = [
+        #     (t+1, v.occupation_id, 
+        #      # All applicants
+        #      len(v.applicants), 
+        #     1.0 / len(v.applicants) if len(v.applicants) > 0 else 1.0,  # ADD THIS: VacsPerApp for each vacancy
+        #      # Only unemployed applicants
+        #     len([app for app in v.applicants if app.time_unemployed != 0]), 
+        #     # Only employed applicants
+        #     len([app for app in v.applicants if app.time_unemployed == 0]))
+        #     for v in vacs_temp
+        # ]
+        # if app_load_rows:  # only if there are vacancies
+        #     app_load_step = pd.DataFrame(app_load_rows, columns=['Time Step', 'Occupation', 'ApplicantsPerVac', 'VacsPerApp', 'UnempApplicantsPerVac', 'EmpApplicantsPerVac'])
+        #     app_load_agg = app_load_step.groupby(['Time Step', 'Occupation']).agg(
+        #         OpenVacs=('ApplicantsPerVac', 'size'),
+        #         TotalApplicants=('ApplicantsPerVac', 'sum'),
+        #         MeanAppsPerVac=('ApplicantsPerVac', 'mean'),
+        #         MedianAppsPerVac=('ApplicantsPerVac', 'median'),
+        #         TotalUnempAppsPerVac=('UnempApplicantsPerVac', 'sum'),
+        #         MeanVacsPerApp=('VacsPerApp', 'mean')  # ADD THIS: Mean of 1/applicants
+
+        #     ).reset_index()
+        #     # app_load_agg['MeanUnempAppsPerVac'] = app_load_agg['TotalUnempAppsPerVac'] / app_load_agg['TotalApplicants']
+
+        #     # # Find level of competition in neighboring occupations in the network
+        #     # app_load_agg['AppsPerVac'] = app_load_agg.apply(
+        #     #     lambda r: (r['TotalApplicants'] / r['OpenVacs'])
+        #     #             if r['OpenVacs'] > 0 else np.nan,
+        #     #     axis=1
+        #     # )
+        #     # app_load_agg['VacsPerApp'] = app_load_agg.apply(
+        #     #     lambda r: (r['OpenVacs'] / r['TotalApplicants'])
+        #     #             if r['TotalApplicants'] > 0 else 0.99,
+        #     #     axis=1)
+            
+        #     comp_map = dict(zip(app_load_agg['Occupation'], app_load_agg['MeanVacsPerApp']))
+
+        #     # Assign to occupations for use in next step
+        #     for occ in net:
+        #         val = comp_map.get(occ.occupation_id, np.nan)
+        #         if np.isnan(val):
+        #             # fallback if no vacancies: keep last known
+        #             val = getattr(occ, "competition_last", 0.0)
+        #         occ.competition_last = val
+
+        #     app_load_records.append(app_load_agg)
     
         vacancies_by_occ = defaultdict(list)
         for v in vacs_temp:
@@ -275,10 +306,11 @@ def run_single_local(d_u,
             else:
                 occ_shock = curr_bus_cy
             # Only consider unemployed workers who have d_wage_offer attribute
-            u_rel_wage = sum(wrkr.ue_rel_wage for wrkr in occ.list_of_employed if wrkr.hired and wrkr.ue_rel_wage is not None)
-            e_rel_wage = sum(wrkr.ee_rel_wage for wrkr in occ.list_of_employed if wrkr.hired and wrkr.ee_rel_wage is not None)
-            ue = len([w for w in occ.list_of_employed if w.hired and w.ue_rel_wage is not None])
-            ee = len([w for w in occ.list_of_employed if w.hired and w.ee_rel_wage is not None])
+            if not simple_res:
+                u_rel_wage = sum(wrkr.ue_rel_wage for wrkr in occ.list_of_employed if wrkr.hired and wrkr.ue_rel_wage is not None)
+                e_rel_wage = sum(wrkr.ee_rel_wage for wrkr in occ.list_of_employed if wrkr.hired and wrkr.ee_rel_wage is not None)
+                ue = len([w for w in occ.list_of_employed if w.hired and w.ue_rel_wage is not None])
+                ee = len([w for w in occ.list_of_employed if w.hired and w.ee_rel_wage is not None])
             # Update time_unemployed and long-term unemployed status of unemployed workers
             # Remove protected "hired" attribute of employed workers
             occ.update_workers()
