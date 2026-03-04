@@ -1,0 +1,120 @@
+---
+title: "Lightcast Job Openings Data"
+format: html
+---
+
+*Note: I wrote the introduction to the overview below with the idea that it could slot into the supplementary materials/manuscript directly so excuse the formal tone for now.*
+
+*For the occupational vacancy rates/data skip directly to Step 3 below.*
+
+
+## Overview
+
+Occupational vacancy rates are constructed by combining two data sources: job
+posting microdata from Lightcast, which provides monthly counts of full-time
+vacancy postings by occupation for the between January 2010 and March 2024, and employment stock
+estimates from the Bureau of Labor Statistics' Occupational Employment and Wage
+Statistics (OEWS) programme, which provides annual employment counts by
+occupation. Vacancy rates are defined as the monthly count of full-time
+postings in a given occupation divided by the annual employment level in that
+occupation in the same calendar year. The construction of this measure requires
+substantial data processing across three stages: first, aggregating the raw
+Lightcast microdata into a consistent monthly occupational panel; second,
+building a matched annual employment series that reconciles differences in
+occupational classification systems and coverage across the two sources; and, third, calculating an occupation-level vacancy rate at the annual and monthly levels.
+Lightcast classifies occupations using the Standard Occupational Classification (SOC). The following process yields vacancy rates at the minor group SOC-3 (n ~ 100; reliably), broad SOC-4 (n ~ 440; possible but requires a lot of assumptions using occupational crosswalks), and detailed SOC-5 (n ~ 800; not advisable) levels.
+
+## Step 1: Processing the Lightcast Vacancy Microdata
+
+The raw Lightcast data contains observations of individual job posting with
+attributes including occupation, employment type, and posting date. We only consider full-time postings and exclude duplicates using the Lightcast methodology. We aggregate these sub-files to monthly observations to produce a single vacancy count per SOC code per month by summing the
+count of full-time vacancies within each SOC code. The final output is one long-format panel with month-SOC level (SOC-3, SOC-4, and SOC-5) observations, covering all occupation-month observations from 2010 to 2024.
+
+
+## Step 2: Matching Vacancy Data to Employment Levels for Vacancy Rates
+
+To construct the vacancy rates, we match the occupational codes present in the Lightcast data to their employment levels as reported in OEWS. Matching the Lightcast vacancy panel to OEWS employment data is complicated by
+three sources of discontinuity: (i) the OEWS did not publish occupational
+aggregates at the minor-group (SOC-3) or broad-group (SOC-4) levels in 2010 and
+2011, reporting only major-group (SOC-2) totals and (SOC-5&6) individual detailed occupations in
+those years; (ii) the 2018 SOC revision renumbered and reorganised several
+occupational groups, creating breaks in the code series; and (iii) the OEWS
+survey excludes certain industries and occupational categories (most notably
+agriculture, fishing, the military, and self-employment) meaning some SOC codes
+present in the Lightcast data have no corresponding OEWS counterpart. Each issue
+is addressed through a distinct strategy, applied in a strict priority ordering
+so that the most reliable data source is always preferred.
+
+For the 2010–2011 gap at the SOC-3 level, minor-group employment totals are
+reconstructed by summing the broad-group sub-codes (or, where broad codes are
+absent, the detailed codes) that fall within each minor group, identified via
+a 4-character SOC prefix match. For three codes affected by the 2018 SOC
+revision () 15-1200 (Computer Occupations), 31-1100 (Home Health and Personal
+Care Aides), and 19-5000 (Occupational Health and Safety)) the predecessor
+minor-group code from the 2010 SOC taxonomy is substituted directly for the
+years 2012–2018, as these represent straightforward renumberings with no change
+in occupational scope. A special case arises for 19-5000, which was moved
+across major groups (from major group 29, Healthcare, to major group 19, Life
+and Physical Science) in the 2018 revision: because the predecessor detailed
+codes (29-9011 and 29-9012) share no prefix with the new code, the standard
+prefix-based construction would erroneously return missing values for 2010–2011.
+These years are therefore handled by an explicit crosswalk that names the
+predecessor detailed codes directly and sums them. Three codes are treated as
+entirely unresolvable: 45-3000 (Fishing and Hunting Workers), which lost OEWS
+coverage after the 2017 estimates due to the exclusion of the fishing industry
+from the OEWS sampling frame; 55-9000 (Military); 99-9000 (Unclassified). Each
+observation in the final matched employment series carries a `source` indicator
+(`direct_match`, `predecessor_code`, or `constructed`) recording which
+strategy was used, allowing sensitivity analyses to be conducted on subsets
+matched via any single method.
+
+```{r setup_cps, echo = FALSE, warning = FALSE, message = FALSE}
+
+knitr::opts_chunk$set(
+  fig.align = 'center',
+  fig.width = 12,
+  fig.height = 14,
+  out.width = '0.9\\linewidth',
+  echo = FALSE,
+  dev = "ragg_png",
+  dpi = 300
+)
+```
+
+
+```{r, echo = FALSE, include = FALSE}
+
+library(here, quietly = TRUE)
+
+```
+
+## Step 3: Constructing the Vacancy Rate {.tabset}
+
+After this process, we have monthly vacancy and annual employment totals for SOC-3 occupations. In the below graph, we assume that employment is consistent (!) for all months to construct the monthly vacancy rate series. We also preserve an indicator for an annual vacancy rate by dividing the annual mean vacancy level by the annual employment level to match the periodicity of each series.
+
+Below, I display the vacancy series for each SOC-3 occupation from 2010-2023.
+
+Some things I notice for now:     
+
+- 2010 seems to be low outlier for all occupations.      
+- Vacancies uniformly fall from around 2021-2023.      
+- The national level vacancy rate from JOLTS is far larger (~4%) than the vacancy rate calculated from the SOC-3 codes (~1.5%) in the Lightcast data. We are excluding military occupations and any occupations "not specified" as belonging to an occupational category but I am not sure why this would impact the data this way.     
+- Evidently, these occupational vacancy rates are only available from 2010 onward, whereas we calibrate our models from 2000 onward. We should discuss how best to use these data. As you can see in the first figure, the mean rates are somewhat consistent across occupations, so we migth be able to just impose an occupation-specific mean?
+
+### SOC-3 (~100 Occupations)
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+
+source(here("data/occ_macro_vars/OEWS/oews_to_lightcast_matching_soc3.R"))
+
+```
+
+### SOC-4 codes (~443 Occupations)
+
+For the SOC-4 codes, there is a lot of missing data in the employment and vacancy data. I can likely improve some of this missing data, but wondering if SOC-3 might be sufficient if we wanted to impose the occupation-specific vacancy rates outright. 
+
+```{r, echo = FALSE, warning = FALSE}
+
+source(here("data/occ_macro_vars/OEWS/oews_to_lightcast_matching_soc4.R"))
+
+```
+
