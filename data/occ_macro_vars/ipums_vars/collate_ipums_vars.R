@@ -271,3 +271,51 @@ for(occ_cat in c("occ2010", "occ", "soc_2010", "soc_2010_major", "soc_2010_minor
 }
 
 
+library(knitr)
+library(kableExtra)
+library(modelsummary)
+
+networks <- list(
+  "O*NET" = read.csv(here("calibration_remote/dRC_Replication/data/ipums_variables_full_omn_w_exp.csv")) %>% 
+    mutate(unemp_rate = (unemp / (emp + unemp))*100,
+           female_share = female_share * 100,
+  emp = emp/1000),
+  "Occupational Mobility Network" = read.csv(here("calibration_remote/dRC_Replication/data/acs_onet_2010_ipums_vars_w_exp.csv")) %>% 
+    mutate(unemp_rate = (unemp / (emp + unemp))*100,
+           female_share = female_share * 100,
+  emp = emp/1000)
+)
+
+combined <- bind_rows(networks, .id = "Network") %>% 
+  select(Network, female_share, median_weekly_earnings, emp, unemp_rate) %>% 
+  rename(`Female Share (\\%)` = female_share,
+         #`Median Weekly Earnings (\\$)` = median_weekly_earnings,
+         `Employment` = emp,
+         `Unemployment Rate (\\%)` = unemp_rate)
+
+options(modelsummary_factory_latex = "kableExtra", 
+        modelsummary_format_numeric_latex = "plain")
+
+tbl_body <- datasummary((`Female Share (\\%)` + 
+                           `Employment` + 
+                           `Unemployment Rate (\\%)`) ~ 
+                          Network * (Mean + SD + Min + Max),
+                        data = combined,
+                        fmt = 1,
+                        title = "Descriptive Statistics of Occupation-Level Characteristics by Network⁠\\label{si_tbl:ipums_desc_stats}",
+                        output = "latex",
+                        escape = FALSE) %>% 
+  kable_styling(latex_options = c("hold_position"))
+
+writeLines(c(
+  "\\begin{table}[H]",
+  "\\centering",
+  "\\begin{threeparttable}",
+  tbl_body,
+  "\\begin{tablenotes}[flushleft]",
+  "\\small",
+  "\\item \\textit{Source:} IPUMS CPS ASEC 2012. Employment is reported in units of 1,000 workers. Female share and unemployment rate are expressed as percentages.",
+  "\\end{tablenotes}",
+  "\\end{threeparttable}",
+  "\\end{table}"
+), "/Users/ebbamark/Dropbox/Apps/Overleaf/ABM_Transitions/si_inputs/ipums_vars_desc_stats.tex")

@@ -14,24 +14,24 @@ gend_shares <- read_xlsx(here("data/occ_gender_shares.xlsx"), skip = 2, na = "-"
   select(occupation, ipums_label, ipums_similar, women_pct)
          #ipums_label = trimws(ipums_label))
 
-ipums <- read.csv(here('dRC_Replication/data/ipums_variables.csv')) %>% 
+ipums <- read.csv(here('calibration_remote/dRC_Replication/data/ipums_variables.csv')) %>% 
   tibble %>% 
   mutate(label = trimws(label))
 
-#setdiff(gend_shares$ipums_label, ipums$label)
-#setdiff(ipums$label, gend_shares$ipums_label)
+setdiff(gend_shares$ipums_label, ipums$label)
+setdiff(ipums$label, gend_shares$ipums_label)
 
 
-#gend_shares %>% 
-#  filter(is.na(women_pct)) 
+gend_shares %>% 
+  filter(is.na(women_pct)) 
 
 
 # All categories now either have a reported gender share OR another ipums label that is arguably similar
 # This will need to be documented
-#gend_shares %>% 
-#  group_by(ipums_label) %>% 
-  # Testing for line items that do not have a gender share NOR a similar category
-  #filter(all(is.na(women_pct)) & all(is.na(ipums_similar)))
+gend_shares %>%
+ group_by(ipums_label) %>%
+#Testing for line items that do not have a gender share NOR a similar category
+filter(all(is.na(women_pct)) & all(is.na(ipums_similar)))
 
 temp <- gend_shares %>% 
   # group by ipums_similar in the cases where they are a sum value of 
@@ -59,6 +59,6 @@ setdiff(final_shares$ipums_label, ipums$label)
 setdiff(ipums$label, final_shares$ipums_label)
 
 #ipums %>% left_join(., final_shares, by = c("label" = "ipums_label")) %>% select(-12) %>% identical(ipums)
-ipums %>% left_join(., final_shares, by = c("label" = "ipums_label")) %>% write.csv(here("data/ipums_variables_w_gender.csv"))
+#ipums %>% left_join(., final_shares, by = c("label" = "ipums_label")) %>% write.csv(here("data/ipums_variables_w_gender.csv"))
 
 
