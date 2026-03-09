@@ -8,6 +8,7 @@ library(conflicted)
 library(janitor)
 library(readxl)
 library(assertthat)
+
 conflict_prefer_all("dplyr", quiet = TRUE)
 new_data = FALSE
 
@@ -181,6 +182,66 @@ if(new_data){
 }
 
 
+
+################################################################################
+################################################################################
+####################### DOCUMENT WAGE LIMITS  ##################################
+################################################################################
+################################################################################
+
+years_to_range <- function(years_str) {
+  yrs <- as.integer(strsplit(years_str, ";")[[1]])
+  yrs_sorted <- sort(yrs)
+  
+  # Check all values in the range are present
+  full_range <- seq(min(yrs_sorted), max(yrs_sorted))
+  if (!identical(yrs_sorted, full_range)) {
+    missing <- setdiff(full_range, yrs_sorted)
+    stop(paste("Years are not fully consecutive. Missing:", paste(missing, collapse = ", ")))
+  }
+  
+  # If only one year, return it as-is
+  if (length(yrs_sorted) == 1) {
+    return(as.character(yrs_sorted))
+  }
+  
+  paste0(min(yrs_sorted), "-", max(yrs_sorted))
+}
+
+limits_summary <- limits_df %>% 
+  select(hourly_max, annual_max, year) %>% 
+  group_by(hourly_max, annual_max) %>% 
+  summarise(years = paste0(year, collapse = ";"), .groups = "drop") %>%
+  mutate(years = map_chr(years, years_to_range)) %>% 
+  arrange(years) %>% 
+  mutate(across(c('hourly_max', 'annual_max'), ~as.numeric(.))) %>% 
+  mutate(across(c('hourly_max', 'annual_max'), ~paste0("\\$", ifelse(nchar(.) != 6, ., paste0(substr(.,1,3), ",", substr(.,4,6)))))) %>% 
+  relocate(years)
+
+tbl_body <- limits_summary %>% 
+  kable(format = "latex",
+        booktabs = TRUE,
+        linesep = "",
+        caption = "OEWS Top-Coded Wage Ceiling Values by Year",
+        label = "si_tbl:oews_ceilings",
+        col.names = c("Years", "Hourly", "Annual"),
+        escape = FALSE) %>% 
+  add_header_above(c(" " = 1, "Ceiling Salary Value" = 2))
+
+writeLines(c(
+  "\\begin{table}[H]",
+  "\\centering",
+  "\\begin{threeparttable}",
+  tbl_body,
+  "\\begin{tablenotes}[flushleft]",
+  "\\small",
+  "\\item \\textit{Source:} BLS Occupational Employment and Wage Statistics (OEWS) field description files.",
+  "\\end{tablenotes}",
+  "\\end{threeparttable}",
+  "\\end{table}"
+), "/Users/ebbamark/Dropbox/Apps/Overleaf/ABM_Transitions/si_inputs/oews_wage_dist_ceiling_vals.tex")
+
+
 ################################################################################
 ################################################################################
 ####################### FITTING LOG NORMAL  ####################################
@@ -249,6 +310,12 @@ abm_occs %>% filter(!(SOC2010_cleaned %in% unique(occ_wages$occ_code)))
 occ_wages_mean <- occ_wages %>% 
   group_by(occ_code) %>% 
   summarise(across(c(h_mean, a_mean, h_pct10, h_pct25, h_median, h_pct75, h_pct90, a_pct10, a_pct25, a_median, a_pct75, a_pct90), ~mean(., na.rm = TRUE)))
+
+# Saving a temporary file with all years
+abm_occs %>% 
+  left_join(., occ_wages, by = c("SOC2010_cleaned" = "occ_code")) %>% 
+  select(-c(X, OCC2010_cps, acs_occ_code_label, major_cat, OCC2010_desc, OCC2010, OCC2010_match_cps)) %>% 
+  write_csv(., here("data/occ_macro_vars/OEWS/wage_distributions_full_omn_with_years.csv"))
 
 wage_dist_temp <- abm_occs %>% 
   left_join(., occ_wages_mean, by = c("SOC2010_cleaned" = "occ_code")) %>% 
@@ -546,3 +613,299 @@ write_csv(wage_dist_final, here("data/occ_macro_vars/OEWS/wage_distributions_omn
 # industry = "000000" 
 # occupation = "000000" 
 # data_type = "01"
+
+###### Below I provide an exploration of the relationship between wages and market tightness
+
+################################################################################
+########################### Occupational Wages  ################################
+################################################################################
+
+wages <- read.csv(here("data/occ_macro_vars/OEWS/wage_distributions_full_omn_with_years.csv")) %>% 
+  group_by(acs_occ_code, year) %>% 
+  # removing duplicate entries
+  select(-occ_group) %>% 
+  distinct %>% 
+  ungroup
+
+stopifnot(nrow(wages) == n_groups(group_by(wages, acs_occ_code, year)))
+
+wages %>% 
+  complete(acs_occ_code, year)
+
+wages %>% group_by(acs_occ_code) %>% filter(n() == 24)
+
+tosave <- wages %>% 
+  select(acs_occ_code, year, h_median) %>% 
+  complete(acs_occ_code, year) %>%
+  group_by(acs_occ_code) %>%
+  mutate(
+    acs_occ_code = as.character(acs_occ_code),
+    # linear interpolation
+    h_median_interp = approx(year, h_median, xout = year, rule = 1)$y,
+    
+    # add noise only to interpolated values (where original was NA)
+    h_median_interp = if_else(
+      is.na(h_median),
+      h_median_interp + rnorm(n(), mean = 0, sd = sd(h_median, na.rm = TRUE) * 0.1),
+      h_median_interp
+    ),
+    log_h_median_interp = log(h_median_interp),
+    gr_h_median_interp = log_h_median_interp - lag(log_h_median_interp, 1)
+  ) 
+  
+abm_occs <- read.csv(here('data/crosswalk_occ_soc_cps_codes_full_omn.csv')) %>% 
+  tibble %>% 
+  mutate(SOC2010_cleaned = gsub("X", "0", SOC2010)) %>% 
+  mutate(OCC2010_match_cps = as.character(OCC2010_cps), 
+         acs_occ_code = as.character(acs_occ_code))
+
+stopifnot(identical(unique(tosave$acs_occ_code), abm_occs$acs_occ_code))
+
+
+tosave %>% 
+  select(acs_occ_code, year, log_h_median_interp) %>% 
+    pivot_wider(id_cols = "acs_occ_code", values_from = "log_h_median_interp", names_from = "year") %>% 
+  write.csv(here("calibration_remote/data/occ_wages_ts_log.csv"))
+  
+tosave %>% 
+    select(acs_occ_code, year, gr_h_median_interp) %>% 
+    pivot_wider(id_cols = "acs_occ_code", values_from = "gr_h_median_interp", names_from = "year") %>% 
+  write.csv(here("calibration_remote/data/occ_wages_ts_gr.csv"))
+  
+  
+tosave %>% 
+  ungroup() %>% 
+  ggplot() + 
+  geom_line(aes(y = h_median_interp, x = year, color = acs_occ_code)) +
+  theme(legend.position = "none")
+
+################################################################################
+########################### Occupational Tightness #############################
+################################################################################
+
+
+################################################################################
+########################### National Wages #####################################
+################################################################################
+library(estimatr)
+library(modelsummary)
+
+# https://fred.stlouisfed.org/series/LES1252881600Q#
+# "Employed full time: Median usual weekly real earnings: Wage and salary workers: 16 years and over"
+# Units: 1982-84 CPI Adjusted Dollars, Seasonally Adjusted
+natl_wages <- read.csv(here("calibration_remote/data/macro_vars/LES1252881600Q.csv")) %>%  
+  # Units: Change, 1982-84 CPI Adjusted Dollars, Seasonally Adjusted
+  left_join(., read.csv(here("calibration_remote/data/macro_vars/LES1252881600Q_CHG.csv")), by = "observation_date") %>%  
+  # Units: Pct Change, 1982-84 CPI Adjusted Dollars, Seasonally Adjusted
+  left_join(., read.csv(here("calibration_remote/data/macro_vars/LES1252881600Q_PCH.csv")), by = "observation_date") %>% 
+  
+  # https://fred.stlouisfed.org/series/LES1252881600Q# - 
+  # "Employed full time: Median usual weekly nominal earnings (second quartile): Wage and salary workers: 16 years and over (LES1252881500Q)"
+  # Units: 1982-84 CPI Adjusted Dollars, Seasonally Adjusted
+  left_join(., read.csv(here("calibration_remote/data/macro_vars/LES1252881500Q.csv")), by = "observation_date") %>% 
+  # Units: Change, Dollars, Seasonally Adjusted
+  left_join(., read.csv(here("calibration_remote/data/macro_vars/LES1252881500Q_CHG.csv")), by = "observation_date") %>% 
+  # Units: Pct Change, Dollars, Seasonally Adjusted
+  left_join(., read.csv(here("calibration_remote/data/macro_vars/LES1252881500Q_PCH.csv")), by = "observation_date") %>% 
+  # Hires Level
+  left_join(., read.csv(here("calibration_remote/data/macro_vars/JTSHIL.csv")), by = "observation_date") %>% 
+  # Job Openings Level
+  left_join(., read.csv(here("calibration_remote/data/macro_vars/JTSJOL.csv")), by = c("observation_date" = "DATE")) %>% 
+  # Unemployment Level
+  left_join(., read.csv(here("calibration_remote/data/macro_vars/UNEMPLOY.csv")), by = c("observation_date")) %>% 
+  # Unemployment RATE
+  left_join(., read.csv(here("calibration_remote/data/macro_vars/UNRATE.csv")), by = c("observation_date" = "DATE")) %>% 
+  left_join(., read.csv(here("calibration_remote/data/macro_vars/USREC.csv")), by = c("observation_date" = "DATE")) %>% 
+  tibble %>% 
+  rename(date = observation_date,
+         wage_cpi_adj = LES1252881600Q,
+         ch_wage_cpi_adj = LES1252881600Q_CHG,
+         pct_ch_wage_cpi_adj = LES1252881600Q_PCH,
+         wage = LES1252881500Q,
+         ch_wage = LES1252881500Q_CHG,
+         pct_ch_wage = LES1252881500Q_PCH,
+         hires = JTSHIL,
+         job_openings = JTSJOL,
+         unemp = UNEMPLOY, 
+         uer = UNRATE,
+         recession = USREC) %>% 
+  mutate(date = as.Date(date)) %>% 
+  arrange(date) %>% 
+  mutate(
+         lm_tightness = job_openings/unemp,
+         ch_lm_tightness = lag(lm_tightness) - lm_tightness,
+         pct_ch_lm_tightness = (lm_tightness - lag(lm_tightness))/lag(lm_tightness),
+         log_ch_lm_tightness = log(lm_tightness) - log(lag(lm_tightness)),
+         jo_stale = lag(job_openings, 1) - hires,
+         jo_hires_ratio = job_openings/hires,
+         jo_stale_neg = jo_stale*(jo_stale < 0),
+         jo_stale_zero = jo_stale*(jo_stale == 0),
+         jo_stale_pos = jo_stale*(jo_stale > 0),
+         log_jo_stale_pos = log(jo_stale_pos),
+         
+    # V_{t-1}: stock of openings entering this month
+    V_lag = lag(job_openings),
+    
+    # Carryover openings still unfilled at end of month
+    # = old openings that were not filled by this month's hires
+    carryover_unfilled = pmax(0, V_lag - hires),
+    
+    # New postings this month (under W_t = 0 assumption)
+    # P_t = (V_t - V_{t-1}) + H_t
+    new_postings = (job_openings - V_lag) + hires,
+    
+    # Sanity check: carryover + new postings should equal V_t
+    # carryover_unfilled + (new_postings that weren't filled) = job_openings
+    # Note: if hires > V_lag, some hires are filling same-month postings
+    hires_from_old  = pmin(hires, V_lag),
+    hires_from_new  = hires - hires_from_old,
+    check = carryover_unfilled + (new_postings - hires_from_new),
+    log_carryover_unfilled = log(carryover_unfilled + 1),
+    ch_log_carryover_unfilled = log_carryover_unfilled - lag(carryover_unfilled),
+    across(contains("wage"), ~log(.x), .names = "log_{.col}"),
+    ch_log_wage = log_wage - lag(log_wage),
+    ch_log_wage_cpi_adj = log_wage_cpi_adj - lag(log_wage_cpi_adj)
+    # check should equal job_openings
+  )
+
+coef_map <- c(
+  # Intercept and AR terms
+  "mconst"                    = "Intercept",
+  "ar1"                       = "AR(1)",
+  "ar2"                       = "AR(2)",
+  "ar3"                       = "AR(3)",
+  "ar4"                       = "AR(4)",
+  
+  # Labor market tightness
+  "log_ch_lm_tightness"       = "Δ Log LM Tightness",
+  "log_ch_lm_tightness_lag"   = "Δ Log LM Tightness (L1)",
+  
+  # Carryover unfilled openings
+  "log_carryover_unfilled"     = "Log Unfilled Vacs",
+  "log_carryover_unfilled_lag" = "Log Unfilled Vacs (L1)",
+  "ch_log_carryover_unfilled"     = "Δ Log Unfilled Vacs",
+  "ch_log_carryover_unfilled_lag" = "Δ Log Unfilled Vacs (L1)",
+  
+  # Recession interactions with tightness
+  "recession_x_tightness"      = "Recession x Δ Log LM Tightness",
+  "recession_x_tightness_l1"   = "Recession (L1) x Δ Log LM Tightness (L1)",
+  
+  # Recession interactions with carryover
+  "recession_x_carryover"      = "Recession x Log Unfilled Vacs",
+  "recession_x_carryover_l1"   = "Recession (L1) x Log Unfilled Vacs (L1)",
+  
+  # Controls
+  "recession"                  = "Recession Indicator",
+  "uer"                        = "Unemployment Rate",
+  
+  # lm_robust interaction terms (from the earlier loop models)
+  "log_carryover_unfilled:uer" = "Log Unfilled Vacs x UER",
+  "log_ch_lm_tightness:uer"   = "Δ Log LM Tightness x UER",
+  "jo_stale"                   = "Stale Job Openings",
+  "jo_hires_ratio"             = "Job Openings to Hires Ratio"
+)
+
+outcome_vars <- c("log_wage_cpi_adj ~ lag(log_wage_cpi_adj) ", "ch_log_wage_cpi_adj ~ ", "log_wage ~ lag(log_wage) ", "ch_log_wage ~ ") 
+
+reg_forms <- list(
+  stale_jo = c("log_carryover_unfilled", "jo_stale", "jo_hires_ratio"), #"jo_stale_neg", "jo_stale_pos", "log_jo_stale_pos", 
+  lm       = c("log_ch_lm_tightness")
+)
+
+all_mods <- list()
+for(prefix in c('stale_jo', 'lm')){
+  mods <- list()
+  for (k in outcome_vars){
+    for (reg in reg_forms[[prefix]]){
+      mods <- append(mods, list(lm_robust(as.formula(paste0(k, "+ ", reg)), data = natl_wages)))
+    }
+  }
+  names(mods) <- paste0(rep(outcome_vars, each = length(reg_forms[[prefix]])))
+  all_mods[[prefix]] <- mods
+}
+
+gof = c("rmse", "nobs", "r.squared", "r.squared.adj")
+modelsummary(all_mods[['stale_jo']], stars = TRUE, gof_map = gof, coef_map = coef_map)
+modelsummary(all_mods[['lm']], stars = TRUE, gof_map = gof, coef_map = coef_map)
+
+
+lm_robust(ch_log_wage_cpi_adj ~ log_ch_lm_tightness + lag(log_ch_lm_tightness) + uer, data = natl_wages) %>% modelsummary(stars = TRUE)
+lm_robust(ch_log_wage_cpi_adj ~ log_ch_lm_tightness + lag(log_ch_lm_tightness)*lag(recession), data = natl_wages) %>% modelsummary(stars = TRUE)
+lm_robust(ch_log_wage ~ log_ch_lm_tightness*recession + lag(log_ch_lm_tightness)*lag(recession), data = natl_wages) %>% modelsummary(stars = TRUE)
+lm_robust(ch_log_wage_cpi_adj ~ log_carryover_unfilled + lag(log_carryover_unfilled) + uer, data = natl_wages) %>% modelsummary(stars = TRUE)
+
+library(gets)
+
+# gets works with time series objects, so convert first
+# assuming quarterly data
+natl_wages_temp <- natl_wages %>% 
+  filter(date >= "2001-04-01" & date < "2024-04-01") %>% 
+  arrange(date) %>%
+  transmute(
+    date,
+    ch_log_wage_cpi_adj,
+    ch_log_wage,
+    log_carryover_unfilled,
+    log_carryover_unfilled_lag = lag(log_carryover_unfilled),
+    log_ch_lm_tightness,
+    log_ch_lm_tightness_lag  = lag(log_ch_lm_tightness),
+    ch_log_carryover_unfilled,
+    ch_log_carryover_unfilled_lag = lag(ch_log_carryover_unfilled),
+    recession, 
+    recession_l1 = lag(recession),
+    recession_x_tightness = recession*log_ch_lm_tightness,
+    recession_x_tightness_l1 = lag(recession)*log_ch_lm_tightness_lag,
+    recession_x_carryover = recession*ch_log_carryover_unfilled,
+    recession_x_carryover_l1 = lag(recession)*ch_log_carryover_unfilled_lag,
+    uer
+  ) %>%
+  na.omit()  # drop NA rows before splitting into ts and mxreg
+
+# now both objects are built from the same clean rows
+ch_log_wage_cpi_adj_ts <- ts(natl_wages_temp$ch_log_wage_cpi_adj, 
+              start = c(year(min(natl_wages_temp$date)), quarter(min(natl_wages_temp$date))), 
+              frequency = 4)
+
+ch_log_wage_ts <- ts(natl_wages_temp$ch_log_wage, 
+              start = c(year(min(natl_wages_temp$date)), quarter(min(natl_wages_temp$date))), 
+              frequency = 4)
+
+mxreg <- natl_wages_temp %>%
+  select(#log_carryover_unfilled, 
+         #log_carryover_unfilled_lag,
+         log_ch_lm_tightness, 
+         log_ch_lm_tightness_lag, 
+         recession_l1,
+         #recession_x_tightness,
+         recession_x_tightness_l1,
+         #recession_x_carryover,
+         recession_x_carryover_l1,
+         #ch_log_carryover_unfilled,
+         ch_log_carryover_unfilled_lag,
+         uer) %>%
+  as.matrix() %>% 
+  ts(start = c(year(min(natl_wages_temp$date)), quarter(min(natl_wages_temp$date))),
+     frequency = 4)
+
+gum_wage_cpi_adj <- arx(ch_log_wage_cpi_adj_ts, 
+           mc    = TRUE,
+           ar    = 1:4,
+           mxreg = mxreg, plot = TRUE)
+
+specific_wage_cpi_adj <- gets(gum_wage_cpi_adj, t.pval = 0.01) %>% as.lm()
+
+
+gum_wage <- arx(ch_log_wage_ts, 
+           mc    = TRUE,
+           ar    = 1:4,
+           mxreg = mxreg, plot = TRUE)
+
+specific_wage <- gets(gum_wage, t.pval = 0.01) %>% as.lm()
+
+modelsummary(list("Δ Log Wage (CPI Adj.)" = specific_wage_cpi_adj, 
+                  "Δ Log Wage"  = specific_wage), 
+             stars    = TRUE, 
+             coef_map = coef_map,
+             gof_map  = gof)
+
+
