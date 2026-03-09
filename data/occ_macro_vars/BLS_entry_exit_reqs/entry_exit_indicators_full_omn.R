@@ -4,13 +4,15 @@ library(tidyverse)
 library(here)
 library(readxl)
 library(assertthat)
+library(knitr)
+library(kableExtra)
 
 cw <- read.csv(here('data/crosswalk_occ_soc_cps_codes_full_omn.csv')) %>% 
   tibble %>% 
   mutate(SOC2010_cleaned = gsub("X", "0", SOC2010)) %>% 
   mutate(OCC2010_match_cps = as.character(OCC2010_cps))
 
-ipums_vars <- read.csv(here("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_ipums_vars.csv")) %>% tibble %>% 
+ipums_vars <- read.csv(here("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_ipums_vars.csv")) %>% tibble %>% 
   mutate(acs_occ_code = occ) %>% 
   rename(id = `X.1`)
 
@@ -151,6 +153,55 @@ temp %>%
   mutate(entry_level = as.numeric(experience_req == "None")) -> tosave
 
 stopifnot(identical(temp$occ, ipums_vars$occ))
+
+match_summary <- tibble(
+  `Matching Level` = c("ACS code", "CPS code", "SOC 2010 (exact)", "SOC broad (6-digit)", "SOC minor (4-digit)"),
+  `Codes Matched` = c(
+    acs_matches        %>% filter(!is.na(ed_req)) %>% distinct(acs_occ_code) %>% nrow(),
+    acs_cps_matches    %>% filter(!is.na(ed_req)) %>% distinct(acs_occ_code) %>% nrow(),
+    soc2010_matches    %>% filter(!is.na(ed_req)) %>% distinct(acs_occ_code) %>% nrow(),
+    soc_broad_matches  %>% filter(!is.na(ed_req)) %>% distinct(acs_occ_code) %>% nrow(),
+    soc_minor_matches  %>% filter(!is.na(ed_req)) %>% distinct(acs_occ_code) %>% nrow()
+  )
+) %>%
+  mutate(
+    `N (cumulative)` = cumsum(`Codes Matched`),
+    `N (total)`      = n_distinct(cw$acs_occ_code),
+    `% Matched`  = round(100 * `Codes Matched` / `N (total)`, 1),
+    `Cumulative % Matched` = round(100 * `N (cumulative)` / `N (total)`, 1)
+  )
+
+
+tbl_body <- match_summary %>%
+  kable(format = "latex",
+        booktabs = TRUE,
+        linesep = "",
+        caption = "Occupational Code Matching Summary: Occupational Mobility Network",
+        label = "si_tbl:full_omn_match_summary",
+        # col.names = c("Matching Level", "Codes Matched", "N (cumulative)", 
+        #               "N (total)", "\\% Matched", "Cumulative \\% Matched"),
+        col.names = c("\\makecell{Matching\\\\Level}",
+                      "\\makecell{Codes\\\\Matched}",
+                      "\\makecell{N\\\\cumulative}",
+                      "\\makecell{N\\\\total}",
+                      "\\makecell{\\%\\\\Matched}",
+                      "\\makecell{Cumulative\\\\\\% Matched}"),
+        escape = FALSE)
+ 
+  writeLines(c(
+    "\\begin{table}[H]",
+    "\\centering",
+    "\\begin{threeparttable}",
+    tbl_body,
+    "\\begin{tablenotes}[flushleft]",
+    "\\small",
+    paste0("\\item \\textit{Note: }Occupational Mobility Network (N = ", unique(match_summary$`N (total)`), "). Matching was performed hierarchically; each step includes only occupations unmatched at all prior steps."),
+    "\\item \\textit{Source:} BLS Education and Training Assignments by Detailed Occupation.",
+    "\\end{tablenotes}",
+    "\\end{threeparttable}",
+    "\\end{table}"
+  ), "/Users/ebbamark/Dropbox/Apps/Overleaf/ABM_Transitions/si_inputs/entry_exit_match_summary_full_omn.tex")
+
 
 tosave %>% 
   write.csv(here("calibration_remote/dRC_Replication/data/ipums_variables_full_omn_w_exp.csv"))
