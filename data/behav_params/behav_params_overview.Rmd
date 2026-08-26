@@ -1,5 +1,5 @@
 ---
-# title: "Data Scoping: Job Search Behaviour"
+# title: "Data Scoping: Job Search Behavior"
 # author: Ebba Mark
 output: 
   pdf_document:
@@ -14,7 +14,7 @@ editor_options:
 ---
 
 ```{r setup, include=FALSE, message = FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, cache = FALSE, fig.height = 6, fig.width = 8, dev = "ragg_png", dpi = 300)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, cache = FALSE, fig.width = 6.27, fig.height = 5.02, dev = "ragg_png", dpi = 300)
 
 library(tidyverse)
 library(here)
@@ -43,16 +43,16 @@ rename_fun <- function(x){
 
 
 The model's central functionality relies on a variety of behavioral
-mechanisms that are parametrised econometrically using micro data.
+mechanisms that are parametrized econometrically using micro data.
 Furthermore, the model relies on additional sources of micro data for
 validation. In the following section we outline, first, the data and
 analysis used to derive the model's behavioral parameters, followed by
 an inventory of the data used to validate various model outputs. We note
 where we make use of methodology employed or constructed by other authors.
 
-## Application Effort and Learning Dynamics: Applications Sent {.tabset}
+### Application Effort and Learning Dynamics: Applications Sent {.tabset}
 
-First, we employ data from the US Bureau of Labor Statistics and the Curren Population Survey on the application effort of unemployed job-seekers to discipline our behavioral mechanism for search. More specifically, in 2018 (May, September) and 2020 (February, May), the Bureau of Labor
+First, we employ data from a supplementary survey designed by the US Bureau of Labor Statistics conducted as part of the Current Population Survey on the application effort of unemployed job-seekers to discipline our behavioral mechanism for search effort. More specifically, in 2018 (May, September) and 2022 (February, May), the Bureau of Labor
 Statistics ran the "Unemployment Insurance Nonfilers" supplemental
 survey to the monthly Current Population Survey run by the US Census
 Bureau. The survey's stated intent was to "obtain information on the
@@ -70,19 +70,28 @@ Relevant to our work, survey respondents were asked the following two questions:
 
 ![Survey Question: Applications Sent](CPS_BLS_Supplement_18_22/applications_sent_q.png)
 
-### Overview of Survey Results
+To inform our agent behavior, we derive an unemployment-duration dependent measure of application effort, reporting in applications sent. More precisely, we estimate the probability distribution over reported job application intensity during unemployment using pooled micro data from the 2018 and 2022 waves of the CPS in which the Bureau of Labor Statistics conducted a supplemental survey called the "Unemployment Insurance Nonfilers". The survey asks unemployed respondents who are actively searching for work the amount of job applications they have sent. Respondents report job application counts in ordinal bins: '0', '1–10', '11–20', '21–80', and '81 or more'. We display the raw data in the figure below. 
 
-First, we replicate figures produced for a 2020 Bureau of Labor Statistics "Beyond the Numbers" issue 2020 ["Beyond the Numbers"
-issue](https://www.bls.gov/opub/btn/volume-9/how-do-jobseekers-search-for-jobs.htm#_edn5), illustrating some high-level results from the survey, prior to describing the econometric specifications employed using the raw survey data. As seen in the image above, the survey responses regarding applications sent are "binned" into intervals (ie. number of people sending 81 or more applications or unemployment duration of
-between 5 and 14 weeks) which means that any line plots (or linear
-interpretation of the bar graph) should be done with caution.
+First, we replicate figures produced for a 2020 Bureau of Labor Statistics "Beyond the Numbers" issue ["Beyond the Numbers"
+issue](https://www.bls.gov/opub/btn/volume-9/how-do-jobseekers-search-for-jobs.htm#_edn5), illustrating some high-level results from the survey, prior to describing the econometric specifications employed using the raw survey data. As seen in the image below, the survey responses regarding applications sent are binned (i.e., number of people sending 81 or more applications or unemployment duration of
+between 5 and 14 weeks). Therefore, linear interpretation of any relationship should be considered with caution.
 
-In Figure 1, the top left panel shows the proportion of all individuals sending X amount of applications receiving Y amount of interviews. The plot indicates a "consistent" return to sending more applications, although as demonstrated in the bottom left plot, the number of applications sent is not a linear predictor of job offers received. More precisely, the bottom left plot demonstrates that the percentage of jobseekers receiving an offer seems to increase as a function of the number of applications sent, until a certain point.Next, the right plot demonstrates the number of applications sent (red), interviews received (green), average interview:application ratio (blue), and probability of receiving a job offer (purple) by individuals in each category of unemployment duration. There is some indication that both effort and success seem to increase and then decline with time spent in unemployment, apart from success as measured by receiving a job offer which seems to consistently decline with time spent in unemployment.
+In the below figure, the top left panel shows the proportion of all individuals sending X amount of applications receiving Y amount of interviews. The plot indicates a "consistent" return to sending more applications, although as demonstrated in the bottom left plot, the number of applications sent is not a linear predictor of job offers received. More precisely, the bottom left plot demonstrates that the percentage of job-seekers receiving an offer seems to increase as a function of the number of applications sent, until a certain point. Next, the right plot demonstrates the number of applications sent (red), interviews received (green), average interview to application ratio (blue), and probability of receiving a job offer (violet) by individuals in each category of unemployment duration. There is some indication that both effort and success seem to increase and then decline with time spent in unemployment, apart from success as measured by receiving a job offer which seems to consistently decline with time spent in unemployment.
 
-```{r cpssupp1, echo = FALSE, include = TRUE, cache = TRUE, echo = FALSE, messages = FALSE, warning=FALSE, fig.cap = "Replication of BLS Analysis", cache = TRUE}
+```{r cpssupp1_cap}
+
+fig_cap1 <- "Joint distribution of job applications sent and interviews received, shown as the proportion of job seekers sending X applications who received Y interviews; shading intensity reflects the proportion."
+
+fig_cap3 <- "Percentage of job-seekers having received a job offer by number of applications sent."
+
+fig_cap2 <- "Empirical patterns of job search effort and outcomes among unemployed workers, drawn from the 2018 Current Population Survey (CPS) Job Search Supplement. Search outcomes by unemployment duration, shown separately for the average number of applications sent, average number of interviews received, the interview-to-application ratio, and the probability of receiving a job offer; duration categories run from fewer than five weeks to 27 weeks and over."
+
+```
+
+
+```{r cpssupp1, echo = FALSE, include = TRUE, cache = FALSE, echo = FALSE, messages = FALSE, warning=FALSE}
 
 source(here('data/ATUS/cps_2018_supplement.R')) # CHECKED, no plots needing common theme
-wrap_width = 40
 
 names(file_tables) <- table_titles
 
@@ -105,14 +114,13 @@ df_long <- temp %>%
 p1 <- ggplot(df_long, aes(y = interviews, x = applications, fill = Proportion)) +
   geom_tile() +
   scale_fill_gradient(low = "white", high = "blue") +  # Customize color gradient
-  labs(title = str_wrap(paste0(sub(", 2018", "", sub("^Table\\s+\\d+\\.\\s*", "", names(file_tables[1])))), wrap_width), x = "Number of Applications Sent", y = "Interviews Received",
-       caption = str_wrap("Shading indicates the proportion of people\nsending X applications receiving Y interviews.", wrap_width)) +
+  labs(title = str_wrap(str_to_title(paste0(sub(", 2018", "", sub("^Table\\s+\\d+\\.\\s*", "", names(file_tables[1]))))), wrap_width), x = "Number of Applications Sent", y = "Interviews Received") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),
-          plot.title = element_text(size = 8)) +
-  common_theme
-
-
+        legend.position = "bottom") +
+  common_theme +
+  guides(color = guide_colorbar(barheight = unit(0.1, "cm"),
+                               barwidth  = unit(5, "cm")))
 
 job_finding_rate <- file_tables[[5]] %>%
   slice(-n()) %>%
@@ -136,13 +144,12 @@ p2 <- ggplot() +
             aes(x = duration, y = value, colour = name)) +
   scale_x_continuous(breaks =2:5,
     labels = c("Less than 5 weeks", "5 to 14 weeks", "15 to 26 weeks", "27 weeks and over")) +
-  labs(title = str_wrap(paste0(sub(", 2018", "", sub("^Table\\s+\\d+\\.\\s*", "", names(file_tables[2])))), wrap_width), x = "Unemployment Duration", y = "") +
+  labs(title = str_wrap(str_to_title(paste0(sub(",", "", sub(", 2018", "", sub("^Table\\s+\\d+\\.\\s*", "", names(file_tables[2])))))), wrap_width), x = "Unemployment Duration", y = "") +
   facet_wrap(~name, scales = "free_y", ncol = 1, labeller = labeller(name = rename_fun)) +
-    theme(axis.text.x=element_text(angle=90),
-          legend.position = "none",
-          plot.title = element_text(size = 8)) +
-  common_theme
-
+    theme(axis.text.x=element_text(angle=45, hjust = 1),
+          legend.position = "none"
+          ) +
+  common_theme 
 
 job_offer_rate_apps <- file_tables[[3]] %>%
   slice(-n()) %>%
@@ -153,25 +160,34 @@ job_offer_rate_apps <- file_tables[[3]] %>%
 p3 <- ggplot() +
   geom_bar(data = filter(job_offer_rate_apps, applications != "All jobseekers"),
             aes(x = applications, y = probability_of_receiving_job_offer), fill = "coral2", stat = "identity", width = 0.5) +
-  labs(title = str_wrap(paste0(sub(", 2018", "", sub("^Table\\s+\\d+\\.\\s*", "", names(file_tables[3])))), wrap_width),
-       x = "Number of applications sent",
-       y = "Probability of receiving a job offer") +
+  labs(title = str_wrap(str_to_title(paste0(sub(",","", sub(", 2018", "", sub("^Table\\s+\\d+\\.\\s*", "", names(file_tables[3])))))), wrap_width),
+       x = str_to_title("Number of applications sent"),
+       y = str_to_title("% receiving a job offer")) +
   scale_y_continuous(limits = c(0,40)) +
-  theme(plot.title = element_text(size = 8)) +
+  theme(
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
   common_theme
-
-
-# Compile all plots
-grid.arrange(p1, p2, p3, layout_matrix = rbind(
-    c(1, 2), # Plot 1 (left column, top row), Plot 3 (right column)
-    c(3, 2)  # Plot 2 (left column, bottom row), Plot 3 (right column)
-  ))
 
 ```
 
-### Econometric Specification Using Raw Data
+```{r cpssupp1-p1, echo = FALSE, fig.cap = fig_cap1, fig.pos = "H"}
+p1
+```
 
-```{r cps_supp2, echo=FALSE, fig.height = 7, fig.width = 10, cache = TRUE}
+```{r cpssupp1-p3, echo = FALSE, fig.cap = fig_cap3, fig.pos = "H"}
+p3
+```
+
+```{r cpssupp1-p2, echo = FALSE, fig.cap = fig_cap2, fig.pos = "H"}
+p2
+```
+
+```{r, echo = FALSE}
+fig_cap <- "Number of job applications sent in the two months prior to being surveyed against unemployment duration in months, for unemployed job seekers in the 2018 and 2022 waves of the CPS-BLS Unemployment Insurance Nonfilers Supplement. Each point represents one respondent; horizontal jitter is applied to reduce overplotting across the ordinal application categories. Grey dashed gridlines mark 2-month intervals, aligning with the application recall window of the survey. Sample sizes are N=3,268 (2018) and N=1,901 (2022)."
+```
+
+
+```{r cps_supp2, echo=FALSE, cache = FALSE, fig.cap = fig_cap}
 source(here('data/behav_params/CPS_BLS_Supplement_18_22/cps_bls_supp_cleaning.R')) # CHECKED, no ggplot objects need common_theme
 
 bea_temp <- bea_2022 %>%
@@ -211,14 +227,16 @@ bea_temp <- bea_2022 %>%
 
 bea_temp %>%
   ggplot() +
-  geom_jitter(aes(x= PRUNEDUR, y = PEA1, colour = year)) +
-  labs(x = "Unemployment Duration (Weeks)", y = "Number of applications sent in the last two months",
-       title = "Applications sent vs. Time Spent Unemployed: 2022 & 2018",
-       subtitle = "Grey gridlines align with 2-month/8-week intervals. N = 2,896 (2018) & 1,677 (2022)",
+  geom_jitter(aes(x= PRUNEDUR_MO, y = PEA1, colour = year)) +
+  labs(x = "Unemployment Duration (Months)", y = str_to_title("Number of applications sent in the last two months"),
+       title = str_wrap("Applications Sent by Time Spent Unemployed: 2018 & 2022 CPS-BLS Survey Waves", wrap_width),
+       #subtitle = " gridlines align with 2-month intervals. N = 2,896 (2018) & 1,677 (2022)",
        color = "Year") +
-   theme(panel.grid.minor = element_line(colour="grey", linetype = "dashed"),
-         panel.grid.major = element_blank()) +
- scale_x_continuous(minor_breaks = seq(0, 120, 8)) +
+   theme(panel.grid.minor = element_line(colour="grey10", linetype = "dashed"),
+         panel.grid.major = element_blank(),
+           legend.position = "bottom") +
+  guides(color = guide_legend(nrow = 1))+
+ scale_x_continuous(minor_breaks = seq(0, 30, 2)) +
   scale_color_manual(values = c("darkblue", "steelblue")) +
   common_theme
 
@@ -236,21 +254,10 @@ bea_temp %>%
 
 ```
 
-To inform our agent behavior, we derive an unemployment-duration dependent measure of application effort, reporting in applications sent. More precisely, we estimate the probability distribution over reported job application intensity during unemployment using pooled micro data from the 2018 and 2022 waves of the CPS in which the Bureau of Labor Statistics conducted a Job Search Supplement. The survey asks unemployed respondents who are actively searching for work the amount of job applications they have sent. Respondents report job application counts in ordinal bins: '0', '1–10', '11–20', '21–80', and '81 or more'. To account for the lack of a continuous dependent variable, we estimate a series of ordinal logistic regression models to recover the conditional probability of each response bin as a function of unemployment duration and various demographic characteristics. We test model specifications along three dimensions: (i) link function, comparing logistic, probit, complementary log-log (cloglog), and log-log links; (ii) linear, quadratic, and cubic specifications of unemployment duration; and (iii) models with and without demographic covariates (education, gender, age, and family income; race was excluded due to lack of statistical significance across models). Formally, the model estimates $\Pr(Y_i \leq j \mid X_i)$, the cumulative probability of observing response category $Y_i$ for individual $i$ below $j$ where $j$ represents the five ordinal bins given various transformations of the vector $X_i$ of independent variables (unemployment duration and demographic controls).
-
-Below, we display the results of an exploration of the probability of
-reporting a specific number of applications sent (in the bins as in the
-survey question above) using various specifications of an ordinal
-logistic regression. Wetest specifications varying three different model
-parameters:\
-1. link function\
-2. linear vs. quadratic unemployment duration,\
-3. with and without demographic control variables (education, gender,
-age, family income - race excluded because of lack of statistical
-significance though this can be revisited.)
+To account for the lack of a continuous dependent variable, we estimate a series of ordinal logistic regression models to recover the conditional probability of each response bin as a function of unemployment duration and various demographic characteristics. We test model specifications along three dimensions: (i) link function, comparing logistic, probit, complementary log-log (cloglog), and log-log links; (ii) linear and quadratic specifications of unemployment duration; and (iii) models with and without demographic covariates (education, gender, age, and family income; race was excluded due to lack of statistical significance across models). Formally, the model estimates $\Pr(Y_i \leq j \mid X_i)$, the cumulative probability of observing response category $Y_i$ for individual $i$ below $j$ where $j$ indexes the thresholds between the five ordinal bins given various transformations of the vector $X_i$ of independent variables (unemployment duration and demographic controls).
 
 We estimate an ordinal logistic regression model for reported
-applications sent $Y_i$ in ${0, 1, 2, 3, 4}$ testing four different link
+applications sent $Y_i$ in ${0, 1, 2, 3, 4}$, indexing the ordinal bins, testing four different link
 functions: the complementary log-log (cloglog), logistic, log-log, and
 probit link functions. Let $X_i^\top \beta$ denote the predictor
 variable. The cumulative probability of observing response category $j$
@@ -271,12 +278,9 @@ either:
 
 $X_i = \left( \text{Unemp.Dur.}_i \right)$
 
-$X_i = \left( \text{Unemp.Dur.}_i^2 \right)$
-
 $X_i = \left( \text{Unemp.Dur.}_i, \text{Unemp.Dur.}_i^2 \right)$
 
-with and without control variables (education, gender, age, family
-income).
+with and without control variables. Included control variables are education (binary indicators for less than high school and high school without a bachelor's degree, with bachelor's or above as the reference category), gender, age (binary indicators for four age brackets, with 65 and above as reference), and family income. $\tau_j$, $j = 1,\ldots,4$ represent the four estimated threshold parameters separating the five adjacent response categories.
 
 Assumptions about the probability distribution of the errors associated
 with each link function:\
@@ -289,8 +293,7 @@ probable.\
 - *Log-log:* When early categories are of more importance or more
 probable.
 
-```{r cps_supp3, echo=FALSE, fig.height = 6, fig.width = 10, cache = TRUE}
-
+```{r cps_supp3, echo=FALSE, cache = FALSE, fig.height = 6.27}
 bea_temp <- bea_temp %>% 
   mutate(PEA_fct = case_when(PEA1 == "0" ~ 0,
                    PEA1 == "1 to 10" ~ 1,
@@ -313,12 +316,10 @@ plots_final <- list()
 # Store AICs
 aic_results <- data.frame()
 
-for (mod in c("PRUNEDUR_MO", "PRUNEDUR_MO2", "PRUNEDUR_MO + PRUNEDUR_MO2")) {
+for (mod in c("PRUNEDUR_MO", "PRUNEDUR_MO + PRUNEDUR_MO2")) {
   
   if(mod == "PRUNEDUR_MO"){
     title_mod <- bquote(X[i] == (Unemp.Dur.[i]))
-  }else if(mod == "PRUNEDUR_MO2"){
-    title_mod <- bquote(X[i] == (Unemp.Dur.[i]^2))
   }else if(mod == "PRUNEDUR_MO + PRUNEDUR_MO2"){
     title_mod <- bquote(X[i] == (Unemp.Dur.[i] * "," ~ Unemp.Dur.[i]^2))
   }else{
@@ -391,7 +392,8 @@ for (mod in c("PRUNEDUR_MO", "PRUNEDUR_MO2", "PRUNEDUR_MO + PRUNEDUR_MO2")) {
     geom_line(size = 0.9) +
     facet_grid(Category ~ Controls, scales = "free_y") +
     labs(
-      title = bquote("Predicted Application Probabilities" ~ .(title_mod)),
+      title = str_wrap("Predicted Application Probabilities", wrap_width),
+                       subtitle = bquote("Explanatory Variable Form: " ~ .(title_mod)),
       x = "Unemployment Duration (Months)",
       y = "Predicted Probability",
       color = "Link Function"
@@ -402,52 +404,74 @@ for (mod in c("PRUNEDUR_MO", "PRUNEDUR_MO2", "PRUNEDUR_MO + PRUNEDUR_MO2")) {
 
   plots_final[[mod]] <- p
 }
+```
+
+```{r cps_supp_captions, echo = FALSE}
+
+fig_cap_olr1 <- "Predicted cumulative probabilities of reported job application intensity by unemployment duration (months), estimated using ordinal logistic regression with a linear unemployment duration term ($X_i = \\text{Unemp.Dur.}_i$). Rows show predicted probabilities for each application bin; columns compare models estimated with and without demographic controls (education, gender, age, family income). Lines correspond to four link functions: logistic, probit, complementary log-log, and log-log. Predictions are evaluated at the sample mean of all covariates."
+
+# fig_cap_olr2 <- "Predicted cumulative probabilities of reported job application intensity by unemployment duration (months), estimated using ordinal logistic regression with a quadratic unemployment duration term ($X_i = \\text{Unemp.Dur.}_i^2$). Rows show predicted probabilities for each application bin; columns compare models estimated with and without demographic controls (education, gender, age, family income). Lines correspond to four link functions: logistic, probit, complementary log-log, and log-log. Predictions are evaluated at the sample mean of all covariates."
+
+fig_cap_olr3 <- "Predicted cumulative probabilities of reported job application intensity by unemployment duration (months), estimated using ordinal logistic regression with both linear and quadratic unemployment duration terms ($X_i = \\text{Unemp.Dur.}_i, \\text{Unemp.Dur.}_i^2$). Rows show predicted probabilities for each application bin; columns compare models estimated with and without demographic controls (education, gender, age, family income). Lines correspond to four link functions: logistic, probit, complementary log-log, and log-log. Predictions are evaluated at the sample mean of all covariates."
+
+fig_cap_aic <- "Model fit comparison across ordinal logistic regression specifications, measured by AIC relative to the best-fitting model. Each point represents one specification; the y-axis distinguishes two functional forms of unemployment duration (linear and linear-quadratic); point shape distinguishes the four link functions (logistic, probit, complementary log-log, log-log); and color distinguishes models estimated with and without demographic controls. Lower relative AIC indicates better fit."
+
+```
+
+
+```{r cps_supp3a, echo=FALSE, cache = FALSE, fig.height = 6.27, fig.cap = fig_cap_olr1}
 # View plot for PRUNEDUR_MO
 print(plots_final[["PRUNEDUR_MO"]])
+```
 
-# View plot for PRUNEDUR_MO2
-print(plots_final[["PRUNEDUR_MO2"]])
 
+<!-- ```{r cps_supp3b, echo=FALSE, cache = FALSE, fig.height = 6.27, fig.cap = fig_cap_olr2} -->
+<!-- # View plot for PRUNEDUR_MO2 -->
+<!-- print(plots_final[["PRUNEDUR_MO2"]]) -->
+<!-- ``` -->
+
+
+```{r cps_supp3c, echo=FALSE, cache = FALSE, fig.height = 6.27, fig.cap = fig_cap_olr3}
 # View plot for PRUNEDUR_MO2
 print(plots_final[["PRUNEDUR_MO + PRUNEDUR_MO2"]])
 ```
 
 Using an AIC information criterion to compare the fit across all models,
-clear results emerge. Models including socio-demographic controls consistently outperform unadjusted models (blue versus red dots in the figure below) and the inclusion of a quadratic transformation (labelled "Lin-Quadratic" in the plot below) of unemployment duration better captures the non-linear relationship between unemployment duration and application effort. Among link functions, the complementary log-log specification performs best across model comparisons. Though the logistic link function emerges as slightly superior in the specification incorporating a linear and quadratic term, we choose to employ the complementary log-log link function to align with the hypothesis that fine-grained resolution is needed among low application effort categories, which dominate the data. Thus, employing a complementary log-log link function, quadratic unemployment duration, and full demographic controls, we generate predicted probabilities over the five application bins for unemployment spells ranging from 0 to 36 months. These fitted probabilities serve as the empirical foundation for modeling job search effort in the agent-based simulation. In our chosen specification, the odds of reporting a lower application bin increase by approximately 0.1\% per additional month unemployed, a relationship statistically significant at the 0.1\% level. However, the inclusion of a quadratic term allows for a concave shape to emerge, better fitting the non-linearity of this relationship between unemployment duration and applications sent.
+clear results emerge. Models including socio-demographic controls consistently outperform unadjusted models (blue versus red dots in the figure below) and the inclusion of a quadratic transformation (labeled "Linear + Quadratic" in the plot below) of unemployment duration better captures the non-linear relationship between unemployment duration and application effort. Among link functions, the complementary log-log specification performs best across model comparisons. Though the logistic link function emerges as slightly superior in the specification incorporating a linear and quadratic term, we choose to employ the complementary log-log link function to align with the hypothesis that fine-grained resolution is needed among low application effort categories, which dominate the data. Thus, employing a complementary log-log link function, quadratic unemployment duration, and full demographic controls, we generate predicted probabilities over the five application bins for unemployment spells ranging from 0 to 36 months. These fitted probabilities serve as the empirical foundation for modeling job search effort in the agent-based simulation. In our chosen specification, the odds of reporting a lower application bin increase by approximately 0.1\% per additional month unemployed, a relationship statistically significant at the 0.1\% level. However, the inclusion of a quadratic term allows for a concave shape to emerge, better fitting the non-linearity of this relationship between unemployment duration and applications sent.
 
-```{r cps_supp4, echo=FALSE, fig.height = 6, fig.width = 8, cache = TRUE}
+```{r cps_supp4, echo=FALSE, cache = FALSE, fig.cap = fig_cap_aic}
 # Normalize AIC relative to the best within each duration variable
 aic_results <- aic_results %>%
   #group_by(Duration_Var) %>%
   mutate(Relative_AIC = AIC - min(AIC)) %>%
   ungroup() %>% 
   mutate(duration = case_when(Duration_Var == "PRUNEDUR_MO" ~ "Linear",
-                   Duration_Var == "PRUNEDUR_MO2" ~ "Quadratic",
-                   Duration_Var == "PRUNEDUR_MO + PRUNEDUR_MO2" ~ "Lin-Quadratic"))
+                  # Duration_Var == "PRUNEDUR_MO2" ~ "Quadratic",
+                   Duration_Var == "PRUNEDUR_MO + PRUNEDUR_MO2" ~ "Linear +\nQuadratic"))
 
 ggplot(aic_results, aes(x = Relative_AIC, color = Controls, shape = Method, y = duration)) +
   geom_point(size = 4) + #stat = "identity", position = position_dodge(width = 0.8)) +
   #facet_wrap(~Duration_Var) +
   labs(
-    title = "Relative AIC Across Link Functions and Linear vs. Quadratic Unemployment Duration",
+    title = str_wrap("Relative AIC Across Link Functions and Unemployment Duration Transformations", wrap_width),
     x = "Relative AIC (compared to best-fit model)",
     y = "w. or w.o Controls",
     color = "Link Function",
-    shape = "Transformation of Unemp. Dur."
+    shape = str_wrap("Transformation of Unemployment Duration Regressor", 25)
   ) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))+
   common_theme
 ```
 
-The figure below demonstrates the predicted probability distribution of application effort by unemployment duration indicating a non-linear concave search effort. We believe this contributes to an open debate in the job search literature regarding the shape of search effort over the unemployment spell. The concave application effort emerging from this data aligns with previous observations about unemployed workers engaging in delayed search while either grieving job loss or engaging in job search planning and adjusting expectations about their re-employment prospects, as described in the main text.
+The figure below demonstrates the predicted probability distribution of application effort by unemployment duration indicating a non-linear concave search effort. This pattern contributes to an open debate in the job search literature regarding the shape of search effort over the unemployment spell. The concave application effort emerging from this data aligns with previous observations about unemployed workers engaging in delayed search while either grieving job loss or engaging in job search planning and adjusting expectations about their re-employment prospects, as described in the main text.
 
 The final result is that for each additional quarter of unemployment, an individual’s
-odds of dropping to a lower-level application category decreases by
+odds of dropping to a lower-level application category increases by
 \~.1%. This is statistically significant across all specifications at
 the 0.1% level.
 
-```{r, echo=FALSE, fig.height = 8, fig.width = 10, cache = FALSE}
+```{r, echo=FALSE, cache = FALSE}
 # View best model row
 best_row <- aic_results %>% arrange(AIC) %>% slice(1)
 
@@ -514,7 +538,7 @@ plots <- plot_data %>%
   lapply(function(df_cat) {
     ggplot(df_cat, aes(x = PRUNEDUR_MO, y = Probability)) +
       geom_line(size = 0.9, color = "darkgrey") +
-      labs(title = paste0("Sent ", unique(df_cat$Category), " applications"), x = "Unemployment Duration (Months)") +
+      labs(title = str_wrap(str_to_title(paste0("Sent ", unique(df_cat$Category), " applications")), wrap_width), x = "Unemployment Duration (Months)") +
       coord_cartesian(ylim = c(unique(df_cat$y_min), unique(df_cat$y_max))) +
       theme_minimal() +
       theme(
@@ -526,25 +550,42 @@ plots <- plot_data %>%
 
 p1 <- wrap_plots(plots, ncol = 1) +
   plot_annotation(
-    title = "Predicted Application Probabilities (Manually Normalized Y-Axis Ranges)",
+    title = str_wrap("Predicted Application Probabilities"),
     theme = plot_annotation_theme
   ) 
+
+#saveRDS(new_data, here("data/behav_params/app_effort_brief_for_composite_fig.RDS"))
   
 p2 <- new_data %>% 
     ggplot(aes(x = PRUNEDUR_MO, y = Probability, fill = Category)) +
     geom_area(stat = "identity") +
     scale_fill_brewer(palette = "Set2") +
-    labs(y = "Probability of Sending X Applications (Binned)", x = "Unemployment Duration (Months)", title= paste0("Predicted Probabilities of Apps Sent\nby Unemployment Duration"))+
-  common_theme 
+    labs(y = "Probability of Sending X Applications (Binned)", x = "Unemployment Duration (Months)", title= str_wrap("Predicted Probabilities of Applications Sent by Unemployment Duration", width = wrap_width))+
+  common_theme
+
+fig_cap_best_ind <- "Predicted probability of reporting each job application bin as a function of unemployment duration in months, derived from the best-fitting ordinal logistic regression model (complementary log-log link, quadratic unemployment duration, with demographic controls). Each panel shows the predicted probability for one application category; y-axes are independently scaled to the range of predicted values within each category. Predictions are evaluated at the sample mean of all covariates. Data pooled from the 2018 and 2022 waves of the CPS-BLS Unemployment Insurance Nonfilers Supplement (N = 5,169)."
+
+fig_cap_best_area <- "Predicted probability distribution over job application intensity bins as a function of unemployment duration in months, derived from the best-fitting ordinal logistic regression model (complementary log-log link, quadratic unemployment duration, with demographic controls). The stacked area chart shows how the full predicted probability mass shifts across the five application categories — 0, 1--10, 11--20, 21--80, and 81 or more applications — as unemployment duration increases. Predictions are evaluated at the sample mean of all covariates. Data pooled from the 2018 and 2022 waves of the CPS-BLS Unemployment Insurance Nonfilers Supplement (N = 5,169)."
+
+```
 
 
-p_all <- (p1 | p2) + plot_annotation(title = "Predicted Probabilities of Application Effort by Unemployment Duration",
-      subtitle = "N = 5,169\nBureau of Labor Statistics Data reported in 2018 and 2022.\nEstimated using an ordinal logistic regression in which the outcome variables are bins of applications sent.\nUnemployment duration enters quadratically w. socio-demographic controls.\nControls: Education, Age, Gender, Family Income. Race excluded because of lack of statistical significance.\nLink function: Complementary log-log function selected using AIC comparison on 4 alternative link functions.",  theme = plot_annotation_theme
-      )
-
-p_all
+```{r, echo=FALSE, cache = FALSE, fig.height = 7, fig.cap = fig_cap_best_ind}
+p1 + common_theme #plot_annotation(title = "Predicted Probabilities of Application Effort by Unemployment Duration",
+     # subtitle = "N = 5,169\nBureau of Labor Statistics Data reported in 2018 and 2022.\nEstimated using an ordinal logistic regression in which the outcome variables are bins of applications sent.\nUnemployment duration enters quadratically w. socio-demographic controls.\nControls: Education, Age, Gender, Family Income. Race excluded because of lack of statistical significance.\nLink function: Complementary log-log function selected using AIC comparison on 4 alternative link functions.",  theme = plot_annotation_theme)
+      
 
 ggsave(here("data/figures/application_effort.png"))
+```
+
+
+```{r, echo=FALSE, cache = FALSE, fig.cap = fig_cap_best_area}
+p2 +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank())
+
+ggsave('/Users/ebbamark/Dropbox/Apps/Overleaf/ABM_Transitions/figs/application_effort_brief.pdf', device = cairo_pdf, width = 8, height = 6)
+
 
 # new_data %>% 
 #   write.csv(., here("data/behav_params/CPS_BLS_Supplement_18_22/app_probs.csv"))
@@ -554,75 +595,96 @@ ggsave(here("data/figures/application_effort.png"))
 
 ```
 
-## Wage Expectations and Satisficing: Reservation Wage Adjustment
+### Wage Expectations and Satisficing: Reservation Wage Adjustment
 
-As part of the Current Population Survey, the US Census Bureau conducts an annual Displaced Worker Supplement in which workers who have lost their job in the last three years are asked additional questions about their unemployment experiences and (if re-employed) their re-employment conditions. From this we draw a reservation wage adjustment rate as a function of unemployment duration. We compare various econometric specifications across several samples that correct for selection effects that typically confound studies of duration-dependent employment outcomes. 
-
-<!-- CHECKED FOR COMMON THEME NEEDS -->
 
 ```{r cps_disc_vignette_input, child = "cps_displaced_worker_supplement/cps_disc_worker_vignette.Rmd"}
 ```
 
-## OTJ Search Propensity
+### On-the-Job Search Propensity
 
-A key improvement in this model is the incorporation of on-the-job seekers. Eeckhout et al. 2019 demonstrate that the flow of employed job-seekers into the pool of job-seekers can generate increased competition in boom periods. Therefore, we derive a mean value for the propensity of employed job-seekers to engage in search using the methodology and data presented in Eeckhout et al. 2019. In other words, we derive the sensitivity of employed job seekers to the business cycle from the employment-to-employment transitions data as used in Eeckhout et al. Due to unreliable component parts of the Eeckhout analysis, we decided to abandon using their estimated parameters (search intensity for employed workers), and instead rely on their series of employment-to-employment (EE) transition rate which resulted in wage increases. This series is plotted in the top panel of the following figure. We draw the mean propensity to search from the average EE transition rate ~6%, represented by the dark blue dashed line in the top panel.
+The agent-based model relies on a fixed propensity of search which motivates the behavior of employed job-seekers. We draw this fixed propensity to search from employment-to-employment (EE) transition rates drawn from IPUMS-CPS data spanning 2000 to 2020, following the flow calculation conventions of Fallick et al. Specifically, we draw a mean propensity to engage in job search from EE transitions accompanied by a 5\% wage increase in line with the convention employed in Eeckhout et al. We focus on employment-to-employment transitions that result in wage increases, as such transitions are more likely to be voluntary and thus reflect active rather than passive search behavior. This yields a mean propensity for employed workers to engage in on-the-job search, represented by the dashed blue line in the figure below.
 
-We provide additional indicators of the cyclicality of this series by plotting fitted values of the EE transition rate as a function of national real GDP. These fitted values are derived from a linear regression in which the EE transition rate is regressed on national real GDP, optionally incorporated a deterministic linear trend. Furthermore, we provide the Hodrick-Prescott filtered series in the bottom panel, both as the raw de-trended series, and as a fitted series to real GDP.
+<!-- ![Employed Search Effort Fit](Eeckhout_Replication/EE_transition_rate.png) -->
 
-![Employed Search Effort Fit](Eeckhout_Replication/EE_transition_rate.png)
+```{r}
 
-```{r eeckhout, echo = FALSE, include = FALSE, fig.height = 8, fig.width = 10, cache = TRUE, results = 'asis'}
+fig_eeckhout_cap <- "Quarterly seasonally adjusted employment-to-employment (EE) transition rates, computed from the Current Population Survey using the tabulation method of Eeckhout et al. The solid red line shows the overall EE transition rate (total EE transitions as a share of the labor force); the dotted grey line shows the subset of EE transitions accompanied by a wage gain exceeding 5%. The dashed blue horizontal line indicates the mean EE transition rate over the calibration period (2000--2019), which enters the agent-based model as the fixed on-the-job search propensity parameter. All series are shown at quarterly frequency and restricted to the model calibration window."
 
-source(here('data/behav_params/Eeckhout_Replication/eeckhout_extended_replication.R'))
+fig_comp_seekers_cap <- "Employed workers as a share of total job seekers (unemployed plus employed on-the-job searchers), expressed as a percentage deviation from the Hodrick-Prescott trend (left axis), alongside the seasonally adjusted unemployment rate (right axis). The series is derived from the Eeckhout et al. replication and covers the model calibration and simulation period. Grey shaded bars indicate NBER recession periods."
 
 ```
 
-## Supporting Data for Validation
+```{r eeckhout, echo = FALSE, cache = FALSE, results = 'asis', fig.pos = "H", fig.cap = fig_eeckhout_cap}
 
-### Intensive Search Effort: Mukoyama et al. 2018 *Job Search and the Business Cycle*
+source(here('data/behav_params/Eeckhout_Replication/eeckhout_replication.R'))
+
+```
+
+## Behavioral Validation Data
+
+### Job-Seeker Composition
+
+We additionally use the empirical job-seeker composition series derived from the Eeckhout et al. framework to validate the simulated composition of the job-seeker pool in the agent-based model. Following the stock-flow accounting conventions of Eeckhout et al., we iterate a forward-looking accounting identity that tracks the stock of employed job seekers over time using the quarterly employment-to-employment, unemployment-to-employment, and employment-to-unemployment transition rates computed from IPUMS-CPS data. For a calibrated search propensity parameter, the stock of employed job seekers evolves each period as a function of labor force flows between employment and unemployment states. The resulting series, expressed as a percentage deviation from its Hodrick-Prescott trend, captures the cyclical component of the job-seeker composition. We compare this series against the model's simulated job-seeker composition in the validation section of the main text. For further methodological detail, we refer the reader to Eeckhout et al. as we extend their series to include more recent data but otherwise replicate their methodology.
+
+```{r eeckhout_valid, echo = FALSE, results = 'asis', fig.cap = fig_comp_seekers_cap}
+
+print(comp_searchers_plot_save)
+
+```
+
+
+### Intensive Search Effort
 
 We use evidence from [Mukoyama et al. 2018](https://www.aeaweb.org/articles?id=10.1257/mac.20160202) regarding the cyclicality of unemployed job search effort to validate the micro behavior of our
-agents. This is a foundational paper within the literature that explores the relationship between search effort and business cycles. The authors provide new data on the intensive margin of unemployed search effort (in minutes searched) over the business cycle by linking date from the American Time Use Survey (ATUS) and Current Population Survey (CPS). We employ the methods and data presented in their work in a validation exercise of the emergent micro behavior of unemployed job-seekers. 
+agents. This is a foundational paper within the literature that explores the relationship between search effort and business cycles. The authors provide novel data on the intensive margin of unemployed search effort (in minutes searched) over the business cycle by linking data from the American Time Use Survey (ATUS) and Current Population Survey (CPS). We employ the methods and data presented in their work in a validation exercise of the emergent micro behavior of unemployed job-seekers. 
 
 More specifically, the authors provide a novel measure of job search effort exploiting the American Time Use and Current Population Surveys which can be reduced to
-just the intensive margin (changes in search effort by worker). Typically, this is an extremely challenging measure to approximate due to data availability and survey design. In general, surveys measure actions taken (i.e., applications sent, interviews completed) but these indicators can abstract from the fundamental intensive margin of search effort. In other words, the most common metrics that measure search effort can result from passive search or intrinsic advantageous worker characteristics, obscuring any sense of real search "effort" or urgency with which individuals apply their search strategies. This intensive margin underlies the motivation behind our dynamic search effort rule, making this data a valuable source of validation data for the model's output. 
+just the intensive margin (changes in search effort by worker). Typically, this is an extremely challenging measure to approximate due to data availability and survey design. In general, surveys measure actions taken (i.e., applications sent, interviews completed) but these indicators can abstract from the fundamental intensive margin of search effort. In other words, the most common metrics that measure search effort can result from passive search or intrinsic advantageous worker characteristics, obscuring any sense of real search "effort" or urgency with which individuals apply their search strategies. This intensive margin underlies the motivation behind our dynamic search effort rule, making this a valuable source of validation data for the model's output. 
 
 Methodologically, the authors construct this time series measure of job search intensity by linking the American Time Use Survey (ATUS) and Current Population Survey (CPS). While the ATUS directly measures minutes spent on job search activities but has limited sample size and coverage (2003-2014), the CPS reports the number and types of search methods used over larger samples beginning in 1994. Both surveys ask similar questions about search methods employed in the previous month. The authors exploit this overlap by first estimating the relationship between reported search time and search methods in the ATUS using a Heckman selection model—estimating both the probability of positive search time and the number of minutes conditional on searching, controlling for demographics, occupation, and unemployment duration. They then apply these estimated coefficients to impute daily search time for all CPS unemployed respondents based on their reported search methods, generating a monthly intensive margin series from 1994-2014. This approach weights each search method by its estimated time intensity and allows baseline search effort to vary by demographic characteristics, producing a more nuanced measure than simply counting the number of methods used.
 
-The figure below represents the intensive search margin time series as calculated by the authors. This data is drawn from the replication code provided by the authors. We have translated the code from Stata to R, and the time series represented in the figure below relies on the methodology outlined by Mukoyama et al. We indicate in the caption and legend where we have incorporated new data by extending the time series to include additional years or applied an alternative weighting scheme to the data to account for missing data. The citation for this work can be found in the bibliography of the main text.
+The figure below represents the intensive search margin time series, replicating and extending the methodology of Mukoyama et al. This data is drawn from the replication code provided by the authors. We have translated the code from Stata to R, and the time series represented in the figure below relies on the methodology outlined by Mukoyama et al. We indicate in the caption and legend where we have incorporated new data by extending the time series to include additional years or applied an alternative weighting scheme to the data to account for missing data.
 
-![Mukoyama Validation Series](Mukoyama_Replication/intensive_search_margin.png)
+```{r, echo = FALSE}
 
-```{r mukoyama, echo = FALSE, include = FALSE, fig.height = 8, fig.width = 10}
+cap_fig3b <- "Average minutes of job search per day among unemployed workers, estimated using the imputation methodology of Mukoyama et al. The series are constructed by applying Heckman selection model coefficients, estimated on the relationship between reported search time and search methods in the American Time Use Survey (ATUS), to impute daily search minutes for all unemployed respondents in the Current Population Survey (CPS), weighted by CPS sample weights. The four series reflect two dimensions of variation: the underlying time series source (Original TS: the authors' original 2003--2014 ATUS data; Extended TS: an extension incorporating ATUS data through 2024) and the weighting scheme applied in the imputation (Original Weights: as reported in the original paper; New Weights: revised weights correcting for missing observations in the CPS and ATUS inputs). Lines are shown at full opacity within the period to which the agent-based model is calibrated and simulated (2001-2019) and are dimmed outside this window."
 
+```
+
+<!-- ![Mukoyama Validation Series](Mukoyama_Replication/intensive_search_margin.png) -->
+
+```{r mukoyama, echo = FALSE, fig.cap = cap_fig3b}
+
+calling_si <- TRUE
 source(here("data/behav_params/Mukoyama_Replication/mukoyama_replication_analysis.R"))
 
 ```
 
 
-### Learning Rate - Mueller et al. Job Seekers' Perceptions and Employment Prospects: Heterogeneity, Duration Dependence and Bias {.tabset}
+<!-- ### Learning Rate - Mueller et al. Job Seekers' Perceptions and Employment Prospects: Heterogeneity, Duration Dependence and Bias {.tabset} -->
 
-Given, the theoretical job search model presented in the main text relies additionally on a learning rate. We consider drawing this learning rate from work by Mueller et al, though this has not been incorporated in the main text thus far.
+<!-- Given, the theoretical job search model presented in the main text relies additionally on a learning rate. We consider drawing this learning rate from work by Mueller et al, though this has not been incorporated in the main text thus far. -->
 
-In this work, the authors claim to disentangle the effects of duration dependence and
-dynamic selection by using job seekers' elicited beliefs about
-job-finding. Assuming (and confirming empirically) that job-seekers have
-realistic initial beliefs about job-finding they isolate the
-heterogeneity in job-seekers from true duration dependence. Ultimately,
-they find that dynamic selection selection explains most of the negative
-duration dependence (rather than pure, true duration dependence).
+<!-- In this work, the authors claim to disentangle the effects of duration dependence and -->
+<!-- dynamic selection by using job seekers' elicited beliefs about -->
+<!-- job-finding. Assuming (and confirming empirically) that job-seekers have -->
+<!-- realistic initial beliefs about job-finding they isolate the -->
+<!-- heterogeneity in job-seekers from true duration dependence. Ultimately, -->
+<!-- they find that dynamic selection selection explains most of the negative -->
+<!-- duration dependence (rather than pure, true duration dependence). -->
 
-We replicate and extend the analysis using replication code made available by the autors. The figures and econometric specification choices are crafted by Mueller et al, and several of the below plots are present in the main text of their work as well. Plot and regression table titles have been maintained for easy comparison. We provide additional evidence regarding the stability of their estimates across a longer time series that includes six additional years of data from 2019-2024.
+<!-- We replicate and extend the analysis using replication code made available by the autors. The figures and econometric specification choices are crafted by Mueller et al, and several of the below plots are present in the main text of their work as well. Plot and regression table titles have been maintained for easy comparison. We provide additional evidence regarding the stability of their estimates across a longer time series that includes six additional years of data from 2019-2024. -->
 
-We find that their results are remarkably consistent even when including additional data from 2019-2024. We aim to include this information in our theoretical model of the job
-search effort as a learning rate (ie. individuals learn about their
-re-employment probability with repeated failures in the job search).
+<!-- We find that their results are remarkably consistent even when including additional data from 2019-2024. We aim to include this information in our theoretical model of the job -->
+<!-- search effort as a learning rate (ie. individuals learn about their -->
+<!-- re-employment probability with repeated failures in the job search). -->
 
-```{r mueller, echo = FALSE, fig.height = 8, fig.width = 10, cache = FALSE, results = 'asis'}
+<!-- ```{r mueller, echo = FALSE, fig.height = 8, fig.width = 10, cache = FALSE, results = 'asis'} -->
 
-source(here("data/behav_params/Mueller_Replication/mueller_repl_analysis_extended_samples.R"))
+<!-- source(here("data/behav_params/Mueller_Replication/mueller_repl_analysis_extended_samples.R")) -->
 
-```
+<!-- ``` -->
 
 <!-- ## Additional Analyses {.tabset} -->
 
