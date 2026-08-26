@@ -1,0 +1,77 @@
+\documentclass{article}
+\usepackage{booktabs}
+\usepackage{threeparttable}
+\usepackage{caption}
+\usepackage{tabularray}
+\usepackage{siunitx}
+\usepackage{adjustbox}
+\usepackage[margin=1in, landscape]{geometry}
+
+\begin{document}
+
+% =============================================================================
+% 1. Cross-sectional vacancy-level regressions
+% =============================================================================
+\section*{Cross-Sectional Results}
+\input{reg_output/table_cross_section}
+
+% =============================================================================
+% 2. Company--Occupation panels
+% =============================================================================
+\section*{Company--Occupation Panels}
+
+\subsection*{SOC-2}
+\input{reg_output/firm_occ_results_soc_2}
+
+\subsection*{SOC-3}
+\input{reg_output/firm_occ_results_soc_3}
+
+\subsection*{SOC-4}
+\input{reg_output/firm_occ_results_soc_4}
+
+\subsection*{SOC-5}
+\input{reg_output/firm_occ_results_soc_5}
+
+% =============================================================================
+% 3. Industry--Occupation panels
+% =============================================================================
+\section*{Industry--Occupation Panels}
+
+\subsection*{NAICS-2}
+\input{reg_output/ind_occ_naics2_soc_2}
+\input{reg_output/ind_occ_naics2_soc_3}
+\input{reg_output/ind_occ_naics2_soc_4}
+\input{reg_output/ind_occ_naics2_soc_5}
+
+\subsection*{NAICS-3}
+\input{reg_output/ind_occ_naics3_soc_2}
+\input{reg_output/ind_occ_naics3_soc_3}
+\input{reg_output/ind_occ_naics3_soc_4}
+\input{reg_output/ind_occ_naics3_soc_5}
+
+\subsection*{NAICS-4}
+\input{reg_output/ind_occ_naics4_soc_2}
+\input{reg_output/ind_occ_naics4_soc_3}
+\input{reg_output/ind_occ_naics4_soc_4}
+\input{reg_output/ind_occ_naics4_soc_5}
+
+\subsection*{NAICS-5}
+\input{reg_output/ind_occ_naics5_soc_2}
+\input{reg_output/ind_occ_naics5_soc_3}
+\input{reg_output/ind_occ_naics5_soc_4}
+\input{reg_output/ind_occ_naics5_soc_5}
+
+\subsection*{NAICS-6}
+\input{reg_output/ind_occ_naics6_soc_2}
+\input{reg_output/ind_occ_naics6_soc_3}
+\input{reg_output/ind_occ_naics6_soc_4}
+\input{reg_output/ind_occ_naics6_soc_5}
+
+% =============================================================================
+% 4. Summary table
+% =============================================================================
+\clearpage
+\section*{Summary Table}
+\input{reg_output/model_summary_table}
+
+\end{document}
