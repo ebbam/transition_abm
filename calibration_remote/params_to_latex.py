@@ -92,13 +92,21 @@ def params_to_latex(
             p = "$\gamma_u$"
         elif p == "theta":
             p = "$\\beta_c$"
-        return p #str(p).replace("_", "\\_")
+        elif p == "d_v":
+            p = "$\delta_v$"
+        elif p == "gamma_v":
+            p = "$\gamma_v$"
+        return p
     
     def get_prior(p):
         if p in ["d_u", "gamma_u"]:
             prior = f"$U(0.0001, 0.9)$"
         elif p == "theta":
-            prior = f"$U(0.01, 5)$"
+            prior = f"$U(0.01, 40)$"
+        elif p == "d_v":
+            prior = f"$U(0, 0.01)$"
+        elif p == "gamma_v":
+            prior = f"$U(0, 1)$"
         else:
             raise KeyError
         return prior 
@@ -127,8 +135,9 @@ def params_to_latex(
     n_models = len(ordered_models)
     col_align = "|l|l|" + "c|" * n_models
     lines = []
-    lines.append("\\begin{table}[h!]")
+    #lines.append("\\begin{table}[h!]")
     lines.append("\\centering")
+    lines.append("\\renewcommand{\\arraystretch}{1.4}")
     lines.append("\\begin{adjustbox}{width=\\textwidth}")
     lines.append(f"\\begin{{tabular}}{{{col_align}}}")
     lines.append("\\hline")
@@ -155,9 +164,10 @@ def params_to_latex(
 
     lines.append("\\end{tabular}")
     lines.append("\\end{adjustbox}")
+    lines.append("\\renewcommand{\\arraystretch}{1}")
     lines.append("\\caption{Prior distribution and parameter estimates for all models. $U(a, b)$ denotes a uniform distribution on $[a,b]$.}")
     lines.append(f"\\label{{tab:priors_posteriors_{label_suffix}}}")
-    lines.append("\\end{table}")
+    #lines.append("\\end{table}")
 
     tex = "\n".join(lines)
     Path(out_tex_path).write_text(tex, encoding="utf-8")

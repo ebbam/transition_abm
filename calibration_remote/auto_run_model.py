@@ -551,9 +551,9 @@ for nw in ["full_omn", "single_node", "onet", "onet_wage_asym"]:
             ###############################################################################################################
             #################### Beveridge Curve ##########################################################################
             ###############################################################################################################
-            plot_bev_curve_color(filtered_model_results, observation, 
-                    sep_strings=sep_strings_filtered, 
-                        sep=True, save=save_button, path=output_path, smooth = 3, viridis_color = 'magma')
+            plot_bev_curve_color(filtered_model_results, observation,
+                    sep_strings=sep_strings_filtered,
+                        sep=True, save=save_button, path=output_path, smooth = 3, colors=plot_colors)
 
 
             ###############################################################################################################
