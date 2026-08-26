@@ -1,0 +1,140 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath}
+\usepackage{threeparttable}
+\usepackage{booktabs}
+\usepackage{tabularray}
+\usepackage{makecell}
+\usepackage{siunitx}
+\usepackage{booktabs}
+\usepackage{threeparttable}
+\usepackage{adjustbox}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{caption}
+\usepackage[margin=1in, landscape]{geometry}
+\usepackage{lscape}
+\title{Scratch Work}
+\author{Ebba Mark testingtruing}
+\date{February 2026}
+
+\begin{document}
+
+\maketitle
+
+
+% \section{Introduction}
+
+% Assuming occupations are wage-posters (not bargainers), one could consider occupational wage-setting to follow a rule responsive to (1) an underlying growth rate and (2) an additional wage pressure defined by market tightness $\varphi_{i,t-1}$.
+
+% \begin{align*}
+% w_{i,y} = w_{i,y-1} (1 + r + \kappa f(\varphi_{i,t-1})) 
+% \end{align*}
+
+% where:\\
+
+% \noindent $w_{y}$: wage offer in year $y$.\\
+% $r$: baseline wage growth rate.\\
+% $\kappa$: sensitivity to market tightness.\\
+% $\varphi$: indicator of market tightness.\\
+
+% Market tightness would proxy a probability of a successful hire. This would imply some form of occupational learning from past hiring success. Alternatively, occupations could respond to a target demand gap (ie. demand for workers) which would reflect their demand for workers. Though $r$ could easily be defined as a fixed rate of wage growth (potentially linked to inflation), this would require calibrating a value for $\kappa$, in addition to the rest of the model's parameters.\\
+
+% In the figure below, we assume that:
+
+% \begin{align*}
+% f(\varphi_{i,t-1}) = \log \frac{\varphi_{i,t-1}}{\bar\varphi}
+% \end{align*}
+
+% where $\bar\varphi = 0.25$, $r = 0.02$, $\kappa = 0.2$, $t$ is measured in years and $\varphi \in [0.0001,1]$
+
+
+% \pagebreak
+
+% \paragraph{Vacancy Creation} Currently, the probability that a vacancy opens is simply the difference between the national vacancy rate at time $t$ and the vacancy rate coming out of the previous period $t-1$ such that we impose vacancy rates explicitly as follows:
+
+% \begin{align}
+%     \pi^v_{it} = max\{0, \bar{v}_t - \pi^v_{it-1}\}
+% \end{align}
+
+% Instead, we consider an alternative vacancy creation rule in which occupations are responsive to the previous period's target demand growth rate, adjusting their vacancy creation rate in line with this projected growth rate. In the most straight-forward case target demand in the current period grows by the growth rate of the previous period. 
+
+% \begin{align}
+% \widehat{d^{\dagger}_{k,t}} = d^{\dagger}_{k,t-1}(1 + g)
+% \end{align}
+
+% \begin{align}
+% g = \frac{d^{\dagger}_{k,t-1} - d^{\dagger}_{k,t-2}}{d^{\dagger}_{k,t-2}}
+% \end{align}
+
+% \begin{align}
+% \widehat{d^{\dagger}_{k,t}} = \frac{{d^{\dagger}_{k,t-1}}^2}{d^{\dagger}_{k,t-2}}
+% \end{align}
+
+% However, to ensure that vacancies are not only repsonsive to this signal, we can weaken it by having the vacancy creation be driven by actual current demand and previous demand (weighted by some parameter $\gamma_v$.
+
+% \begin{align}
+% \tilde{d}_{i,t} = (1 - \gamma_v)\, d_{i,t} + \gamma_v\, \widehat{d^{\dagger}_{k,t}}
+% \end{align}
+
+% \begin{align}
+% v_{i,t} = \max\!\left(0,\; \tilde{d}_{i,t} - e_{i,t} - v^{\text{open}}_{i,t}\right)
+% \end{align}
+% Notation:
+% \begin{itemize}
+%     \item $\tilde{d}_{i,t}$: projected demand for occupation $i$ at time $t$
+%     \item $g_{i,t}$: realised demand growth rate from $t-2$ to $t-1$
+%     \item $e_{i,t}$: employment count
+%     \item $v^{\text{open}}_{i,t}$: currently open (unfilled) vacancies
+%     \item $v_{i,t}$: new vacancies posted
+%     \item $\gamma_v \in [0,1]$: forward-looking weight: $\gamma_v = 0$ targets the current demand gap; $\gamma_v = 1$ fully extrapolates last period's growth rate
+% \end{itemize}
+
+
+% Each occupation $i$ maintains a 24-month history of realised demand $\{d^\dagger_{i,t-23}, \dots, d^\dagger_{i,t}\}$, where $d^\dagger_{i,t} = \bar{D}_i \cdot \xi_{i,t}$ is the occupation's baseline target demand scaled by its period-$t$ productivity shock. The firm forms a forward-looking demand projection by computing an integrated year-on-year growth signal:
+
+% \begin{equation}
+%     g'_{i,t} = \frac{1}{12} \sum_{k=0}^{11} \left( d^\dagger_{i,t-k} - d^\dagger_{i,t-k-12} \right)
+% \end{equation}
+
+% This averages the last 12 monthly year-on-year differences, producing a smoothed estimate of the absolute demand trend in headcount units. The projected demand for the next period is then:
+
+% \begin{equation}
+%     \widehat{d^\dagger_{i,t}} = d^\dagger_{i,t} + \gamma_v \cdot g'_{i,t}
+% \end{equation}
+
+% where $d^\dagger_{i,t} = \bar{D}_i \cdot \xi_{i,t}$ is the contemporaneous target demand implied by the current productivity shock, and $\gamma_v \in [0,1]$ controls the weight placed on the growth signal relative to the contemporaneous demand level. Vacancies are opened to close the gap between projected demand and current headcount (the sum of employed workers $e_{i,t}$ and already-open vacancies $v_{i,t}$):
+
+% \begin{equation}
+%     v^{\text{new}}_{i,t} = \max\left(0,\ \widehat{d^\dagger_{i,t}} - e_{i,t} - v_{i,t}\right)
+% \end{equation}
+
+% This specification ensures vacancies are only posted when projected demand exceeds current capacity, and that firms do not double-post against vacancies already in the market. During contractions ($g'_{i,t} < 0$), the occupation enters a hiring freeze and workforce reductions occur passively through separations.
+
+% \begin{table}[h]
+% \centering
+% \begin{tabular}{ll}
+% \hline
+% \textbf{Variable} & \textbf{Definition} \\
+% \hline
+% $d^\dagger_{i,t}$ & Contemporaneous target demand, $d^\dagger_{i,t} = \bar{D}_i \cdot \xi_{i,t}$, in headcount units \\
+% $\widehat{d^\dagger_{i,t}}$ & Projected target demand incorporating the growth signal \\
+% $\bar{D}_i$ & Baseline target demand for occupation $i$ \\
+% $\xi_{i,t}$ & Occupation-specific productivity shock at time $t$ \\
+% $g'_{i,t}$ & Integrated year-on-year demand growth signal for occupation $i$ at time $t$ \\
+% $\gamma_v$ & Weight on the growth signal in the vacancy posting rule, $\gamma_v \in [0,1]$ \\
+% $e_{i,t}$ & Number of employed workers in occupation $i$ at time $t$ \\
+% $e_{i,t}$ & Number of open vacancies in occupation $i$ at time $t$ \\
+% $e^{\text{new}}_{i,t}$ & Number of new vacancies posted by occupation $i$ at time $t$ \\
+% \hline
+% \end{tabular}
+% \caption{Variables used in the vacancy creation rule.}
+% \end{table}
+
+
+
+\input{regression_tables}
+
+
+
+\end{document}

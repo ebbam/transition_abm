@@ -302,14 +302,21 @@ tbl_body <- datasummary((`Female Share (\\%)` +
                           Network * (Mean + SD + Min + Max),
                         data = combined,
                         fmt = 1,
-                        title = "Descriptive Statistics of Occupation-Level Characteristics by Network⁠\\label{si_tbl:ipums_desc_stats}",
+                        #title = "Descriptive Statistics of Occupation-Level Characteristics by Network
+                        # \\label{si_tbl:ipums_desc_stats}",
                         output = "latex",
                         escape = FALSE) %>% 
-  kable_styling(latex_options = c("hold_position"))
+  kable_styling(latex_options = c("hold_position")) %>% 
+  gsub("\\\\begin\\{table\\}.*?\n", "", .) %>%
+  gsub("\\\\end\\{table\\}\n?", "", .) %>%
+  #gsub("\\\\caption\\{.*?\\}\n?", "", .) %>%
+  gsub("\\\\centering\n?", "", .)
 
 writeLines(c(
   "\\begin{table}[H]",
   "\\centering",
+  "\\caption{Descriptive Statistics of Occupation-Level Characteristics by Network}",
+  "\\label{si_tbl:ipums_desc_stats}",
   "\\begin{threeparttable}",
   tbl_body,
   "\\begin{tablenotes}[flushleft]",

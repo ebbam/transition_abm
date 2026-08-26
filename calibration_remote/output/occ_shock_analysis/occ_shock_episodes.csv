@@ -1,0 +1,58 @@
+episode,occ_id,label,acs_occ_code,trough_month,min_shock,mean_shock_in_window,peak_to_trough_drop
+Coal mining,86,Mining and geological engineers including mining safety engineers,1500,2016-10-01,0.93423,1.00062,0.17279
+Coal mining,335,First-line supervisors/managers of construction trades and extraction workers,6200,2011-01-01,0.94335,0.99608,0.12989
+Coal mining,367,Derrick rotary drill and service unit operators oil gas and mining,6800,2016-10-01,0.89224,1.00001,0.29537
+Coal mining,370,Mining machine operators,6840,2016-10-01,0.88795,0.99997,0.30882
+Coal mining,371,Roof bolters mining,6910,2016-10-01,0.88514,0.99999,0.31814
+Coal mining,373,Helpers -- extraction workers,6930,2016-10-01,0.90925,0.99928,0.24429
+Coal mining,374,Other extraction workers,6940,2016-10-01,0.90025,0.99968,0.26308
+Textiles/apparel,449,Pressers textile garment and related materials,8310,2001-01-01,0.95674,0.99666,0.08956
+Textiles/apparel,450,Sewing machine operators,8320,2002-01-01,0.95921,1.0136,0.05298
+Textiles/apparel,454,Textile bleaching and dyeing machine operators and tenders,8360,2002-01-01,0.95295,1.01326,0.06277
+Textiles/apparel,455,Textile cutting machine setters operators and tenders,8400,2002-01-01,0.9548,1.01363,0.05846
+Textiles/apparel,456,Textile knitting and weaving machine setters operators and tenders,8410,2002-01-01,0.95298,1.01325,0.06262
+Textiles/apparel,457,Textile winding twisting and drawing out machine setters operators and tenders,8420,2002-01-01,0.95294,1.01324,0.06261
+Textiles/apparel,459,Fabric and apparel patternmakers,8440,2002-01-01,0.95928,1.01473,0.05085
+Textiles/apparel,461,Textile apparel and furnishings workers all others,8460,2002-01-01,0.96092,1.01515,0.0429
+Furniture/wood,462,Cabinetmakers and bench carpenters,8500,2009-01-01,0.91482,1.00393,0.15284
+Furniture/wood,463,Furniture finishers,8510,2009-04-01,0.92703,1.00273,0.13001
+Furniture/wood,465,Woodworking machine setters operators and tenders except sawing,8540,2009-01-01,0.9118,1.00395,0.15755
+Furniture/wood,466,Woodworkers all others,8550,2009-04-01,0.91451,1.00411,0.15232
+Construction trades,15,Construction managers,220,2010-01-01,0.92994,0.9721,0.14036
+Construction trades,335,First-line supervisors/managers of construction trades and extraction workers,6200,2010-01-01,0.9285,0.97261,0.14475
+Construction trades,337,Brickmasons blockmasons and stonemasons,6220,2010-01-01,0.92514,0.96914,0.15355
+Construction trades,338,Carpenters,6230,2010-01-01,0.9302,0.9708,0.14353
+Construction trades,340,Cement masons concrete finishers and terrazzo workers,6250,2010-01-01,0.92464,0.96909,0.15472
+Construction trades,341,Construction laborers,6260,2010-01-01,0.92847,0.97036,0.14694
+Construction trades,344,Operating engineers and other construction equipment operators,6320,2010-01-01,0.9286,0.97347,0.14439
+Construction trades,349,Painters construction and maintenance,6420,2010-01-01,0.93146,0.972,0.13956
+Construction trades,352,Plasterers and stucco masons,6460,2010-01-01,0.9238,0.96911,0.15593
+Construction trades,358,Helpers construction trades,6600,2010-01-01,0.92507,0.9694,0.15326
+Construction trades,359,Construction and building inspectors,6660,2009-10-01,0.94909,0.99088,0.1023
+Construction trades,366,Miscellaneous construction and related workers,6765,2009-04-01,0.93789,0.97496,0.12216
+Construction trades,462,Cabinetmakers and bench carpenters,8500,2009-01-01,0.91482,0.9776,0.15284
+Construction trades,520,Laborers and freight stock and material movers hand,9620,2009-07-01,0.92878,0.97947,0.11839
+Motor vehicles,382,Electronic equipment installers and repairers motor vehicles,7110,2009-07-01,0.93695,0.97374,0.12468
+Motor vehicles,386,Automotive body and related repairers,7150,2009-07-01,0.96214,0.9877,0.06956
+Motor vehicles,387,Automotive glass installers and repairers,7160,2009-12-01,0.96717,0.99269,0.07925
+Motor vehicles,388,Automotive service technicians and mechanics,7200,2009-07-01,0.951,0.97995,0.09536
+Motor vehicles,413,Aircraft structure surfaces rigging and systems assemblers,7710,2009-01-01,0.911,0.97246,0.15893
+Motor vehicles,414,Electrical electronics and electromechanical assemblers,7720,2009-04-01,0.91385,0.97284,0.15469
+Motor vehicles,415,Engine and other machine assemblers,7730,2009-01-01,0.91353,0.97294,0.15557
+Motor vehicles,417,Miscellaneous assemblers and fabricators,7750,2009-04-01,0.91544,0.97284,0.14948
+Motor vehicles,500,Motor vehicle operators all other,9150,2009-07-01,0.93376,0.9779,0.11297
+Routine clerical,267,Travel agents,4830,2009-07-01,0.91675,1.00454,0.15707
+Routine clerical,277,Switchboard operators including answering service,5010,2009-07-01,0.96343,1.00664,0.08812
+Routine clerical,278,Telephone operators,5020,2000-01-01,0.96188,1.00697,0.00194
+Routine clerical,282,Bookkeeping accounting and auditing clerks,5120,2009-04-01,0.96072,1.00598,0.08452
+Routine clerical,286,Tellers,5160,2008-10-01,0.70813,1.00907,0.376
+Routine clerical,318,Data entry keyers,5810,2009-07-01,0.96197,1.00569,0.09372
+Routine clerical,319,Word processors and typists,5820,2009-07-01,0.98351,1.00687,0.06831
+Routine clerical,376,Computer automated teller and office machine repairers,7010,2009-07-01,0.93429,1.00554,0.10925
+Printing/publishing,445,Prepress technicians and workers,8250,2009-04-01,0.92482,0.99689,0.1367
+Printing/publishing,446,Printing machine operators,8255,2009-04-01,0.92263,0.99694,0.13945
+Printing/publishing,481,Photographic process workers and processing machine operators,8830,2009-07-01,0.9479,0.99913,0.10289
+Retail,258,First-line supervisors/managers of retail sales workers,4700,2015-01-01,0.99022,1.016,0.08703
+Retail,259,First-line supervisors/managers of non-retail sales workers,4710,2017-04-01,0.99589,1.00489,0.06073
+Retail,260,Cashiers,4720,2015-01-01,0.99219,1.0188,0.08056
+Retail,263,Retail salespersons,4760,2015-01-01,0.98987,1.01626,0.08868

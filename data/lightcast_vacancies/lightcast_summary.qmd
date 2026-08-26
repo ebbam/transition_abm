@@ -1,6 +1,8 @@
 ---
 title: "Lightcast Job Openings Data"
 format: html
+editor_options: 
+  chunk_output_type: console
 ---
 
 *Note: I wrote the introduction to the overview below with the idea that it could slot into the supplementary materials/manuscript directly so excuse the formal tone for now.*

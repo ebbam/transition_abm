@@ -1,0 +1,341 @@
+
+% =============================================================================
+% 1. Cross-sectional vacancy-level regressions
+% =============================================================================
+\section{Demand-Side Wage Adjustment Mechanism}
+
+In the model, we allow for demand-side wage adjustment to match potential wage preference shifts of job-seekers. 
+
+Via Lightcast, we have access to 24 million job postings between 2010-2024. We use this data to extract a single parameter on which to ground a wage adjustment rate to vacancy duration. Below, we outline the estimation strategy and results. We provide coefficient plots for all estimations and a regression table for the cross-sectional regressions. Regression tables for the panel regressions are available upon request from the author. We estimate a series of regressions at the vacancy, firm-occupation, and industry-occupation levels, with variations in the inclusion of time fixed effects, inverse-duration weighting to account for potential selection effects, level and first-difference specifications, and occupational (SOC) or industry (NAICS) aggregation. 
+
+% I double-checked the full dataset to see whether we can actually extract a panel of vacancies themselves, but I am now fairly certain that this is not possible unless we try to link vacancies with different IDs that we suspect might be identical. This would duplicate the work that Lightcast already does to identify vacancies. Additionally, Lightcast de-duplicates the job openings themselves. Though I am not sure whether this applies month-by-month, I think it partly explains why we cannot link individual vacancy IDs over time. 
+
+% Therefore, after some discussion with Stefi, I have tried the following three options with variations in the estimation strategy listed below each number:
+
+% \begin{enumerate}
+% \item Estimate a \emph{cross-sectional} regression on a dataset where observations are individual vacancies. 
+%     \begin{itemize}
+%     \item Include/exclude year-month fixed effects.
+%     \item Down-weight longer vacancy durations due to potential selection effects.
+%     \end{itemize}
+    
+% \item Estimate a \emph{panel} regression in which we link \emph{firm-level} occupational wage offers over time, regressing them on \emph{firm-level} occupational vacancy durations.
+%     \begin{itemize}
+%     \item Vary SOC-2, SOC-3, SOC-4, SOC-5 occupational categories.
+%     \item \textcolor{red}{First-differences} vs. levels.
+%     \end{itemize}
+    
+% \item Estimate a emph{panel} regression in which we link \emph{industry-level} occupational wage offers over time, regressing them on \emph{industry-level} occupational vacancy durations. 
+%     \begin{itemize}
+%     \item Vary SOC-2, SOC-3, SOC-4, SOC-5 occupational categories.
+%     \item Vary NAICS-2, 3, 4, 5 industrial categories.
+%     \item \textcolor{red}{First-differences} vs. levels.
+%     \end{itemize}
+    
+% \end{enumerate}
+
+\subsection{Cross-Sectional Results: Individual Vacancy-Level Regression}
+
+As a baseline, we estimate the following log-linear regression at the 
+individual vacancy level:
+
+\begin{align}
+\ln w_{i,j,s,k,l,t} = \beta \cdot \text{dur}_{i,j,s,k,l,t} + \alpha_j + \alpha_s + \alpha_k + \alpha_l + \alpha_t + \varepsilon_{i,j,s,k,l,t}
+\end{align}
+
+where $\ln w_{i,j,s,k,l,t}$ is the log of the posted salary for vacancy
+$i$ posted by firm $j$ in occupation $s$, industry $k$ (NAICS-2), location $l$ (MSA), at
+year-month $t$. $\text{dur}_{i,j,s,k,l,t}$ is vacancy duration, measured in months. The coefficient of interest
+$\beta$ captures the conditional association between duration and posted
+wages within firms, occupations, industries, locations, and time periods. $\alpha_j$,
+$\alpha_s$, $\alpha_k$, $\alpha_l$, and $\alpha_t$ denote firm, occupation, industry, location,
+and year-month fixed effects respectively. Standard errors are clustered
+at the firm level. We also estimate specifications that replace the joint year-month fixed effect with separate month and year fixed effects, to test whether an aggregate seasonal or annual profile alone -- rather than firm-specific timing -- drives the association.
+
+To address length-biased sampling, whereby longer-duration vacancies are
+mechanically over-represented in any cross-sectional scrape of job
+postings, we re-estimate this specification using inverse-duration
+weighting (IDW): $\omega_i = 1/\text{dur}_i$, where $\text{dur}_i$ is
+vacancy duration measured in days (weighting by any other time unit
+rescales $\omega_i$ by a constant and so does not change the estimated
+coefficients), which downweights long-duration observations
+proportionally.
+
+\begin{table}[h]
+\begin{adjustbox}{width=\textwidth}
+\input{wage_adjustment_mech_input/table_cross_section_months_display}
+\end{adjustbox}
+\caption{Individual vacancy-level regressions of log posted wage on vacancy duration (months). All 12 specifications include occupation (SOC-3), industry (NAICS-2), and location (MSA) fixed effects; columns vary in the addition of a joint year-month fixed effect (``Base'') versus separate month/company/year fixed effects (``No-YM''), and in inverse-duration weighting (``IDW''). Standard errors, clustered at the firm level, in parentheses.}
+\label{si_tab:wage_adj_cross_section}
+\end{table}
+
+\begin{figure}
+\includegraphics[width = \textwidth]{wage_adjustment_mech_input/coefficient_plot_cross_section_full.pdf}
+\caption{Coefficient on vacancy duration (months) from individual vacancy-level log-wage regressions, across 12 specifications. All specifications include SOC-3, NAICS-2, and MSA fixed effects; specifications vary in whether they add a joint year-month fixed effect (`Base') or separate month, company, and year fixed effects (`No-YM'), and whether observations are weighted by inverse vacancy duration to address length-biased sampling (`IDW'). The grid beneath the panel indicates, for each specification, whether the year-month, month, company, or year fixed effect is included and whether inverse-duration weighting is applied; vertical grey lines separate the four weighting/fixed-effect groups (`Base', `IDW', `No-YM', `No-YM IDW'). Error bars show 95\% confidence intervals; standard errors are clustered at the firm level. Filled markers with solid error bars denote coefficients significant at the 5\% level; open markers with dashed error bars denote coefficients that are not statistically significant.}\label{si_fig:wage_adj_cross_section}
+\end{figure}
+
+The cross-sectional estimates are not robust to the inclusion of time controls: once we add a year fixed effect on top of company fixed effects (the most saturated specification that still excludes a joint year-month effect), the coefficient on duration becomes small and statistically insignificant. This suggests the raw cross-sectional association is largely driven by aggregate trends or across-firm heterogeneity rather than a genuine within-firm, within-time wage-adjustment response, and we do not treat the cross-sectional estimates as reliable evidence on their own. The more robust evidence for a wage-duration relationship comes from the firm-occupation and industry-occupation panel regressions presented below.
+
+% =============================================================================
+% 2. Company-Occupation panels
+% =============================================================================
+\subsection{Panel Results}
+
+\subsubsection{Company-Occupation Regression}
+
+The individual vacancy-level specification compares \emph{different} vacancies
+within the same firm at a point in time, but cannot identify whether firms
+\emph{respond} to prolonged vacancy duration by adjusting posted wages over time.
+
+The data is originally structured as a cross-sectional set of vacancy observations. Constructing a true panel would require observing the same vacancy over time, which is not possible with the Lightcast data as each vacancy is de-duplicated, confirmed by the fact that the dataset does not include multiple observations of the same vacancy ID. Therefore, we cannot estimate a panel regression at the vacancy level which would be required for any kind of causal identification strategy. Instead, we can construct two panels at the firm-occupation and industry-occupation levels, where we observe the mean wage and mean vacancy duration for each firm-occupation or industry-occupation pair over time. 
+
+To address this, we collapse the data to a firm-occupation-month panel and 
+estimate:
+
+\begin{align}
+\bar{w}_{j,s,t} = \beta \cdot \overline{\text{dur}}_{j,s,t} + \alpha_{j,s} + \alpha_t + \varepsilon_{j,s,t}
+\end{align}
+
+where $\bar{w}_{j,s,t}$ is the mean log posted wage across all vacancies 
+posted by firm $j$ in occupation $s$ at year-month $t$, and 
+$\overline{\text{dur}}_{j,s,t}$ is the corresponding mean vacancy duration. 
+The firm-occupation fixed effect $\alpha_{j,s}$ absorbs all time-invariant
+heterogeneity at the firm-occupation level. Identification therefore comes from within-cell variation over time: $\beta$ captures whether firm $j$ posts higher wages for occupation $s$ in months when its vacancies in that occupation take
+longer to fill than usual.
+
+We additionally estimate the analogous first-differenced specification, regressing the month-on-month change in mean log wage on the month-on-month change in mean vacancy duration within each firm-occupation cell:
+
+\begin{align}
+\Delta \bar{w}_{j,s,t} = \beta \cdot \Delta \overline{\text{dur}}_{j,s,t} + \alpha_t + \varepsilon_{j,s,t}
+\end{align}
+
+Differencing removes the firm-occupation fixed effect $\alpha_{j,s}$ by construction, so identification comes purely from within-cell changes over time; the year-month fixed effect $\alpha_t$ is retained to absorb aggregate wage growth and seasonality.
+
+Cells with fewer than five vacancies in a given month are dropped prior to
+estimation. Cells observed in only a single month are also dropped as they 
+provide no within-cell variation. We estimate this specification
+using mean duration entered in months, and additionally
+with observations weighted by cell size $n_{j,s,t}$ to account for
+differences in the precision of cell-level means. For brevity, we report only the unweighted (equal-weighted mean) estimates; the cell-size-weighted estimates are qualitatively similar and available upon request. Standard errors are
+clustered at the firm-occupation cell level. The specification is estimated 
+separately for occupational aggregation at the 2-, 3-, 4-, and 5-digit SOC 
+level, providing a robustness check on the role of occupational 
+classification granularity.
+
+% \subsection*{SOC-2}
+% \subsubsection*{Levels}
+% \input{reg_output/firm_occ_results_soc_2}
+
+% \subsubsection*{First Differences}
+% \input{reg_output/firm_occ_results_soc_2_fd}
+
+% \subsection*{SOC-3}
+% \subsubsection*{Levels}
+% \input{reg_output/firm_occ_results_soc_3}
+
+% \subsubsection*{First Differences}
+% \input{reg_output/firm_occ_results_soc_3_fd}
+
+% \subsection*{SOC-4}
+% \subsubsection*{Levels}
+% \input{reg_output/firm_occ_results_soc_4}
+
+% \subsubsection*{First Differences}
+% \input{reg_output/firm_occ_results_soc_4_fd}
+
+% \subsection*{SOC-5}
+% \subsubsection*{Levels}
+% \input{reg_output/firm_occ_results_soc_5}
+
+% \subsubsection*{First Differences}
+% \input{reg_output/firm_occ_results_soc_5_fd}
+
+% =============================================================================
+% 3. Industry-Occupation panels
+% =============================================================================
+\subsubsection{Industry-Occupation Regression}
+
+To address potential sparsity in the firm-occupation panel arising from 
+firms that post relatively few vacancies in a given occupation, we 
+additionally estimate the model at the industry-occupation-month level:
+
+\begin{align}
+\bar{w}_{k,s,t} = \beta \cdot \overline{\text{dur}}_{k,s,t} + \alpha_{k,s} + \alpha_t + \varepsilon_{k,s,t}
+\end{align}
+
+where $k$ indexes industry, $\bar{w}_{k,s,t}$ is the mean log posted wage 
+for industry $k$, occupation $s$ at year-month $t$, and 
+$\overline{\text{dur}}_{k,s,t}$ is the corresponding mean vacancy duration. 
+The industry-occupation fixed effect $\alpha_{k,s}$ absorbs all 
+time-invariant differences in wages and vacancy duration across 
+industry-occupation pairs. This specification trades within-firm
+identification for larger and more stable cells, at the cost of
+averaging over heterogeneity across firms within the same industry.
+
+The analogous first-differenced specification is:
+
+\begin{align}
+\Delta \bar{w}_{k,s,t} = \beta \cdot \Delta \overline{\text{dur}}_{k,s,t} + \alpha_t + \varepsilon_{k,s,t}
+\end{align}
+
+As above, differencing removes the industry-occupation fixed effect $\alpha_{k,s}$ by construction.
+
+This specification is estimated across all combinations of
+industry aggregation (2- through 6-digit NAICS) and occupational 
+aggregation (2- through 5-digit SOC), yielding a $5 \times 4$ grid of 
+specifications. This allows us to assess whether results are sensitive to
+the level of industry and occupational disaggregation. The same cell-size
+and singleton filters described above are applied prior to estimation, and
+standard errors are clustered at the industry-occupation cell level.
+
+The Company-Occupation panel shows a consistent, statistically significant, positive coefficient of approximately 0.5--1.5\% per additional month of vacancy duration in both the levels and first-differenced estimators, across all SOC aggregation levels. The Industry-Occupation panel shows the same pattern once occupational aggregation reaches at least the 3-digit SOC level; estimates at the coarsest 2-digit SOC level, and, in the levels estimator, 3-digit SOC paired with 2- or 3-digit NAICS, are noisy and frequently statistically insignificant or wrong-signed. This reflects the substantial within-cell heterogeneity that remains at coarse levels of occupational aggregation, making these cells confounded by challenges similar to those in the cross-sectional regressions, in which such heterogeneity confounds the estimation of a robust relationship.
+
+\begin{figure}
+\includegraphics[width = \textwidth]{wage_adjustment_mech_input/coefficient_plot_full.pdf}
+\caption{Coefficient on mean vacancy duration (months) from firm-occupation and industry-occupation panel regressions, estimated in both levels and first differences (indicated in each panel's title). Company-Occupation panels (top row) are estimated separately by 2- through 5-digit SOC occupation aggregation; Industry-Occupation panels (middle and bottom rows) are estimated across all combinations of 2- through 6-digit NAICS industry and 2- through 5-digit SOC occupation aggregation. Error bars show 95\% confidence intervals; standard errors are clustered at the firm-occupation or industry-occupation cell level. Filled markers with solid error bars denote coefficients significant at the 5\% level; open markers with dashed error bars denote coefficients that are not statistically significant.}\label{si_fig:wage_adj_panel_regs}
+\end{figure}
+
+In all specifications, the overall $R^2$ is high while the within-$R^2$ is very low, indicating that the fixed effects account for the majority of variation in wages, as expected given the various factors that determine wages and their levels, specifically. The coefficient on vacancy duration is nonetheless highly statistically significant, indicating a modest yet still robust wage-adjustment response to duration net of these fixed effects.
+
+% \subsection*{NAICS-2}
+
+% \paragraph*{SOC-2 --- Levels}
+% \input{reg_output/ind_occ_naics2_soc_2}
+
+% \paragraph*{SOC-2 --- First Differences}
+% \input{reg_output/ind_occ_naics2_soc_2_fd}
+
+% \paragraph*{SOC-3 --- Levels}
+% \input{reg_output/ind_occ_naics2_soc_3}
+
+% \paragraph*{SOC-3 --- First Differences}
+% \input{reg_output/ind_occ_naics2_soc_3_fd}
+
+% \paragraph*{SOC-4 --- Levels}
+% \input{reg_output/ind_occ_naics2_soc_4}
+
+% \paragraph*{SOC-4 --- First Differences}
+% \input{reg_output/ind_occ_naics2_soc_4_fd}
+
+% \paragraph*{SOC-5 --- Levels}
+% \input{reg_output/ind_occ_naics2_soc_5}
+
+% \paragraph*{SOC-5 --- First Differences}
+% \input{reg_output/ind_occ_naics2_soc_5_fd}
+
+% \subsection*{NAICS-3}
+
+% \paragraph*{SOC-2 --- Levels}
+% \input{reg_output/ind_occ_naics3_soc_2}
+
+% \paragraph*{SOC-2 --- First Differences}
+% \input{reg_output/ind_occ_naics3_soc_2_fd}
+
+% \paragraph*{SOC-3 --- Levels}
+% \input{reg_output/ind_occ_naics3_soc_3}
+
+% \paragraph*{SOC-3 --- First Differences}
+% \input{reg_output/ind_occ_naics3_soc_3_fd}
+
+% \paragraph*{SOC-4 --- Levels}
+% \input{reg_output/ind_occ_naics3_soc_4}
+
+% \paragraph*{SOC-4 --- First Differences}
+% \input{reg_output/ind_occ_naics3_soc_4_fd}
+
+% \paragraph*{SOC-5 --- Levels}
+% \input{reg_output/ind_occ_naics3_soc_5}
+
+% \paragraph*{SOC-5 --- First Differences}
+% \input{reg_output/ind_occ_naics3_soc_5_fd}
+
+% \subsection*{NAICS-4}
+
+% \paragraph*{SOC-2 --- Levels}
+% \input{reg_output/ind_occ_naics4_soc_2}
+
+% \paragraph*{SOC-2 --- First Differences}
+% \input{reg_output/ind_occ_naics4_soc_2_fd}
+
+% \paragraph*{SOC-3 --- Levels}
+% \input{reg_output/ind_occ_naics4_soc_3}
+
+% \paragraph*{SOC-3 --- First Differences}
+% \input{reg_output/ind_occ_naics4_soc_3_fd}
+
+% \paragraph*{SOC-4 --- Levels}
+% \input{reg_output/ind_occ_naics4_soc_4}
+
+% \paragraph*{SOC-4 --- First Differences}
+% \input{reg_output/ind_occ_naics4_soc_4_fd}
+
+% \paragraph*{SOC-5 --- Levels}
+% \input{reg_output/ind_occ_naics4_soc_5}
+
+% \paragraph*{SOC-5 --- First Differences}
+% \input{reg_output/ind_occ_naics4_soc_5_fd}
+
+% \subsection*{NAICS-5}
+
+% \paragraph*{SOC-2 --- Levels}
+% \input{reg_output/ind_occ_naics5_soc_2}
+
+% \paragraph*{SOC-2 --- First Differences}
+% \input{reg_output/ind_occ_naics5_soc_2_fd}
+
+% \paragraph*{SOC-3 --- Levels}
+% \input{reg_output/ind_occ_naics5_soc_3}
+
+% \paragraph*{SOC-3 --- First Differences}
+% \input{reg_output/ind_occ_naics5_soc_3_fd}
+
+% \paragraph*{SOC-4 --- Levels}
+% \input{reg_output/ind_occ_naics5_soc_4}
+
+% \paragraph*{SOC-4 --- First Differences}
+% \input{reg_output/ind_occ_naics5_soc_4_fd}
+
+% \paragraph*{SOC-5 --- Levels}
+% \input{reg_output/ind_occ_naics5_soc_5}
+
+% \paragraph*{SOC-5 --- First Differences}
+% \input{reg_output/ind_occ_naics5_soc_5_fd}
+
+% \subsection*{NAICS-6}
+
+% \paragraph*{SOC-2 --- Levels}
+% \input{reg_output/ind_occ_naics6_soc_2}
+
+% \paragraph*{SOC-2 --- First Differences}
+% \input{reg_output/ind_occ_naics6_soc_2_fd}
+
+% \paragraph*{SOC-3 --- Levels}
+% \input{reg_output/ind_occ_naics6_soc_3}
+
+% \paragraph*{SOC-3 --- First Differences}
+% \input{reg_output/ind_occ_naics6_soc_3_fd}
+
+% \paragraph*{SOC-4 --- Levels}
+% \input{reg_output/ind_occ_naics6_soc_4}
+
+% \paragraph*{SOC-4 --- First Differences}
+% \input{reg_output/ind_occ_naics6_soc_4_fd}
+
+% \paragraph*{SOC-5 --- Levels}
+% \input{reg_output/ind_occ_naics6_soc_5}
+
+% \paragraph*{SOC-5 --- First Differences}
+% \input{reg_output/ind_occ_naics6_soc_5_fd}
+
+% =============================================================================
+% 4. Summary table
+% =============================================================================
+
+% Excluded from the SI document -- available upon request from the author,
+% per the note in the introductory paragraph above.
+% \begin{landscape}
+% \input{reg_output/model_summary_table}
+%
+% \input{reg_output/model_summary_table_fd}
+% \end{landscape}
+

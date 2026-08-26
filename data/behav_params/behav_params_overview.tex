@@ -91,7 +91,7 @@
 \begin{document}
 
 The model's central functionality relies on a variety of behavioral
-mechanisms that are parametrised econometrically using micro data.
+mechanisms that are parametrized econometrically using micro data.
 Furthermore, the model relies on additional sources of micro data for
 validation. In the following section we outline, first, the data and
 analysis used to derive the model's behavioral parameters, followed by
@@ -99,125 +99,144 @@ an inventory of the data used to validate various model outputs. We note
 where we make use of methodology employed or constructed by other
 authors.
 
-\subsection{Application Effort and Learning Dynamics: Applications
+\subsubsection{Application Effort and Learning Dynamics: Applications
 Sent}\label{application-effort-and-learning-dynamics-applications-sent}
 
-First, we employ data from the US Bureau of Labor Statistics and the
-Curren Population Survey on the application effort of unemployed
-job-seekers to discipline our behavioral mechanism for search. More
-specifically, in 2018 (May, September) and 2020 (February, May), the
-Bureau of Labor Statistics ran the ``Unemployment Insurance Nonfilers''
-supplemental survey to the monthly Current Population Survey run by the
-US Census Bureau. The survey's stated intent was to ``obtain information
-on the characteristics of people who do not file for Unemployment
-Insurance benefits as well as their reasons for not doing so.'' The
-survey was conducted for all persons responding the the monthly Current
-Population Survey which encompasses ``all persons in the civilian
-non-institutional population of the United States living in households.
-The probability sample selected to represent the universe consists of
-approximately 54,000 households.''
+First, we employ data from a supplementary survey designed by the US
+Bureau of Labor Statistics conducted as part of the Current Population
+Survey on the application effort of unemployed job-seekers to discipline
+our behavioral mechanism for search effort. More specifically, in 2018
+(May, September) and 2022 (February, May), the Bureau of Labor
+Statistics ran the ``Unemployment Insurance Nonfilers'' supplemental
+survey to the monthly Current Population Survey run by the US Census
+Bureau. The survey's stated intent was to ``obtain information on the
+characteristics of people who do not file for Unemployment Insurance
+benefits as well as their reasons for not doing so.'' The survey was
+conducted for all persons responding the the monthly Current Population
+Survey which encompasses ``all persons in the civilian non-institutional
+population of the United States living in households. The probability
+sample selected to represent the universe consists of approximately
+54,000 households.''
 
 Relevant to our work, survey respondents were asked the following two
 questions:
 
 \begin{figure}
 \centering
-\pandocbounded{\includegraphics[keepaspectratio]{CPS_BLS_Supplement_18_22/prunedur_q.png}}
+\pandocbounded{\includegraphics[keepaspectratio,alt={Survey Question: Unemployment Duration}]{behav_params_overview_files/CPS_BLS_Supplement_18_22/prunedur_q.png}}
 \caption{Survey Question: Unemployment Duration}
 \end{figure}
 
 \begin{figure}
 \centering
-\pandocbounded{\includegraphics[keepaspectratio]{CPS_BLS_Supplement_18_22/applications_sent_q.png}}
+\pandocbounded{\includegraphics[keepaspectratio,alt={Survey Question: Applications Sent}]{behav_params_overview_files/CPS_BLS_Supplement_18_22/applications_sent_q.png}}
 \caption{Survey Question: Applications Sent}
 \end{figure}
-
-\subsubsection{Overview of Survey
-Results}\label{overview-of-survey-results}
-
-First, we replicate figures produced for a 2020 Bureau of Labor
-Statistics ``Beyond the Numbers'' issue 2020
-\href{https://www.bls.gov/opub/btn/volume-9/how-do-jobseekers-search-for-jobs.htm\#_edn5}{``Beyond
-the Numbers'' issue}, illustrating some high-level results from the
-survey, prior to describing the econometric specifications employed
-using the raw survey data. As seen in the image above, the survey
-responses regarding applications sent are ``binned'' into intervals (ie.
-number of people sending 81 or more applications or unemployment
-duration of between 5 and 14 weeks) which means that any line plots (or
-linear interpretation of the bar graph) should be done with caution.
-
-In Figure 1, the top left panel shows the proportion of all individuals
-sending X amount of applications receiving Y amount of interviews. The
-plot indicates a ``consistent'' return to sending more applications,
-although as demonstrated in the bottom left plot, the number of
-applications sent is not a linear predictor of job offers received. More
-precisely, the bottom left plot demonstrates that the percentage of
-jobseekers receiving an offer seems to increase as a function of the
-number of applications sent, until a certain point.Next, the right plot
-demonstrates the number of applications sent (red), interviews received
-(green), average interview:application ratio (blue), and probability of
-receiving a job offer (purple) by individuals in each category of
-unemployment duration. There is some indication that both effort and
-success seem to increase and then decline with time spent in
-unemployment, apart from success as measured by receiving a job offer
-which seems to consistently decline with time spent in unemployment.
-
-\begin{figure}
-\centering
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cpssupp1-1.png}}
-\caption{Replication of BLS Analysis}
-\end{figure}
-
-\subsubsection{Econometric Specification Using Raw
-Data}\label{econometric-specification-using-raw-data}
-
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp2-1.png}}
 
 To inform our agent behavior, we derive an unemployment-duration
 dependent measure of application effort, reporting in applications sent.
 More precisely, we estimate the probability distribution over reported
 job application intensity during unemployment using pooled micro data
 from the 2018 and 2022 waves of the CPS in which the Bureau of Labor
-Statistics conducted a Job Search Supplement. The survey asks unemployed
-respondents who are actively searching for work the amount of job
-applications they have sent. Respondents report job application counts
-in ordinal bins:
-\texttt{0\textquotesingle{}\textquotesingle{},}1--10'\,`,
-\texttt{11–20\textquotesingle{}\textquotesingle{},}21--80'`, and ``81 or
-more'\,'. To account for the lack of a continuous dependent variable, we
-estimate a series of ordinal logistic regression models to recover the
+Statistics conducted a supplemental survey called the ``Unemployment
+Insurance Nonfilers''. The survey asks unemployed respondents who are
+actively searching for work the amount of job applications they have
+sent. Respondents report job application counts in ordinal bins: `0',
+`1--10', `11--20', `21--80', and `81 or more'. We display the raw data
+in the figure below.
+
+First, we replicate figures produced for a 2020 Bureau of Labor
+Statistics ``Beyond the Numbers'' issue
+\href{https://www.bls.gov/opub/btn/volume-9/how-do-jobseekers-search-for-jobs.htm\#_edn5}{``Beyond
+the Numbers'' issue}, illustrating some high-level results from the
+survey, prior to describing the econometric specifications employed
+using the raw survey data. As seen in the image below, the survey
+responses regarding applications sent are binned (i.e., number of people
+sending 81 or more applications or unemployment duration of between 5
+and 14 weeks). Therefore, linear interpretation of any relationship
+should be considered with caution.
+
+In the below figure, the top left panel shows the proportion of all
+individuals sending X amount of applications receiving Y amount of
+interviews. The plot indicates a ``consistent'' return to sending more
+applications, although as demonstrated in the bottom left plot, the
+number of applications sent is not a linear predictor of job offers
+received. More precisely, the bottom left plot demonstrates that the
+percentage of job-seekers receiving an offer seems to increase as a
+function of the number of applications sent, until a certain point.
+Next, the right plot demonstrates the number of applications sent (red),
+interviews received (green), average interview to application ratio
+(blue), and probability of receiving a job offer (violet) by individuals
+in each category of unemployment duration. There is some indication that
+both effort and success seem to increase and then decline with time
+spent in unemployment, apart from success as measured by receiving a job
+offer which seems to consistently decline with time spent in
+unemployment.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Joint distribution of job applications sent and interviews received, shown as the proportion of job seekers sending X applications who received Y interviews; shading intensity reflects the proportion.}]{behav_params_overview_files/behav_params_overview_files/figure-latex/cpssupp1-p1-1.png}}
+\caption{Joint distribution of job applications sent and interviews
+received, shown as the proportion of job seekers sending X applications
+who received Y interviews; shading intensity reflects the proportion.}
+\end{figure}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Percentage of job-seekers having received a job offer by number of applications sent.}]{behav_params_overview_files/behav_params_overview_files/figure-latex/cpssupp1-p3-1.png}}
+\caption{Percentage of job-seekers having received a job offer by number
+of applications sent.}
+\end{figure}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Empirical patterns of job search effort and outcomes among unemployed workers, drawn from the 2018 Current Population Survey (CPS) Job Search Supplement. Search outcomes by unemployment duration, shown separately for the average number of applications sent, average number of interviews received, the interview-to-application ratio, and the probability of receiving a job offer; duration categories run from fewer than five weeks to 27 weeks and over.}]{behav_params_overview_files/behav_params_overview_files/figure-latex/cpssupp1-p2-1.png}}
+\caption{Empirical patterns of job search effort and outcomes among
+unemployed workers, drawn from the 2018 Current Population Survey (CPS)
+Job Search Supplement. Search outcomes by unemployment duration, shown
+separately for the average number of applications sent, average number
+of interviews received, the interview-to-application ratio, and the
+probability of receiving a job offer; duration categories run from fewer
+than five weeks to 27 weeks and over.}
+\end{figure}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Number of job applications sent in the two months prior to being surveyed against unemployment duration in months, for unemployed job seekers in the 2018 and 2022 waves of the CPS-BLS Unemployment Insurance Nonfilers Supplement. Each point represents one respondent; horizontal jitter is applied to reduce overplotting across the ordinal application categories. Grey dashed gridlines mark 2-month intervals, aligning with the application recall window of the survey. Sample sizes are N=3,268 (2018) and N=1,901 (2022).}]{behav_params_overview_files/behav_params_overview_files/figure-latex/cps_supp2-1.png}}
+\caption{Number of job applications sent in the two months prior to
+being surveyed against unemployment duration in months, for unemployed
+job seekers in the 2018 and 2022 waves of the CPS-BLS Unemployment
+Insurance Nonfilers Supplement. Each point represents one respondent;
+horizontal jitter is applied to reduce overplotting across the ordinal
+application categories. Grey dashed gridlines mark 2-month intervals,
+aligning with the application recall window of the survey. Sample sizes
+are N=3,268 (2018) and N=1,901 (2022).}
+\end{figure}
+
+To account for the lack of a continuous dependent variable, we estimate
+a series of ordinal logistic regression models to recover the
 conditional probability of each response bin as a function of
 unemployment duration and various demographic characteristics. We test
 model specifications along three dimensions: (i) link function,
 comparing logistic, probit, complementary log-log (cloglog), and log-log
-links; (ii) linear, quadratic, and cubic specifications of unemployment
+links; (ii) linear and quadratic specifications of unemployment
 duration; and (iii) models with and without demographic covariates
 (education, gender, age, and family income; race was excluded due to
 lack of statistical significance across models). Formally, the model
 estimates \(\Pr(Y_i \leq j \mid X_i)\), the cumulative probability of
 observing response category \(Y_i\) for individual \(i\) below \(j\)
-where \(j\) represents the five ordinal bins given various
-transformations of the vector \(X_i\) of independent variables
+where \(j\) indexes the thresholds between the five ordinal bins given
+various transformations of the vector \(X_i\) of independent variables
 (unemployment duration and demographic controls).
 
-Below, we display the results of an exploration of the probability of
-reporting a specific number of applications sent (in the bins as in the
-survey question above) using various specifications of an ordinal
-logistic regression. Wetest specifications varying three different model
-parameters:\\
-1. link function\\
-2. linear vs.~quadratic unemploymentduration,\\
-3. with and without demographic control variables (education, gender,
-age, family income - race excluded because of lack of statistical
-significance though this can be revisited.)
-
 We estimate an ordinal logistic regression model for reported
-applications sent \(Y_i\) in \({0, 1, 2, 3, 4}\) testing four different
-link functions: the complementary log-log (cloglog), logistic, log-log,
-and probit link functions. Let \(X_i^\top \beta\) denote the predictor
-variable. The cumulative probability of observing response category
-\(j\) or below, \(\Pr(Y_i \leq j \mid X_i)\), is modeled as follows for
-each link function:
+applications sent \(Y_i\) in \({0, 1, 2, 3, 4}\), indexing the ordinal
+bins, testing four different link functions: the complementary log-log
+(cloglog), logistic, log-log, and probit link functions. Let
+\(X_i^\top \beta\) denote the predictor variable. The cumulative
+probability of observing response category \(j\) or below,
+\(\Pr(Y_i \leq j \mid X_i)\), is modeled as follows for each link
+function:
 
 \begin{align*}
 \text{Complementary log-log (cloglog):} \quad & \Pr(Y_i \leq j \mid X_i) = 1 - \exp\left( -\exp\left( \tau_j - X_i^\top \beta \right) \right) \\
@@ -233,12 +252,15 @@ is either:
 
 \(X_i = \left( \text{Unemp.Dur.}_i \right)\)
 
-\(X_i = \left( \text{Unemp.Dur.}_i^2 \right)\)
-
 \(X_i = \left( \text{Unemp.Dur.}_i, \text{Unemp.Dur.}_i^2 \right)\)
 
-with and without control variables (education, gender, age, family
-income).
+with and without control variables. Included control variables are
+education (binary indicators for less than high school and high school
+without a bachelor's degree, with bachelor's or above as the reference
+category), gender, age (binary indicators for four age brackets, with 65
+and above as reference), and family income. \(\tau_j\),
+\(j = 1,\ldots,4\) represent the four estimated threshold parameters
+separating the five adjacent response categories.
 
 Assumptions about the probability distribution of the errors associated
 with each link function:\\
@@ -251,18 +273,42 @@ probable.\\
 - \emph{Log-log:} When early categories are of more importance or more
 probable.
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp3-1.png}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp3-2.png}}
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp3-3.png}}
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Predicted cumulative probabilities of reported job application intensity by unemployment duration (months), estimated using ordinal logistic regression with a linear unemployment duration term (X\_i = \textbackslash text\{Unemp.Dur.\}\_i). Rows show predicted probabilities for each application bin; columns compare models estimated with and without demographic controls (education, gender, age, family income). Lines correspond to four link functions: logistic, probit, complementary log-log, and log-log. Predictions are evaluated at the sample mean of all covariates.}]{behav_params_overview_files/behav_params_overview_files/figure-latex/cps_supp3a-1.png}}
+\caption{Predicted cumulative probabilities of reported job application
+intensity by unemployment duration (months), estimated using ordinal
+logistic regression with a linear unemployment duration term
+(\(X_i = \text{Unemp.Dur.}_i\)). Rows show predicted probabilities for
+each application bin; columns compare models estimated with and without
+demographic controls (education, gender, age, family income). Lines
+correspond to four link functions: logistic, probit, complementary
+log-log, and log-log. Predictions are evaluated at the sample mean of
+all covariates.}
+\end{figure}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Predicted cumulative probabilities of reported job application intensity by unemployment duration (months), estimated using ordinal logistic regression with both linear and quadratic unemployment duration terms (X\_i = \textbackslash text\{Unemp.Dur.\}\_i, \textbackslash text\{Unemp.Dur.\}\_i\^{}2). Rows show predicted probabilities for each application bin; columns compare models estimated with and without demographic controls (education, gender, age, family income). Lines correspond to four link functions: logistic, probit, complementary log-log, and log-log. Predictions are evaluated at the sample mean of all covariates.}]{behav_params_overview_files/behav_params_overview_files/figure-latex/cps_supp3c-1.png}}
+\caption{Predicted cumulative probabilities of reported job application
+intensity by unemployment duration (months), estimated using ordinal
+logistic regression with both linear and quadratic unemployment duration
+terms (\(X_i = \text{Unemp.Dur.}_i, \text{Unemp.Dur.}_i^2\)). Rows show
+predicted probabilities for each application bin; columns compare models
+estimated with and without demographic controls (education, gender, age,
+family income). Lines correspond to four link functions: logistic,
+probit, complementary log-log, and log-log. Predictions are evaluated at
+the sample mean of all covariates.}
+\end{figure}
 
 Using an AIC information criterion to compare the fit across all models,
 clear results emerge. Models including socio-demographic controls
 consistently outperform unadjusted models (blue versus red dots in the
 figure below) and the inclusion of a quadratic transformation (labelled
-``Lin-Quadratic'' in the plot below) of unemployment duration better
-captures the non-linear relationship between unemployment duration and
-application effort. Among link functions, the complementary log-log
-specification performs best across model comparisons. Though the
+``Linear + Quadratic'' in the plot below) of unemployment duration
+better captures the non-linear relationship between unemployment
+duration and application effort. Among link functions, the complementary
+log-log specification performs best across model comparisons. Though the
 logistic link function emerges as slightly superior in the specification
 incorporating a linear and quadratic term, we choose to employ the
 complementary log-log link function to align with the hypothesis that
@@ -280,12 +326,23 @@ a quadratic term allows for a concave shape to emerge, better fitting
 the non-linearity of this relationship between unemployment duration and
 applications sent.
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/cps_supp4-1.png}}
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Model fit comparison across ordinal logistic regression specifications, measured by AIC relative to the best-fitting model. Each point represents one specification; the y-axis distinguishes two functional forms of unemployment duration (linear and linear-quadratic); point shape distinguishes the four link functions (logistic, probit, complementary log-log, log-log); and color distinguishes models estimated with and without demographic controls. Lower relative AIC indicates better fit.}]{behav_params_overview_files/behav_params_overview_files/figure-latex/cps_supp4-1.png}}
+\caption{Model fit comparison across ordinal logistic regression
+specifications, measured by AIC relative to the best-fitting model. Each
+point represents one specification; the y-axis distinguishes two
+functional forms of unemployment duration (linear and linear-quadratic);
+point shape distinguishes the four link functions (logistic, probit,
+complementary log-log, log-log); and color distinguishes models
+estimated with and without demographic controls. Lower relative AIC
+indicates better fit.}
+\end{figure}
 
 The figure below demonstrates the predicted probability distribution of
 application effort by unemployment duration indicating a non-linear
-concave search effort. We believe this contributes to an open debate in
-the job search literature regarding the shape of search effort over the
+concave search effort. This pattern contributes to an open debate in the
+job search literature regarding the shape of search effort over the
 unemployment spell. The concave application effort emerging from this
 data aligns with previous observations about unemployed workers engaging
 in delayed search while either grieving job loss or engaging in job
@@ -294,83 +351,99 @@ prospects, as described in the main text.
 
 The final result is that for each additional quarter of unemployment, an
 individual's odds of dropping to a lower-level application category
-decreases by \textasciitilde.1\%. This is statistically significant
+increases by \textasciitilde.1\%. This is statistically significant
 across all specifications at the 0.1\% level.
 
-\pandocbounded{\includegraphics[keepaspectratio]{behav_params_overview_files/figure-latex/unnamed-chunk-1-1.png}}
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Predicted probability of reporting each job application bin as a function of unemployment duration in months, derived from the best-fitting ordinal logistic regression model (complementary log-log link, quadratic unemployment duration, with demographic controls). Each panel shows the predicted probability for one application category; y-axes are independently scaled to the range of predicted values within each category. Predictions are evaluated at the sample mean of all covariates. Data pooled from the 2018 and 2022 waves of the CPS-BLS Unemployment Insurance Nonfilers Supplement (N = 5,169).}]{behav_params_overview_files/behav_params_overview_files/figure-latex/unnamed-chunk-3-1.png}}
+\caption{Predicted probability of reporting each job application bin as
+a function of unemployment duration in months, derived from the
+best-fitting ordinal logistic regression model (complementary log-log
+link, quadratic unemployment duration, with demographic controls). Each
+panel shows the predicted probability for one application category;
+y-axes are independently scaled to the range of predicted values within
+each category. Predictions are evaluated at the sample mean of all
+covariates. Data pooled from the 2018 and 2022 waves of the CPS-BLS
+Unemployment Insurance Nonfilers Supplement (N = 5,169).}
+\end{figure}
 
-\subsection{Wage Expectations and Satisficing: Reservation Wage
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Predicted probability distribution over job application intensity bins as a function of unemployment duration in months, derived from the best-fitting ordinal logistic regression model (complementary log-log link, quadratic unemployment duration, with demographic controls). The stacked area chart shows how the full predicted probability mass shifts across the five application categories --- 0, 1--10, 11--20, 21--80, and 81 or more applications --- as unemployment duration increases. Predictions are evaluated at the sample mean of all covariates. Data pooled from the 2018 and 2022 waves of the CPS-BLS Unemployment Insurance Nonfilers Supplement (N = 5,169).}]{behav_params_overview_files/behav_params_overview_files/figure-latex/unnamed-chunk-4-1.png}}
+\caption{Predicted probability distribution over job application
+intensity bins as a function of unemployment duration in months, derived
+from the best-fitting ordinal logistic regression model (complementary
+log-log link, quadratic unemployment duration, with demographic
+controls). The stacked area chart shows how the full predicted
+probability mass shifts across the five application categories --- 0,
+1--10, 11--20, 21--80, and 81 or more applications --- as unemployment
+duration increases. Predictions are evaluated at the sample mean of all
+covariates. Data pooled from the 2018 and 2022 waves of the CPS-BLS
+Unemployment Insurance Nonfilers Supplement (N = 5,169).}
+\end{figure}
+
+\subsubsection{Wage Expectations and Satisficing: Reservation Wage
 Adjustment}\label{wage-expectations-and-satisficing-reservation-wage-adjustment}
-
-As part of the Current Population Survey, the US Census Bureau conducts
-an annual Displaced Worker Supplement in which workers who have lost
-their job in the last three years are asked additional questions about
-their unemployment experiences and (if re-employed) their re-employment
-conditions. From this we draw a reservation wage adjustment rate as a
-function of unemployment duration. We compare various econometric
-specifications across several samples that correct for selection effects
-that typically confound studies of duration-dependent employment
-outcomes.
 
 As part of the Current Population Survey, the US Census Bureau conducts
 an annual
 \href{https://cps.ipums.org/cps/dw_sample_notes.shtml}{Displaced Worker
-Supplement} in which workers who have lost their job in the last three
-years are asked additional questions about their unemployment
-experiences and (if re-employed) their re-employment conditions.
-
-As reported in the survey documentation linked above, ``the universe for
-the Displaced Workers Supplement is civilians 20 or older. Respondents
-are further categorized as a `displaced worker' if they meet additional
-characteristics (see DWSTAT). Users should note that there is an
-important difference in definition of displaced worker across samples.
-Before 1994, displaced workers are those who lost or left a job during
-the past 5 years. After 1994, displaced workers are those who lost or
-left a job due to layoffs or shutdowns within the past 3 years. For 1998
-on, respondents are only considered displaced workers if they had lost
-or left a job due to layoffs or shutdowns within the past 3 years, were
-not self-employed, and did not expect to be recalled to work within the
-next six months. Self-response was not required for this supplement
-after 1994, so often one individual answered for all household
-members.''
+Supplement} (DWS) in which workers who have lost their job in the last
+three years are asked additional questions about their unemployment
+experiences and (if re-employed) their re-employment conditions. As
+reported in the survey documentation, ``the universe for the Displaced
+Workers Supplement is civilians 20 or older. Respondents are further
+categorized as a `displaced worker' if they had lost or left a job due
+to layoffs or shutdowns within the past 3 years, were not self-employed,
+and did not expect to be recalled to work within the next six months.''
 
 We utilize the information reported on an individual's weekly wage at
 their lost job, wage at their new job, and the time spent unemployed to
-derive a measure of duration-dependent reservation wage adjustment. More
-precisely, we regress the ratio of the new wage to the wage at the lost
-job on unemployment duration and various control variables in a
+derive a reservation wage adjustment rate as a function of unemployment
+duration. More precisely, we regress the ratio of the survey
+respondent's wage at their post-displacement job to the wage at their
+lost job on unemployment duration and various control variables in a
 cross-sectional setting. We compare the model fit across linear,
 quadratic, and cubic specifications, with and without various
 combinations of control variables (whether or not an individual received
 unemployment compensation, age, race, sex, marital status, education,
-previous wage level). Note that wages are reported in hourly and weekly
-values but this reporting is inconsistent across observations. In other
-words, though most individuals (4600/6198) report their wage in both
-units, 270 report only hourly and 1328 report only weekly. To be able to
-combine information on all workers to one value, we select the present
-statistic for those missing one and retain either the minimum, maximum,
-or mean of the hourly versus weekly wage for those reporting both. We
-display box plots of these wage ratios across unemployment duration bins
-for the different methods of reconciling the missing data later in this
-document. The data used below is from annual survey responses between
-2000-2025. We use the supplement sample weights in all results below.
+previous wage level). We compare various econometric specifications
+across several samples that correct for selection effects that typically
+confound studies of duration-dependent employment outcomes.
 
-We note where the sample has been trimmed for outliers (wage ratio
-between {[}0.25, 2{]} and unemployment duration less than 96 weeks
-(\textasciitilde24 months). All analysis below uses Displaced Worker
-Sample Weights to ensure appropriate weighting of survey responses and
-reduce any influence of selection bias.
+Wages are reported in hourly and weekly values but this reporting is
+inconsistent across observations. In other words, though most
+individuals (4,600 respondents of the full sample of 6,198) report their
+wage in both units, 270 report only hourly and 1328 report only weekly.
+To be able to combine information on all workers to one value, we select
+the present statistic for those missing one and retain either the
+minimum, maximum, or mean of the hourly versus weekly wage for those
+reporting both. We display box plots of these wage ratios across
+unemployment duration bins for the different methods of reconciling the
+missing data in the figures below.
 
 Below, we outline the data cleaning procedure, provide descriptive
 figures and statistics, outline the econometric estimation strategy,
 provide regression results using the raw sample and reweighted samples
-addressing selection issues and non-uniformity, and provide information
-on the representativeness of the raw sample. The sample is non-uniform
-in unemployment duration (less observations are observed for higher
-values of unemployment duration). We employ three methods of reweighting
-to address these selection issues (Heckman Selection correction,
-entropy-balancing, and propensity score matching) to deal with
-representativeness issues of across values of unemployment durations.
+addressing selection issues and non-uniformity, describe the integration
+into the agent-based model, and describe inherent limitations in the
+dataset. First, regarding data cleaning, we make use of the survey
+responses recorded between 2000-2025. We trim the sample for possible
+outliers or measurement error by excluding any reported unemployment
+durations greater than 96 weeks (\textasciitilde24 months) and any
+reported accepted wage ratios within {[}0.5, 2{]}, though we display the
+full sample in the descriptive figures below, denoting where the full
+versus clipped sample is used. All analysis below uses Displaced Worker
+Sample Weights to ensure appropriate weighting of survey responses and
+reduce any influence of selection bias.
+
+Next, regarding selection issues and non-uniformity, the sample is
+non-uniform in unemployment duration (fewer observations are observed
+for higher values of unemployment duration). We employ three methods of
+reweighting to address these selection issues (Heckman Selection
+correction, entropy-balancing, and propensity score matching) to test
+the robustness of our econometric results using the trimmed sample.
 These re-weighting and sample balancing methods confirm the
 directionality of the regression results in the non-uniform sample,
 providing greater confidence in the triangulated reservation wage
@@ -379,97 +452,146 @@ adjustment rate.
 Overall, we find that individuals accept a \textasciitilde1-percentage
 point decrease in the wage ratio per additional month of unemployment.
 Variations using model reweighting, different samples, combinations of
-control variables, reported hourly and weekly wage ratios do not seem to
-affect the result. However, the data seems to follow a non-linear
-relationship (we see little satisficing until around \textasciitilde12
-months of unemployment) after which the wage ratio begins to decrease.
-Individuals seem to accept a below-1 relative wage ratio (current
-wage:wage at lost job) following a year of unemployment.
+control variables, reported hourly and weekly wage ratios do not appear
+to affect the results. However, the data indicates a potential
+non-linear relationship (we see little satisficing until around
+\textasciitilde12 months of unemployment) after which the wage ratio
+begins to decrease. Individuals seem to accept a below-1 relative wage
+ratio (current wage:wage at lost job) following a year of unemployment.
 
-\textbf{Potential Limitations:}
+\paragraph{Descriptives}\label{descriptives}
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\tightlist
-\item
-  \textbf{Displaced worker classification as outlined above.} We do not
-  distinguish between workers in our model that are voluntarily or
-  involuntarily separated from their jobs. Therefore, the displaced
-  worker classification outlined above does not represent individuals
-  unemployed voluntarily.
-\item
-  \textbf{The reported `current wage' is not necessarily the realised
-  wage post-re-employment.} Individuals report the wage at their lost
-  job, the amount of time unemployed until they were re-employed, and
-  the wage they hold at their current job. However, it is not indicated
-  whether the current job is the same job as the first they were
-  re-employed at. As such, there is uncertainty in the measurement of
-  this outcome as an accepted wage that is relatively low compared to an
-  individual's previous wage might be a temporary reality rather than a
-  true re-employment wage (i.e., an individual finding stop-gap
-  employment).
-\item
-  \textbf{Outcome variable:} The outcome variable does not adequately
-  handle fundamentally different wage scales (i.e., a 10\% wage increase
-  would likely be more or less devastating depending on the initial wage
-  level). We control for wage levels in various specifications listed
-  below. We find that controlling for wage levels does not significantly
-  impact our results.
-\end{enumerate}
+\subparagraph{Duration Distributions}\label{duration-distributions}
 
-\section{Descriptives}\label{descriptives}
+First, we provide some visualizations of the raw data. The figure below
+displays the distribution of continuous (red) and binned (blue)
+unemployment durations reported in the survey. The distribution is, as
+expected, heavily skewed, with more individuals concentrated at low
+unemployment durations. The continuous values in the red histogram are
+the values later employed as the explanatory variable in the
+cross-sectional regressions used to triangulate the reservation wage
+adjustment schedule employed in the agent-based model.
 
-First, we display the distribution of continuous (red) and binned (blue)
-unemployment duration. The distribution is, as expected, heavily skewed,
-with more individuals concentrated at low unemployment durations. The
-binned values in the blue histogram are the binned values later employed
-as an outcome variable in various regressions.
+\begin{figure}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives-1} \end{center}
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_descriptives-1} 
+
+}
+
+\caption{Distribution of time between job loss and re-employment among displaced workers, weighted by Displaced Worker Supplement sample weights. The upper panel shows the raw continuous distribution in months; the lower panel groups responses into variable-width bins reflecting the diminishing sample density at higher durations (monthly bins for less than 6 months, quarterly for 6–12 months, half-yearly thereafter). The distribution is right-skewed, with most displaced workers re-employed within six months.}\label{fig:disc_descriptives}
+\end{figure}
+
+\subparagraph{Wage Ratios}\label{wage-ratios}
 
 Next, looking at the reported wage ratios in weekly and hourly values
 (without reconciling the missing data), the mean is fixed near 1 until
-\textgreater12 mos of unemployment in hourly wage reporting. In weekly
-wage reporting, the ``satisficing'' seems to start earlier in
+\textgreater12 months of unemployment in hourly wage reporting. In
+weekly wage reporting, the ``satisficing'' seems to start earlier in
 unemployment duration, indicating that the relationship is potentially
 negative and non-linear.
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives2-1} \end{center}
+\begin{figure}
 
-Next, we compare the various options for reconciling missing data across
-survey responses (i.e., when either weekly or hourly wage is reported
-but not both.) Notably, reconciling the reported data by taking the
-minimum (left panel) or mean (right panel) across reported wage values
-for those individuals that report both do not lead to meaningful
-differences in the distribution, visually. However, reconciling with the
-max (middle panel) value leads to slightly less dramatic declines in
-accepted wage ratios than in the other two cases. In the following
-sections, we proceed with the method that reconciles mutliple reported
-values using the minimum value of the wage ratio.
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_descriptives2-1} 
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives3-1} \end{center}
+}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_descriptives4-1} \end{center}
+\caption{Box plots of the accepted re-employment wage ratio (current:lost job wage) by binned unemployment duration, shown separately for hourly (left) and weekly (right) wages. The dashed blue line marks a wage ratio of one. The median wage ratio remains near one for the first twelve months of unemployment before declining; the decline appears slightly earlier in weekly wage reporting. All observations are weighted by Displaced Worker Supplement sample weights.}\label{fig:disc_descriptives2}
+\end{figure}
 
-Next, we fit a linear and spline fit to the scatted plot of the wage
+Given the inconsistent reporting of hourly and weekly wages (i.e., when
+either weekly or hourly wage is reported but not both), we compare a few
+options for reconciling missing data across survey responses. Notably,
+reconciling the reported data by taking the minimum (top panel) or mean
+(bottom right panel) across reported wage values for those individuals
+that report both do not lead to visually meaningful differences in the
+distribution. However, reconciling with the max (bottom left panel)
+value leads to slightly less evident declines in accepted wage ratios
+than in the other two cases. In the following sections, we proceed with
+the method that reconciles multiple reported values using the minimum
+value of the wage ratio.
+
+\begin{figure}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_descriptives3-1} 
+
+}
+
+\caption{Box plots of the accepted re-employment wage ratio by binned unemployment duration, comparing three approaches to reconciling discrepancies between hourly and weekly wage reports: taking the minimum across available values (top), the maximum (lower left), and the mean (lower right). The dashed blue line marks a wage ratio of one. Reconciling with the maximum produces a modestly less pronounced decline in accepted wages; the minimum and mean methods yield visually indistinguishable patterns. All observations are weighted by Displaced Worker Supplement sample weights.}\label{fig:disc_descriptives3}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_descriptives4-1} 
+
+}
+
+\caption{Box plots of the accepted re-employment wage ratio (minimum reconciled) by two-month intervals of unemployment duration. The dashed blue line marks a wage ratio of one. A decline in the median accepted wage ratio is visible from approximately twelve months of unemployment onwards.}\label{fig:disc_descriptives4}
+\end{figure}
+
+Next, we fit a linear and spline fit to the scatter plot of the wage
 ratio to unemployment duration before employing any regressions. These
 plots both visually indicate a decline in the wage ratio with
-unemployment duratio, with the spline fit indicating a potentially
-non-linear fit (not yet accounting for selection effects).
+unemployment duration, with the spline fit indicating a potentially
+non-linear fit. Note that these descriptive relationships do not yet
+account for selection effects.
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_spline-1} \end{center}
+\begin{figure}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_spline-1} 
+
+}
+
+\caption{Scatter plots of the hourly wage ratio against unemployment duration in months, with a weighted linear fit (upper panel) and a cubic spline fit (lower panel). Both fits indicate a negative relationship between unemployment duration and the accepted wage ratio, with the spline suggesting the decline is concentrated after approximately twelve months of unemployment. Observations are weighted by Displaced Worker Supplement sample weights; the sample is restricted to wage ratios between 0.5 and 2 and durations below 96 weeks.}\label{fig:disc_spline}
+\end{figure}
+
+\subparagraph{Sample
+Representativeness}\label{sample-representativeness}
+
+To assess the representativeness of the displaced worker sample used in
+the analysis above, we compare key demographic characteristics of our
+sample against reference values from the Bureau of Labor Statistics. The
+figures below show the sample composition with respect to hourly wage,
+age, education attainment, and gender, all weighted by Displaced Worker
+Supplement sample weights. The sample over-represents below-mean wage
+earners relative to the BLS-reported mean hourly wage of \$36 in 2024,
+which is consistent with the displaced worker population being
+concentrated in lower-wage, more routine-task-intensive occupations. The
+sample is broadly representative in terms of age, with the weighted
+sample median closely tracking the BLS-reported median labor force age
+of 41.7 years. In terms of education, individuals with a high school
+diploma represent the largest share of the sample, and men are
+over-represented relative to the general labor force.
+
+\begin{figure}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_rep_age_wage-1} 
+
+}
+
+\caption{Sample composition with respect to hourly wage at the current job (upper) and age (lower), weighted by Displaced Worker Supplement sample weights. The purple vertical line marks the sample mean hourly wage (upper) and sample median age (lower); the orange dashed line marks the corresponding BLS-reported reference values (mean hourly wage, 2024; median labor force age, 2020). The sample over-represents below-mean wage earners and is broadly representative in terms of age.}\label{fig:disc_rep_age_wage}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_rep_ed_gender-1} 
+
+}
+
+\caption{Sample composition with respect to education attainment (left) and gender (right), weighted by Displaced Worker Supplement sample weights. Individuals with a high school diploma represent the largest share of the sample; men are over-represented relative to the general labor force, consistent with the displaced worker population skewing toward male-dominated industries.}\label{fig:disc_rep_ed_gender}
+\end{figure}
 
 \FloatBarrier
 
-\section{Regressions (non-uniform
-sample)}\label{regressions-non-uniform-sample}
+\paragraph{Cross-Sectional Regression
+Results}\label{cross-sectional-regression-results}
 
-Next, before correcting for the non-uniformity of the sample (i.e., that
-there are less observations present for higher unemployment durations),
-we employ the following cross-sectional econometric specifications (with
-various modifications to sample and control variables).\\
+Before correcting for the non-uniformity of the sample (i.e., that there
+are fewer observations present for higher unemployment durations), we
+employ the following cross-sectional econometric specifications, varying
+samples and included control variables.
 
-\(W_{i} = \alpha_{i} + \beta_{1} d_{i} + \beta_{2}UI_{i} + \beta_{3}X_{i} + \epsilon_{i}\)
+\(W_{i} = \alpha + \beta_{1} d_{i} + \beta_{2}UI_{i} + \mathbf{X}_{i}'\boldsymbol{\beta}_{3} + \epsilon_{i}\)
 
 where \(W_{i}\): Ratio of accepted wage to wage at lost job (hourly
 values).
@@ -480,40 +602,43 @@ values.
 \(UI_{i}\): Control variable for having used or exhausted unemployment
 benefits.
 
-\(X_{i}\): Vector of control variables (sex, age, race, marital status,
-education level, and previous wage level).
+\(\mathbf{X}_{i}'\): Vector of control variables (sex, age, race,
+marital status, education level, and previous wage).
 
-We present and compare \textasciitilde72 variations on the above model
-present with all combinations of the following:
+We present and compare 72 variations on the above model, covering all
+combinations of:
 
 \begin{itemize}
 \item
   \textbf{Continuous vs.~Discrete Treatment Variable (2 alternatives):}
   Continuous (monthly) versus binned unemployment duration.
 \item
-  \textbf{Linear vs.~Quadratic vs.~Cubic representation of the principal
+  \textbf{Linear or Quadratic or Cubic representation of the principal
   treatment variable (3 alternatives):} We allow the treatment variable
   to enter non-linearly by testing the presence of quadratic or cubic
   relationships (with the lower-order transformations entering in all
   models). We do not include any non-linear representation of the binned
   unemployment duration as the bins are uneven and would thus require
-  additional assumptions for validity.
+  additional assumptions for validity. We do not present the cubic
+  specifications in the regression tables due to poor fit, but display
+  these estimations in the line figures for the raw and reweighted
+  samples.
 \item
-  \textbf{w. UI vs w. Exhausted UI (3 alternatives):} The survey
-  includes a variable for whether individuals USE and/or EXHAUST
-  unemployment benefits. We run the regressions without these UI
+  \textbf{Controlling for UI Receipt or UI Exhaustion (3 alternatives):}
+  The survey includes a variable for whether individuals use or exhaust
+  unemployment insurance. We run the regressions without these UI
   controls, with the control for having used UI, or with the control for
   having exhausted UI.
 \item
-  \textbf{w. Controls (2 alternatives):} With or without additional
-  demographic controls (sex, age, race, married, education).
+  \textbf{With Controls (2 alternatives):} With or without additional
+  demographic controls (sex, age, race, marital status, education).
 \item
-  \textbf{w. Wage Level (2 alternatives):} With or without wage level of
-  lost job to control for income and the relationship between wage
-  levels and the outcome wage ratio itself.
+  \textbf{Controlling for Wage Level of Lost Job (2 alternatives):} With
+  or without wage level of lost job to control for income and the
+  relationship between wage levels and the outcome wage ratio itself.
 \item
-  \textbf{Outlier clipped sample (2 alternatives):} We either remove
-  outliers where the wage ratio is within {[}0.25, 2.5{]} and reported
+  \textbf{Outlier Clipped Sample (2 alternatives):} We either remove
+  outliers where the wage ratio is within {[}0.5, 2{]} and reported
   unemployment duration is below 96 weeks (\textasciitilde{} 2 years),
   or employ the raw sample.
 \end{itemize}
@@ -528,7 +653,7 @@ package in R to display visual checks of various model assumptions.
 Across all models (except those that include a control for having
 exhausted UI benefits) in the tables below we see a consistently
 negative coefficient on unemployment duration (\textasciitilde0.5-1
-percentage point increase in the wage ratio for each additional month
+percentage point decrease in the wage ratio for each additional month
 spent in unemployment). These coefficients are all statistically
 significant at the 0.1\% level. Interestingly, this coefficient loses
 statistical significance in any model that controls for having exhausted
@@ -537,252 +662,555 @@ continuous unemployment duration, UI use (not exhaustion), all controls,
 wage levels, and outlier correction we see that the model performs
 passably across various diagnostic tests.
 
-In the sections that follow, we report all regression results in
-regression tables. Additionally, we display model diagnostic plots for
-the specification with continuous unemployment duration, UI control,
-demographic controls, using the clipped sample, and assuming linearity
-in the relationship between unemployment duration and the accepted
-re-employment wage ratio. The quantile-quantile plots below reveal that
-residuals are approximately normally distributed, though there is
-evidence of heavy-tailed behavior in the upper quantiles.
+In the sections that follow, we report all regression results.
+Additionally, we display model diagnostic plots for the specification
+with continuous unemployment duration, UI control, demographic controls,
+using the clipped sample, assuming linearity in the relationship between
+unemployment duration and the accepted re-employment wage ratio. The
+quantile-quantile plots below reveal that residuals are approximately
+normally distributed, though there is evidence of heavy-tailed behavior
+in the upper quantiles.
 
 \FloatBarrier
 
-\subsection{Continuous UE Duration}\label{continuous-ue-duration}
-
-Continuous UE duration treatment is reported in monthly values. A
-one-unit increase in the treatment variable = 1 additional month of
-unemployment.
+\subparagraph{Continuous UE Duration}\label{continuous-ue-duration}
 
 \begin{table}
 \centering\centering
-\caption{\label{tab:disc_reg2}Continuous UE Duration w.o Wage Level Control (Clipped Sample)}
-\centering
-\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
-\begin{tabular}[t]{lcccccccccccc}
-\toprule
-  & Cont. (clipped) & Cont. w. UI (clipped) & Cont. w. exhausted UI (clipped) & Cont. Sq (clipped) & Cont. Sq w. UI (clipped) & Cont. Sq w. exhausted UI (clipped) & Cont. w. controls (clipped) & Cont. w. UI w. controls (clipped) & Cont. w. exhausted UI w. controls (clipped) & Cont. Sq w. controls (clipped) & Cont. Sq w. UI w. controls (clipped) & Cont. Sq w. exhausted UI w. controls (clipped)\\
-\midrule
-Intercept & \num{1.045}*** & \num{1.045}*** & \num{1.006}*** & \num{1.046}*** & \num{1.046}*** & \num{1.001}*** & \num{1.163}*** & \num{1.163}*** & \num{1.113}*** & \num{1.163}*** & \num{1.163}*** & \num{1.108}***\\
- & (\num{0.004}) & (\num{0.004}) & (\num{0.007}) & (\num{0.005}) & (\num{0.005}) & (\num{0.008}) & (\num{0.021}) & (\num{0.021}) & (\num{0.023}) & (\num{0.021}) & (\num{0.021}) & (\num{0.023})\\
-\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.001}} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.001}}\\
- & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002})\\
-Received Unemployment Compensation &  & \num{0.000} &  &  & \num{0.000} &  &  & \num{0.000} &  &  & \num{0.000} & \\
- &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
-Exhausted Unemployment Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}*** &  &  & \num{0.000}*** &  &  & \num{0.001}***\\
- &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
-Unemployment Duration (Months²) &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000} &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000}\\
- &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-Female &  &  &  &  &  &  & \num{-0.003} & \num{-0.003} & \num{-0.003} & \num{-0.003} & \num{-0.003} & \num{-0.003}\\
- &  &  &  &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & \vphantom{1} (\num{0.007})\\
-Age &  &  &  &  &  &  & \num{-0.002}*** & \num{-0.002}*** & \num{-0.002}*** & \num{-0.002}*** & \num{-0.002}*** & \num{-0.002}***\\
- &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-White &  &  &  &  &  &  & \num{-0.052}** & \num{-0.052}** & \num{-0.051}** & \num{-0.052}** & \num{-0.052}** & \num{-0.051}**\\
- &  &  &  &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
-Black &  &  &  &  &  &  & \num{-0.057}** & \num{-0.057}** & \num{-0.055}** & \num{-0.057}** & \num{-0.057}** & \num{-0.056}**\\
- &  &  &  &  &  &  & (\num{0.018}) & (\num{0.018}) & (\num{0.018}) & (\num{0.018}) & (\num{0.018}) & (\num{0.018})\\
-Mixed &  &  &  &  &  &  & \num{-0.070}** & \num{-0.070}* & \num{-0.068}* & \num{-0.070}** & \num{-0.070}* & \num{-0.068}*\\
- &  &  &  &  &  &  & (\num{0.027}) & (\num{0.027}) & (\num{0.027}) & (\num{0.027}) & (\num{0.027}) & (\num{0.027})\\
-Married &  &  &  &  &  &  & \num{0.011} & \num{0.011} & \num{0.012}+ & \num{0.011} & \num{0.011} & \num{0.012}+\\
- &  &  &  &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007})\\
-High School &  &  &  &  &  &  & \num{0.001} & \num{0.001} & \num{0.005} & \num{0.001} & \num{0.001} & \num{0.005}\\
- &  &  &  &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
-Associate's Degree &  &  &  &  &  &  & \num{-0.009} & \num{-0.009} & \num{-0.005} & \num{-0.009} & \num{-0.009} & \num{-0.005}\\
- &  &  &  &  &  &  & (\num{0.014}) & (\num{0.014}) & (\num{0.014}) & (\num{0.014}) & (\num{0.014}) & (\num{0.014})\\
-Bachelor's Degree &  &  &  &  &  &  & \num{0.066}*** & \num{0.066}*** & \num{0.070}*** & \num{0.066}*** & \num{0.066}*** & \num{0.070}***\\
- &  &  &  &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
-Postgraduate Degree &  &  &  &  &  &  & \num{0.030} & \num{0.030} & \num{0.037} & \num{0.030} & \num{0.030} & \num{0.037}\\
- &  &  &  &  &  &  & (\num{0.031}) & (\num{0.031}) & (\num{0.031}) & (\num{0.031}) & (\num{0.031}) & (\num{0.031})\\
-\midrule
-Num.Obs. & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644}\\
-R2 & \num{0.012} & \num{0.012} & \num{0.022} & \num{0.012} & \num{0.012} & \num{0.023} & \num{0.032} & \num{0.032} & \num{0.040} & \num{0.032} & \num{0.032} & \num{0.040}\\
-R2 Adj. & \num{0.012} & \num{0.011} & \num{0.022} & \num{0.011} & \num{0.011} & \num{0.022} & \num{0.029} & \num{0.029} & \num{0.037} & \num{0.029} & \num{0.029} & \num{0.038}\\
-RMSE & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24}\\
-\bottomrule
-\multicolumn{13}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
-\end{tabular}}
-\end{table}
-
-\begin{table}
-\centering\centering
-\caption{\label{tab:disc_reg2}Continuous UE Duration w.o Wage Level Control (Full Sample)}
-\centering
-\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
-\begin{tabular}[t]{lcccccccccccc}
-\toprule
-  & Cont. & Cont. w. UI & Cont. w. exhausted UI & Cont. Sq & Cont. Sq w. UI & Cont. Sq w. exhausted UI & Cont. w. controls & Cont. w. UI w. controls & Cont. w. exhausted UI w. controls & Cont. Sq w. controls & Cont. Sq w. UI w. controls & Cont. Sq w. exhausted UI w. controls\\
-\midrule
-Intercept & \num{1.053}*** & \num{1.053}*** & \num{1.006}*** & \num{1.055}*** & \num{1.055}*** & \num{1.002}*** & \num{1.180}*** & \num{1.180}*** & \num{1.119}*** & \num{1.180}*** & \num{1.180}*** & \num{1.116}***\\
- & (\num{0.006}) & (\num{0.006}) & (\num{0.010}) & (\num{0.007}) & (\num{0.007}) & (\num{0.011}) & (\num{0.031}) & (\num{0.031}) & (\num{0.033}) & (\num{0.031}) & (\num{0.031}) & (\num{0.033})\\
-\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.003}} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.008}**} & \cellcolor{yellow!20}{\num{-0.008}**} & \cellcolor{yellow!20}{\num{-0.003}}\\
- & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003})\\
-Received Unemployment Compensation &  & \num{-0.000} &  &  & \num{-0.000} &  &  & \num{0.000} &  &  & \num{0.000} & \\
- &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
-Exhausted Unemployment Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}*** &  &  & \num{0.001}*** &  &  & \num{0.001}***\\
- &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
-Unemployment Duration (Months²) &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000} &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000}\\
- &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-Female &  &  &  &  &  &  & \num{0.003} & \num{0.003} & \num{0.003} & \num{0.003} & \num{0.003} & \num{0.003}\\
- &  &  &  &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & \vphantom{1} (\num{0.011})\\
-Age &  &  &  &  &  &  & \num{-0.003}*** & \num{-0.003}*** & \num{-0.003}*** & \num{-0.003}*** & \num{-0.003}*** & \num{-0.003}***\\
- &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-White &  &  &  &  &  &  & \num{-0.035} & \num{-0.035} & \num{-0.033} & \num{-0.035} & \num{-0.035} & \num{-0.033}\\
- &  &  &  &  &  &  & (\num{0.023}) & (\num{0.023}) & (\num{0.023}) & (\num{0.023}) & (\num{0.023}) & (\num{0.023})\\
-Black &  &  &  &  &  &  & \num{-0.048}+ & \num{-0.048}+ & \num{-0.045}+ & \num{-0.048}+ & \num{-0.048}+ & \num{-0.045}+\\
- &  &  &  &  &  &  & (\num{0.026}) & (\num{0.026}) & (\num{0.026}) & (\num{0.026}) & (\num{0.026}) & (\num{0.026})\\
-Mixed &  &  &  &  &  &  & \num{0.014} & \num{0.014} & \num{0.017} & \num{0.014} & \num{0.014} & \num{0.016}\\
- &  &  &  &  &  &  & (\num{0.040}) & (\num{0.040}) & (\num{0.040}) & (\num{0.040}) & (\num{0.040}) & (\num{0.040})\\
-Married &  &  &  &  &  &  & \num{0.005} & \num{0.005} & \num{0.005} & \num{0.005} & \num{0.005} & \num{0.005}\\
- &  &  &  &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
-High School &  &  &  &  &  &  & \num{0.005} & \num{0.005} & \num{0.011} & \num{0.006} & \num{0.006} & \num{0.011}\\
- &  &  &  &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
-Associate's Degree &  &  &  &  &  &  & \num{0.032} & \num{0.032} & \num{0.038}+ & \num{0.032} & \num{0.032} & \num{0.037}+\\
- &  &  &  &  &  &  & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & \vphantom{1} (\num{0.021})\\
-Bachelor's Degree &  &  &  &  &  &  & \num{0.079}*** & \num{0.079}*** & \num{0.085}*** & \num{0.080}*** & \num{0.080}*** & \num{0.084}***\\
- &  &  &  &  &  &  & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021})\\
-Postgraduate Degree &  &  &  &  &  &  & \num{0.114}* & \num{0.114}* & \num{0.122}** & \num{0.115}* & \num{0.115}* & \num{0.122}**\\
- &  &  &  &  &  &  & (\num{0.045}) & (\num{0.045}) & (\num{0.045}) & (\num{0.045}) & (\num{0.045}) & (\num{0.045})\\
-\midrule
-Num.Obs. & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870}\\
-R2 & \num{0.009} & \num{0.009} & \num{0.017} & \num{0.010} & \num{0.010} & \num{0.017} & \num{0.025} & \num{0.025} & \num{0.030} & \num{0.025} & \num{0.025} & \num{0.030}\\
-R2 Adj. & \num{0.009} & \num{0.009} & \num{0.016} & \num{0.009} & \num{0.009} & \num{0.016} & \num{0.022} & \num{0.022} & \num{0.028} & \num{0.022} & \num{0.022} & \num{0.027}\\
-F & \num{46.344} & \num{23.169} & \num{41.487} & \num{23.546} & \num{15.694} & \num{27.802} & \num{11.151} & \num{10.220} & \num{12.521} & \num{10.252} & \num{9.462} & \num{11.589}\\
-RMSE & \num{0.38} & \num{0.38} & \num{0.37} & \num{0.38} & \num{0.38} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37}\\
-\bottomrule
-\multicolumn{13}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
-\end{tabular}}
-\end{table}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_reg1-1} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_reg3-1} \end{center}
-
-\begin{table}
-\centering\centering
-\caption{\label{tab:disc_reg4}Continuous UE Duration w. Wage Level Control (Clipped Sample)}
-\centering
-\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
-\begin{tabular}[t]{lcccccccccccc}
-\toprule
-  & Cont. (clipped) & Cont. w. UI (clipped) & Cont. w. exhausted UI (clipped) & Cont. Sq (clipped) & Cont. Sq w. UI (clipped) & Cont. Sq w. exhausted UI (clipped) & Cont. w. controls (clipped) & Cont. w. UI w. controls (clipped) & Cont. w. exhausted UI w. controls (clipped) & Cont. Sq w. controls (clipped) & Cont. Sq w. UI w. controls (clipped) & Cont. Sq w. exhausted UI w. controls (clipped)\\
-\midrule
-Intercept & \num{1.131}*** & \num{1.130}*** & \num{1.094}*** & \num{1.131}*** & \num{1.131}*** & \num{1.090}*** & \num{1.217}*** & \num{1.217}*** & \num{1.173}*** & \num{1.217}*** & \num{1.217}*** & \num{1.169}***\\
- & (\num{0.008}) & (\num{0.008}) & (\num{0.010}) & (\num{0.008}) & (\num{0.008}) & (\num{0.011}) & (\num{0.021}) & (\num{0.021}) & (\num{0.022}) & (\num{0.021}) & (\num{0.021}) & (\num{0.023})\\
-\cellcolor{yellow!20}{Hourly Wage of Lost Job} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
- & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.002}} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.002}}\\
- & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002})\\
-Received Unemployment Compensation &  & \num{0.000} &  &  & \num{0.000} &  &  & \num{0.000} &  &  & \num{0.000} & \\
- &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
-Exhausted Unemployment Compensation &  &  & \num{0.000}*** &  &  & \num{0.000}*** &  &  & \num{0.000}*** &  &  & \num{0.000}***\\
- &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
-Unemployment Duration (Months²) &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000} &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000}\\
- &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-Female &  &  &  &  &  &  & \num{-0.023}** & \num{-0.023}** & \num{-0.023}** & \num{-0.023}** & \num{-0.023}** & \num{-0.023}**\\
- &  &  &  &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & \vphantom{1} (\num{0.007})\\
-Age &  &  &  &  &  &  & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}***\\
- &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-White &  &  &  &  &  &  & \num{-0.050}** & \num{-0.050}** & \num{-0.049}** & \num{-0.050}** & \num{-0.050}** & \num{-0.050}**\\
- &  &  &  &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
-Black &  &  &  &  &  &  & \num{-0.061}*** & \num{-0.061}*** & \num{-0.060}*** & \num{-0.061}*** & \num{-0.061}*** & \num{-0.060}***\\
- &  &  &  &  &  &  & (\num{0.018}) & (\num{0.018}) & (\num{0.018}) & (\num{0.018}) & (\num{0.018}) & (\num{0.018})\\
-Mixed &  &  &  &  &  &  & \num{-0.067}* & \num{-0.067}* & \num{-0.065}* & \num{-0.067}* & \num{-0.067}* & \num{-0.066}*\\
- &  &  &  &  &  &  & (\num{0.027}) & (\num{0.027}) & (\num{0.026}) & (\num{0.027}) & (\num{0.027}) & (\num{0.026})\\
-Married &  &  &  &  &  &  & \num{0.018}* & \num{0.018}* & \num{0.018}* & \num{0.018}* & \num{0.018}* & \num{0.018}*\\
- &  &  &  &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007}) & (\num{0.007})\\
-High School &  &  &  &  &  &  & \num{0.019}+ & \num{0.019}+ & \num{0.022}* & \num{0.019}+ & \num{0.019}+ & \num{0.022}*\\
- &  &  &  &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
-Associate's Degree &  &  &  &  &  &  & \num{0.027}+ & \num{0.027}+ & \num{0.029}* & \num{0.027}+ & \num{0.027}+ & \num{0.030}*\\
- &  &  &  &  &  &  & (\num{0.014}) & (\num{0.014}) & (\num{0.014}) & (\num{0.014}) & (\num{0.014}) & (\num{0.014})\\
-Bachelor's Degree &  &  &  &  &  &  & \num{0.121}*** & \num{0.121}*** & \num{0.123}*** & \num{0.121}*** & \num{0.121}*** & \num{0.123}***\\
- &  &  &  &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
-Postgraduate Degree &  &  &  &  &  &  & \num{0.120}*** & \num{0.120}*** & \num{0.123}*** & \num{0.120}*** & \num{0.120}*** & \num{0.123}***\\
- &  &  &  &  &  &  & (\num{0.031}) & (\num{0.031}) & (\num{0.031}) & (\num{0.031}) & (\num{0.031}) & (\num{0.031})\\
-\midrule
-Num.Obs. & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644}\\
-R2 & \num{0.046} & \num{0.046} & \num{0.053} & \num{0.046} & \num{0.046} & \num{0.053} & \num{0.073} & \num{0.073} & \num{0.079} & \num{0.073} & \num{0.073} & \num{0.079}\\
-R2 Adj. & \num{0.046} & \num{0.046} & \num{0.053} & \num{0.046} & \num{0.045} & \num{0.053} & \num{0.071} & \num{0.071} & \num{0.077} & \num{0.071} & \num{0.071} & \num{0.077}\\
-RMSE & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.23} & \num{0.23} & \num{0.23} & \num{0.23} & \num{0.23} & \num{0.23}\\
-\bottomrule
-\multicolumn{13}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
-\end{tabular}}
-\end{table}
-
-\begin{table}
-\centering\centering
-\caption{\label{tab:disc_reg4}Continuous UE Duration w. Wage Level Control (Full Sample)}
-\centering
-\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
-\begin{tabular}[t]{lcccccccccccc}
-\toprule
-  & Cont. & Cont. w. UI & Cont. w. exhausted UI & Cont. Sq & Cont. Sq w. UI & Cont. Sq w. exhausted UI & Cont. w. controls & Cont. w. UI w. controls & Cont. w. exhausted UI w. controls & Cont. Sq w. controls & Cont. Sq w. UI w. controls & Cont. Sq w. exhausted UI w. controls\\
-\midrule
-Intercept & \num{1.185}*** & \num{1.186}*** & \num{1.145}*** & \num{1.186}*** & \num{1.187}*** & \num{1.141}*** & \num{1.263}*** & \num{1.263}*** & \num{1.213}*** & \num{1.263}*** & \num{1.263}*** & \num{1.210}***\\
- & (\num{0.011}) & (\num{0.011}) & (\num{0.014}) & (\num{0.012}) & (\num{0.012}) & (\num{0.015}) & (\num{0.031}) & (\num{0.031}) & (\num{0.033}) & (\num{0.031}) & (\num{0.031}) & (\num{0.033})\\
-\cellcolor{yellow!20}{Hourly Wage of Lost Job} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***}\\
- & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
-\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.003}} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.003}}\\
- & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003})\\
-Received Unemployment Compensation &  & \num{-0.000} &  &  & \num{-0.000} &  &  & \num{-0.000} &  &  & \num{-0.000} & \\
- &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
-Exhausted Unemployment Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}*** &  &  & \num{0.000}*** &  &  & \num{0.000}***\\
- &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
-Unemployment Duration (Months²) &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000} &  &  &  & \num{0.000} & \num{0.000} & \num{-0.000}\\
- &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-Female &  &  &  &  &  &  & \num{-0.028}** & \num{-0.028}** & \num{-0.028}** & \num{-0.028}** & \num{-0.028}** & \num{-0.028}**\\
- &  &  &  &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
-Age &  &  &  &  &  &  & \num{-0.002}*** & \num{-0.002}*** & \num{-0.001}*** & \num{-0.002}*** & \num{-0.002}*** & \num{-0.001}***\\
- &  &  &  &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-White &  &  &  &  &  &  & \num{-0.034} & \num{-0.034} & \num{-0.032} & \num{-0.034} & \num{-0.034} & \num{-0.032}\\
- &  &  &  &  &  &  & (\num{0.023}) & (\num{0.023}) & (\num{0.023}) & (\num{0.023}) & (\num{0.023}) & (\num{0.023})\\
-Black &  &  &  &  &  &  & \num{-0.058}* & \num{-0.058}* & \num{-0.055}* & \num{-0.057}* & \num{-0.057}* & \num{-0.055}*\\
- &  &  &  &  &  &  & (\num{0.026}) & (\num{0.026}) & (\num{0.026}) & (\num{0.026}) & (\num{0.026}) & (\num{0.026})\\
-Mixed &  &  &  &  &  &  & \num{0.016} & \num{0.016} & \num{0.019} & \num{0.016} & \num{0.016} & \num{0.018}\\
- &  &  &  &  &  &  & (\num{0.039}) & (\num{0.039}) & (\num{0.039}) & (\num{0.039}) & (\num{0.039}) & (\num{0.039})\\
-Married &  &  &  &  &  &  & \num{0.013} & \num{0.013} & \num{0.013} & \num{0.013} & \num{0.013} & \num{0.014}\\
- &  &  &  &  &  &  & (\num{0.010}) & (\num{0.010}) & (\num{0.010}) & (\num{0.010}) & (\num{0.010}) & (\num{0.010})\\
-High School &  &  &  &  &  &  & \num{0.033}* & \num{0.033}* & \num{0.037}* & \num{0.033}* & \num{0.033}* & \num{0.037}*\\
- &  &  &  &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
-Associate's Degree &  &  &  &  &  &  & \num{0.084}*** & \num{0.084}*** & \num{0.088}*** & \num{0.084}*** & \num{0.084}*** & \num{0.087}***\\
- &  &  &  &  &  &  & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021}) & (\num{0.021})\\
-Bachelor's Degree &  &  &  &  &  &  & \num{0.161}*** & \num{0.161}*** & \num{0.164}*** & \num{0.161}*** & \num{0.161}*** & \num{0.163}***\\
- &  &  &  &  &  &  & (\num{0.022}) & (\num{0.022}) & (\num{0.022}) & (\num{0.022}) & (\num{0.022}) & (\num{0.022})\\
-Postgraduate Degree &  &  &  &  &  &  & \num{0.244}*** & \num{0.244}*** & \num{0.248}*** & \num{0.245}*** & \num{0.245}*** & \num{0.248}***\\
- &  &  &  &  &  &  & (\num{0.045}) & (\num{0.045}) & (\num{0.045}) & (\num{0.045}) & (\num{0.045}) & (\num{0.045})\\
-\midrule
-Num.Obs. & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870}\\
-R2 & \num{0.048} & \num{0.048} & \num{0.052} & \num{0.048} & \num{0.048} & \num{0.052} & \num{0.069} & \num{0.069} & \num{0.073} & \num{0.069} & \num{0.069} & \num{0.073}\\
-R2 Adj. & \num{0.047} & \num{0.047} & \num{0.051} & \num{0.047} & \num{0.047} & \num{0.051} & \num{0.067} & \num{0.067} & \num{0.070} & \num{0.067} & \num{0.067} & \num{0.070}\\
-F & \num{121.551} & \num{81.034} & \num{88.352} & \num{81.047} & \num{60.784} & \num{66.451} & \num{30.216} & \num{27.890} & \num{29.347} & \num{27.893} & \num{25.899} & \num{27.287}\\
-RMSE & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37}\\
-\bottomrule
-\multicolumn{13}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
-\end{tabular}}
-\end{table}
-
-\FloatBarrier
-
-\subsection{Binned UE Duration}\label{binned-ue-duration}
-
-Binned UE duration treatment is reported in bins as indicated in the box
-plots and code cleaning above.
-
-\begin{table}
-\centering\centering
-\caption{\label{tab:disc_reg5}Binned UE Duration w.o Wage Level Control (Clipped Sample)}
+\caption{\label{tab:disc_reg2}Continuous Unemployment Duration: Linear Specifications, No Wage Control (Clipped Sample)}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
 \begin{tabular}[t]{lcccccc}
 \toprule
-  & Disc. (clipped) & Disc. w. UI (clipped) & Disc. w. exhausted UI (clipped) & Disc. w. controls (clipped) & Disc. w. UI w. controls (clipped) & Disc. w. exhausted UI w. controls (clipped)\\
+  & \makecell{Cont.\\ (clipped)} & \makecell{Cont. w.\\ UI\\ (clipped)} & \makecell{Cont. w.\\ exhausted UI\\ (clipped)} & \makecell{Cont. w.\\ controls\\ (clipped)} & \makecell{Cont. w.\\ UI w.\\ controls\\ (clipped)} & \makecell{Cont. w.\\ exhausted UI w.\\ controls\\ (clipped)}\\
+\midrule
+Intercept & \num{1.045}*** & \num{1.045}*** & \num{1.006}*** & \num{1.163}*** & \num{1.163}*** & \num{1.113}***\\
+ & (\num{0.004}) & (\num{0.004}) & (\num{0.007}) & (\num{0.021}) & (\num{0.021}) & (\num{0.023})\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Months)} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
+Received
+Unemployment
+Compensation &  & \num{0.000} &  &  & \num{0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted
+Unemployment
+Compensation &  &  & \num{0.001}*** &  &  & \num{0.000}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Female &  &  &  & \num{-0.003} & \num{-0.003} & \num{-0.003}\\
+ &  &  &  & (\num{0.007}) & (\num{0.007}) & \vphantom{1} (\num{0.007})\\
+Age &  &  &  & \num{-0.002}*** & \num{-0.002}*** & \num{-0.002}***\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  & \num{-0.052}** & \num{-0.052}** & \num{-0.051}**\\
+ &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
+Black &  &  &  & \num{-0.057}** & \num{-0.057}** & \num{-0.055}**\\
+ &  &  &  & (\num{0.018}) & (\num{0.018}) & (\num{0.018})\\
+Mixed &  &  &  & \num{-0.070}** & \num{-0.070}* & \num{-0.068}*\\
+ &  &  &  & (\num{0.027}) & (\num{0.027}) & (\num{0.027})\\
+Married &  &  &  & \num{0.011} & \num{0.011} & \num{0.012}+\\
+ &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007})\\
+High
+School &  &  &  & \num{0.001} & \num{0.001} & \num{0.005}\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+Associate's
+Degree &  &  &  & \num{-0.009} & \num{-0.009} & \num{-0.005}\\
+ &  &  &  & (\num{0.014}) & (\num{0.014}) & (\num{0.014})\\
+Bachelor's
+Degree &  &  &  & \num{0.066}*** & \num{0.066}*** & \num{0.070}***\\
+ &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
+Postgraduate
+Degree &  &  &  & \num{0.030} & \num{0.030} & \num{0.037}\\
+ &  &  &  & (\num{0.031}) & (\num{0.031}) & (\num{0.031})\\
+\midrule
+Num.Obs. & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644}\\
+R2 & \num{0.012} & \num{0.012} & \num{0.022} & \num{0.032} & \num{0.032} & \num{0.040}\\
+R2 Adj. & \num{0.012} & \num{0.011} & \num{0.022} & \num{0.029} & \num{0.029} & \num{0.037}\\
+RMSE & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24}\\
+\bottomrule
+\multicolumn{7}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
+\end{table}
+
+\begin{table}
+\centering\centering
+\caption{\label{tab:disc_reg2a}Continuous Unemployment Duration: Quadratic Specifications, No Wage Control (Clipped Sample)}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccc}
+\toprule
+  & \makecell{Cont. Sq\\ (clipped)} & \makecell{Cont. Sq w.\\ UI\\ (clipped)} & \makecell{Cont. Sq w.\\ exhausted UI\\ (clipped)} & \makecell{Cont. Sq w.\\ controls\\ (clipped)} & \makecell{Cont. Sq w.\\ UI w.\\ controls\\ (clipped)} & \makecell{Cont. Sq w.\\ exhausted UI w.\\ controls\\ (clipped)}\\
+\midrule
+Intercept & \num{1.046}*** & \num{1.046}*** & \num{1.001}*** & \num{1.163}*** & \num{1.163}*** & \num{1.108}***\\
+ & (\num{0.005}) & (\num{0.005}) & (\num{0.008}) & (\num{0.021}) & (\num{0.021}) & (\num{0.023})\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Months)} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.001}} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.001}}\\
+ & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002})\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Months²)} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{-0.000}} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{-0.000}}\\
+ & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+Received
+Unemployment
+Compensation &  & \num{0.000} &  &  & \num{0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted
+Unemployment
+Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Female &  &  &  & \num{-0.003} & \num{-0.003} & \num{-0.003}\\
+ &  &  &  & (\num{0.007}) & (\num{0.007}) & \vphantom{1} (\num{0.007})\\
+Age &  &  &  & \num{-0.002}*** & \num{-0.002}*** & \num{-0.002}***\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  & \num{-0.052}** & \num{-0.052}** & \num{-0.051}**\\
+ &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
+Black &  &  &  & \num{-0.057}** & \num{-0.057}** & \num{-0.056}**\\
+ &  &  &  & (\num{0.018}) & (\num{0.018}) & (\num{0.018})\\
+Mixed &  &  &  & \num{-0.070}** & \num{-0.070}* & \num{-0.068}*\\
+ &  &  &  & (\num{0.027}) & (\num{0.027}) & (\num{0.027})\\
+Married &  &  &  & \num{0.011} & \num{0.011} & \num{0.012}+\\
+ &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007})\\
+High
+School &  &  &  & \num{0.001} & \num{0.001} & \num{0.005}\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+Associate's
+Degree &  &  &  & \num{-0.009} & \num{-0.009} & \num{-0.005}\\
+ &  &  &  & (\num{0.014}) & (\num{0.014}) & (\num{0.014})\\
+Bachelor's
+Degree &  &  &  & \num{0.066}*** & \num{0.066}*** & \num{0.070}***\\
+ &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
+Postgraduate
+Degree &  &  &  & \num{0.030} & \num{0.030} & \num{0.037}\\
+ &  &  &  & (\num{0.031}) & (\num{0.031}) & (\num{0.031})\\
+\midrule
+Num.Obs. & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644}\\
+R2 & \num{0.012} & \num{0.012} & \num{0.023} & \num{0.032} & \num{0.032} & \num{0.040}\\
+R2 Adj. & \num{0.011} & \num{0.011} & \num{0.022} & \num{0.029} & \num{0.029} & \num{0.038}\\
+RMSE & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24}\\
+\bottomrule
+\multicolumn{7}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
+\end{table}
+
+\begin{table}
+\centering\centering
+\caption{\label{tab:disc_reg2b}Continuous Unemployment Duration: Linear Specifications, No Wage Control (Full Sample)}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccc}
+\toprule
+  & \makecell{Cont.} & \makecell{Cont. w.\\ UI} & \makecell{Cont. w.\\ exhausted UI} & \makecell{Cont. w.\\ controls} & \makecell{Cont. w.\\ UI w.\\ controls} & \makecell{Cont. w.\\ exhausted UI w.\\ controls}\\
+\midrule
+Intercept & \num{1.053}*** & \num{1.053}*** & \num{1.006}*** & \num{1.180}*** & \num{1.180}*** & \num{1.119}***\\
+ & (\num{0.006}) & (\num{0.006}) & (\num{0.010}) & (\num{0.031}) & (\num{0.031}) & (\num{0.033})\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Months)} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
+Received
+Unemployment
+Compensation &  & \num{-0.000} &  &  & \num{0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted
+Unemployment
+Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Female &  &  &  & \num{0.003} & \num{0.003} & \num{0.003}\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & \vphantom{1} (\num{0.011})\\
+Age &  &  &  & \num{-0.003}*** & \num{-0.003}*** & \num{-0.003}***\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  & \num{-0.035} & \num{-0.035} & \num{-0.033}\\
+ &  &  &  & (\num{0.023}) & (\num{0.023}) & (\num{0.023})\\
+Black &  &  &  & \num{-0.048}+ & \num{-0.048}+ & \num{-0.045}+\\
+ &  &  &  & (\num{0.026}) & (\num{0.026}) & (\num{0.026})\\
+Mixed &  &  &  & \num{0.014} & \num{0.014} & \num{0.017}\\
+ &  &  &  & (\num{0.040}) & (\num{0.040}) & (\num{0.040})\\
+Married &  &  &  & \num{0.005} & \num{0.005} & \num{0.005}\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+High
+School &  &  &  & \num{0.005} & \num{0.005} & \num{0.011}\\
+ &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
+Associate's
+Degree &  &  &  & \num{0.032} & \num{0.032} & \num{0.038}+\\
+ &  &  &  & (\num{0.021}) & (\num{0.021}) & \vphantom{1} (\num{0.021})\\
+Bachelor's
+Degree &  &  &  & \num{0.079}*** & \num{0.079}*** & \num{0.085}***\\
+ &  &  &  & (\num{0.021}) & (\num{0.021}) & (\num{0.021})\\
+Postgraduate
+Degree &  &  &  & \num{0.114}* & \num{0.114}* & \num{0.122}**\\
+ &  &  &  & (\num{0.045}) & (\num{0.045}) & (\num{0.045})\\
+\midrule
+Num.Obs. & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870}\\
+R2 & \num{0.009} & \num{0.009} & \num{0.017} & \num{0.025} & \num{0.025} & \num{0.030}\\
+R2 Adj. & \num{0.009} & \num{0.009} & \num{0.016} & \num{0.022} & \num{0.022} & \num{0.028}\\
+F & \num{46.344} & \num{23.169} & \num{41.487} & \num{11.151} & \num{10.220} & \num{12.521}\\
+RMSE & \num{0.38} & \num{0.38} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37}\\
+\bottomrule
+\multicolumn{7}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
+\end{table}
+
+\begin{table}
+\centering\centering
+\caption{\label{tab:disc_reg2c}Continuous Unemployment Duration: Quadratic Specifications, No Wage Control (Full Sample)}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccc}
+\toprule
+  & \makecell{Cont. Sq} & \makecell{Cont. Sq w.\\ UI} & \makecell{Cont. Sq w.\\ exhausted UI} & \makecell{Cont. Sq w.\\ controls} & \makecell{Cont. Sq w.\\ UI w.\\ controls} & \makecell{Cont. Sq w.\\ exhausted UI w.\\ controls}\\
+\midrule
+Intercept & \num{1.055}*** & \num{1.055}*** & \num{1.002}*** & \num{1.180}*** & \num{1.180}*** & \num{1.116}***\\
+ & (\num{0.007}) & (\num{0.007}) & (\num{0.011}) & (\num{0.031}) & (\num{0.031}) & (\num{0.033})\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Months)} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.003}} & \cellcolor{yellow!20}{\num{-0.008}**} & \cellcolor{yellow!20}{\num{-0.008}**} & \cellcolor{yellow!20}{\num{-0.003}}\\
+ & (\num{0.002}) & (\num{0.002}) & (\num{0.003}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003})\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Months²)} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{-0.000}} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{-0.000}}\\
+ & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+Received
+Unemployment
+Compensation &  & \num{-0.000} &  &  & \num{0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted
+Unemployment
+Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Female &  &  &  & \num{0.003} & \num{0.003} & \num{0.003}\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & \vphantom{1} (\num{0.011})\\
+Age &  &  &  & \num{-0.003}*** & \num{-0.003}*** & \num{-0.003}***\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  & \num{-0.035} & \num{-0.035} & \num{-0.033}\\
+ &  &  &  & (\num{0.023}) & (\num{0.023}) & (\num{0.023})\\
+Black &  &  &  & \num{-0.048}+ & \num{-0.048}+ & \num{-0.045}+\\
+ &  &  &  & (\num{0.026}) & (\num{0.026}) & (\num{0.026})\\
+Mixed &  &  &  & \num{0.014} & \num{0.014} & \num{0.016}\\
+ &  &  &  & (\num{0.040}) & (\num{0.040}) & (\num{0.040})\\
+Married &  &  &  & \num{0.005} & \num{0.005} & \num{0.005}\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+High
+School &  &  &  & \num{0.006} & \num{0.006} & \num{0.011}\\
+ &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
+Associate's
+Degree &  &  &  & \num{0.032} & \num{0.032} & \num{0.037}+\\
+ &  &  &  & (\num{0.021}) & (\num{0.021}) & \vphantom{1} (\num{0.021})\\
+Bachelor's
+Degree &  &  &  & \num{0.080}*** & \num{0.080}*** & \num{0.084}***\\
+ &  &  &  & (\num{0.021}) & (\num{0.021}) & (\num{0.021})\\
+Postgraduate
+Degree &  &  &  & \num{0.115}* & \num{0.115}* & \num{0.122}**\\
+ &  &  &  & (\num{0.045}) & (\num{0.045}) & (\num{0.045})\\
+\midrule
+Num.Obs. & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870}\\
+R2 & \num{0.010} & \num{0.010} & \num{0.017} & \num{0.025} & \num{0.025} & \num{0.030}\\
+R2 Adj. & \num{0.009} & \num{0.009} & \num{0.016} & \num{0.022} & \num{0.022} & \num{0.027}\\
+F & \num{23.546} & \num{15.694} & \num{27.802} & \num{10.252} & \num{9.462} & \num{11.589}\\
+RMSE & \num{0.38} & \num{0.38} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37}\\
+\bottomrule
+\multicolumn{7}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
+\end{table}
+
+\begin{figure}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_reg1-1} 
+
+}
+
+\caption{Model diagnostic plots for the baseline linear OLS specification (continuous monthly unemployment duration, UI receipt control, demographic controls, clipped sample). Panels display: a posterior predictive check comparing observed and model-predicted outcome distributions; a linearity check of residuals against fitted values; a homogeneity of variance check (square root of standardized residuals against fitted values); an influential observations plot of standardized residuals against leverage; a collinearity check reporting variance inflation factors; and a quantile-quantile plot of residuals against the standard normal distribution. Residuals are approximately normally distributed, with evidence of heavy-tailed behavior in the upper quantiles.}\label{fig:disc_reg1}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_reg3-1} 
+
+}
+
+\caption{Predicted hourly wage ratios by unemployment duration (months) from weighted OLS regressions on the non-reweighted sample, shown for linear, quadratic, and cubic duration specifications with demographic controls. Shaded bands indicate 95\% confidence intervals; predictions are evaluated at the sample mean of all covariates.}\label{fig:disc_reg3}
+\end{figure}
+
+\begin{table}
+\centering\centering
+\caption{\label{tab:disc_reg4}Continuous Unemployment Duration: Linear Specifications, With Wage Control (Clipped Sample)}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccc}
+\toprule
+  & \makecell{Cont.\\ (clipped)} & \makecell{Cont. w.\\ UI\\ (clipped)} & \makecell{Cont. w.\\ exhausted UI\\ (clipped)} & \makecell{Cont. w.\\ controls\\ (clipped)} & \makecell{Cont. w.\\ UI w.\\ controls\\ (clipped)} & \makecell{Cont. w.\\ exhausted UI w.\\ controls\\ (clipped)}\\
+\midrule
+Intercept & \num{1.131}*** & \num{1.130}*** & \num{1.094}*** & \num{1.217}*** & \num{1.217}*** & \num{1.173}***\\
+ & (\num{0.008}) & (\num{0.008}) & (\num{0.010}) & (\num{0.021}) & (\num{0.021}) & (\num{0.022})\\
+Hourly
+Wage of
+\cellcolor{yellow!20}{Lost Job} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
+ & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Months)} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.004}***}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
+Received
+Unemployment
+Compensation &  & \num{0.000} &  &  & \num{0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted
+Unemployment
+Compensation &  &  & \num{0.000}*** &  &  & \num{0.000}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Female &  &  &  & \num{-0.023}** & \num{-0.023}** & \num{-0.023}**\\
+ &  &  &  & (\num{0.007}) & (\num{0.007}) & \vphantom{1} (\num{0.007})\\
+Age &  &  &  & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}***\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  & \num{-0.050}** & \num{-0.050}** & \num{-0.049}**\\
+ &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
+Black &  &  &  & \num{-0.061}*** & \num{-0.061}*** & \num{-0.060}***\\
+ &  &  &  & (\num{0.018}) & (\num{0.018}) & (\num{0.018})\\
+Mixed &  &  &  & \num{-0.067}* & \num{-0.067}* & \num{-0.065}*\\
+ &  &  &  & (\num{0.027}) & (\num{0.027}) & (\num{0.026})\\
+Married &  &  &  & \num{0.018}* & \num{0.018}* & \num{0.018}*\\
+ &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007})\\
+High
+School &  &  &  & \num{0.019}+ & \num{0.019}+ & \num{0.022}*\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+Associate's
+Degree &  &  &  & \num{0.027}+ & \num{0.027}+ & \num{0.029}*\\
+ &  &  &  & (\num{0.014}) & (\num{0.014}) & (\num{0.014})\\
+Bachelor's
+Degree &  &  &  & \num{0.121}*** & \num{0.121}*** & \num{0.123}***\\
+ &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
+Postgraduate
+Degree &  &  &  & \num{0.120}*** & \num{0.120}*** & \num{0.123}***\\
+ &  &  &  & (\num{0.031}) & (\num{0.031}) & (\num{0.031})\\
+\midrule
+Num.Obs. & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644}\\
+R2 & \num{0.046} & \num{0.046} & \num{0.053} & \num{0.073} & \num{0.073} & \num{0.079}\\
+R2 Adj. & \num{0.046} & \num{0.046} & \num{0.053} & \num{0.071} & \num{0.071} & \num{0.077}\\
+RMSE & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.23} & \num{0.23} & \num{0.23}\\
+\bottomrule
+\multicolumn{7}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
+\end{table}
+
+\begin{table}
+\centering\centering
+\caption{\label{tab:disc_reg4a}Continuous Unemployment Duration: Quadratic Specifications, With Wage Control (Clipped Sample)}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccc}
+\toprule
+  & \makecell{Cont. Sq\\ (clipped)} & \makecell{Cont. Sq w.\\ UI\\ (clipped)} & \makecell{Cont. Sq w.\\ exhausted UI\\ (clipped)} & \makecell{Cont. Sq w.\\ controls\\ (clipped)} & \makecell{Cont. Sq w.\\ UI w.\\ controls\\ (clipped)} & \makecell{Cont. Sq w.\\ exhausted UI w.\\ controls\\ (clipped)}\\
+\midrule
+Intercept & \num{1.131}*** & \num{1.131}*** & \num{1.090}*** & \num{1.217}*** & \num{1.217}*** & \num{1.169}***\\
+ & (\num{0.008}) & (\num{0.008}) & (\num{0.011}) & (\num{0.021}) & (\num{0.021}) & (\num{0.023})\\
+Hourly
+Wage of
+\cellcolor{yellow!20}{Lost Job} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
+ & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & \vphantom{1} (\num{0.000})\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Months)} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.002}} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.006}**} & \cellcolor{yellow!20}{\num{-0.002}}\\
+ & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002})\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Months²)} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{-0.000}} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{-0.000}}\\
+ & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+Received
+Unemployment
+Compensation &  & \num{0.000} &  &  & \num{0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted
+Unemployment
+Compensation &  &  & \num{0.000}*** &  &  & \num{0.000}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Female &  &  &  & \num{-0.023}** & \num{-0.023}** & \num{-0.023}**\\
+ &  &  &  & (\num{0.007}) & (\num{0.007}) & \vphantom{1} (\num{0.007})\\
+Age &  &  &  & \num{-0.001}*** & \num{-0.001}*** & \num{-0.001}***\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  & \num{-0.050}** & \num{-0.050}** & \num{-0.050}**\\
+ &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
+Black &  &  &  & \num{-0.061}*** & \num{-0.061}*** & \num{-0.060}***\\
+ &  &  &  & (\num{0.018}) & (\num{0.018}) & (\num{0.018})\\
+Mixed &  &  &  & \num{-0.067}* & \num{-0.067}* & \num{-0.066}*\\
+ &  &  &  & (\num{0.027}) & (\num{0.027}) & (\num{0.026})\\
+Married &  &  &  & \num{0.018}* & \num{0.018}* & \num{0.018}*\\
+ &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007})\\
+High
+School &  &  &  & \num{0.019}+ & \num{0.019}+ & \num{0.022}*\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+Associate's
+Degree &  &  &  & \num{0.027}+ & \num{0.027}+ & \num{0.030}*\\
+ &  &  &  & (\num{0.014}) & (\num{0.014}) & (\num{0.014})\\
+Bachelor's
+Degree &  &  &  & \num{0.121}*** & \num{0.121}*** & \num{0.123}***\\
+ &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
+Postgraduate
+Degree &  &  &  & \num{0.120}*** & \num{0.120}*** & \num{0.123}***\\
+ &  &  &  & (\num{0.031}) & (\num{0.031}) & (\num{0.031})\\
+\midrule
+Num.Obs. & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644}\\
+R2 & \num{0.046} & \num{0.046} & \num{0.053} & \num{0.073} & \num{0.073} & \num{0.079}\\
+R2 Adj. & \num{0.046} & \num{0.045} & \num{0.053} & \num{0.071} & \num{0.071} & \num{0.077}\\
+RMSE & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.23} & \num{0.23} & \num{0.23}\\
+\bottomrule
+\multicolumn{7}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
+\end{table}
+
+\begin{table}
+\centering\centering
+\caption{\label{tab:disc_reg4b}Continuous Unemployment Duration: Linear Specifications, With Wage Control (Full Sample)}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccc}
+\toprule
+  & \makecell{Cont.} & \makecell{Cont. w.\\ UI} & \makecell{Cont. w.\\ exhausted UI} & \makecell{Cont. w.\\ controls} & \makecell{Cont. w.\\ UI w.\\ controls} & \makecell{Cont. w.\\ exhausted UI w.\\ controls}\\
+\midrule
+Intercept & \num{1.185}*** & \num{1.186}*** & \num{1.145}*** & \num{1.263}*** & \num{1.263}*** & \num{1.213}***\\
+ & (\num{0.011}) & (\num{0.011}) & (\num{0.014}) & (\num{0.031}) & (\num{0.031}) & (\num{0.033})\\
+Hourly
+Wage of
+\cellcolor{yellow!20}{Lost Job} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & \vphantom{1} (\num{0.001})\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Months)} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.005}***}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
+Received
+Unemployment
+Compensation &  & \num{-0.000} &  &  & \num{-0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted
+Unemployment
+Compensation &  &  & \num{0.001}*** &  &  & \num{0.000}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Female &  &  &  & \num{-0.028}** & \num{-0.028}** & \num{-0.028}**\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+Age &  &  &  & \num{-0.002}*** & \num{-0.002}*** & \num{-0.001}***\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  & \num{-0.034} & \num{-0.034} & \num{-0.032}\\
+ &  &  &  & (\num{0.023}) & (\num{0.023}) & (\num{0.023})\\
+Black &  &  &  & \num{-0.058}* & \num{-0.058}* & \num{-0.055}*\\
+ &  &  &  & (\num{0.026}) & (\num{0.026}) & (\num{0.026})\\
+Mixed &  &  &  & \num{0.016} & \num{0.016} & \num{0.019}\\
+ &  &  &  & (\num{0.039}) & (\num{0.039}) & (\num{0.039})\\
+Married &  &  &  & \num{0.013} & \num{0.013} & \num{0.013}\\
+ &  &  &  & (\num{0.010}) & (\num{0.010}) & (\num{0.010})\\
+High
+School &  &  &  & \num{0.033}* & \num{0.033}* & \num{0.037}*\\
+ &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
+Associate's
+Degree &  &  &  & \num{0.084}*** & \num{0.084}*** & \num{0.088}***\\
+ &  &  &  & (\num{0.021}) & (\num{0.021}) & (\num{0.021})\\
+Bachelor's
+Degree &  &  &  & \num{0.161}*** & \num{0.161}*** & \num{0.164}***\\
+ &  &  &  & (\num{0.022}) & (\num{0.022}) & (\num{0.022})\\
+Postgraduate
+Degree &  &  &  & \num{0.244}*** & \num{0.244}*** & \num{0.248}***\\
+ &  &  &  & (\num{0.045}) & (\num{0.045}) & (\num{0.045})\\
+\midrule
+Num.Obs. & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870}\\
+R2 & \num{0.048} & \num{0.048} & \num{0.052} & \num{0.069} & \num{0.069} & \num{0.073}\\
+R2 Adj. & \num{0.047} & \num{0.047} & \num{0.051} & \num{0.067} & \num{0.067} & \num{0.070}\\
+F & \num{121.551} & \num{81.034} & \num{88.352} & \num{30.216} & \num{27.890} & \num{29.347}\\
+RMSE & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37}\\
+\bottomrule
+\multicolumn{7}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
+\end{table}
+
+\begin{table}
+\centering\centering
+\caption{\label{tab:disc_reg4c}Continuous Unemployment Duration: Quadratic Specifications, With Wage Control (Full Sample)}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccc}
+\toprule
+  & \makecell{Cont. Sq} & \makecell{Cont. Sq w.\\ UI} & \makecell{Cont. Sq w.\\ exhausted UI} & \makecell{Cont. Sq w.\\ controls} & \makecell{Cont. Sq w.\\ UI w.\\ controls} & \makecell{Cont. Sq w.\\ exhausted UI w.\\ controls}\\
+\midrule
+Intercept & \num{1.186}*** & \num{1.187}*** & \num{1.141}*** & \num{1.263}*** & \num{1.263}*** & \num{1.210}***\\
+ & (\num{0.012}) & (\num{0.012}) & (\num{0.015}) & (\num{0.031}) & (\num{0.031}) & (\num{0.033})\\
+Hourly
+Wage of
+\cellcolor{yellow!20}{Lost Job} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***}\\
+ & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Months)} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.003}} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.007}**} & \cellcolor{yellow!20}{\num{-0.003}}\\
+ & (\num{0.002}) & (\num{0.002}) & (\num{0.003}) & (\num{0.002}) & (\num{0.002}) & (\num{0.003})\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Months²)} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{-0.000}} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{0.000}} & \cellcolor{yellow!20}{\num{-0.000}}\\
+ & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+Received
+Unemployment
+Compensation &  & \num{-0.000} &  &  & \num{-0.000} & \\
+ &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
+Exhausted
+Unemployment
+Compensation &  &  & \num{0.001}*** &  &  & \num{0.000}***\\
+ &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
+Female &  &  &  & \num{-0.028}** & \num{-0.028}** & \num{-0.028}**\\
+ &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
+Age &  &  &  & \num{-0.002}*** & \num{-0.002}*** & \num{-0.001}***\\
+ &  &  &  & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
+White &  &  &  & \num{-0.034} & \num{-0.034} & \num{-0.032}\\
+ &  &  &  & (\num{0.023}) & (\num{0.023}) & (\num{0.023})\\
+Black &  &  &  & \num{-0.057}* & \num{-0.057}* & \num{-0.055}*\\
+ &  &  &  & (\num{0.026}) & (\num{0.026}) & (\num{0.026})\\
+Mixed &  &  &  & \num{0.016} & \num{0.016} & \num{0.018}\\
+ &  &  &  & (\num{0.039}) & (\num{0.039}) & (\num{0.039})\\
+Married &  &  &  & \num{0.013} & \num{0.013} & \num{0.014}\\
+ &  &  &  & (\num{0.010}) & (\num{0.010}) & (\num{0.010})\\
+High
+School &  &  &  & \num{0.033}* & \num{0.033}* & \num{0.037}*\\
+ &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
+Associate's
+Degree &  &  &  & \num{0.084}*** & \num{0.084}*** & \num{0.087}***\\
+ &  &  &  & (\num{0.021}) & (\num{0.021}) & (\num{0.021})\\
+Bachelor's
+Degree &  &  &  & \num{0.161}*** & \num{0.161}*** & \num{0.163}***\\
+ &  &  &  & (\num{0.022}) & (\num{0.022}) & (\num{0.022})\\
+Postgraduate
+Degree &  &  &  & \num{0.245}*** & \num{0.245}*** & \num{0.248}***\\
+ &  &  &  & (\num{0.045}) & (\num{0.045}) & (\num{0.045})\\
+\midrule
+Num.Obs. & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870}\\
+R2 & \num{0.048} & \num{0.048} & \num{0.052} & \num{0.069} & \num{0.069} & \num{0.073}\\
+R2 Adj. & \num{0.047} & \num{0.047} & \num{0.051} & \num{0.067} & \num{0.067} & \num{0.070}\\
+F & \num{81.047} & \num{60.784} & \num{66.451} & \num{27.893} & \num{25.899} & \num{27.287}\\
+RMSE & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37}\\
+\bottomrule
+\multicolumn{7}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\end{tabular}}
+\end{table}
+
+\FloatBarrier
+
+\subparagraph{Binned UE Duration}\label{binned-ue-duration}
+
+\begin{table}
+\centering\centering
+\caption{\label{tab:disc_reg5}Binned Unemployment Duration: All Specifications, No Wage Control (Clipped Sample)}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\begin{tabular}[t]{lcccccc}
+\toprule
+  & \makecell{Disc.\\ (clipped)} & \makecell{Disc. w.\\ UI\\ (clipped)} & \makecell{Disc. w.\\ exhausted UI\\ (clipped)} & \makecell{Disc. w.\\ controls\\ (clipped)} & \makecell{Disc. w.\\ UI w.\\ controls\\ (clipped)} & \makecell{Disc. w.\\ exhausted UI w.\\ controls\\ (clipped)}\\
 \midrule
 Intercept & \num{1.055}*** & \num{1.055}*** & \num{1.010}*** & \num{1.170}*** & \num{1.170}*** & \num{1.116}***\\
  & (\num{0.005}) & (\num{0.005}) & (\num{0.008}) & (\num{0.021}) & (\num{0.021}) & (\num{0.023})\\
-\cellcolor{yellow!20}{Unemployment Duration (Binned)} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.005}***}\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Binned)} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.005}***}\\
  & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
-Received Unemployment Compensation &  & \num{0.000} &  &  & \num{0.000} & \\
+Received
+Unemployment
+Compensation &  & \num{0.000} &  &  & \num{0.000} & \\
  &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
-Exhausted Unemployment Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}***\\
+Exhausted
+Unemployment
+Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}***\\
  &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
 Female &  &  &  & \num{-0.003} & \num{-0.003} & \num{-0.003}\\
  &  &  &  & (\num{0.007}) & (\num{0.007}) & \vphantom{1} (\num{0.007})\\
@@ -796,13 +1224,17 @@ Mixed &  &  &  & \num{-0.070}** & \num{-0.070}* & \num{-0.068}*\\
  &  &  &  & (\num{0.027}) & (\num{0.027}) & (\num{0.027})\\
 Married &  &  &  & \num{0.011} & \num{0.011} & \num{0.012}\\
  &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007})\\
-High School &  &  &  & \num{0.001} & \num{0.001} & \num{0.005}\\
+High
+School &  &  &  & \num{0.001} & \num{0.001} & \num{0.005}\\
  &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
-Associate's Degree &  &  &  & \num{-0.009} & \num{-0.009} & \num{-0.005}\\
+Associate's
+Degree &  &  &  & \num{-0.009} & \num{-0.009} & \num{-0.005}\\
  &  &  &  & (\num{0.014}) & (\num{0.014}) & (\num{0.014})\\
-Bachelor's Degree &  &  &  & \num{0.067}*** & \num{0.067}*** & \num{0.071}***\\
+Bachelor's
+Degree &  &  &  & \num{0.067}*** & \num{0.067}*** & \num{0.071}***\\
  &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
-Postgraduate Degree &  &  &  & \num{0.030} & \num{0.030} & \num{0.038}\\
+Postgraduate
+Degree &  &  &  & \num{0.030} & \num{0.030} & \num{0.038}\\
  &  &  &  & (\num{0.031}) & (\num{0.031}) & (\num{0.031})\\
 \midrule
 Num.Obs. & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644}\\
@@ -816,20 +1248,26 @@ RMSE & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.2
 
 \begin{table}
 \centering\centering
-\caption{\label{tab:disc_reg5}Binned UE Duration w.o Wage Level Control (Full Sample)}
+\caption{\label{tab:disc_reg5a}Binned Unemployment Duration: All Specifications, No Wage Control (Full Sample)}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
 \begin{tabular}[t]{lcccccc}
 \toprule
-  & Disc. & Disc. w. UI & Disc. w. exhausted UI & Disc. w. controls & Disc. w. UI w. controls & Disc. w. exhausted UI w. controls\\
+  & \makecell{Disc.} & \makecell{Disc. w.\\ UI} & \makecell{Disc. w.\\ exhausted UI} & \makecell{Disc. w.\\ controls} & \makecell{Disc. w.\\ UI w.\\ controls} & \makecell{Disc. w.\\ exhausted UI w.\\ controls}\\
 \midrule
 Intercept & \num{1.069}*** & \num{1.069}*** & \num{1.016}*** & \num{1.190}*** & \num{1.190}*** & \num{1.127}***\\
  & (\num{0.008}) & (\num{0.008}) & (\num{0.012}) & (\num{0.031}) & (\num{0.031}) & (\num{0.034})\\
-\cellcolor{yellow!20}{Unemployment Duration (Binned)} & \cellcolor{yellow!20}{\num{-0.013}***} & \cellcolor{yellow!20}{\num{-0.013}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Binned)} & \cellcolor{yellow!20}{\num{-0.013}***} & \cellcolor{yellow!20}{\num{-0.013}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
  & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002})\\
-Received Unemployment Compensation &  & \num{-0.000} &  &  & \num{0.000} & \\
+Received
+Unemployment
+Compensation &  & \num{-0.000} &  &  & \num{0.000} & \\
  &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
-Exhausted Unemployment Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}***\\
+Exhausted
+Unemployment
+Compensation &  &  & \num{0.001}*** &  &  & \num{0.001}***\\
  &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
 Female &  &  &  & \num{0.003} & \num{0.003} & \num{0.003}\\
  &  &  &  & (\num{0.011}) & (\num{0.011}) & \vphantom{1} (\num{0.011})\\
@@ -843,13 +1281,17 @@ Mixed &  &  &  & \num{0.014} & \num{0.014} & \num{0.017}\\
  &  &  &  & (\num{0.040}) & (\num{0.040}) & (\num{0.040})\\
 Married &  &  &  & \num{0.004} & \num{0.004} & \num{0.005}\\
  &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
-High School &  &  &  & \num{0.006} & \num{0.006} & \num{0.012}\\
+High
+School &  &  &  & \num{0.006} & \num{0.006} & \num{0.012}\\
  &  &  &  & (\num{0.016}) & (\num{0.016}) & (\num{0.016})\\
-Associate's Degree &  &  &  & \num{0.033} & \num{0.033} & \num{0.038}+\\
+Associate's
+Degree &  &  &  & \num{0.033} & \num{0.033} & \num{0.038}+\\
  &  &  &  & (\num{0.021}) & (\num{0.021}) & \vphantom{1} (\num{0.021})\\
-Bachelor's Degree &  &  &  & \num{0.082}*** & \num{0.082}*** & \num{0.087}***\\
+Bachelor's
+Degree &  &  &  & \num{0.082}*** & \num{0.082}*** & \num{0.087}***\\
  &  &  &  & (\num{0.021}) & (\num{0.021}) & (\num{0.021})\\
-Postgraduate Degree &  &  &  & \num{0.116}** & \num{0.116}** & \num{0.124}**\\
+Postgraduate
+Degree &  &  &  & \num{0.116}** & \num{0.116}** & \num{0.124}**\\
  &  &  &  & (\num{0.045}) & (\num{0.045}) & (\num{0.045})\\
 \midrule
 Num.Obs. & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870}\\
@@ -864,22 +1306,30 @@ RMSE & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.3
 
 \begin{table}
 \centering\centering
-\caption{\label{tab:disc_reg6}Binned UE Duration w. Wage Level Control (Clipped Sample)}
+\caption{\label{tab:disc_reg6}Binned Unemployment Duration: All Specifications, With Wage Control (Clipped Sample)}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
 \begin{tabular}[t]{lcccccc}
 \toprule
-  & Disc. (clipped) & Disc. w. UI (clipped) & Disc. w. exhausted UI (clipped) & Disc. w. controls (clipped) & Disc. w. UI w. controls (clipped) & Disc. w. exhausted UI w. controls (clipped)\\
+  & \makecell{Disc.\\ (clipped)} & \makecell{Disc. w.\\ UI\\ (clipped)} & \makecell{Disc. w.\\ exhausted UI\\ (clipped)} & \makecell{Disc. w.\\ controls\\ (clipped)} & \makecell{Disc. w.\\ UI w.\\ controls\\ (clipped)} & \makecell{Disc. w.\\ exhausted UI w.\\ controls\\ (clipped)}\\
 \midrule
 Intercept & \num{1.139}*** & \num{1.139}*** & \num{1.098}*** & \num{1.224}*** & \num{1.224}*** & \num{1.176}***\\
  & (\num{0.008}) & (\num{0.008}) & (\num{0.011}) & (\num{0.021}) & (\num{0.021}) & (\num{0.023})\\
-\cellcolor{yellow!20}{Hourly Wage of Lost Job} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
+Hourly
+Wage of
+\cellcolor{yellow!20}{Lost Job} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
  & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000}) & (\num{0.000})\\
-\cellcolor{yellow!20}{Unemployment Duration (Binned)} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.005}***}\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Binned)} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.005}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.005}***}\\
  & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
-Received Unemployment Compensation &  & \num{0.000} &  &  & \num{-0.000} & \\
+Received
+Unemployment
+Compensation &  & \num{0.000} &  &  & \num{-0.000} & \\
  &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
-Exhausted Unemployment Compensation &  &  & \num{0.000}*** &  &  & \num{0.000}***\\
+Exhausted
+Unemployment
+Compensation &  &  & \num{0.000}*** &  &  & \num{0.000}***\\
  &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
 Female &  &  &  & \num{-0.023}** & \num{-0.023}** & \num{-0.023}**\\
  &  &  &  & (\num{0.007}) & (\num{0.007}) & \vphantom{1} (\num{0.007})\\
@@ -893,13 +1343,17 @@ Mixed &  &  &  & \num{-0.067}* & \num{-0.067}* & \num{-0.065}*\\
  &  &  &  & (\num{0.027}) & (\num{0.027}) & (\num{0.026})\\
 Married &  &  &  & \num{0.017}* & \num{0.017}* & \num{0.018}*\\
  &  &  &  & (\num{0.007}) & (\num{0.007}) & (\num{0.007})\\
-High School &  &  &  & \num{0.019}+ & \num{0.019}+ & \num{0.022}*\\
+High
+School &  &  &  & \num{0.019}+ & \num{0.019}+ & \num{0.022}*\\
  &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
-Associate's Degree &  &  &  & \num{0.027}+ & \num{0.027}+ & \num{0.030}*\\
+Associate's
+Degree &  &  &  & \num{0.027}+ & \num{0.027}+ & \num{0.030}*\\
  &  &  &  & (\num{0.014}) & (\num{0.014}) & (\num{0.014})\\
-Bachelor's Degree &  &  &  & \num{0.122}*** & \num{0.122}*** & \num{0.124}***\\
+Bachelor's
+Degree &  &  &  & \num{0.122}*** & \num{0.122}*** & \num{0.124}***\\
  &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
-Postgraduate Degree &  &  &  & \num{0.120}*** & \num{0.120}*** & \num{0.124}***\\
+Postgraduate
+Degree &  &  &  & \num{0.120}*** & \num{0.120}*** & \num{0.124}***\\
  &  &  &  & (\num{0.031}) & (\num{0.031}) & (\num{0.031})\\
 \midrule
 Num.Obs. & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644} & \num{4644}\\
@@ -913,22 +1367,30 @@ RMSE & \num{0.24} & \num{0.24} & \num{0.24} & \num{0.23} & \num{0.23} & \num{0.2
 
 \begin{table}
 \centering\centering
-\caption{\label{tab:disc_reg6}Binned UE Duration w. Wage Level Control (Full Sample)}
+\caption{\label{tab:disc_reg6a}Binned Unemployment Duration: All Specifications, With Wage Control (Full Sample)}
 \centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
 \begin{tabular}[t]{lcccccc}
 \toprule
-  & Disc. & Disc. w. UI & Disc. w. exhausted UI & Disc. w. controls & Disc. w. UI w. controls & Disc. w. exhausted UI w. controls\\
+  & \makecell{Disc.} & \makecell{Disc. w.\\ UI} & \makecell{Disc. w.\\ exhausted UI} & \makecell{Disc. w.\\ controls} & \makecell{Disc. w.\\ UI w.\\ controls} & \makecell{Disc. w.\\ exhausted UI w.\\ controls}\\
 \midrule
 Intercept & \num{1.198}*** & \num{1.199}*** & \num{1.154}*** & \num{1.272}*** & \num{1.272}*** & \num{1.220}***\\
  & (\num{0.012}) & (\num{0.012}) & (\num{0.016}) & (\num{0.031}) & (\num{0.031}) & (\num{0.034})\\
-\cellcolor{yellow!20}{Hourly Wage of Lost Job} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***}\\
+Hourly
+Wage of
+\cellcolor{yellow!20}{Lost Job} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.009}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***}\\
  & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
-\cellcolor{yellow!20}{Unemployment Duration (Binned)} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.010}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Binned)} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.008}***} & \cellcolor{yellow!20}{\num{-0.011}***} & \cellcolor{yellow!20}{\num{-0.010}***} & \cellcolor{yellow!20}{\num{-0.007}***}\\
  & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002}) & (\num{0.002})\\
-Received Unemployment Compensation &  & \num{-0.000} &  &  & \num{-0.000} & \\
+Received
+Unemployment
+Compensation &  & \num{-0.000} &  &  & \num{-0.000} & \\
  &  & (\num{0.001}) &  &  & (\num{0.001}) & \\
-Exhausted Unemployment Compensation &  &  & \num{0.000}*** &  &  & \num{0.000}***\\
+Exhausted
+Unemployment
+Compensation &  &  & \num{0.000}*** &  &  & \num{0.000}***\\
  &  &  & (\num{0.000}) &  &  & (\num{0.000})\\
 Female &  &  &  & \num{-0.028}** & \num{-0.028}** & \num{-0.028}**\\
  &  &  &  & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
@@ -942,13 +1404,17 @@ Mixed &  &  &  & \num{0.017} & \num{0.017} & \num{0.019}\\
  &  &  &  & (\num{0.039}) & (\num{0.039}) & (\num{0.039})\\
 Married &  &  &  & \num{0.013} & \num{0.013} & \num{0.013}\\
  &  &  &  & (\num{0.010}) & (\num{0.010}) & (\num{0.010})\\
-High School &  &  &  & \num{0.034}* & \num{0.034}* & \num{0.038}*\\
+High
+School &  &  &  & \num{0.034}* & \num{0.034}* & \num{0.038}*\\
  &  &  &  & (\num{0.015}) & (\num{0.015}) & (\num{0.015})\\
-Associate's Degree &  &  &  & \num{0.085}*** & \num{0.085}*** & \num{0.088}***\\
+Associate's
+Degree &  &  &  & \num{0.085}*** & \num{0.085}*** & \num{0.088}***\\
  &  &  &  & (\num{0.021}) & (\num{0.021}) & (\num{0.021})\\
-Bachelor's Degree &  &  &  & \num{0.163}*** & \num{0.163}*** & \num{0.166}***\\
+Bachelor's
+Degree &  &  &  & \num{0.163}*** & \num{0.163}*** & \num{0.166}***\\
  &  &  &  & (\num{0.022}) & (\num{0.022}) & (\num{0.022})\\
-Postgraduate Degree &  &  &  & \num{0.246}*** & \num{0.246}*** & \num{0.250}***\\
+Postgraduate
+Degree &  &  &  & \num{0.246}*** & \num{0.246}*** & \num{0.250}***\\
  &  &  &  & (\num{0.045}) & (\num{0.045}) & (\num{0.045})\\
 \midrule
 Num.Obs. & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870} & \num{4870}\\
@@ -963,101 +1429,154 @@ RMSE & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.3
 
 \FloatBarrier
 
-Next, we provide results for the econometric specifications listed above
-with better balanced survey samples. We outline the various procedures
-employed for dealing with selection issues and non-uniformity in the
-sample.
+\paragraph{Regressions with Selection
+Correction}\label{regressions-with-selection-correction}
 
-\section{Regressions with Selection Correction of Non-Random
-Sample}\label{regressions-with-selection-correction-of-non-random-sample}
+One of the challenges with the survey data is that the sample grows
+significantly smaller for higher reported of unemployment duration, as
+shown above. Therefore, we re-weight our survey sample (beyond the
+Census weights already employed) to ensure population similarity across
+unemployment durations. More precisely, we employ propensity score
+matching using a generalized linear model, entropy-balancing, and
+Heckman selection correction. Overall, we find the econometric results
+reported earlier to be consistent across these implementations, with the
+coefficients on unemployment duration remaining stable.
 
-One of the challenges with this data is that the sample grows
-significantly smaller for higher reported of unemployment duration (see
-scatter plots in section above). Therefore, we re-weight our survey
-sample (beyond the census weights already employed) to ensure population
-similarity across bins. More precisely, we employ propensity score
-matching using a generalised linear model, entropy-balancing, and
-Heckman selection correction.
+\subparagraph{Entropy Balancing}\label{entropy-balancing}
 
-Overall, we find the econometric results reported earlier to be
-consistent across these implementations, with the coefficients on
-unemployment duration remaining somewhat stable.
+Entropy balancing reweights observations in the original sample such
+that pre-specified moments of the covariate distributions (here, the
+means of all demographic control variables) are exactly balanced across
+values of unemployment duration. Unlike propensity score methods,
+entropy balancing achieves covariate balance directly by solving a
+constrained reweighting problem, without requiring a model for the
+propensity score itself.
 
-\subsection{Entropy Balancing}\label{entropy-balancing}
+\begin{figure}
 
-First, entropy balancing simply reweights observations to ensure
-population matching across the key dependent variable.
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_eb1-1} 
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb1-1} \end{center}
+}
 
-\FloatBarrier
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb2-1} \end{center}
-
-\FloatBarrier
-
-\subsubsection{Diagnostic Tests for Entropy-balanced Reweighted
-Sample}\label{diagnostic-tests-for-entropy-balanced-reweighted-sample}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_eb3-1} \end{center}
+\caption{Covariate balance before and after entropy-balancing reweighting, shown as standardized mean differences. The dashed vertical line marks the 0.001 balance threshold. All covariates achieve balance within this threshold after reweighting.}\label{fig:disc_eb1}
+\end{figure}
 
 \FloatBarrier
 
-\subsection{Propensity Score Weighting with GLM
+\begin{figure}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_eb2-1} 
+
+}
+
+\caption{Predicted hourly wage ratios by unemployment duration (months) from regressions on the entropy-balanced sample, shown for linear, quadratic, and cubic duration specifications with demographic controls. Shaded bands indicate 95\% confidence intervals; predictions are evaluated at the sample mean of all covariates.}\label{fig:disc_eb2}
+\end{figure}
+
+\FloatBarrier
+
+\begin{figure}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_eb3-1} 
+
+}
+
+\caption{Model diagnostic plots for the linear specification estimated on the entropy-balanced sample. Panels display: a posterior predictive check comparing observed and model-predicted outcome distributions; a linearity check of residuals against fitted values; a homogeneity of variance check (square root of standardized residuals against fitted values); an influential observations plot of standardized residuals against leverage; a collinearity check reporting variance inflation factors; and a quantile-quantile plot of residuals against the standard normal distribution.}\label{fig:disc_eb3}
+\end{figure}
+
+\FloatBarrier
+
+\subparagraph{Propensity Score Weighting with GLM
 Estimator}\label{propensity-score-weighting-with-glm-estimator}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm1-1} \end{center}
+As a second reweighting approach, we estimate propensity scores using a
+generalized linear model (GLM) that regresses unemployment duration on
+the full set of demographic control variables, then reweight
+observations by the inverse of their estimated propensity scores to
+achieve covariate balance. Relative to entropy balancing, the GLM
+estimator is more conventional but imposes stronger functional form
+assumptions on the relationship between covariates and unemployment
+duration, and as shown in the plot below, achieves somewhat looser
+balance on several covariates at the tighter 0.001 threshold.
+
+\begin{figure}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_glm1-1} 
+
+}
+
+\caption{Covariate balance before and after propensity-score reweighting using a generalized linear model (GLM) estimator, shown as standardized mean differences. The solid dashed line marks the 0.01 balance threshold; the dotted lines mark the tighter 0.001 threshold. Most covariates balance at the 0.01 level; fewer pass the tighter threshold compared to entropy balancing.}\label{fig:disc_glm1}
+\end{figure}
 
 \FloatBarrier
 
-\subsubsection{Diagnostic Tests for Propensity Score Matching (GLM)
-Reweighted
-Sample}\label{diagnostic-tests-for-propensity-score-matching-glm-reweighted-sample}
+\begin{figure}
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm2-1} \end{center}
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_glm2-1} 
 
-\FloatBarrier
+}
 
-\subsubsection{Predicted Reservation Wage using GLM Reweighted
-Sample}\label{predicted-reservation-wage-using-glm-reweighted-sample}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_glm3-1} \end{center}
+\caption{Model diagnostic plots for the linear specification estimated on the GLM propensity-score-reweighted sample. Panels display: a posterior predictive check comparing observed and model-predicted outcome distributions; a linearity check of residuals against fitted values; a homogeneity of variance check (square root of standardized residuals against fitted values); an influential observations plot of standardized residuals against leverage; a collinearity check reporting variance inflation factors; and a quantile-quantile plot of residuals against the standard normal distribution.}\label{fig:disc_glm2}
+\end{figure}
 
 \FloatBarrier
 
-\subsection{Heckman Selection}\label{heckman-selection}
+\begin{figure}
 
-Additionally, we employ a Heckman Selection correction to correct for
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_glm3-1} 
+
+}
+
+\caption{Predicted hourly wage ratios by unemployment duration (months) from regressions on the GLM propensity-score-reweighted sample, shown for linear, quadratic, and cubic duration specifications with demographic controls. Shaded bands indicate 95\% confidence intervals; predictions are evaluated at the sample mean of all covariates.}\label{fig:disc_glm3}
+\end{figure}
+
+\FloatBarrier
+
+\subparagraph{Heckman Selection}\label{heckman-selection}
+
+Additionally, we employ Heckman Selection correction to correct for
 likely selection effects in the data. We correct for selection effects
 by balancing across the various control variables (gender, age, race,
-marital status, and level of eduction).
+marital status, and level of education).
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_heckman1-1} \end{center}
+\begin{figure}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_heckman1-1} 
+
+}
+
+\caption{Predicted hourly wage ratios by unemployment duration (months) from two-step Heckman selection-corrected regressions, shown for linear, quadratic, and cubic duration specifications. The selection equation uses gender, age, race, marital status, and education to account for the non-random observability of re-employment wages in the sample.}\label{fig:disc_heckman1}
+\end{figure}
 
 \FloatBarrier
 
-\subsection{Regression Results with Sample
+\subparagraph{Regression Results with Sample
 Reweighting}\label{regression-results-with-sample-reweighting}
 
 Finally, we provide a comparison of the regression coefficients of the
-unbalanced, Heckman corrected, entropy balanced, and GLM reweighting
+unbalanced, Heckman corrected, entropy-balanced, and GLM reweighting
 using propensity score matching. Most importantly, the regression
 coefficient on unemployment duration is consistent across specifications
 indicating that the consequences of non-uniformity and selection effects
-in our sample are minimal. We incorporate the
+in our sample are minimal.
 
 \begin{table}
 \centering\centering
+\caption{\label{tab:disc_heckman2}Comparison of Unemployment Duration Coefficients Across Reweighting Methods}
+\centering
 \resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
 \begin{tabular}[t]{lcccc}
 \toprule
-  & Unabalanced LM & Heckman Correction & Entropy Balanced Reweight & GLM Reweight\\
+  & Unbalanced LM & Heckman Correction & Entropy Balanced Reweight & GLM Reweight\\
 \midrule
 Intercept & \num{1.180}*** & \num{1.131}*** & \num{1.147}*** & \num{1.143}***\\
  & (\num{0.031}) & (\num{0.041}) & (\num{0.033}) & (\num{0.033})\\
-\cellcolor{yellow!20}{Unemployment Duration (Months)} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***}\\
+Unemployment
+Duration
+\cellcolor{yellow!20}{(Months)} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***} & \cellcolor{yellow!20}{\num{-0.006}***}\\
  & (\num{0.001}) & (\num{0.001}) & (\num{0.001}) & (\num{0.001})\\
-Received Unemployment Compensation & \num{0.000} &  &  & \\
+Received
+Unemployment
+Compensation & \num{0.000} &  &  & \\
  & (\num{0.001}) &  &  & \\
 Female & \num{0.003} & \num{0.018} & \num{0.001} & \num{0.001}\\
  & (\num{0.011}) & (\num{0.014}) & (\num{0.011}) & (\num{0.011})\\
@@ -1071,15 +1590,21 @@ Mixed & \num{0.014} & \num{-0.054} & \num{0.003} & \num{0.007}\\
  & (\num{0.040}) & (\num{0.055}) & (\num{0.044}) & (\num{0.044})\\
 Married & \num{0.005} & \num{0.003} & \num{0.005} & \num{0.004}\\
  & (\num{0.011}) & (\num{0.011}) & (\num{0.011}) & (\num{0.011})\\
-High School & \num{0.005} & \num{-0.014} & \num{-0.014} & \num{-0.014}\\
+High
+School & \num{0.005} & \num{-0.014} & \num{-0.014} & \num{-0.014}\\
  & (\num{0.016}) & (\num{0.019}) & (\num{0.017}) & (\num{0.017})\\
-Associate's Degree & \num{0.032} & \num{-0.078} & \num{0.007} & \num{0.006}\\
+Associate's
+Degree & \num{0.032} & \num{-0.078} & \num{0.007} & \num{0.006}\\
  & (\num{0.021}) & (\num{0.064}) & (\num{0.022}) & (\num{0.022})\\
-Bachelor's Degree & \num{0.079}*** & \num{-0.217} & \num{0.054}* & \num{0.054}*\\
+Bachelor's
+Degree & \num{0.079}*** & \num{-0.217} & \num{0.054}* & \num{0.054}*\\
  & (\num{0.021}) & (\num{0.165}) & (\num{0.023}) & (\num{0.023})\\
-Postgraduate Degree & \num{0.114}* & \num{-0.479} & \num{0.083}+ & \num{0.086}+\\
+Postgraduate
+Degree & \num{0.114}* & \num{-0.479} & \num{0.083}+ & \num{0.086}+\\
  & (\num{0.045}) & (\num{0.330}) & (\num{0.048}) & (\num{0.047})\\
-Inverse Mills Ratio &  & \num{0.870}+ &  & \\
+Inverse
+Mills
+Ratio &  & \num{0.870}+ &  & \\
  &  & (\num{0.479}) &  & \\
 \midrule
 Num.Obs. & \num{4870} & \num{4870} & \num{4870} & \num{4870}\\
@@ -1089,95 +1614,156 @@ F & \num{10.220} &  & \num{6.487} & \num{6.798}\\
 RMSE & \num{0.37} & \num{0.37} & \num{0.37} & \num{0.37}\\
 \bottomrule
 \multicolumn{5}{l}{\rule{0pt}{1em}+ p $<$ 0.1, * p $<$ 0.05, ** p $<$ 0.01, *** p $<$ 0.001}\\
+\multicolumn{5}{l}{\rule{0pt}{1em}All specifications use continuous monthly unemployment duration, UI receipt control, and demographic controls.}\\
+\multicolumn{5}{l}{\rule{0pt}{1em}The unbalanced LM uses Displaced Worker Supplement sample weights only;}\\
+\multicolumn{5}{l}{\rule{0pt}{1em}Heckman, EB, and GLM models apply additional reweighting as described in the text.}\\
+\multicolumn{5}{l}{\rule{0pt}{1em}Highlighted row indicates the coefficient of interest.}\\
 \end{tabular}}
 \end{table}
 
-Next, we predict the value of the accepted wage ratio using each of the
-models, incorporating 95\% confidence intervals to allow for
-stochasticity to enter the behavioral mechanism itself. Essentially, as
-an agent in our model enters an additional period of unemployment, they
-will draw their reservation wage ratio from the mean and 95\% confidence
-interval at each unemployment duration value represented in the figure
-below. We assume a uniform distribution around the regression estimate
-when drawing these values.
+Next, we predict the accepted wage ratio by unemployment duration using
+the unbalanced LM specification, plotting predicted values alongside
+95\% confidence intervals. These predictions inform the reservation wage
+adjustment mechanism in the agent-based simulation. At each additional
+month of unemployment, an agent draws a reservation wage multiplier from
+a normal distribution parameterized by the predicted mean and standard
+error at that unemployment duration. The agent then sets their
+reservation wage to the product of their previously held wage and this
+drawn multiplier. For unemployment durations beyond 36 months (the
+maximum observed in the estimation sample) agents draw from a normal
+distribution centered at 0.5, the lower bound of the estimation sample's
+wage ratio range. The GLM and entropy-balanced predictions shown in the
+figure below serve as robustness checks on the unbalanced LM, confirming
+stability of the predicted wage ratio profile across reweighting
+methods.
 
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_heckman3-1} \end{center}
+\begin{figure}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/disc_heckman3-1} 
+
+}
+
+\caption{Simulated distributions of the predicted accepted wage ratio at each month of unemployment duration, derived from 1,000 draws per duration value from normal distributions parameterized by the mean prediction and standard error of the OLS, GLM-reweighted, and entropy-balanced models. White dots indicate the mean simulated value. These distributions parameterize the stochastic reservation wage adjustment mechanism in the agent-based model, with agents drawing an accepted wage ratio at each unemployment duration.}\label{fig:disc_heckman3}
+\end{figure}
 
 \FloatBarrier
 
-\section{Additional Considerations}\label{additional-considerations}
+\paragraph{Additional Considerations}\label{additional-considerations}
 
-\subsection{Job Tenure}\label{job-tenure}
+\subparagraph{Job Tenure}\label{job-tenure}
 
-We have information on the tenure spent at the last job which could
-impact the result. This could speak to the ``adaptability'' of
-individuals. Wage ratio seems to decrease (although not sure if
-meaningfully) with tenure at previous job.
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/unnamed-chunk-9-1} \end{center}
-
-\subsection{Representation}\label{representation}
-
-Although the survey does provide sample weights which we use above, it's
-still likely that those who are laid off might be systematically more
-susceptible to layoffs (lower-wage, low-skill occupation, male, etc).
-Below, we provide some descriptive graphs to illustrate what the sample
-looks like. First, the sample over-represents below-mean wage earners
-and men. The median age of survey respondents is near the mean age of
-the US labor force as reported by the Bureau of Labor Statistics in
-2024. Individuals with only a HS diploma represent a strong majority in
-the sample.
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/disc_rep-1} \end{center}
-
-\subsection{OTJ Search Propensity}\label{otj-search-propensity}
-
-A key improvement in this model is the incorporation of on-the-job
-seekers. Eeckhout et al.~2019 demonstrate that the flow of employed
-job-seekers into the pool of job-seekers can generate increased
-competition in boom periods. Therefore, we derive a mean value for the
-propensity of employed job-seekers to engage in search using the
-methodology and data presented in Eeckhout et al.~2019. In other words,
-we derive the sensitivity of employed job seekers to the business cycle
-from the employment-to-employment transitions data as used in Eeckhout
-et al.~Due to unreliable component parts of the Eeckhout analysis, we
-decided to abandon using their estimated parameters (search intensity
-for employed workers), and instead rely on their series of
-employment-to-employment (EE) transition rate which resulted in wage
-increases. This series is plotted in the top panel of the following
-figure. We draw the mean propensity to search from the average EE
-transition rate \textasciitilde6\%, represented by the dark blue dashed
-line in the top panel.
-
-We provide additional indicators of the cyclicality of this series by
-plotting fitted values of the EE transition rate as a function of
-national real GDP. These fitted values are derived from a linear
-regression in which the EE transition rate is regressed on national real
-GDP, optionally incorporated a deterministic linear trend. Furthermore,
-we provide the Hodrick-Prescott filtered series in the bottom panel,
-both as the raw de-trended series, and as a fitted series to real GDP.
+We additionally explore whether tenure at the lost job affects the
+accepted re-employment wage ratio. The left panel of the figure below
+shows the weighted distribution of tenure at the lost job in years; the
+right panel plots the accepted hourly wage ratio against tenure, with a
+weighted linear fit. We find a slight negative relationship between
+tenure and the accepted re-employment wage ratio, suggesting that
+longer-tenured displaced workers accept modestly larger wage losses upon
+re-employment, though the relationship is weak and we do not incorporate
+tenure as an additional dimension of reservation wage adjustment in the
+agent-based model or the underlying econometric estimation.
 
 \begin{figure}
-\centering
-\pandocbounded{\includegraphics[keepaspectratio]{Eeckhout_Replication/EE_transition_rate.png}}
-\caption{Employed Search Effort Fit}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/tenure-1} 
+
+}
+
+\caption{Weighted distribution of tenure at the lost job in years (left) and accepted hourly wage ratio as a function of tenure (right), for displaced workers in the clipped sample. The linear fit indicates a slight negative relationship between tenure and the accepted re-employment wage ratio. All observations are weighted by Displaced Worker Supplement sample weights.}\label{fig:tenure}
 \end{figure}
 
-\subsection{Supporting Data for
-Validation}\label{supporting-data-for-validation}
+\subparagraph{Limitations}\label{limitations}
 
-\subsubsection{\texorpdfstring{Intensive Search Effort: Mukoyama et
-al.~2018 \emph{Job Search and the Business
-Cycle}}{Intensive Search Effort: Mukoyama et al.~2018 Job Search and the Business Cycle}}\label{intensive-search-effort-mukoyama-et-al.-2018-job-search-and-the-business-cycle}
+Finally, we acknowledge three potential limitations with this data basis
+for informing the behavioral rules in the agent-based model. First, we
+do not distinguish between workers in our agent-based model that are
+voluntarily or involuntarily separated from their jobs. Therefore, the
+displaced worker classification outlined above does not represent
+individuals unemployed voluntarily. Second, the reported `current wage'
+is not necessarily the realized wage post-re-employment. Individuals
+report the wage at their lost job, the amount of time unemployed until
+they were re-employed, and the wage they hold at their current job.
+However, it is not indicated whether the current job is the same job
+where they were first re-employed after displacement. As such, there is
+uncertainty in the measurement of this outcome as an accepted wage that
+is relatively low compared to an individual's previous wage might be a
+temporary reality rather than a true re-employment wage (i.e., an
+individual finding stop-gap employment). Additionally, an individual
+might currently hold a wage higher than their initial re-employment wage
+if they have since made any additional work transitions. Third, the
+outcome variable does not adequately handle fundamentally different wage
+scales (i.e., a 10\% wage increase would likely be more or less
+impactful on the worker, depending on their initial wage level). We
+control for wage levels in several specifications to address this
+concern though this has minimal impact on our results.
+
+\subsubsection{On-the-Job Search
+Propensity}\label{on-the-job-search-propensity}
+
+The agent-based model relies on a fixed propensity of search which
+motivates the behavior of employed job-seekers. We draw this fixed
+propensity to search from employment-to-employment (EE) transition rates
+drawn from IPUMS-CPS data spanning 2000 to 2020, following the flow
+calculation conventions of Fallick et al.~Specifically, we draw a mean
+propensity to engage in job search from EE transitions accompanied by a
+5\% wage increase in line with the convention employed in Eeckhout et
+al.~We focus on employment-to-employment transitions that result in wage
+increases, as such transitions are more likely to be voluntary and thus
+reflect active rather than passive search behavior. This yields a mean
+propensity for employed workers to engage in on-the-job search,
+represented by the dashed blue line in the figure below.
+
+\begin{figure}[H]
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/eeckhout-1} 
+
+}
+
+\caption{Quarterly seasonally adjusted employment-to-employment (EE) transition rates, computed from the Current Population Survey using the tabulation method of Eeckhout et al. The solid red line shows the overall EE transition rate (total EE transitions as a share of the labor force); the dotted grey line shows the subset of EE transitions accompanied by a wage gain exceeding 5\%. The dashed blue horizontal line indicates the mean EE transition rate over the calibration period (2000--2019), which enters the agent-based model as the fixed on-the-job search propensity parameter. All series are shown at quarterly frequency and restricted to the model calibration window.}\label{fig:eeckhout}
+\end{figure}
+
+\subsection{Behavioral Validation
+Data}\label{behavioral-validation-data}
+
+\subsubsection{Job-Seeker Composition}\label{job-seeker-composition}
+
+We additionally use the empirical job-seeker composition series derived
+from the Eeckhout et al.~framework to validate the simulated composition
+of the job-seeker pool in the agent-based model. Following the
+stock-flow accounting conventions of Eeckhout et al., we iterate a
+forward-looking accounting identity that tracks the stock of employed
+job seekers over time using the quarterly employment-to-employment,
+unemployment-to-employment, and employment-to-unemployment transition
+rates computed from IPUMS-CPS data. For a calibrated search propensity
+parameter, the stock of employed job seekers evolves each period as a
+function of labor force flows between employment and unemployment
+states. The resulting series, expressed as a percentage deviation from
+its Hodrick-Prescott trend, captures the cyclical component of the
+job-seeker composition. We compare this series against the model's
+simulated job-seeker composition in the validation section of the main
+text. For further methodological detail, we refer the reader to Eeckhout
+et al.~as we extend their series to include more recent data but
+otherwise replicate their methodology.
+
+\begin{figure}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/eeckhout_valid-1} 
+
+}
+
+\caption{Employed workers as a share of total job seekers (unemployed plus employed on-the-job searchers), expressed as a percentage deviation from the Hodrick-Prescott trend (left axis), alongside the seasonally adjusted unemployment rate (right axis). The series is derived from the Eeckhout et al. replication and covers the model calibration and simulation period. Grey shaded bars indicate NBER recession periods.}\label{fig:eeckhout_valid}
+\end{figure}
+
+\subsubsection{Intensive Search Effort}\label{intensive-search-effort}
 
 We use evidence from
 \href{https://www.aeaweb.org/articles?id=10.1257/mac.20160202}{Mukoyama
 et al.~2018} regarding the cyclicality of unemployed job search effort
 to validate the micro behavior of our agents. This is a foundational
 paper within the literature that explores the relationship between
-search effort and business cycles. The authors provide new data on the
+search effort and business cycles. The authors provide novel data on the
 intensive margin of unemployed search effort (in minutes searched) over
-the business cycle by linking date from the American Time Use Survey
+the business cycle by linking data from the American Time Use Survey
 (ATUS) and Current Population Survey (CPS). We employ the methods and
 data presented in their work in a validation exercise of the emergent
 micro behavior of unemployed job-seekers.
@@ -1194,7 +1780,7 @@ metrics that measure search effort can result from passive search or
 intrinsic advantageous worker characteristics, obscuring any sense of
 real search ``effort'' or urgency with which individuals apply their
 search strategies. This intensive margin underlies the motivation behind
-our dynamic search effort rule, making this data a valuable source of
+our dynamic search effort rule, making this a valuable source of
 validation data for the model's output.
 
 Methodologically, the authors construct this time series measure of job
@@ -1217,228 +1803,22 @@ and allows baseline search effort to vary by demographic
 characteristics, producing a more nuanced measure than simply counting
 the number of methods used.
 
-The figure below represents the intensive search margin time series as
-calculated by the authors. This data is drawn from the replication code
-provided by the authors. We have translated the code from Stata to R,
-and the time series represented in the figure below relies on the
-methodology outlined by Mukoyama et al.~We indicate in the caption and
-legend where we have incorporated new data by extending the time series
-to include additional years or applied an alternative weighting scheme
-to the data to account for missing data. The citation for this work can
-be found in the bibliography of the main text.
+The figure below represents the intensive search margin time series,
+replicating and extending the methodology of Mukoyama et al.~This data
+is drawn from the replication code provided by the authors. We have
+translated the code from Stata to R, and the time series represented in
+the figure below relies on the methodology outlined by Mukoyama et
+al.~We indicate in the caption and legend where we have incorporated new
+data by extending the time series to include additional years or applied
+an alternative weighting scheme to the data to account for missing data.
 
 \begin{figure}
-\centering
-\pandocbounded{\includegraphics[keepaspectratio]{Mukoyama_Replication/intensive_search_margin.png}}
-\caption{Mukoyama Validation Series}
+
+{\centering \includegraphics{behav_params_overview_files/figure-latex/mukoyama-1} 
+
+}
+
+\caption{Average minutes of job search per day among unemployed workers, estimated using the imputation methodology of Mukoyama et al. The series are constructed by applying Heckman selection model coefficients, estimated on the relationship between reported search time and search methods in the American Time Use Survey (ATUS), to impute daily search minutes for all unemployed respondents in the Current Population Survey (CPS), weighted by CPS sample weights. The four series reflect two dimensions of variation: the underlying time series source (Original TS: the authors' original 2003--2014 ATUS data; Extended TS: an extension incorporating ATUS data through 2024) and the weighting scheme applied in the imputation (Original Weights: as reported in the original paper; New Weights: revised weights correcting for missing observations in the CPS and ATUS inputs). Lines are shown at full opacity within the period to which the agent-based model is calibrated and simulated (2001-2019) and are dimmed outside this window.}\label{fig:mukoyama}
 \end{figure}
-
-\subsubsection{Learning Rate - Mueller et al.~Job Seekers' Perceptions
-and Employment Prospects: Heterogeneity, Duration Dependence and
-Bias}\label{learning-rate---mueller-et-al.-job-seekers-perceptions-and-employment-prospects-heterogeneity-duration-dependence-and-bias}
-
-Given, the theoretical job search model presented in the main text
-relies additionally on a learning rate. We consider drawing this
-learning rate from work by Mueller et al, though this has not been
-incorporated in the main text thus far.
-
-In this work, the authors claim to disentangle the effects of duration
-dependence and dynamic selection by using job seekers' elicited beliefs
-about job-finding. Assuming (and confirming empirically) that
-job-seekers have realistic initial beliefs about job-finding they
-isolate the heterogeneity in job-seekers from true duration dependence.
-Ultimately, they find that dynamic selection selection explains most of
-the negative duration dependence (rather than pure, true duration
-dependence).
-
-We replicate and extend the analysis using replication code made
-available by the autors. The figures and econometric specification
-choices are crafted by Mueller et al, and several of the below plots are
-present in the main text of their work as well. Plot and regression
-table titles have been maintained for easy comparison. We provide
-additional evidence regarding the stability of their estimates across a
-longer time series that includes six additional years of data from
-2019-2024.
-
-We find that their results are remarkably consistent even when including
-additional data from 2019-2024. We aim to include this information in
-our theoretical model of the job search effort as a learning rate (ie.
-individuals learn about their re-employment probability with repeated
-failures in the job search).
-
-\begin{table}[!htbp] \centering 
-  \caption{Descriptive Statistics (SCE)} 
-  \label{} 
-\begin{tabular}{@{\extracolsep{5pt}} cccc} 
-\\[-1.8ex]\hline 
-\hline \\[-1.8ex] 
-Variable & Orig. 2013-19 & 2013-24 & 2020-24 \\ 
-\hline \\[-1.8ex] 
-High-School Degree or Less & $44.5$ & $40.6$ & $36.9$ \\ 
-Some College Education & $32.4$ & $34.9$ & $37.6$ \\ 
-College Degree or More & $23.1$ & $24.6$ & $25.6$ \\ 
-Age 20-34 & $25.4$ & $27.2$ & $30.0$ \\ 
-Age 35-49 & $33.5$ & $33.6$ & $35.3$ \\ 
-Age 50-65 & $41.1$ & $39.2$ & $34.8$ \\ 
-Female & $59.3$ & $61.2$ & $60.8$ \\ 
-Black & $19.1$ & $17.9$ & $16.4$ \\ 
-Hispanic & $12.5$ & $13.0$ & $12.6$ \\ 
-UE transition rate & $18.7$ & $19.1$ & $18.2$ \\ 
-UE transition rate: ST & $25.8$ & $26.5$ & $24.3$ \\ 
-UE transition rate: LT & $12.7$ & $12.7$ & $12.3$ \\ 
-\# respondents & $948$ & $1,367$ & $433$ \\ 
-\# respondents w/ at least 2 u obs & $534$ & $780$ & $252$ \\ 
-\# observations & $2,597$ & $3,926$ & $1,347$ \\ 
-\hline \\[-1.8ex] 
-\end{tabular} 
-\end{table}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-1} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-2} \end{center}
-
-\begin{table}[!htbp] \centering 
-  \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
-  \label{} 
-\begin{tabular}{@{\extracolsep{5pt}}lccc} 
-\\[-1.8ex]\hline 
-\hline \\[-1.8ex] 
- & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
-\cline{2-4} 
-\\[-1.8ex] & \multicolumn{3}{c}{T+3 UE Transitions (3-Months)} \\ 
- & Orig. 2013-19 & 2013-24 & 2020-24 \\ 
-\\[-1.8ex] & (1) & (2) & (3)\\ 
-\hline \\[-1.8ex] 
- find\_job\_3mon & 0.464$^{***}$ & 0.396$^{***}$ & 0.265$^{***}$ \\ 
-  & (0.045) & (0.036) & (0.067) \\ 
-  & & & \\ 
- 1 \textbar  userid & $-$0.104 &  & $-$0.136 \\ 
-  & (0.169) &  & (0.267) \\ 
-  & & & \\ 
- Constant &  & $-$0.080 &  \\ 
-  &  & (0.137) &  \\ 
-  & & & \\ 
-\hline \\[-1.8ex] 
-Observations & 1,201 & 1,911 & 673 \\ 
-R$^{2}$ & 0.218 & 0.139 & 0.105 \\ 
-Adjusted R$^{2}$ & 0.207 & 0.132 & 0.083 \\ 
-Residual Std. Error & 0.467 (df = 1184) & 0.475 (df = 1894) & 0.478 (df = 656) \\ 
-\hline 
-\hline \\[-1.8ex] 
-\textit{Note:}  & \multicolumn{3}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
-\end{tabular} 
-\end{table}
-
-\begin{table}[!htbp] \centering 
-  \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Contemporaneous elicitations} 
-  \label{} 
-\begin{tabular}{@{\extracolsep{5pt}}lccc} 
-\\[-1.8ex]\hline 
-\hline \\[-1.8ex] 
- & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
-\cline{2-4} 
-\\[-1.8ex] & \multicolumn{3}{c}{T+3 UE Transitions (3-Months)} \\ 
- & Orig. 2013-19 & 2013-24 & 2020-24 \\ 
-\\[-1.8ex] & (1) & (2) & (3)\\ 
-\hline \\[-1.8ex] 
- find\_job\_3mon & 0.501$^{***}$ & 0.418$^{***}$ & 0.391$^{***}$ \\ 
-  & (0.061) & (0.051) & (0.094) \\ 
-  & & & \\ 
- findjob\_3mon\_longterm & $-$0.258$^{***}$ & $-$0.170$^{**}$ & $-$0.360$^{***}$ \\ 
-  & (0.088) & (0.071) & (0.133) \\ 
-  & & & \\ 
- longterm\_unemployed & $-$0.078 & $-$0.127$^{***}$ & $-$0.043 \\ 
-  & (0.051) & (0.041) & (0.075) \\ 
-  & & & \\ 
- 1 \textbar  userid &  &  &  \\ 
-  &  &  &  \\ 
-  & & & \\ 
- Constant & $-$0.062 & $-$0.063 & $-$0.402 \\ 
-  & (0.175) & (0.139) & (0.266) \\ 
-  & & & \\ 
-\hline \\[-1.8ex] 
-Observations & 1,201 & 1,911 & 673 \\ 
-R$^{2}$ & 0.259 & 0.182 & 0.155 \\ 
-Adjusted R$^{2}$ & 0.248 & 0.174 & 0.132 \\ 
-Residual Std. Error & 0.455 (df = 1182) & 0.464 (df = 1892) & 0.465 (df = 654) \\ 
-\hline 
-\hline \\[-1.8ex] 
-\textit{Note:}  & \multicolumn{3}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
-\end{tabular} 
-\end{table}
-
-\begin{table}[!htbp] \centering 
-  \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
-  \label{} 
-\begin{tabular}{@{\extracolsep{5pt}}lccc} 
-\\[-1.8ex]\hline 
-\hline \\[-1.8ex] 
- & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
-\cline{2-4} 
-\\[-1.8ex] & \multicolumn{3}{c}{T+3 UE Transitions (3-Months)} \\ 
- & Orig. 2013-19 & 2013-24 & 2020-24 \\ 
-\\[-1.8ex] & (1) & (2) & (3)\\ 
-\hline \\[-1.8ex] 
- tplus3\_percep\_3mon & 0.332$^{***}$ & 0.241$^{***}$ & 0.203$^{**}$ \\ 
-  & (0.067) & (0.056) & (0.102) \\ 
-  & & & \\ 
- 1 \textbar  userid &  &  &  \\ 
-  &  &  &  \\ 
-  & & & \\ 
- Constant & 0.304 & 0.490$^{**}$ & 0.451 \\ 
-  & (0.270) & (0.207) & (0.394) \\ 
-  & & & \\ 
-\hline \\[-1.8ex] 
-Observations & 474 & 798 & 300 \\ 
-R$^{2}$ & 0.168 & 0.090 & 0.179 \\ 
-Adjusted R$^{2}$ & 0.139 & 0.071 & 0.132 \\ 
-Residual Std. Error & 0.398 (df = 457) & 0.436 (df = 781) & 0.447 (df = 283) \\ 
-\hline 
-\hline \\[-1.8ex] 
-\textit{Note:}  & \multicolumn{3}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
-\end{tabular} 
-\end{table}
-
-\begin{table}[!htbp] \centering 
-  \caption{Table 2—Regressions of Realized on Elicited 3-Month Job-Finding Probabilities (SCE): Lagged elicitations} 
-  \label{} 
-\begin{tabular}{@{\extracolsep{5pt}}lccc} 
-\\[-1.8ex]\hline 
-\hline \\[-1.8ex] 
- & \multicolumn{3}{c}{\textit{Dependent variable:}} \\ 
-\cline{2-4} 
-\\[-1.8ex] & \multicolumn{3}{c}{T+3 UE Transitions (3-Months)} \\ 
- & Orig. 2013-19 & 2013-24 & 2020-24 \\ 
-\\[-1.8ex] & (1) & (2) & (3)\\ 
-\hline \\[-1.8ex] 
- find\_job\_3mon & 0.301$^{***}$ & 0.205$^{***}$ & $-$0.035 \\ 
-  & (0.069) & (0.058) & (0.110) \\ 
-  & & & \\ 
- 1 \textbar  userid &  &  &  \\ 
-  &  &  &  \\ 
-  & & & \\ 
- Constant & 0.201 & 0.422$^{**}$ & 0.361 \\ 
-  & (0.274) & (0.207) & (0.400) \\ 
-  & & & \\ 
-\hline \\[-1.8ex] 
-Observations & 474 & 798 & 300 \\ 
-R$^{2}$ & 0.159 & 0.083 & 0.168 \\ 
-Adjusted R$^{2}$ & 0.129 & 0.064 & 0.121 \\ 
-Residual Std. Error & 0.400 (df = 457) & 0.437 (df = 781) & 0.450 (df = 283) \\ 
-\hline 
-\hline \\[-1.8ex] 
-\textit{Note:}  & \multicolumn{3}{r}{$^{*}$p$<$0.1; $^{**}$p$<$0.05; $^{***}$p$<$0.01} \\ 
-\end{tabular} 
-\end{table}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-3} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-4} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-5} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-6} \end{center}
-
-\begin{center}\includegraphics[width=0.9\linewidth]{behav_params_overview_files/figure-latex/mueller-7} \end{center}
 
 \end{document}

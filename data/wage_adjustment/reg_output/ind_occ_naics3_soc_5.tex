@@ -1,0 +1,26 @@
+\renewcommand\cellalign{t}
+\begin{threeparttable}
+\begin{tabular}{lccc}
+\toprule
+ & \multicolumn{2}{c}{mean_log_wage} \\
+\cmidrule(lr){2-3} 
+ & Mean (months) & Weighted (months) \\
+ & (1) & (2) \\
+\midrule
+\addlinespace
+mean_dur_months & \makecell{0.010*** \\ (0.002)} & \makecell{-0.007 \\ (0.013)} \\
+\midrule
+\addlinespace
+naics3_soc_5 & x & x \\
+ym & x & x \\
+\midrule
+\addlinespace
+Observations & 366815 & 366815 \\
+S.E. type & by: naics3_soc_5 & by: naics3_soc_5 \\
+$R^2$ & 0.888 & 0.945 \\
+$R^2$ Within & 0.000 & 0.000 \\
+\bottomrule
+\end{tabular}
+\footnotesize Significance levels: $*$ p $<$ 0.05, $**$ p $<$ 0.01, $***$ p $<$ 0.001. Format of coefficient cell: Coefficient 
+ (Std. Error)
+\end{threeparttable}

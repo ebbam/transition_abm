@@ -176,6 +176,8 @@ tbl_body <- match_summary %>%
   kable(format = "latex",
         booktabs = TRUE,
         linesep = "",
+        #caption = "Occupational Code Matching Summary: Occupational Mobility Network",
+        #label = "si_tbl:full_omn_match_summary",
         caption = "Occupational Code Matching Summary: Occupational Mobility Network",
         label = "si_tbl:full_omn_match_summary",
         # col.names = c("Matching Level", "Codes Matched", "N (cumulative)", 
@@ -191,6 +193,8 @@ tbl_body <- match_summary %>%
   writeLines(c(
     "\\begin{table}[H]",
     "\\centering",
+    "\\caption{Occupational Code Matching Summary: Occupational Mobility Network}",
+    "\\label{si_tbl:full_omn_match_summary}",
     "\\begin{threeparttable}",
     tbl_body,
     "\\begin{tablenotes}[flushleft]",

@@ -1,0 +1,15 @@
+\centering
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{|l|l|c|c|c|c|c|c|}
+\hline
+\textbf{Parameter} & \textbf{Prior Distribution} & \multicolumn{6}{c|}{\textbf{Model Category}} \\
+\cline{3-8}
+& & \textbf{Non-behavioural} & \textbf{\shortstack{Non-behavioural \\ w. OTJ}} & \textbf{\shortstack{Behavioural \\ w. Cyc. OTJ \\ w.o RW}} & \textbf{\shortstack{Behavioural \\ w.o. Cyc. OTJ \\ w.o RW}} & \textbf{\shortstack{Behavioural \\ w. Cyc. OTJ \\ w. RW}} & \textbf{\shortstack{Behavioural \\ w.o. Cyc. OTJ \\ w. RW}} \\
+\hline
+$\delta_u$ & $U(0.0001, 0.9)$ & 0.017 & 0.014 & 0.013 & 0.012 & 0.015 & 0.014 \\ \hline
+$\gamma_u$ & $U(0.0001, 0.9)$ & 0.654 & 0.608 & 0.424 & 0.447 & 0.555 & 0.528 \\ \hline
+$\beta_c$ & $U(0.01, 40)$ &  &  & 1.665 &  & 1.448 &  \\ \hline
+\end{tabular}
+\end{adjustbox}
+\caption{Prior distribution and parameter estimates for all models. $U(a, b)$ denotes a uniform distribution on $[a,b]$.}
+\label{tab:priors_posteriors_full_omn}

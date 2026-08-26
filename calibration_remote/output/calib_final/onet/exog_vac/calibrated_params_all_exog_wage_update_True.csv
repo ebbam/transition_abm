@@ -1,0 +1,25 @@
+Parameter,Value,otj,cyc_otj,cyc_ue,disc,Timestamp,model_cat
+d_u,0.017595495255445057,False,False,False,False,2026-06-04 18:43:41,nonbehav
+gamma_u,0.5684344738153989,False,False,False,False,2026-06-04 18:43:41,nonbehav
+d_u,0.013936610662904423,True,False,False,False,2026-06-04 19:01:23,otj_nonbehav
+gamma_u,0.5646312047453872,True,False,False,False,2026-06-04 19:01:23,otj_nonbehav
+d_u,0.013388516503528066,True,False,False,True,2026-06-04 19:34:43,otj_disc
+gamma_u,0.5133843315802284,True,False,False,True,2026-06-04 19:34:43,otj_disc
+d_u,0.012056632864742926,True,False,False,True,2026-06-04 19:41:48,otj_disc_no_rw
+gamma_u,0.4523007191115581,True,False,False,True,2026-06-04 19:41:48,otj_disc_no_rw
+d_u,0.017212573400995173,False,False,False,False,2026-06-05 05:49:01,nonbehav
+gamma_u,0.6855972245087208,False,False,False,False,2026-06-05 05:49:01,nonbehav
+d_u,0.013674854081136738,True,False,False,False,2026-06-05 05:51:01,otj_nonbehav
+gamma_u,0.6375787142450329,True,False,False,False,2026-06-05 05:51:01,otj_nonbehav
+d_u,0.011829730387710105,True,False,False,True,2026-06-05 06:37:55,otj_disc_no_rw
+gamma_u,0.4970267358314219,True,False,False,True,2026-06-05 06:37:55,otj_disc_no_rw
+d_u,0.013179013746894907,True,False,False,True,2026-06-05 06:43:50,otj_disc
+gamma_u,0.5965746202355368,True,False,False,True,2026-06-05 06:43:50,otj_disc
+d_u,0.017360289442544058,False,False,False,False,2026-06-09 16:26:17,nonbehav
+gamma_u,0.6801318916924115,False,False,False,False,2026-06-09 16:26:17,nonbehav
+d_u,0.013724270700852916,True,False,False,False,2026-06-09 16:37:23,otj_nonbehav
+gamma_u,0.6265588136694199,True,False,False,False,2026-06-09 16:37:23,otj_nonbehav
+d_u,0.01176125194342145,True,False,False,True,2026-06-09 17:59:27,otj_disc_no_rw
+gamma_u,0.5276550395401882,True,False,False,True,2026-06-09 17:59:27,otj_disc_no_rw
+d_u,0.01318260979445431,True,False,False,True,2026-06-09 18:57:27,otj_disc
+gamma_u,0.5887795177583154,True,False,False,True,2026-06-09 18:57:27,otj_disc

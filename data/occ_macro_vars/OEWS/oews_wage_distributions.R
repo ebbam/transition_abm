@@ -222,8 +222,8 @@ tbl_body <- limits_summary %>%
   kable(format = "latex",
         booktabs = TRUE,
         linesep = "",
-        caption = "OEWS Top-Coded Wage Ceiling Values by Year",
-        label = "si_tbl:oews_ceilings",
+        #caption = "OEWS Top-Coded Wage Ceiling Values by Year",
+        #label = "si_tbl:oews_ceilings",
         col.names = c("Years", "Hourly", "Annual"),
         escape = FALSE) %>% 
   add_header_above(c(" " = 1, "Ceiling Salary Value" = 2))
@@ -231,6 +231,8 @@ tbl_body <- limits_summary %>%
 writeLines(c(
   "\\begin{table}[H]",
   "\\centering",
+  "\\caption{OEWS Top-Coded Wage Ceiling Values by Year}",
+  "\\label{si_tbl:oews_ceilings}",
   "\\begin{threeparttable}",
   tbl_body,
   "\\begin{tablenotes}[flushleft]",

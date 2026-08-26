@@ -43,15 +43,16 @@ final %>%
   filter(label_0 == "Private industries" & !is.na(label_2)) %>% 
   ggplot() +
   geom_line(aes(x = date, y = real_VA, group = industry, color = label)) +
-  facet_wrap_custom(~label_2, scales = "free_y") + 
+  facet_wrap_custom(~label_2, scales = "free_y", width = 13) + 
   theme_minimal() +
   theme(legend.position = "bottom") +
   labs(title = "Annual Real VA by Industry 1997-2024", 
-       subtitle = "Data from Bureau of Economic Analysis Economic Accounts", 
+       #subtitle = "Data from Bureau of Economic Analysis Economic Accounts", 
        x = "Year", 
-       y = "Real Value Added in 2017-chained USD", 
+       y = "Real Value Added in 2017-Chained $USD", 
        color = "Industry Level of Aggregation") +
-  common_theme -> p2
+  common_theme +
+  theme(strip.text = element_text(size = 9, hjust = 0)) -> p2
 
 
 # Picked relevant industries as 2-digit NAICS industries 
@@ -85,10 +86,10 @@ final %>%
   filter(tolower(industry) %in% tolower(names(rel_inds))) %>% 
   ggplot() +
   geom_line(aes(x = date, y = real_VA, color = industry)) +
-  facet_wrap_custom(~industry, scales = "free_y") + 
+  facet_wrap_custom(~industry, scales = "free_y", width = 13) + 
   theme(legend.position = "none") +
   theme_minimal() +
-  labs(title = "Annual Real VA by Industry 1997-2024", subtitle = "Data from Bureau of Economic Analysis Economic Accounts", x = "Year", y = "Real Value Added in 2017-chained USD", color = "Industry Level of Aggregation") +
+  labs(title = "Annual Real VA by Industry 1997-2024", subtitle = "Data from Bureau of Economic Analysis Economic Accounts", x = "Year", y = "Real Value Added in 2017-Chained $USD", color = "Industry Level of Aggregation") +
   theme(legend.position = "none") +
   common_theme -> p3
 
@@ -96,12 +97,12 @@ final %>%
   filter(tolower(industry) %in% tolower(names(rel_inds))) %>% 
   ggplot() +
   geom_line(aes(x = date, y = real_VA, color = industry)) +
-  #facet_wrap_custom(~industry, scales = "free_y") + 
+  #facet_wrap_custom(~industry, scales = "free_y", width = 13) + 
   scale_y_continuous(trans = log_trans()) +
   theme_minimal() +
   labs(title = "(log) Annual Real VA\nby Industry 1997-2024", 
        subtitle = "Data from Bureau of Economic Analysis\nEconomic Accounts", 
-       x = "Year", y = "log Real Value Added in 2017-chained USD", color = "Industry Level of Aggregation") +
+       x = "Year", y = "log Real Value Added in 2017-Chained $USD", color = "Industry Level of Aggregation") +
   common_theme -> p4
 
 
@@ -127,8 +128,8 @@ final %>%
   geom_line(data = real_gdp, aes(x = date, y = GDPC1, color = "Real GDP (FRED Series)")) +
   theme_minimal() +
   theme(legend.position = "bottom") +
-  labs(x = "Year", y = "VA or GDP Value", 
-       title = "Comparison of Quarterly GDP\nSeries and Real Value Added\nas Reported by Industry", 
+  labs(x = "Year", y = "Real Value (Billions $USD)", 
+       title = str_wrap("Comparison of Quarterly GDP Series and Real Value Added as Reported by Industry", wrap_width), 
        color = "Series") +
   common_theme -> p5
 
@@ -196,13 +197,13 @@ final %>%
   filter(label_0 == "Private industries" & !is.na(label_2)) %>% 
   ggplot() +
   geom_line(aes(x = date, y = real_VA, group = industry, color = label)) +
-  facet_wrap_custom(~label_2, scales = "free_y") + 
+  facet_wrap_custom(~label_2, scales = "free_y", width = 13) + 
   theme_minimal() +
   theme(legend.position = "bottom") +
-  labs(title = "Quarterly Real VA by Industry 2005-2024", 
+  labs(title = "Quarterly Real Value Added by Industry 2005-2024", 
        subtitle = "Data from Bureau of Economic Analysis Economic Accounts", 
-       x = "Year-Quarter", 
-       y = "Real Value Added in 2017-chained USD", color = "Industry Level of Aggregation") +
+       x = "Year", 
+       y = "Real Value Added in 2017-Chained $USD", color = "Industry Level of Aggregation") +
   common_theme -> p1
 
 #print(p1)
@@ -212,7 +213,7 @@ cat("\n")
 ggplot() + 
   geom_line(data = ind_va_for_abm, aes(x = date, y = log_real_VA, group = industry), color = "red") +
   geom_line(data = filter(final, tolower(industry) %in% tolower(names(rel_inds))), aes(x = date, y = log_real_VA, group = industry)) +
-  facet_wrap_custom(~industry, scales = "free") +
+  facet_wrap_custom(~industry, scales = "free", width = 13) +
   common_theme
 
 q_ind_va_for_abm <- final %>% 
@@ -224,16 +225,18 @@ ind_va_for_abm_full <- ind_va_for_abm %>%
 
 ind_va_for_abm_full %>% 
   filter(date >= '2000-01-01' & date <= '2024-10-01') %>% 
+  mutate(industry = str_to_title(industry)) %>%
   ggplot() +
   geom_line(aes(x = date, y = log_real_VA, group = industry)) +
-  labs(title = "Quarterly Real VA by Industry 2005-2024", 
-       subtitle = "Data from Bureau of Economic Analysis Economic Accounts", 
-       caption = "Annual data prior to 2005 is linearly interpolated to achieve a quarterly frequency matching the later portion of each time series.",
-       x = "Year-Quarter", 
-       y = "Real Value Added in 2017-chained USD", color = "Industry Level of Aggregation") +
+  labs(title = "Quarterly Real Value Added by Industry 2005-2024", 
+       #subtitle = "Data from Bureau of Economic Analysis Economic Accounts", 
+       #caption = "Annual data prior to 2005 is linearly interpolated to achieve a quarterly frequency matching the later portion of each time series.",
+       x = "Year", 
+       y = "Real Value Added in (Billions 2017-Chained $USD)", color = "Industry Level of Aggregation") +
   #xlim(as.Date(2000-01-01), as.Date(2024-10-01)) +
-              facet_wrap_custom(~industry, scales = "free") +
-              common_theme -> p_final
+              facet_wrap_custom(~industry, scales = "free_y", width = 13) +
+              common_theme +
+  theme(strip.text = element_text(size = 8, hjust = 0))-> p_final
 
 ind_va_for_abm_full %>% 
   filter(date >= '2000-01-01' & date <= '2024-10-01') %>% 
@@ -244,18 +247,22 @@ ind_va_for_abm_full %>%
   geom_line(data = filter(real_gdp, date >= '2000-01-01' & date <= '2024-10-01'), aes(x = date, y = GDPC1, color = "Real GDP (FRED Series)")) +
   theme_minimal() +
   theme(legend.position = "bottom") +
-  labs(x = "Year", y = "VA or GDP Value", 
-       title = "Comparison of Quarterly GDP\nSeries and Real Value Added\nas Reported by Industry", 
+  labs(x = "Year", y = "Real Value (Billions 2017-Chained $USD)", 
+       title = str_wrap("Comparison of Quarterly GDP Series and Real Value Added as Reported by Industry", wrap_width), 
        color = "Series") +
+  scale_color_manual(values = c(
+    "Sum of Real Value Added by Industry (BEA Series)" = "steelblue",
+    "Real GDP (FRED Series)" = "darkorange"
+  )) +
   common_theme -> p_final_gdp_comp
 
-print(p_final)
+#print(p_final)
 
-cat("\n")
-cat("\n")
-cat("\n")
+#cat("\n")
+#cat("\n")
+#cat("\n")
 
-print(p_final_gdp_comp)
+#print(p_final_gdp_comp)
 
 
 

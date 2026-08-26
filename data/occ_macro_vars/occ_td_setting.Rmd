@@ -3,12 +3,16 @@
 #date: "`r Sys.Date()`"
 output: 
   pdf_document:
+    keep_tex: true
     latex_engine: xelatex
+header-includes:
+  - \usepackage{placeins}
 ---
 
 ```{r setup, echo = FALSE, include=FALSE}
 
-knitr::opts_chunk$set(echo = FALSE, cache = FALSE, fig.height = 8, fig.width = 7, dev = "ragg_png", dpi = 300)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, cache = FALSE, fig.width = 6.27, fig.height = 8, dev = "ragg_png", dpi = 300)
+
 library(here)
 library(RColorBrewer)
 library(gridExtra)
@@ -23,29 +27,32 @@ nx = "Full OMN"
   
 ```
 
-# Setting Occupational Target Demand
+The impetus for agents to act within our model relies on non-static target demand across occupations. In other words, occupational demand for workers needs to fluctuate during the simulation. We define such movements at the occupational level by drawing on the share of occupations employed across various US industries and interact these shares with the real value added of each industry. As such, we arrive at occupational target demand profiles that fluctuate in line with real-world target demand over the simulated time period.\footnote{Future work should aim to accommodate shifts in labor productivity of different industries and shifting industry-specific occupational shares to account for additional sources of structural transformation beyond those explored in this work.}
 
-The impetus for agents to act within our model relies on non-static target demand across occupations. In other words, occupational demand for workers needs to fluctuate during the simulation. We define such movements at the occupational level by drawing on the share of occupations employed across various US industries and interact these shares with the real value added of each industry. As such, we arrive at occupational target demand profiles that fluctuate in line with real-world target demand over the simulated time period. Important future work should aim to accommodate shifts in labor productivity of different industries and/or shifting industry-specific occupational shares to account for additional sources of structural transformation beyond those explored in this work.
+Target demand $d_{i,t}^{\dagger}$ reflects the desired employment level of occupation $i$ at time $t$. Target demand for occupation $i$ at time $t$ is the product of a fixed baseline occupational demand $d^{\dagger}_i$ and the sum of the marginal occupational demand shocks across all industries $j$ in the US economy at time $t$.
 
-First, using reported occupational shares of industry employment from the Bureau of Labor Statistics’ Occupational Employment and Wages dataset and the industry Value Added (quarterly data available from 2005 and annual data available from 1999), we calculate the occupational employment composition across 19 US industries at NAICS 2-digit code level.
 
-First, assume that the baseline de-trended demand for occupation $i$ in the economy $D_{i}$ is:
+$$d_{i,t}^{\dagger} =  d^{\dagger}_i\sum_{j=1}^{n} \hat d_{ijt},$$
 
-$D_{i} = \sum_{j=1}^{n} \bar d_{ij} = 1$
+where $\hat{d}_{ijt}$ is the industry-level demand shift for occupation $i$ in industry $j$ at time $t$ defined as:
 
-where the de-trended fluctuating demand (i.e., demand at time $t$ for occupation $i$) is:
 
-$D_{it} = \sum_{j=1}^{n} \hat d_{ijt}$
+$$\hat d_{ijt} = \bar d_{ij} \theta_{jt},$$
 
-$\hat d_{ijt} = \sum_{j=1}^{n} \bar d_{ij} \theta_{jt}$
 
-in which $\bar d_{ij}$ is the average share of occupation $i$ in industry $j$ and $\theta_{jt}$ is the de-trended value-added of industry $j$ at time $t$. Thus, we obtain occupation-specific fluctuations in demand dependent on their "exposure" or the share of a specific occupation in industry $j$. We de-trend the value added using a Hodrick-Prescott filter to obtain occupational target demand as a fluctuation around a mean. This allows for an interpretation of demand fluctuations as either an upward or downward pressure on occupational employment levels.
+where $\theta_{jt}$ is a de-trended value added shock in industry $j$ and $\bar d_{ij}$ represents the fixed demand for occupation $i$ in industry $j$ calculated as:
 
-In the following sections, we describe the data used, provide visualizations of the series as well as the imputed occupational target demand series.
+$$\bar d_{ij} = \frac{1}{T}\sum_{T=2012}^{2018} \frac{d_{ijT}}{d_{iT}}.$$
+
+Thus, we obtain occupation-specific fluctuations in demand dependent on their ``exposure'' or the share of a specific occupation in industry $j$. These occupation-specific demand shocks are represented in \autoref{fig:occ_shocks}.
+
+Using reported occupational shares of industry employment from the Bureau of Labor Statistics’ Occupational Employment and Wages dataset and the industry value added (quarterly data available from 2005 and annual data available from 1999), we calculate the occupational employment composition across 19 US industries at 2-digit NAICS level. We detrend the value added using a Hodrick-Prescott filter to obtain occupational target demand as a fluctuation around a mean. This allows for an interpretation of demand fluctuations as either an upward or downward pressure on occupational employment levels. 
+
+In the following sections, we describe the data sources, present visualizations of the underlying series, and demonstrate the resulting occupation-specific target demand profiles.
 
 ## Value Added by Industry
 
-We use industry value added data from the US Bureau of Economic Analysis (using annual data from 2000-2004 and quarterly data available from 2005) to define $\theta_{jt}$ to create these occupation-specific target demand trajectories. We de-trend the value added using a Hodrick-Prescott filter. Below, we present the industry real value added and demonstrate that these disagreggated series closely follow the national real GDP series.
+We use industry value added data from the US Bureau of Economic Analysis (using annual data from 2000-2004 and quarterly data available from 2005) to define $\theta_{jt}$ to create these occupation-specific target demand trajectories. We detrend the value added using a Hodrick-Prescott filter. Below, we present the industry real value added and demonstrate that these disaggregated series closely follow the national real GDP series.
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 
@@ -53,13 +60,36 @@ source(here("data/occ_macro_vars/bea_industry_va.R"))
 
 ```
 
-## Occupational shares of industry-level emloyment
 
-We use annual occupational shares of employment from the Occupational Employment and Wage Statistics database from the US Bureau of Labor Statistics to derive our $\bar d_{ij}$. The first figure shows the share of occupations within each industry, drawn from the OEWS data. The gaps in the figure is due to a reshuffling of occupational codes in 2010 and 2018. To deal with this challenge, we take the mean industry-share of occupational employment reported in the years where majority (\>97%) of our occupational codes are present (2012-2018 - after and before SOC reorganization of 2010 and 2018). We display the occupation-industry employment shares in a gridded format as well.
+```{r}
+fig_cap_p_final <- "Real value added by US industry (2017-chained USD), drawn from the Bureau of Economic Analysis National Economic Accounts. Annual data prior to 2005 is linearly interpolated to quarterly frequency to match the later portion of each series. Each panel shows one 2-digit NAICS industry; axes are independently scaled."
+
+```
+
+```{r real_val_add_fig, echo = FALSE, fig.cap = fig_cap_p_final}
+print(p_final)
+```
+
+```{r}
+
+fig_cap_p_final_gdp_comp <- "Comparison of the sum of industry-level real value added (BEA series, blue) against the FRED quarterly real GDP series (orange), covering 2000--2024. The close correspondence between the two series validates the use of the disaggregated BEA industry value added series as the driver of occupational target demand."
+
+```
+
+
+```{r gdp_va_comp, echo = FALSE, fig.height = 5.02, fig.cap = fig_cap_p_final_gdp_comp}
+print(p_final_gdp_comp)
+```
+
+\FloatBarrier
+
+## Occupational Shares of Industry Employment
+
+We use annual occupational shares of employment from the Occupational Employment and Wage Statistics database from the US Bureau of Labor Statistics to derive our $\bar d_{ij}$. The first figure shows the share of occupations within each industry, drawn from the OEWS data. The gaps in the sub-figures are due to a reshuffling of occupational codes in 2010 and 2018. To deal with this challenge, we take the mean industry-share of occupational employment reported in the years in which majority (\>97%) of our occupational codes are present (2012-2018 - before and after the SOC reorganization of 2010 and 2018). We display the occupation-industry employment shares in a gridded format below.
 
 Note that the procedure we employ to arrive at consistent occupational shares of industry-level employment results in 6 occupational categories that have a sum of their mean shares greater than 1.1.
 
-```{r, echo = FALSE, results = 'asis', message = FALSE, warning = FALSE}
+```{r, echo = FALSE, message = FALSE, warning = FALSE}
 
 
 if(nx == "Original OMN"){
@@ -106,9 +136,52 @@ source(here("data/occ_macro_vars/OEWS/occ_emp_industry_oews.R"))
 
 ```
 
-## Bringing them together
+```{r}
 
-We bring these values together by adding the product of industry-level real-value added and the fixed occupational employment shares across all industries as in the formulation above, repeated here for ease: $\hat d_{ijt} = \sum_{j=1}^{n} \bar d_{ij} \theta_{jt}$. This yields occupation-specific target demand profiles that respond to disagreggated industrial productivity movements.
+fig_cap_p2 <- "Occupational employment shares within each 2-digit NAICS industry over time, drawn from the Occupational Employment and Wage Statistics (OEWS) database. Each line represents one occupation code; gaps reflect SOC code reorganizations in 2010 and 2018. Industries are shown in separate panels with independently scaled y-axes."
+
+```
+
+
+```{r occ_emp_shares, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = fig_cap_p2}
+
+print(p2)
+
+```
+
+
+<!-- ```{r} -->
+
+<!-- fig_cap_p6 <- "Mean occupational employment share by industry, averaged over 2012--2018 to straddle the 2010 and 2018 SOC reorganizations and retain the years in which more than 97\\% of occupational codes are consistently present. Only occupation--industry pairs with a mean share of at least 5\\% are shown. Industries are ordered along the x-axis by the total number of occupations they employ in ascending order." -->
+
+<!-- ``` -->
+
+
+<!-- ```{r, echo = FALSE, message = FALSE, warning = FALSE, fig.cap = fig_cap_p6} -->
+
+<!-- print(p6) -->
+
+<!-- ``` -->
+
+
+```{r odd_ones, echo = FALSE, results = 'asis', message = FALSE, warning = FALSE}
+
+
+#cat(paste0(nrow(odd_ones), " occupational categories have a sum of mean shares > 1.1:"))
+
+odd_ones %>%
+  kable(format = "latex", booktabs = TRUE, escape = FALSE,
+        caption = str_wrap("Occupational categories for which the sum of mean industry employment shares exceeds 1.1, indicating potential inconsistencies in the OEWS occupational share data across industries. These categories are retained in the analysis but flagged here for transparency.", 120)) %>%
+  kableExtra::column_spec(2, width = "6cm") %>%
+  print(.)
+
+```
+
+\FloatBarrier
+
+## Combining VA and Employment Shares
+
+We combine these two data sources by computing the product of industry-level real value added and fixed occupational employment shares, summing across industries as in the formulation above, repeated here for ease: $\hat d_{ijt} = \sum_{j=1}^{n} \bar d_{ij} \theta_{jt}$. This yields occupation-specific target demand profiles that respond to disaggregated industrial productivity movements.
 
 ```{r, echo = FALSE, message = FALSE}
 
@@ -154,23 +227,37 @@ gdp_processed <- ind_va_for_abm_full %>%
 
 ```
 
-```{r, echo = FALSE, message = FALSE}
+```{r}
+
+fig_cap_va_shocks_norm <- "Industry-level value added shocks expressed as the raw Hodrick-Prescott filtered cycle (blue) and as percentage deviation from the HP trend (orange), for each 2-digit NAICS industry. The percentage deviation is used as $\\theta_{jt}$ in the occupational target demand formulation."
+
+```
+
+
+```{r fig_cap_va_shocks_norm, echo = FALSE, message = FALSE, fig.cap = fig_cap_va_shocks_norm}
 
 gdp_processed %>% 
   select(date, industry, gdp_pct_dev, gdp_cycle) %>% 
   pivot_longer(!c(date, industry)) %>%
-  mutate(name_clean = case_when(name == "gdp_cycle" ~ "De-trended cycle",
+  mutate(name_clean = case_when(name == "gdp_cycle" ~ "Detrended cycle",
                                 name == "gdp_pct_dev" ~ "% Deviation from trend")) %>% 
+    mutate(industry = str_to_title(industry)) %>%
   ggplot() +
   geom_line(aes(x = date, y = value, color = name_clean)) +
-  facet_wrap_custom(~industry) +
+  facet_wrap_custom(~industry, scales = "free_y", width = 13) +
     labs(title = "Industry-level Value Added Shocks",
-         subtitle = "Normalization of HP Filter Method: Raw HP Filter vs. Percent Deviation",
+         #subtitle = "Normalization of HP Filter Method: Raw HP Filter vs. Percent Deviation",
          x = "Date",
-         y = "De-trended Value",
+         y = "Detrended Value",
          color = "Normalization Method") +
+  scale_color_manual(values = c(
+  "Detrended cycle" = "steelblue",
+  "% Deviation from trend" = "darkorange"
+)) +
   common_theme +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom",
+        strip.text = element_text(size = 8, hjust = 0))
+
 
 ```
 
@@ -260,7 +347,12 @@ Furthermore, in the case of the full OMN we are missing both 13-2081 and 33-3031
 
 Finally, in the case of the O\*NET Related Occupations Network both of the above are missing in addition to 45-3021 (hunters and trappers). We assign hunters and trappers the same occupational shocks as the only other occupation in the same Minor SOC Group (45-3011 - Fishers and Related Fishing Workers). They are both categorized within the same "Fishing and Hunting Workers" Minor SOC Group (45-3000).
 
-```{r, echo = FALSE, message = FALSE}
+```{r}
+fig_cap_occ_shocks <- "Occupation-specific value added shocks ($\\hat{d}_{ijt}$), constructed as the weighted sum of industry-level HP-filtered value added cycles, where weights are the mean occupational employment share in each industry ($\\bar{d}_{ij}$). Each panel shows one broad occupational category (SOC major group); lines within each panel represent individual detailed occupation codes, shaded by occupation."
+```
+
+
+```{r fig_cap_occ_shocks, echo = FALSE, message = FALSE, fig.cap = fig_cap_occ_shocks}
 
 if(nx == "Original OMN"){
   occ_shocks_full <- occ_shocks %>% 
@@ -310,16 +402,18 @@ color_map <- setNames(shuffled_palette, sort(unique(occ_shocks_full$occ_code)))
 occ_shocks_full %>% 
   ggplot() +
   geom_line(aes(x = date, y = shock, color = occ_code)) +
-  facet_wrap_custom(~OCC2010_desc) + 
+  facet_wrap_custom(~OCC2010_desc, scales = "free_y", width = 13) + 
   scale_color_manual(values = color_map) +
   labs(
     x = "Date", 
-    y = "Occupation Specific VA Shock (Deviation from Trend)",
-    title = "Occupation Specific Value Added Shock", 
-    subtitle = "Composite of Industry VA shocks x Industry Occupational Shares"
+    y = "Occupation-Specific VA Shock (Deviation from Trend)",
+    title = "Occupation Specific Value Added Shock"#, 
+    #subtitle = "Composite of Industry VA shocks x Industry Occupational Shares"
   ) +
   common_theme +
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        strip.text = element_text(size = 8, hjust = 0))
+
 
 abm_cw <- abm %>% 
   mutate(SOC2010_adj = SOC2010)
@@ -400,7 +494,9 @@ if(nx == "Full OMN"){
 }
 
 
-write.csv(tosave, here(paste0("calibration_remote/data/", file_title)))
+if(save_data){
+  write.csv(tosave, here(paste0("calibration_remote/data/", file_title)))
+}
 
 if(nx == "Original OMN"){stopifnot(identical(read.csv(paste0("calibration_remote/data/", file_title)), read.csv(here("calibration_remote/data/occupational_va_shocks.csv"))))}
 

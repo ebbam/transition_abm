@@ -1,0 +1,58 @@
+\begin{table}
+\caption{Contemporaneous vs.\ lagged FD estimates of the wage-adjustment coefficient on vacancy duration (months). The contemporaneous estimate is expected to be a conservative lower bound due to within-period simultaneity: higher wages attract applicants in the same month, compressing observed duration and attenuating $\hat{\beta}$. The lagged specification ($\Delta \bar{w}_t \sim \Delta \overline{\text{dur}}_{t-1}$) sidesteps this by using last period's duration change as the regressor.}
+\label{tab:robustness_comparison}
+\begin{tabular}{llllrrr}
+\toprule
+Specification & Panel type & Key & Coefficient & SE & p-value & Observations \\
+\midrule
+Contemporaneous FD & Industry-Occ & NAICS2_SOC_2 & -0.002334 & 0.006523 & 0.720608 & 51815 \\
+Contemporaneous FD & Industry-Occ & NAICS2_SOC_3 & 0.005101 & 0.003457 & 0.140215 & 124426 \\
+Contemporaneous FD & Industry-Occ & NAICS2_SOC_4 & 0.005272 & 0.002188 & 0.016009 & 249251 \\
+Contemporaneous FD & Industry-Occ & NAICS2_SOC_5 & 0.006572 & 0.001952 & 0.000764 & 299117 \\
+Contemporaneous FD & Industry-Occ & NAICS3_SOC_2 & 0.004806 & 0.003942 & 0.222895 & 107115 \\
+Contemporaneous FD & Industry-Occ & NAICS3_SOC_3 & 0.007599 & 0.002705 & 0.004987 & 192671 \\
+Contemporaneous FD & Industry-Occ & NAICS3_SOC_4 & 0.010027 & 0.001893 & 0.000000 & 308046 \\
+Contemporaneous FD & Industry-Occ & NAICS3_SOC_5 & 0.010473 & 0.001745 & 0.000000 & 351725 \\
+Contemporaneous FD & Industry-Occ & NAICS4_SOC_2 & 0.003506 & 0.002967 & 0.237371 & 176742 \\
+Contemporaneous FD & Industry-Occ & NAICS4_SOC_3 & 0.009493 & 0.002252 & 0.000025 & 269990 \\
+Contemporaneous FD & Industry-Occ & NAICS4_SOC_4 & 0.011277 & 0.001737 & 0.000000 & 368092 \\
+Contemporaneous FD & Industry-Occ & NAICS4_SOC_5 & 0.011570 & 0.001605 & 0.000000 & 404678 \\
+Contemporaneous FD & Industry-Occ & NAICS5_SOC_2 & 0.006478 & 0.002539 & 0.010759 & 222006 \\
+Contemporaneous FD & Industry-Occ & NAICS5_SOC_3 & 0.012431 & 0.002007 & 0.000000 & 303918 \\
+Contemporaneous FD & Industry-Occ & NAICS5_SOC_4 & 0.013641 & 0.001649 & 0.000000 & 386549 \\
+Contemporaneous FD & Industry-Occ & NAICS5_SOC_5 & 0.012943 & 0.001537 & 0.000000 & 418226 \\
+Contemporaneous FD & Industry-Occ & NAICS6_SOC_2 & 0.008149 & 0.002413 & 0.000737 & 241306 \\
+Contemporaneous FD & Industry-Occ & NAICS6_SOC_3 & 0.012842 & 0.001935 & 0.000000 & 316698 \\
+Contemporaneous FD & Industry-Occ & NAICS6_SOC_4 & 0.014555 & 0.001616 & 0.000000 & 393454 \\
+Contemporaneous FD & Industry-Occ & NAICS6_SOC_5 & 0.013785 & 0.001525 & 0.000000 & 423381 \\
+Contemporaneous FD & Company-Occ & SOC_2 & 0.013808 & 0.001432 & 0.000000 & 302886 \\
+Contemporaneous FD & Company-Occ & SOC_3 & 0.011870 & 0.001334 & 0.000000 & 306034 \\
+Contemporaneous FD & Company-Occ & SOC_4 & 0.009065 & 0.001286 & 0.000000 & 325018 \\
+Contemporaneous FD & Company-Occ & SOC_5 & 0.009452 & 0.001271 & 0.000000 & 332792 \\
+Lagged FD & Company-Occ & soc_2 & -0.004652 & 0.001333 & 0.000484 & 267606 \\
+Lagged FD & Company-Occ & soc_3 & -0.004390 & 0.001260 & 0.000492 & 270474 \\
+Lagged FD & Company-Occ & soc_4 & -0.001668 & 0.001191 & 0.161278 & 289390 \\
+Lagged FD & Company-Occ & soc_5 & -0.002016 & 0.001196 & 0.091984 & 297211 \\
+Lagged FD & Industry-Occ & ('naics2', 'soc_2') & 0.005379 & 0.005811 & 0.355034 & 51341 \\
+Lagged FD & Industry-Occ & ('naics2', 'soc_3') & -0.000336 & 0.003015 & 0.911323 & 122714 \\
+Lagged FD & Industry-Occ & ('naics2', 'soc_4') & 0.004201 & 0.001885 & 0.025877 & 243939 \\
+Lagged FD & Industry-Occ & ('naics2', 'soc_5') & 0.001248 & 0.001698 & 0.462304 & 291809 \\
+Lagged FD & Industry-Occ & ('naics3', 'soc_2') & 0.002964 & 0.003211 & 0.356068 & 105304 \\
+Lagged FD & Industry-Occ & ('naics3', 'soc_3') & -0.001006 & 0.002264 & 0.656945 & 187766 \\
+Lagged FD & Industry-Occ & ('naics3', 'soc_4') & -0.001314 & 0.001617 & 0.416425 & 297477 \\
+Lagged FD & Industry-Occ & ('naics3', 'soc_5') & -0.002388 & 0.001486 & 0.108209 & 338721 \\
+Lagged FD & Industry-Occ & ('naics4', 'soc_2') & 0.006621 & 0.002561 & 0.009754 & 172146 \\
+Lagged FD & Industry-Occ & ('naics4', 'soc_3') & 0.002282 & 0.001934 & 0.237998 & 259668 \\
+Lagged FD & Industry-Occ & ('naics4', 'soc_4') & -0.000071 & 0.001486 & 0.962115 & 350504 \\
+Lagged FD & Industry-Occ & ('naics4', 'soc_5') & -0.000668 & 0.001403 & 0.633822 & 384313 \\
+Lagged FD & Industry-Occ & ('naics5', 'soc_2') & 0.004273 & 0.002225 & 0.054895 & 214345 \\
+Lagged FD & Industry-Occ & ('naics5', 'soc_3') & 0.000179 & 0.001773 & 0.919752 & 289335 \\
+Lagged FD & Industry-Occ & ('naics5', 'soc_4') & -0.001262 & 0.001428 & 0.376778 & 365554 \\
+Lagged FD & Industry-Occ & ('naics5', 'soc_5') & -0.001479 & 0.001366 & 0.278944 & 394673 \\
+Lagged FD & Industry-Occ & ('naics6', 'soc_2') & 0.003799 & 0.002086 & 0.068594 & 231893 \\
+Lagged FD & Industry-Occ & ('naics6', 'soc_3') & -0.000247 & 0.001708 & 0.885175 & 300177 \\
+Lagged FD & Industry-Occ & ('naics6', 'soc_4') & -0.002587 & 0.001402 & 0.065099 & 370906 \\
+Lagged FD & Industry-Occ & ('naics6', 'soc_5') & -0.002363 & 0.001355 & 0.081259 & 398383 \\
+\bottomrule
+\end{tabular}
+\end{table}

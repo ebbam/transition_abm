@@ -32,6 +32,6 @@ get_soc_table <- function(code){
   soc_desc %>% filter(!is.na(!!sym(code))) %>% select(!!code, description) %>% return(.)
 }
 
-get_soc_table('soc_2010_minor') %>% View()
-get_soc_table('soc_2010_broad') %>% View()
+#get_soc_table('soc_2010_minor') %>% View()
+#get_soc_table('soc_2010_broad') %>% View()
          
