@@ -381,3 +381,9 @@ data/behav_params/Eeckhout_Replication/.RData
 .RDataTmp
 /data/lightcast_vacancies/monthly_subfiles
 /data/macro_vars/Data_Code_AHR_BPEA_Spring_2020
+/data/lightcast_vacancies/detailed_monthly_sub_files
+/calibration_remote/output/cos_calib_smart_hire_4
+.positai
+/calibration_remote/output/calib_final/full_omn_copy/endog_vac_drift
+/calibration_remote/output/calib_final/full_omn_copy
+*.db
