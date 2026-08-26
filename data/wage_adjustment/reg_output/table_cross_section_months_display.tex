@@ -1,0 +1,31 @@
+\renewcommand\cellalign{t}
+\begin{threeparttable}
+\begin{tabular}{lcccccccccccc}
+\toprule
+ & \multicolumn{12}{c}{log\_wage} \\
+\cmidrule(lr){2-13} 
+ & Base | msa & Base | ym & Base | company & IDW | msa & IDW | ym & IDW | company & No-YM | month & No-YM | company & No-YM | year & No-YM IDW | month & No-YM IDW | company & No-YM IDW | year \\
+ & (1) & (2) & (3) & (4) & (5) & (6) & (7) & (8) & (9) & (10) & (11) & (12) \\
+\midrule
+\addlinespace
+Duration (months) & \makecell{0.025*** \\ (0.004)} & \makecell{-0.003 \\ (0.004)} & \makecell{-0.002 \\ (0.004)} & \makecell{0.099*** \\ (0.005)} & \makecell{0.002 \\ (0.004)} & \makecell{0.004 \\ (0.005)} & \makecell{0.027*** \\ (0.004)} & \makecell{0.017*** \\ (0.004)} & \makecell{-0.001 \\ (0.003)} & \makecell{0.103*** \\ (0.005)} & \makecell{0.066*** \\ (0.007)} & \makecell{0.002 \\ (0.004)} \\
+\midrule
+\addlinespace
+soc\_3 & x & x & x & x & x & x & x & x & x & x & x & x \\
+ym & - & x & x & - & x & x & - & - & - & - & - & - \\
+msa & x & x & x & x & x & x & x & x & x & x & x & x \\
+naics2 & x & x & x & x & x & x & x & x & x & x & x & x \\
+company & - & - & x & - & - & x & - & x & x & - & x & x \\
+month & - & - & - & - & - & - & x & x & x & x & x & x \\
+year & - & - & - & - & - & - & - & - & x & - & - & x \\
+\midrule
+\addlinespace
+Observations & 19331829 & 19331829 & 18987319 & 19331829 & 19331829 & 18987319 & 19331829 & 18987319 & 18987319 & 19331829 & 18987319 & 18987319 \\
+S.E. type & by: company & by: company & by: company & by: company & by: company & by: company & by: company & by: company & by: company & by: company & by: company & by: company \\
+$R^2$ & 0.523 & 0.558 & 0.678 & 0.537 & 0.574 & 0.686 & 0.524 & 0.657 & 0.678 & 0.538 & 0.666 & 0.685 \\
+$R^2$ Within & 0.001 & 0.000 & 0.000 & 0.014 & 0.000 & 0.000 & 0.001 & 0.001 & 0.000 & 0.014 & 0.007 & 0.000 \\
+\bottomrule
+\end{tabular}
+\footnotesize Significance levels: $*$ p $<$ 0.05, $**$ p $<$ 0.01, $***$ p $<$ 0.001. Format of coefficient cell: Coefficient 
+ (Std. Error)
+\end{threeparttable}
