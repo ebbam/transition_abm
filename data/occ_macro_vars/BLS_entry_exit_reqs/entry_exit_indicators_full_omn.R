@@ -4,13 +4,15 @@ library(tidyverse)
 library(here)
 library(readxl)
 library(assertthat)
+library(knitr)
+library(kableExtra)
 
 cw <- read.csv(here('data/crosswalk_occ_soc_cps_codes_full_omn.csv')) %>% 
   tibble %>% 
   mutate(SOC2010_cleaned = gsub("X", "0", SOC2010)) %>% 
   mutate(OCC2010_match_cps = as.character(OCC2010_cps))
 
-ipums_vars <- read.csv(here("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_ipums_vars.csv")) %>% tibble %>% 
+ipums_vars <- read.csv(here("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_ipums_vars.csv")) %>% tibble %>% 
   mutate(acs_occ_code = occ) %>% 
   rename(id = `X.1`)
 
@@ -176,6 +178,8 @@ tbl_body <- match_summary %>%
         linesep = "",
         #caption = "Occupational Code Matching Summary: Occupational Mobility Network",
         #label = "si_tbl:full_omn_match_summary",
+        caption = "Occupational Code Matching Summary: Occupational Mobility Network",
+        label = "si_tbl:full_omn_match_summary",
         # col.names = c("Matching Level", "Codes Matched", "N (cumulative)", 
         #               "N (total)", "\\% Matched", "Cumulative \\% Matched"),
         col.names = c("\\makecell{Matching\\\\Level}",

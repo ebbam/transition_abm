@@ -1,17 +1,21 @@
 # Import packages
+import os
+
 import numpy as np
 import pandas as pd
 import random as random
 from copy import deepcopy 
 import math as math
+import matplotlib.pyplot as plt
 import heapq
 from collections import defaultdict
 from scipy.stats import norm
 import cProfile, pstats, io
+from plot_style import TEXTWIDTH, save_plot_standard, apply_minor_gridlines, add_shared_legend
 rng = np.random.default_rng()
 
 path = "~/Documents/Documents - Nuff-Malham/GitHub/transition_abm/calibration_remote/data/"
-
+plot_new = False
 #########################################
 
 # Testing import works
@@ -32,17 +36,21 @@ app_effort = pd.read_csv(path + "app_probs_long.csv")
 # Helper function: Sample an integer from the bin's internal distribution
 def sample_within_bin(bin_label, expectation=False):
     if bin_label == "0":
-        return 1
+        raw = 1
     elif bin_label == "1 to 10":
-        return 5.5 if expectation else random.randint(1, 10)
+        raw = 5.5 if expectation else random.randint(1, 10)
     elif bin_label == "11 to 20":
-        return 15.5 if expectation else random.randint(11, 20)
+        raw = 15.5 if expectation else random.randint(11, 20)
     elif bin_label == "21 to 80":
-        return 50.5 if expectation else random.randint(21, 80)
+        raw = 50.5 if expectation else random.randint(21, 80)
     elif bin_label == "81 or more":
-        return 90.5 if expectation else random.randint(81, 100)
+        raw = 90.5 if expectation else random.randint(81, 100)
     else:
         raise ValueError(f"Unknown bin label: {bin_label}")
+    return_val = max(1, round(raw/2))
+    if return_val > 75:
+        print(return_val)
+    return return_val
 
 # Main function: given duration and bin probabilities, return application count
 def applications_sent(duration_months,
@@ -100,10 +108,116 @@ def search_effort_alpha(t_unemp, bus_cy, disc, alpha):
             apps = apps * (1 - alpha*(t_unemp-7))
     return round(max(1, apps))
 
-# Alternative search effort function that is dictated by the time series of a business cycle
-def search_effort_ts(t_unemp, se):
-    apps = max(0, round(10 - 100*(1-se)))
-    return apps
+if plot_new:
+    # series_dict = {}
+    # for i, a in enumerate([0.1, 0.05, 0.01]):
+    #     efforts = []
+    #     for t_unemp in range(36):
+    #         apps = search_effort_alpha(t_unemp, 1, True, a)
+    #         efforts.append(apps)
+
+    #     series_dict[f"Alpha: {a}"] = {
+    #         "x": list(range(0, len(efforts))),
+    #         "y": efforts
+    #         }
+
+    imposed_efforts = []
+    for t_unemp in range(40):
+        apps = applications_sent(duration_months=t_unemp, duration_to_prob_dict=duration_to_prob_dict, expectation = True)
+        imposed_efforts.append(apps)
+
+    bls_df = {
+        "x": list(range(0, len(imposed_efforts))),
+        "y": imposed_efforts
+        }
+    
+    plt.plot(bls_df['x'], bls_df['y'], color='purple', linestyle='-', linewidth=2, label='Mean Application Effort from BLS Survey Data')
+
+    plt.axvline(x=24, color='black', linestyle='--', linewidth=1, label='2 years')
+    plt.axvline(x=36, color='grey', linestyle='--', linewidth=1, label='3 years')
+    plt.legend(loc='upper right')
+    plt.suptitle("Applications Sent by Unemployment Duration")
+    plt.tight_layout()
+    plt.savefig('output/figures/applications_sent_by_unemployment_duration.png', dpi=300)
+    plt.show()
+
+
+    from collections import defaultdict
+
+    # --- parameters you can change ---
+    N = 50000                 # Monte-Carlo draws per duration (increase for smoother bands)
+    max_duration = 40        # number of months to plot
+    seed = 123               # reproducible sampling seed
+
+    random.seed(seed)
+    np.random.seed(seed)
+
+    # --- helper that runs N stochastic draws for a given duration ---
+    def sample_applications(duration, duration_to_prob_dict, n_draws=N):
+        """Return an array of length n_draws of stochastic application counts for given duration."""
+        samples = []
+        for _ in range(n_draws):
+            # call your function in stochastic mode (expectation=False)
+            # ensure it returns an integer >= 1 as your original did
+            samples.append(applications_sent(duration, duration_to_prob_dict, expectation=False))
+        return np.array(samples, dtype=float)
+
+    # --- run MC across durations and compute summary stats ---
+    durations = list(range(max_duration))
+    means = []
+    medians = []
+    p05 = []
+    p25 = []
+    p75 = []
+    p95 = []
+
+    for t in durations:
+        # if duration missing in dict, your function returns 1; still sample
+        arr = sample_applications(t, duration_to_prob_dict, n_draws=N)
+        means.append(arr.mean())
+        medians.append(np.median(arr))
+        p05.append(np.percentile(arr, 5))
+        p25.append(np.percentile(arr, 25))
+        p75.append(np.percentile(arr, 75))
+        p95.append(np.percentile(arr, 95))
+
+    means = np.array(means)
+    medians = np.array(medians)
+    p05 = np.array(p05)
+    p25 = np.array(p25)
+    p75 = np.array(p75)
+    p95 = np.array(p95)
+
+    # --- plotting ---
+    plt.figure(figsize=(6.27, 5.02))
+
+    # shaded 90% band (5th to 95th percentile)
+    #plt.fill_between(durations, p05, p95, color='lavender', alpha=0.6, label='90% interval (5-95th pct)')
+
+    # shaded interquartile band
+    plt.fill_between(durations, p25, p75, color='mediumpurple', alpha=0.3, label='IQR (25-75th pct)')
+
+    # mean and median lines
+    plt.plot(durations, means, color='purple', linestyle='-', linewidth=2, label='Mean Application Effort')
+    plt.plot(durations, medians, color='darkviolet', linestyle='--', linewidth=1.5, label='Median')
+
+    # vertical reference lines
+    plt.axvline(x=24, color='black', linestyle='--', linewidth=1, label='2 years')
+    plt.axvline(x=36, color='grey', linestyle='--', linewidth=1, label='3 years')
+
+    plt.legend(loc='upper right')
+    plt.title("Applications Sent by Unemployment Duration")
+    plt.xlabel("Unemployment Duration (Months)")
+    plt.ylabel("Applications Sent")
+    #plt.gcf().set_size_inches(8, 6)
+    plt.tight_layout()
+    plt.savefig(os.path.expanduser('~/Dropbox/Apps/Overleaf/ABM_Transitions/figs/applications_sent_by_unemployment_duration_with_uncertainty.pdf'), dpi=300, bbox_inches='tight')
+    plt.show()
+
+    # Alternative search effort function that is dictated by the time series of a business cycle
+    def search_effort_ts(t_unemp, se):
+        apps = max(0, round(10 - 100*(1-se)))
+        return apps
 
 #### Reservation Wage Adjustment Rate ######
 # Load the data
@@ -165,11 +279,12 @@ def reservation_wage(duration_months,
 ## Defining classes
 # Potentially redundant use of IDs in the below classes...to check
 class worker:
-    def __init__(wrkr, occupation_id, 
-                 # employed, 
-                 longterm_unemp, 
+    def __init__(wrkr, occupation_id,
+                 # employed,
+                 longterm_unemp,
                  # time_employed,
-                 time_unemployed, wage, hired, female, age, risk_av_score, ee_rel_wage, ue_rel_wage, applicants_sent, d_wage_offer, last_ue_duration):
+                 time_unemployed, wage, hired, female, age, risk_av_score, ee_rel_wage, ue_rel_wage, applicants_sent, d_wage_offer, last_ue_duration,
+                 ue_new_wage=None, ue_presep_wage=None, new_entrant=False):
         # State-specific attributes:
         # Occupation id
         wrkr.occupation_id = occupation_id
@@ -195,8 +310,9 @@ class worker:
         wrkr.apps_sent = applicants_sent
         wrkr.d_wage_offer = d_wage_offer
         wrkr.last_ue_duration = last_ue_duration
+        wrkr.new_entrant = new_entrant
 
-    
+
     def search_and_apply(
         wrkr,
         net,
@@ -355,8 +471,8 @@ class worker:
                 vsent += 1
 
         else:
-            # when not disc, choose up to 8 random vacancies
-            n_choice = min(len(found_vacs), 8)
+            # when not disc, choose up to 4 random vacancies - median of data
+            n_choice = min(len(found_vacs), 4)
             chosen_sample = found_vacs if n_choice == len(found_vacs) else r_sample(found_vacs, k=n_choice)
             
             gpool = global_pool_override
@@ -427,8 +543,11 @@ class worker:
             
         mean_wage = np.mean([v.wage for v in found_vacs]) if found_vacs else 0
 
+        # if disc and wage_prefs:
+        #     found_vacs = [v for v in found_vacs if v.wage >= np.random.normal(wrkr.wage*1.05, 0.05*wrkr.wage*1.05)]
         if disc and wage_prefs:
-            found_vacs = [v for v in found_vacs if v.wage >= np.random.normal(wrkr.wage*1.05, 0.05*wrkr.wage*1.05)]
+            thresholds = np.random.normal(wrkr.wage*1.05, 0.05*wrkr.wage*1.05, size=len(found_vacs))
+            found_vacs = [v for v, thr in zip(found_vacs, thresholds) if v.wage >= thr]
 
         elif wage_prefs and not disc:
             found_vacs = [v for v in found_vacs if v.wage >= np.random.normal(wrkr.wage, 0.05*wrkr.wage)]
@@ -515,6 +634,8 @@ class occupation:
             e.ee_rel_wage = None
             e.apps_sent = 0
             e.age += 0.083
+            # The equivalent of an annual 2% raise
+            #e.wage = e.wage*(1.02**(1/12))
 
     def retire_workers(occ):
         """ Function to retire workers over the age of 65 """
@@ -525,44 +646,74 @@ class occupation:
         return(workers_sep)
 
     
-    def entry(occ, entry_tot):
-        """Add exactly `entry_tot` new workers to this occupation (if entry-level)."""
+    def entry(occ, entry_tot, enter_emp=False, use_wage_dist=False, jg_wage=None):
+        """Add exactly `entry_tot` new workers to this occupation (if entry-level).
+
+        use_wage_dist=False (default): entry wage = mean of bottom 5% employed.
+        use_wage_dist=True:            entry wage drawn from occ lognormal distribution.
+        jg_wage: when enter_emp=True, override the market wage draw with this value.
+                 Pass "entry_anchor" to use the 25th-pct anchor computed here, or a float.
+        """
         if entry_tot <= 0 or not occ.entry_level:
             return
 
-        #occ.list_of_employed.sort(key=lambda x: x.wage, reverse=True)
         emp_no = len(occ.list_of_employed)
+        fem_prob = float(np.mean([wrkr.female for wrkr in occ.list_of_employed])) if emp_no > 0 else 0.5
 
-        # Wage offered to new entrants: avg of bottom 5% employed (or 95% of mean wage if empty)
-        if emp_no == 0:
-            new_wage = occ.wage * 0.95
-            fem_prob = 0.5
-        else:
-            bottom_5 = max(1, int(emp_no * 0.05))
-            new_wage = np.mean([w.wage for w in heapq.nsmallest(bottom_5, occ.list_of_employed, key=lambda x: x.wage)])
-            # bottom_5 = max(1, int(emp_no * 0.05))
-            # new_wage = np.mean([wrkr.wage for wrkr in occ.list_of_employed[-bottom_5:]])
-            fem_prob = float(np.mean([wrkr.female for wrkr in occ.list_of_employed]))
+        if not use_wage_dist:
+            if emp_no == 0:
+                fixed_wage = occ.wage * 0.95
+            else:
+                bottom_5 = max(1, int(emp_no * 0.05))
+                fixed_wage = np.mean([w.wage for w in heapq.nsmallest(bottom_5, occ.list_of_employed, key=lambda x: x.wage)])
+
+        entry_anchor = np.exp(occ.wage_mu - 0.6745 * occ.wage_sigma)  # 25th pct of occ wage dist
 
         for _ in range(entry_tot):
+            new_wage = np.random.lognormal(occ.wage_mu, occ.wage_sigma) if use_wage_dist else fixed_wage
             fem = (random.random() < fem_prob)
             ra = 3 if fem else 7
 
-            occ.list_of_employed.append(worker(
-                occ.occupation_id,         # occupation_id
-                False,                     # longterm_unemp
-                0,                         # time_unemployed
-                new_wage,                  # wage
-                False,                     # hired
-                fem,                       # female
-                occ.experience_age,        # age
-                abs(int(np.random.normal(ra, 2))),  # risk_av_score
-                1,                         # ee_rel_wage
-                1,                         # ue_rel_wage
-                0,                         # applicants_sent
-                0,                         # d_wage_offer
-                None                       # last_ue_duration
-            ))
+            if enter_emp:
+                if jg_wage == "entry_anchor":
+                    emp_wage = entry_anchor
+                elif jg_wage is not None:
+                    emp_wage = float(jg_wage)
+                else:
+                    emp_wage = new_wage
+                occ.list_of_employed.append(worker(
+                    occ.occupation_id,         # occupation_id
+                    False,                     # longterm_unemp
+                    0,                         # time_unemployed
+                    emp_wage,                  # wage
+                    False,                     # hired
+                    fem,                       # female
+                    occ.experience_age,        # age
+                    abs(int(np.random.normal(ra, 2))),  # risk_av_score
+                    1,                         # ee_rel_wage
+                    1,                         # ue_rel_wage
+                    0,                         # applicants_sent
+                    0,                         # d_wage_offer
+                    None,                      # last_ue_duration
+                    new_entrant=True
+                ))
+            else:
+                occ.list_of_unemployed.append(worker(
+                    occ.occupation_id,         # occupation_id
+                    False,                     # longterm_unemp
+                    0,                         # time_unemployed
+                    entry_anchor,              # wage (25th pct of occ dist as reservation wage anchor)
+                    False,                     # hired
+                    fem,
+                    occ.experience_age,        # age
+                    abs(int(np.random.normal(ra, 2))),  # risk_av_score
+                    1,                         # ee_rel_wage
+                    1,                         # ue_rel_wage
+                    0,                         # applicants_sent
+                    0,                         # d_wage_offer
+                    None,                      # last_ue_duration
+                    new_entrant=True
+                ))
 
     def update_competition_metric(
             occ,
@@ -619,30 +770,54 @@ class vac:
         
 
     # Function to hire a worker from pool of vacancies    
-    def hire(v, net, dumb_hire):
+    def hire(v, net, dumb_hire, ltu_hire_bias=0.0, entry_hire_bias=0.0):
+        assert not (ltu_hire_bias > 0.0 and entry_hire_bias > 0.0), \
+            "ltu_hire_bias and entry_hire_bias cannot both be positive — only one policy at a time."
         if dumb_hire:
             a = random.choice(v.applicants)
             assert not a.hired
         else:
-            # Sample up to 3 unique applicants without replacement
-            sample_size = min(1, len(v.applicants))
-            sampled_applicants = random.sample(v.applicants, sample_size)
-            
-            a = None
-            for candidate in sampled_applicants:
-                if not candidate.hired:
-                    a = candidate
-                    break
-            
-            if a is None:
-                v.applicants.clear()
-                # All sampled applicants were already hired
-                return None
+            if ltu_hire_bias > 0.0 or entry_hire_bias > 0.0:
+                # Preferential hiring: weight favoured applicants more heavily.
+                # Biases are multiplicative so both can apply simultaneously.
+                available = [w for w in v.applicants if not w.hired]
+                if not available:
+                    v.applicants.clear()
+                    return None
+                weights = [
+                    (1.0 + ltu_hire_bias)  if getattr(w, 'longterm_unemp', False) else
+                    (1.0 + entry_hire_bias) if getattr(w, 'new_entrant',    False) else
+                    1.0
+                    for w in available
+                ]
+                a = random.choices(available, weights=weights, k=1)[0]
+            else:
+                # Sample up to 3 unique applicants without replacement
+                sample_size = min(1, len(v.applicants))
+                sampled_applicants = random.sample(v.applicants, sample_size)
+
+                a = None
+                for candidate in sampled_applicants:
+                    if not candidate.hired:
+                        a = candidate
+                        break
+
+                if a is None:
+                    v.applicants.clear()
+                    return None
 
         assert not a.hired
 
         origin_occ = None
-        ue_dur = None
+        ue_dur     = None
+        longterm   = None
+
+        # Capture worker state before any lists are mutated or wages overwritten
+        src_occ     = a.occupation_id
+        pre_wage    = a.wage
+        age         = a.age
+        female      = a.female
+        new_entrant = getattr(a, 'new_entrant', False)
 
         try:
             # EE → E (no unemployment spell)
@@ -660,7 +835,8 @@ class vac:
                 idx = src_list.index(a)
 
                 origin_occ = a.occupation_id
-                ue_dur = src_list[idx].time_unemployed  # spell length right now
+                ue_dur     = src_list[idx].time_unemployed  # spell length right now
+                longterm   = src_list[idx].longterm_unemp
 
                 net[v.occupation_id].list_of_employed.append(src_list.pop(idx))
                 a.ue_rel_wage = v.wage / a.wage
@@ -673,12 +849,16 @@ class vac:
         a.time_unemployed = 0          # reset after hire
         a.wage = v.wage
         a.hired = True
+        a.new_entrant = False          # first hire clears the new-entrant flag
         v.applicants.clear()
 
-        # Return origin & spell length only for UE→E hires; EE→E returns None
-        if origin_occ is not None and ue_dur is not None:
-            return (origin_occ, a.occupation_id, int(ue_dur))
-        return (None, None, None)
+        # Always return a rich tuple covering both UE and EE transitions.
+        # TransitionType: 'UE' if came from unemployed list, 'EE' otherwise.
+        # ue_dur / longterm are None for EE hires.
+        trans_type    = 'UE' if origin_occ is not None else 'EE'
+        final_origin  = origin_occ if origin_occ is not None else src_occ
+        return (trans_type, final_origin, v.occupation_id, ue_dur,
+                pre_wage, v.wage, age, female, longterm, new_entrant)
 
         
 def bus_cycle_demand(d_0, time, amp, period):
@@ -814,29 +994,28 @@ def _sigmoid(x):
     else:
         return 1.0 / (1.0 + math.exp(-x))
 
-def p_search_logit(age, comp, *, alpha=0.0, beta_A=0.05, beta_C=-0.8, beta_CA=0.0, A0=40.0):
+def p_search_logit(comp, alpha=0.0, beta_C=-0.8): #age, beta_A=0.05, beta_CA=0.0, A0=40.0
     """
     Logit p = alpha + beta_A*(age-A0) + beta_C*comp + beta_CA*comp*(age-A0)
     No cycle term, no occ_shock.
     """
     logit_val = (alpha
-                 + beta_A * (age - A0)
+                 #+ beta_A * (age - A0)
                  + beta_C * comp)
     return _sigmoid(logit_val)
 
 def test_p_search_logit():
     """Unit test for search probability function"""
-    age = 40
     beta_C_positive = 0.8  # Positive effect (new model)
     
     # Test 1: Higher comp → higher probability (with positive beta_C)
-    prob_low = p_search_logit(age, comp=0.1, alpha=-1.58, beta_A=-0.05, beta_C=beta_C_positive)
-    prob_high = p_search_logit(age, comp=0.5, alpha=-1.58, beta_A=-0.05, beta_C=beta_C_positive)
+    prob_low = p_search_logit(comp=0.1, alpha=-1.58, beta_C=beta_C_positive)
+    prob_high = p_search_logit(comp=0.5, alpha=-1.58, beta_C=beta_C_positive)
     assert prob_high > prob_low, f"Higher comp should increase prob: {prob_low:.4f} vs {prob_high:.4f}"
     
     # Test 2: Edge cases
-    prob_zero = p_search_logit(age, comp=0.0, alpha=-1.58, beta_A=-0.05, beta_C=beta_C_positive)
-    prob_one = p_search_logit(age, comp=1.0, alpha=-1.58, beta_A=-0.05, beta_C=beta_C_positive)
+    prob_zero = p_search_logit(comp=0.0, alpha=-1.58, beta_C=beta_C_positive)
+    prob_one = p_search_logit(comp=1.0, alpha=-1.58, beta_C=beta_C_positive)
     assert prob_one > prob_zero, "comp=1.0 should give higher prob than comp=0.0"
     
     # Test 3: Probability bounds
@@ -848,23 +1027,23 @@ def test_p_search_logit():
 # Run test
 test_p_search_logit()
 
-import numpy as np
+# import numpy as np
 import matplotlib.pyplot as plt
 
-def _sigmoid(x):
-    if x < -709:
-        return 0.0
-    elif x > 709:
-        return 1.0
-    else:
-        return 1.0 / (1.0 + math.exp(-x))
+# def _sigmoid(x):
+#     if x < -709:
+#         return 0.0
+#     elif x > 709:
+#         return 1.0
+#     else:
+#         return 1.0 / (1.0 + math.exp(-x))
 
-def p_search_logit(age, comp, *, alpha=0.0, beta_A=0.05, beta_C=-0.8, beta_CA=0.0, A0=40.0):
-    """
-    Logit p = alpha + beta_A*(age-A0) + beta_C*comp + beta_CA*comp*(age-A0)
-    """
-    logit_val = (alpha + beta_A * (age - A0) + beta_C * comp)
-    return _sigmoid(logit_val)
+# def p_search_logit(age, comp, *, alpha=0.0, beta_A=0.05, beta_C=-0.8, beta_CA=0.0, A0=40.0):
+#     """
+#     Logit p = alpha + beta_A*(age-A0) + beta_C*comp + beta_CA*comp*(age-A0)
+#     """
+#     logit_val = (alpha + beta_A * (age - A0) + beta_C * comp)
+#     return _sigmoid(logit_val)
 
 # Parameters from your model
 alpha = -4
@@ -875,7 +1054,7 @@ A0 = 40.0
 comp_range = np.linspace(0, 1, 100)
 
 # Different theta (beta_C) values to test
-theta_values = [1.0, 1.5, 2.0, 2.5, 3, 3.5, 4, 5.0]
+theta_values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 20, 25, 30, 35, 40, 45, 50]
 #theta_values = [0.1, 0.25, 0.5, 0.75, 0.9]
 
 
@@ -888,7 +1067,7 @@ fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 # Panel 1: Different theta values (fixed age=40)
 ax1 = axes[0]
 for theta in theta_values:
-    probs = [p_search_logit(40, comp, alpha=alpha, beta_A=beta_A, beta_C=theta, A0=A0) 
+    probs = [p_search_logit(comp, alpha=alpha, beta_C=theta) 
              for comp in comp_range]
     ax1.plot(comp_range, probs, linewidth=2, label=rf'$\beta_c$={theta}')
 
@@ -903,22 +1082,22 @@ ax1.set_xlim([0, 1])
 ax1.set_ylim([0, 1])
 
 # Panel 2: Different ages (fixed theta=5.0)
-ax2 = axes[1]
-theta_fixed = 5.0
-for age in ages:
-    probs = [p_search_logit(age, comp, alpha=alpha, beta_A=beta_A, beta_C=theta_fixed, A0=A0) 
-             for comp in comp_range]
-    ax2.plot(comp_range, probs, linewidth=2, label=f'Age {age}')
+# ax2 = axes[1]
+# theta_fixed = 5.0
+# for age in ages:
+#     probs = [p_search_logit(age, comp, alpha=alpha, beta_A=beta_A, beta_C=theta_fixed, A0=A0) 
+#              for comp in comp_range]
+#     ax2.plot(comp_range, probs, linewidth=2, label=f'Age {age}')
 
-ax2.axhline(y=0.07, color='red', linestyle='--', linewidth=1, alpha=0.5, label='7% target')
-ax2.axvspan(0.033, 0.333, alpha=0.15, color='blue', label='Expected range')
-ax2.set_xlabel('Competition (VacsPerApp)', fontsize=12)
-ax2.set_ylabel('Search Probability', fontsize=12)
-ax2.set_title(rf'Age Effects on Search Behavior ($\beta_c$={theta_fixed})', fontsize=13, fontweight='bold')
-ax2.legend(fontsize=10)
-ax2.grid(True, alpha=0.3)
-ax2.set_xlim([0, 1])
-ax2.set_ylim([0, 1])
+# ax2.axhline(y=0.07, color='red', linestyle='--', linewidth=1, alpha=0.5, label='7% target')
+# ax2.axvspan(0.033, 0.333, alpha=0.15, color='blue', label='Expected range')
+# ax2.set_xlabel('Competition (VacsPerApp)', fontsize=12)
+# ax2.set_ylabel('Search Probability', fontsize=12)
+# ax2.set_title(rf'Age Effects on Search Behavior ($\beta_c$={theta_fixed})', fontsize=13, fontweight='bold')
+# ax2.legend(fontsize=10)
+# ax2.grid(True, alpha=0.3)
+# ax2.set_xlim([0, 1])
+# ax2.set_ylim([0, 1])
 
 plt.tight_layout()
 plt.savefig('search_probability_vs_competition.png', dpi=150, bbox_inches='tight')
@@ -932,5 +1111,5 @@ print("SAMPLE VALUES (Age=40, θ=5.0):")
 print("="*60)
 test_comps = [0.0, 0.033, 0.1, 0.333, 0.5, 1.0]
 for comp in test_comps:
-    prob = p_search_logit(40, comp, alpha=alpha, beta_A=beta_A, beta_C=5.0, A0=A0)
+    prob = p_search_logit(comp, alpha=alpha, beta_C=5.0)
     print(f"VacsPerApp = {comp:.3f} → Search Probability = {prob:.4f} ({prob*100:.2f}%)")

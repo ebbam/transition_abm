@@ -4,14 +4,16 @@ library(tidyverse)
 library(here)
 library(readxl)
 library(assertthat)
+library(knitr)
+library(kableExtra)
 
 # ONET
-cw <- read.csv("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/acs_onet_2010_soc_cw.csv") %>% tibble %>% 
+cw <- read.csv("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/acs_onet_2010_soc_cw.csv") %>% tibble %>% 
   rename(SOC2010 = soc_2010_code,
          acs_occ_code = acs_2010_code,
          label = title)
 
-temp <- read.csv(here("/Users/ebbamark/Dropbox/GenerateOccMobNets/ONET/acs_onet_2010_ipums_vars.csv")) %>% tibble %>% 
+temp <- read.csv(here("/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/acs_onet_2010_ipums_vars.csv")) %>% tibble %>% 
   rename(acs_occ_code = occ)
 
 # Crosswalk here:
@@ -62,7 +64,7 @@ cw %>%
   select(acs_occ_code) %>% 
   distinct %>%
   #mutate(id = id - 1) %>% 
-  all_equal(select(temp, acs_occ_code))
+  all.equal(select(temp, acs_occ_code))
 
 test_missing <- function(df, total_df){
   df %>% 
