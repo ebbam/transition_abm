@@ -496,3 +496,15 @@ calibration_remote/output/occ_shock_analysis/plots/construction_trades.png
 calibration_remote/output/occ_shock_analysis/plots/coal_mining.png
 calibration_remote/calibration_tracking.xlsx
 data/lightcast_vacancies/var_labels.xlsx
+data/lightcast_vacancies/var_labels.xlsx
+data/lightcast_vacancies/var_labels.xlsx
+data/wage_adjustment/wage_adjustment_mech_input/coefficient_plot_full.pdf
+data/wage_adjustment/reg_output/firm_occ_results_soc_2.cpkl
+data/wage_adjustment/reg_output/firm_occ_results_soc_3.cpkl
+data/wage_adjustment/reg_output/firm_occ_results_soc_2_fd.cpkl
+data/wage_adjustment/reg_output/firm_occ_results_soc_3_fd.cpkl
+data/wage_adjustment/reg_output/coefficient_plot_full.pdf
+data/wage_adjustment/reg_output/coefficient_plot_months.pdf
+data/wage_adjustment/reg_output/coefficient_plot_months_fd.pdf
+data/wage_adjustment/wage_adjustment_mech_input/coefficient_plot_months.pdf
+data/wage_adjustment/wage_adjustment_mech_input/coefficient_plot_months_fd.pdf
