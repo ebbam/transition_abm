@@ -82,6 +82,12 @@ recessions["DATE"] = pd.to_datetime(recessions["DATE"])
 
 recessions.to_csv(path + "data/macro_vars/collated_recessions.csv")
 
+_in_rec = recessions["USREC"].astype(bool)
+recession_spans = pd.DataFrame({
+    "start": recessions["DATE"][_in_rec & ~_in_rec.shift(1, fill_value=False)].values,
+    "end":   recessions["DATE"][_in_rec & ~_in_rec.shift(-1, fill_value=False)].values,
+})
+
 ########################################################################################
 ############ JOLTS #####################################################################
 ########################################################################################
@@ -455,3 +461,21 @@ plt.plot(seekers_comp_obs_full['DATE'], seekers_comp_obs_full['Seeker Compositio
 plt.plot(seekers_comp_obs['DATE'], seekers_comp_obs['Seeker Composition'], label='Calibration Window', color='blue', linestyle='solid')
 plt.close()
 
+##################################################################################################
+####################### MARKET TIGHTNESS ###############################################
+##################################################################################################
+
+tightness = pd.read_csv(path+"data/macro_vars/market_tightness_vals.csv", delimiter=',', decimal='.')
+tightness['DATE'] = pd.to_datetime(tightness["DATE"])
+tightness = tightness[(tightness['DATE'] >= calib_date[0]) & (tightness['DATE'] <= "2024-05-01")]
+
+##################################################################################################
+####################### WAGES ###############################################
+##################################################################################################
+
+
+wages = pd.read_csv(path+"data/macro_vars/LES1252881600Q.csv", delimiter=',', decimal='.')
+wages['DATE'] = pd.to_datetime(wages["observation_date"])
+wages.rename(columns={'LES1252881600Q': 'Observed Wages'}, inplace=True)
+
+wages = wages[(wages['DATE'] >= calib_date[0])]

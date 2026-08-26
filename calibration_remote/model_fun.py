@@ -7,6 +7,7 @@ import random as random
 from copy import deepcopy 
 import math as math
 from scipy.stats import norm
+from collections import deque
 
 ####################
 # Model Run ########
@@ -36,7 +37,14 @@ def run_single_local(d_u,
                     mistake_rate,
                     strict_rw,
                     dumb_hire,
-                    simple_res = False):
+                    simple_res = False,
+                    vac_method = "g_prime_norm",
+                    vac_wage_update = True,
+                    entry_alloc_scalar = 1.0,
+                    jg_frac = 0.0,
+                    jg_wage = "entry_anchor",
+                    ltu_hire_bias = 0.0,
+                    entry_hire_bias = 0.0):
 
     """ Runs the model once
     Argsuments:
@@ -59,24 +67,57 @@ def run_single_local(d_u,
     vacs_temp = deepcopy(vacs)
     net = deepcopy(net_temp)
     seekers_rec = []
-    time_steps = time_steps + delay
+    if not simple_res:
+        _next_wid = 0
+        for _occ in net:
+            for _w in _occ.list_of_employed + _occ.list_of_unemployed:
+                _w.worker_id = _next_wid
+                _next_wid += 1
+    # occ_shocks_data has shape (n_occs, 24 + delay + calib_length).
+    # Cols 0..23 are used to pre-fill the deque for the new vacancy rule.
+    # The loop runs over the remaining delay+calib_length columns, so we
+    # subtract 24 here and index occ_shocks_data as 24+t throughout.
+    # Results are recorded from t >= delay in both vacancy rule modes.
+    time_steps = time_steps - 24
     avg_wage_offer_diff_records = []
     app_load_records = []
     retired_all = 0
     ue_spell_records = []
+    transition_records = []   # rich per-event log: UE + EE, with wages + demographics
+    ue_stock_records = []
+    wage_age_records = []
+    gender_median_records = []
+    d_initial = 0.032
+
+    endog_vac_prob = (vac_method != "exog")
+    if not endog_vac_prob:
+        gamma_v = np.nan
+        d_v = np.nan
+    # Initialise 24-month demand history for integrated YoY vacancy signal.
+    # For new vacancy rule: pre-fill from cols 0..23 of occ_shocks_data so
+    # g_prime has a genuine historical baseline from the first loop step.
+    # For old vacancy rule: flat initialisation (deque is unused).
+    for occ in net:
+        td_base = float(occ.target_demand)
+        if endog_vac_prob and occ_shocks_data is not None and occ_shocks_data.shape[1] >= 24:
+            history = [td_base * float(occ_shocks_data[occ.occupation_id, k])
+                       for k in range(24)]
+        else:
+            history = [td_base] * 24
+        occ.td_history = deque(history, maxlen=24)
+        occ.target_vr = d_initial if endog_vac_prob else np.nan
+        occ.g_norm_ema = 0.0  # AR(1) running mean of g_prime_norm, used for demeaning
 
     for t in range(time_steps-1):
-        # Steady State option
-        if t < delay | steady_state:
+        # occ_shocks_data is indexed at 24+t to skip the deque pre-fill columns.
+        # This is consistent for both endog_vac_prob=True and endog_vac_prob=False.
+        if steady_state:
             curr_bus_cy = 1
-            vr_t = 0.03
-        if t >= delay and not steady_state:
+            vr_t = 0.04
+        else:
             if occ_shocks_data is not None:
-                curr_bus_cy = np.take(occ_shocks_data, indices=t-delay, axis=1)
-            # else:
-            #     curr_bus_cy = gdp_data[t-delay]
-
-            vr_t = vac_data[t-delay]
+                curr_bus_cy = np.take(occ_shocks_data, indices=24 + t, axis=1)
+            vr_t = vac_data[t - delay] if t >= delay else 0.04
 
         # Ensure number of workers in economy has not changed
         emp_seekers = 0
@@ -104,7 +145,8 @@ def run_single_local(d_u,
         for occ in net:
             occ.separated = 0
             occ.hired = 0
-            if occ_shocks_data is not None and t >= delay and not steady_state:
+            occ.failed_hires = 0
+            if isinstance(curr_bus_cy, np.ndarray):
                 occ_shock = curr_bus_cy[occ.occupation_id]
             else:
                 occ_shock = curr_bus_cy
@@ -113,7 +155,16 @@ def run_single_local(d_u,
             # occ.entry_rate(0.01)
             # Entry by partitioning retired demand according to target demand across entry level occupations
             if occ.entry_level:
-                occ.entry(entry_alloc.get(occ.occupation_id, 0))
+                n_total = entry_alloc.get(occ.occupation_id, 0)
+                if jg_frac > 0.0 and n_total > 0:
+                    n_jg  = round(jg_frac * n_total)
+                    n_reg = n_total - n_jg
+                    if n_jg  > 0:
+                        occ.entry(n_jg,  enter_emp=True,  use_wage_dist=True, jg_wage=jg_wage)
+                    if n_reg > 0:
+                        occ.entry(n_reg, enter_emp=False, use_wage_dist=True)
+                else:
+                    occ.entry(n_total, enter_emp=False, use_wage_dist=True)
             # Remove the top 2% of earners in an occupation's employed list
             # occ.entry_and_exit_fixed(0.02)
 
@@ -121,9 +172,9 @@ def run_single_local(d_u,
             # isolate list of vacancies in economy that are relevant to the occupation
             # - avoids selecting in each search_and_apply application
             r_vacs = vacancies_by_occ  
-    
+            
+            unemp_seekers += len(occ.list_of_unemployed)
             for u in occ.list_of_unemployed:
-                unemp_seekers += 1
                 u.search_and_apply(net, r_vacs, disc, app_effort_dat, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp, strict_reservation_wage = strict_rw)
 
             if otj:
@@ -138,29 +189,31 @@ def run_single_local(d_u,
                 #     emp_seekers += 1
                 #     e_apps += e.emp_search_and_apply(net, r_vacs, disc)
                 if cyc_otj:
-                    #print(f'Competition: {occ.competition_last}')
-                    for e in occ.list_of_employed:
-                        prob = p_search_logit(
-                            age=e.age,
-                            # Taken from calculated competition metric for occupation
+                    if occ.competition_last > 1:
+                        raise KeyError("competition value > 1")
+                    # beta_A=0 so age has no effect; s_prob is identical for every worker
+                    s_prob = p_search_logit(
+                            #age=0,
                             comp=occ.competition_last,
-                            alpha=-4,     # tune baseline
-                            beta_A=0,  # age effect
-                            beta_C=theta,    # competition effect
-                            A0=40.0
+                            alpha=-4,
+                            #beta_A=0,
+                            beta_C=theta
+                            #A0=40.0
                         )
-                        if occ.competition_last > 1:
-                            raise KeyError("competition value > 1")
-                        #print(f'Search Probability: {prob}')
-                        if np.random.random() < prob:
-                            emp_seekers += 1
-                            e_apps += e.emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp)
+                    # Draw all Bernoulli outcomes at once instead of one random call per worker
+                    n_emp = len(occ.list_of_employed)
+                    if n_emp > 0:
+                        searching_idx = np.where(np.random.random(n_emp) < s_prob)[0]
+                        emp_seekers += len(searching_idx)
+                        for idx in searching_idx:
+                            e_apps += occ.list_of_employed[idx].emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp)
                 else:
                     for e in random.sample(occ.list_of_employed, int(0.07*len(occ.list_of_employed))):
                         emp_seekers += 1
                         e_apps += e.emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp)
 
-            u_apps += sum(wrkr.apps_sent for wrkr in occ.list_of_unemployed if wrkr.apps_sent is not None)
+            if not simple_res:
+                u_apps += sum(wrkr.apps_sent for wrkr in occ.list_of_unemployed if wrkr.apps_sent is not None)
             if not simple_res:
                 d_wage_offers = [w.d_wage_offer for w in occ.list_of_unemployed if hasattr(w, 'd_wage_offer')]
                 avg_diff = np.mean(d_wage_offers) if d_wage_offers else np.nan
@@ -178,7 +231,8 @@ def run_single_local(d_u,
                 return np.inf
             
                     
-        seekers_rec.append([t+1, unemp_seekers, u_apps, emp_seekers, e_apps])
+        if not simple_res:
+            seekers_rec.append([t+1, unemp_seekers, u_apps, emp_seekers, e_apps])
         # Compute competition metric directly from vacancies_by_occ (no DataFrame needed)
         if vacs_temp:
             comp_map = {
@@ -259,34 +313,50 @@ def run_single_local(d_u,
 
         #     app_load_records.append(app_load_agg)
     
-        vacancies_by_occ = defaultdict(list)
-        for v in vacs_temp:
-            vacancies_by_occ[v.occupation_id].append(v)
-        
         ### HIRING
         # Ordering of hiring randomised to ensure list order does not matter in filling vacancies...
-        for v_open in sorted(vacs_temp,key=lambda _: random.random()):
+        random.shuffle(vacs_temp)
+        for v_open in vacs_temp:
             if dumb_hire:
                 # Removes any applicants that have already been hired in another vacancy
                 v_open.applicants[:] = [app for app in v_open.applicants if not(app.hired)]
             
             v_open.time_open += 1
             if len(v_open.applicants) > 0:
-                ret = v_open.hire(net, dumb_hire)
+                ret = v_open.hire(net, dumb_hire, ltu_hire_bias, entry_hire_bias)
                 # If hire() succeeded (didn't return None on first line)
                 if ret is not None:
                     # Hire was successful
                     v_open.filled = True
-                    
-                    # Record UE spell only if this was a UE→E hire (not EE→E)
-                    origin_occ, dest_occ, ue_dur = ret
-                    if origin_occ is not None and dest_occ is not None and ue_dur is not None:
-                        ue_spell_records.append((t+1, origin_occ, dest_occ, ue_dur))
+
+                    trans_type, origin_occ, dest_occ, ue_dur, pre_wage, new_wage, age, female, longterm, new_entrant = ret
+                else:
+                    # Vacancy had applicants this period but none could be hired
+                    # (its sampled/available applicants were already hired by a
+                    # competing vacancy earlier in this period's shuffle).
+                    net[v_open.occupation_id].failed_hires += 1
+
+                    if not simple_res:
+                        # Keep the legacy UE-only spell record for backward compatibility
+                        if trans_type == 'UE':
+                            ue_spell_records.append((t+1, origin_occ, dest_occ, ue_dur))
+
+                        # Rich per-event log (UE + EE)
+                        transition_records.append((t+1, trans_type, origin_occ, dest_occ,
+                                                   ue_dur, pre_wage, new_wage, age, female, longterm, new_entrant))
             assert(len(v_open.applicants) == 0)
 
 
         # Close a vacancy after it's been open for 6 months
-        vacs_temp = [v for v in vacs_temp if not(v.filled) and v.time_open < 6] 
+        vacs_temp = [v for v in vacs_temp if not(v.filled) and v.time_open < 6]
+        if vac_wage_update:
+            for v in vacs_temp:
+                v.wage *= 1.01
+
+        # Build a count lookup once (O(n_vacs)) so curr_vacs below is O(1) per occupation
+        vac_count_by_occ = defaultdict(int)
+        for v in vacs_temp:
+            vac_count_by_occ[v.occupation_id] += 1
 
         # # Reset counters for record in time t
         if simple_res:
@@ -300,8 +370,11 @@ def run_single_local(d_u,
         # Update vacancies after all shifts have taken place
         # Could consider making this a function of the class itself?
         retired_all = 0
+        if not simple_res:
+            _f_wages_t = []
+            _m_wages_t = []
         for occ in net:
-            if occ_shocks_data is not None and t >= delay and not steady_state:
+            if isinstance(curr_bus_cy, np.ndarray):
                 occ_shock = curr_bus_cy[occ.occupation_id]
             else:
                 occ_shock = curr_bus_cy
@@ -314,6 +387,9 @@ def run_single_local(d_u,
             # Update time_unemployed and long-term unemployed status of unemployed workers
             # Remove protected "hired" attribute of employed workers
             occ.update_workers()
+            if not simple_res:
+                for wrkr in occ.list_of_unemployed:
+                    ue_stock_records.append((t+1, occ.occupation_id, wrkr.time_unemployed, wrkr.longterm_unemp))
             retired = occ.retire_workers()
             retired_all += retired
             # Assert that all unemployed people have spent 1 or more time periods unemployed
@@ -321,12 +397,82 @@ def run_single_local(d_u,
             # Assert that all employed people have spent 0 time periods unemployed
             assert(sum([worker.time_unemployed <= 0 for worker in occ.list_of_employed]) == len(occ.list_of_employed))
             emp = len(occ.list_of_employed)
-            curr_vacs = len([v_open for v_open in vacs_temp if v_open.occupation_id == occ.occupation_id])
+            curr_vacs = vac_count_by_occ[occ.occupation_id]
             occ.current_demand = (curr_vacs + emp)
-            # If real-world vacancy rate is greater than the current vacancy rate, then we create new vacancies 
-            vac_prob= max(0, vr_t - (curr_vacs/(occ.target_demand + 1)))
-            #vac_prob = d_v + (1-d_v)*((gamma_v * max(0, occ.target_demand*(occ_shock) - occ.current_demand)) / (emp + 1))
-            vacs_create = int(np.random.binomial(occ.target_demand, np.clip(vac_prob, 0, 1)))
+            # If real-world vacancy rate is greater than the current vacancy rate, then we create new vacancies
+            if not endog_vac_prob:
+                vac_prob = max(0, vr_t - (curr_vacs/(occ.target_demand + 1)))
+                # #vac_prob = d_v + (1-d_v)*((gamma_v * max(0, occ.target_demand*(occ_shock) - occ.current_demand)) / (emp + 1))
+                vacs_create = int(np.random.binomial(occ.target_demand, np.clip(vac_prob, 0, 1)))
+            else:
+                # ---------------------------------------------------------------
+                # Integrated year-over-year vacancy signal  (g'_t)
+                #
+                # Signal:  g'_t = (1/12) * Σ_{k=0}^{11} [td_{t-k} - td_{t-k-12}]
+                #
+                # After appending td_now the deque layout is:
+                #   index  0  = td_{t-23}  …  index 11 = td_{t-12}
+                #   index 12  = td_{t-11}  …  index 23 = td_{t}
+                #
+                # So each YoY pair is:  deque[23-k] - deque[11-k]  for k=0..11
+                #   k=0  → td_{t}    - td_{t-12}
+                #   k=11 → td_{t-11} - td_{t-23}
+                #
+                # Forecast:  projected_td = td_now + g'_t
+                # Vacancies: vacs_gap = projected_td - current_demand
+                #
+                # This opens vacancies to close the gap between where demand is
+                # heading next period and current headcount (employed + open vacs).
+                # ---------------------------------------------------------------
+                td_now = float(occ.target_demand * occ_shock)
+
+                # Push current period into history (oldest entry is automatically dropped)
+                occ.td_history.append(td_now)
+
+                # Integrated YoY growth (absolute, same units as headcount)
+                # g_prime = (1.0 / 12.0) * sum(
+                #     occ.td_history[23 - k] - occ.td_history[11 - k]
+                #     for k in range(12)
+                # )
+                g_prime_norm = (1.0 / 12.0) * sum(
+                        (occ.td_history[23 - k] - occ.td_history[11 - k]) / (occ.td_history[11 - k] + 1e-6)
+                        for k in range(12)
+                    )                
+                
+                # We apply a linear weighting so that more recent demand changes affect behaviour more
+                weight_denom = 78 # hard-code 78 to avoid recalculating the sum at each step sum(range(1, 13))  # normalisation factor so that weights sum to 1
+                weighted_g_prime_norm = sum((12 - k) / 78 * (occ.td_history[23 - k] - occ.td_history[11 - k]) / (occ.td_history[11 - k] + 1e-6) 
+                                            for k in range(12))
+
+
+                # Because we are opening the vacancies to be filled in t+1 we therefore
+                # project next period's demand and open vacancies to close the gap
+                # Ebba changed this to td_now
+                
+                #projected_td = td_now + gamma_v*g_prime
+
+                # # projected_td = float(occ.target_demand) + gamma_v*g_prime
+                if t == delay:
+                    occ.target_vr = 0.032
+                if t >= delay:
+                    if vac_method == "g_prime_norm_weighted":
+                        signal = weighted_g_prime_norm
+                    else:
+                        signal = g_prime_norm
+
+                    if vac_method == "cost_red":
+                        # d_v is the geometric growth rate of gamma_v
+                        gamma_v_t = np.clip(gamma_v * (1 + d_v) ** (t - delay), 0, 1)
+                        occ.target_vr += gamma_v_t * signal
+                    else:
+                        # g_prime_norm / g_prime_norm_weighted: d_v is secular drift (0 = no drift)
+                        occ.target_vr += d_v + gamma_v * signal
+
+                target_vr = max(0.0, occ.target_vr)
+                curr_vr = curr_vacs / (td_now + 1)
+                vac_prob = max(0.0, target_vr - curr_vr)
+                vacs_create = int(np.random.binomial(occ.target_demand, np.clip(vac_prob, 0, 1)))
+
 
             #vacs_create = emp*int(vac_prob) + int(np.random.binomial(emp, vac_prob%1))
             for v in range(vacs_create):
@@ -374,14 +520,36 @@ def run_single_local(d_u,
                 vacs_occ = len([v for v in vacs_temp if v.occupation_id == occ.occupation_id])
                 vacs_wage = np.mean([v.wage for v in vacs_temp if v.occupation_id == occ.occupation_id]) if vacs_occ > 0 else np.nan
                 wage_occ = np.mean([wrkr.wage for wrkr in occ.list_of_employed]) if emp > 0 else np.nan
+                wage_median_occ = np.median([wrkr.wage for wrkr in occ.list_of_employed]) if emp > 0 else np.nan
                 wages_occ = sum(wrkr.wage for wrkr in occ.list_of_employed)
                 seps = occ.separated + retired
                 retirees = retired
                 hires = occ.hired
+                failed_hires = occ.failed_hires
                 entry_level_entrants = entry_alloc.get(occ.occupation_id, 0) if occ.entry_level else 0
+                female_wages = sum(wrkr.wage for wrkr in occ.list_of_employed if wrkr.female)
+                male_wages   = sum(wrkr.wage for wrkr in occ.list_of_employed if not wrkr.female)
+                female_empl  = sum(1 for wrkr in occ.list_of_employed if wrkr.female)
+                male_empl    = sum(1 for wrkr in occ.list_of_employed if not wrkr.female)
+                _f_wages_t.extend(wrkr.wage for wrkr in occ.list_of_employed if wrkr.female)
+                _m_wages_t.extend(wrkr.wage for wrkr in occ.list_of_employed if not wrkr.female)
 
                 ### UPDATE INDICATOR RECORD
-                record.append([t+1, occ.occupation_id, empl, unemp, empl + unemp, vacs_occ, n_ltue, curr_demand, t_demand, emp_seekers, unemp_seekers, wages_occ, u_rel_wage, e_rel_wage, ue, ee, seps, hires, vacs_wage, wage_occ, retirees, entry_level_entrants])
+                record.append([t+1, occ.occupation_id, empl, unemp, empl + unemp, vacs_occ, n_ltue, curr_demand, t_demand, emp_seekers, unemp_seekers, wages_occ, u_rel_wage, e_rel_wage, ue, ee, seps, hires, failed_hires, vacs_wage, wage_occ, retirees, entry_level_entrants, female_wages, male_wages, female_empl, male_empl])
+
+                # Annual snapshot of individual worker wages and ages (every 12 steps after delay)
+                if t >= delay and (t - delay) % 12 == 0:
+                    yr = (t - delay) // 12
+                    for wrkr in occ.list_of_employed:
+                        if not hasattr(wrkr, 'worker_id'):
+                            wrkr.worker_id = _next_wid
+                            _next_wid += 1
+                        wage_age_records.append((t+1, yr, occ.occupation_id, wrkr.worker_id, wrkr.wage, wrkr.age))
+
+            # if occ.occupation_id == 27 and endog_vac_prob:
+            #     print(f"t={t} occ={occ.occupation_id} td_base={occ.target_demand:.0f} "
+            #         f"g_norm={g_prime_norm:.4f} vacs_created={vacs_create:.0f} "
+            #         f"curr_demand={occ.current_demand:.0f} target_vr = {occ.target_vr:.4f}")
 
         if simple_res:
             ### UPDATE INDICATOR RECORD
@@ -389,11 +557,12 @@ def run_single_local(d_u,
                         np.array([[t+1, empl, unemp, empl + unemp, len(vacs_temp), n_ltue, t_demand, seps, emp_seekers, unemp_seekers]]), axis=0)
 
         else:
-            record_temp_df = pd.DataFrame(record, columns=['Time Step', 'Occupation', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Current_Demand', 'Target_Demand', 'Employed Seekers', 'Unemployed Seekers', 'Total_Wages', 'U_Rel_Wage', 'E_Rel_Wage', 'UE_Transitions', 'EE_Transitions', "Separations", "Hires", "Mean Vacancy Offer", "Mean Occupational Wage", "Retirees", "Entry_Level_Hires"])
+            record_temp_df = pd.DataFrame(record, columns=['Time Step', 'Occupation', 'Employment', 'Unemployment', 'Workers', 'Vacancies', 'LT Unemployed Persons', 'Current_Demand', 'Target_Demand', 'Employed Seekers', 'Unemployed Seekers', 'Total_Wages', 'U_Rel_Wage', 'E_Rel_Wage', 'UE_Transitions', 'EE_Transitions', "Separations", "Hires", "Failed_Hires", "Mean Vacancy Offer", "Mean Occupational Wage", "Retirees", "Entry_Level_Hires", "Female_Total_Wages", "Male_Total_Wages", "Female_Employment", "Male_Employment"])
             record_df = record_temp_df[record_temp_df['Time Step'] >= delay]
             grouped = record_df.groupby('Time Step').sum().reset_index()
 
             grouped['UER'] = grouped['Unemployment'] / grouped['Workers']
+            grouped['Mean_Economy_Wage'] = grouped['Total_Wages'] / grouped['Employment']
             grouped['U_REL_WAGE_MEAN'] = grouped['U_Rel_Wage'] / grouped['UE_Transitions']
             grouped['E_REL_WAGE_MEAN'] = grouped['E_Rel_Wage'] / grouped['EE_Transitions']
             grouped['UE_Trans_Rate'] = grouped['UE_Transitions'] / grouped['Workers']
@@ -402,6 +571,15 @@ def run_single_local(d_u,
             grouped['Hires Rate'] = grouped['Hires'] / grouped['Employment']
             grouped['Separations Rate'] = (grouped['Separations'] + grouped['EE_Transitions']) / grouped['Employment']
             grouped['E-U Rate'] = grouped['Separations'] / grouped['Employment']
+            grouped['Gender_Pay_Gap'] = (
+                1 - (grouped['Female_Total_Wages'] / grouped['Female_Employment'])
+                  / (grouped['Male_Total_Wages']   / grouped['Male_Employment'])
+            )
+            gender_median_records.append({
+                'Time Step': t + 1,
+                'Female_Median_Wage': np.median(_f_wages_t) if _f_wages_t else np.nan,
+                'Male_Median_Wage':   np.median(_m_wages_t) if _m_wages_t else np.nan,
+            })
 
             data = {'UER': grouped['UER'], 'VACRATE': grouped['VACRATE'], }#, 'SEPSRATE': grouped['Separations Rate']}
             avg_wage_offer_diff_df = pd.DataFrame(avg_wage_offer_diff_records)
@@ -412,6 +590,12 @@ def run_single_local(d_u,
                 app_load_df = pd.DataFrame(columns=['Time Step','Occupation','OpenVacs','TotalApplicants','MeanAppsPerVac','MedianAppsPerVac'])
 
             ue_spell_origin_df = pd.DataFrame(ue_spell_records, columns=['Time Step', 'OriginOccupation', 'DestinationOccupation', 'UEDuration'])
+            ue_stock_df = pd.DataFrame(ue_stock_records, columns=['Time Step', 'Occupation', 'UEDuration', 'LongtermUnemp'])
+            transition_df = pd.DataFrame(transition_records, columns=[
+                'Time Step', 'TransitionType', 'OriginOccupation', 'DestinationOccupation',
+                'UEDuration', 'PreSepWage', 'AcceptedWage', 'Age', 'Female', 'LongtermUnemp',
+                'NewEntrant'])
+            wage_age_df = pd.DataFrame(wage_age_records, columns=['Time Step', 'Year', 'Occupation', 'Worker_ID', 'Wage', 'Age'])
 
     if simple_res:
         if theta is not None:
@@ -427,11 +611,11 @@ def run_single_local(d_u,
 
         seekers_rec = pd.DataFrame(seekers_rec, columns=['Time Step', 'Unemployed Seekers', 'Applications Sent (Unemployed)', 'Employed Seekers', 'Applications Sent (Employed)'])
         seekers_rec = seekers_rec[seekers_rec['Time Step'] >= delay]
-        return record_df, grouped, net, data, seekers_rec, avg_wage_offer_diff_df, app_load_df, ue_spell_origin_df, vacs_temp
+        gender_median_df = pd.DataFrame(gender_median_records)
+        gender_median_df = gender_median_df[gender_median_df['Time Step'] >= delay]
+        grouped = grouped.merge(gender_median_df, on='Time Step', how='left')
+        grouped['Gender_Median_Pay_Gap'] = (
+            1 - grouped['Female_Median_Wage'] / grouped['Male_Median_Wage']
+        )
+        return record_df, grouped, net, data, seekers_rec, avg_wage_offer_diff_df, app_load_df, ue_spell_origin_df, vacs_temp, wage_age_df, ue_stock_df, transition_df
 
-#########################################
-# # Wrapper for pyabc ########
-# #########################################
-# def pyabc_run_single(parameter):     
-#     res = run_single_local(**parameter)
-#     return res 
