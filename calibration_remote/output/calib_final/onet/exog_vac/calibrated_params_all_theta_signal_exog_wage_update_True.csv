@@ -1,0 +1,19 @@
+Parameter,Value,otj,cyc_otj,cyc_ue,disc,Timestamp,model_cat
+d_u,0.012236842361742394,True,True,False,True,2026-06-04 22:47:36,otj_cyclical_e_disc
+gamma_u,0.2735575346433042,True,True,False,True,2026-06-04 22:47:36,otj_cyclical_e_disc
+theta,10.640671442008525,True,True,False,True,2026-06-04 22:47:36,otj_cyclical_e_disc
+d_u,0.014680209603329218,True,True,False,True,2026-06-05 07:27:49,otj_cyclical_e_disc
+gamma_u,0.5262414582587137,True,True,False,True,2026-06-05 07:27:49,otj_cyclical_e_disc
+theta,1.5736402677372359,True,True,False,True,2026-06-05 07:27:49,otj_cyclical_e_disc
+d_u,0.010910521814511262,True,True,False,True,2026-06-05 07:41:00,otj_cyclical_e_disc_no_rw
+gamma_u,0.24654115708352278,True,True,False,True,2026-06-05 07:41:00,otj_cyclical_e_disc_no_rw
+theta,12.174090561859144,True,True,False,True,2026-06-05 07:41:00,otj_cyclical_e_disc_no_rw
+d_u,0.013651187846494765,True,True,False,True,2026-06-09 08:42:31,otj_cyclical_e_disc_no_rw
+gamma_u,0.443467214339426,True,True,False,True,2026-06-09 08:42:31,otj_cyclical_e_disc_no_rw
+theta,1.7995463161687901,True,True,False,True,2026-06-09 08:42:31,otj_cyclical_e_disc_no_rw
+d_u,0.013386603617301459,True,True,False,True,2026-06-09 23:22:36,otj_cyclical_e_disc_no_rw
+gamma_u,0.4821395947638314,True,True,False,True,2026-06-09 23:22:36,otj_cyclical_e_disc_no_rw
+theta,1.1058404151682046,True,True,False,True,2026-06-09 23:22:36,otj_cyclical_e_disc_no_rw
+d_u,0.01464901737385741,True,True,False,True,2026-06-10 00:17:22,otj_cyclical_e_disc
+gamma_u,0.5421689167598811,True,True,False,True,2026-06-10 00:17:22,otj_cyclical_e_disc
+theta,1.5943143551911163,True,True,False,True,2026-06-10 00:17:22,otj_cyclical_e_disc
