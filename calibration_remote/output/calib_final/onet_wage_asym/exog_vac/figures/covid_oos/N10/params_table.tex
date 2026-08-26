@@ -1,0 +1,15 @@
+\centering
+\begin{adjustbox}{width=\textwidth}
+\begin{tabular}{|l|l|c|c|c|c|c|c|}
+\hline
+\textbf{Parameter} & \textbf{Prior Distribution} & \multicolumn{6}{c|}{\textbf{Model Category}} \\
+\cline{3-8}
+& & \textbf{Non-behavioural} & \textbf{\shortstack{Non-behavioural \\ w. OTJ}} & \textbf{\shortstack{Behavioural \\ w. Cyc. OTJ \\ w.o RW}} & \textbf{\shortstack{Behavioural \\ w.o. Cyc. OTJ \\ w.o RW}} & \textbf{\shortstack{Behavioural \\ w. Cyc. OTJ \\ w. RW}} & \textbf{\shortstack{Behavioural \\ w.o. Cyc. OTJ \\ w. RW}} \\
+\hline
+$\delta_u$ & $U(0.0001, 0.9)$ & 0.018 & 0.014 & 0.014 & 0.012 & 0.015 & 0.014 \\ \hline
+$\gamma_u$ & $U(0.0001, 0.9)$ & 0.664 & 0.665 & 0.551 & 0.578 & 0.554 & 0.626 \\ \hline
+$\beta_c$ & $U(0.01, 40)$ &  &  & 1.033 &  & 2.256 &  \\ \hline
+\end{tabular}
+\end{adjustbox}
+\caption{Prior distribution and parameter estimates for all models. $U(a, b)$ denotes a uniform distribution on $[a,b]$.}
+\label{tab:priors_posteriors_onet_wage_asym}
