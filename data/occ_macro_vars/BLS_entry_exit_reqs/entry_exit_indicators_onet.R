@@ -150,6 +150,56 @@ assert_that(temp %>% filter(!(acs_occ_code %in% unique(final_exp$acs_occ_code)))
 assert_that(final_exp %>% filter(!(acs_occ_code %in% unique(temp$acs_occ_code))) %>% nrow(.) == 0)
 assert_that(final_exp %>% filter(any(is.na(.))) %>% nrow(.) == 0)
 
+
+# Create summary table for supplementary materials
+matched_at_acs    <- acs_matches       %>% filter(!is.na(ed_req)) %>% distinct(acs_occ_code) %>% pull()
+matched_at_soc    <- soc2010_matches   %>% filter(!is.na(ed_req)) %>% distinct(acs_occ_code) %>% filter(!acs_occ_code %in% matched_at_acs) %>% pull()
+matched_at_broad  <- soc_broad_matches %>% filter(!is.na(ed_req)) %>% distinct(acs_occ_code) %>% filter(!acs_occ_code %in% c(matched_at_acs, matched_at_soc)) %>% pull()
+matched_at_minor  <- soc_minor_matches %>% filter(!is.na(ed_req)) %>% distinct(acs_occ_code) %>% filter(!acs_occ_code %in% c(matched_at_acs, matched_at_soc, matched_at_broad)) %>% pull()
+
+match_summary <- tibble(
+  `Matching Level` = c("ACS code", "SOC 2010 (exact)", "SOC broad (6-digit)", "SOC minor (4-digit)"),
+  `Codes Matched`  = c(length(matched_at_acs), length(matched_at_soc), 
+                       length(matched_at_broad), length(matched_at_minor))
+) %>%
+  mutate(
+    `N (cumulative)`       = cumsum(`Codes Matched`),
+    `N (total)`            = n_distinct(cw$acs_occ_code),
+    `% Matched`            = round(100 * `Codes Matched` / `N (total)`, 1),
+    `Cumulative % Matched` = round(100 * `N (cumulative)` / `N (total)`, 1)
+  )
+
+
+tbl_body <- match_summary %>%
+  kable(format = "latex",
+        booktabs = TRUE,
+        linesep = "",
+        #caption = "Occupational Code Matching Summary: O*NET Network",
+        #label = "si_tbl:onet_match_summary",
+        col.names = c("\\makecell{Matching\\\\Level}",
+                      "\\makecell{Codes\\\\Matched}",
+                      "\\makecell{N\\\\cumulative}",
+                      "\\makecell{N\\\\total}",
+                      "\\makecell{\\%\\\\Matched}",
+                      "\\makecell{Cumulative\\\\\\% Matched}"),
+        escape = FALSE)
+
+writeLines(c(
+  "\\begin{table}[H]",
+  "\\centering",
+  "\\caption{Occupational Code Matching Summary: O*NET Network}",
+  "\\label{si_tbl:onet_match_summary}",
+  "\\begin{threeparttable}",
+  tbl_body,
+  "\\begin{tablenotes}[flushleft]",
+  "\\small",
+  paste0("\\item \\textit{Note: }O*NET Network (N = ", unique(match_summary$`N (total)`), "). Matching was performed hierarchically; each step includes only occupations unmatched at all prior steps."),
+  "\\item \\textit{Source:} BLS Education and Training Assignments by Detailed Occupation.",
+  "\\end{tablenotes}",
+  "\\end{threeparttable}",
+  "\\end{table}"
+), "/Users/ebbamark/Dropbox/Apps/Overleaf/ABM_Transitions/si_inputs/entry_exit_match_summary_onet.tex")
+
 temp %>%
   left_join(., final_exp, by = "acs_occ_code") %>%
   mutate(entry_level = as.numeric(experience_req == "None"),

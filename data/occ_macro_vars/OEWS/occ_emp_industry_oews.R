@@ -77,10 +77,11 @@ temp %>%
   ungroup %>% 
   ggplot() + 
   geom_area(aes(x = year, y = pct_total, fill = occ_code)) +
-  facet_wrap_custom(~naics_title) +
-  labs(x = "Year", y = "Reported Pct Shares", title = "Occupational Employment Shares by 2-digit NAICS") +
+  facet_wrap_custom(~naics_title, width = 13) +
+  labs(x = "Year", y = "Reported % Shares", title = "Occupational Employment Shares by 2-digit NAICS") +
   common_theme +
-  theme(legend.position = "none") -> p1
+  theme(legend.position = "none",
+        strip.text = element_text(size = 9, hjust = 0)) -> p1
 
 #print(p1)
 
@@ -92,14 +93,21 @@ temp %>%
   mutate(tot = sum(pct_total, na.rm = TRUE),
          pct_total_norm = pct_total/tot) %>% 
   ungroup %>% 
+  mutate(date = as.Date(paste0(year, "-01-01"))) %>%
   ggplot() + 
-  geom_area(aes(x = year, y = pct_total_norm, fill = occ_code), stat = "identity") +
-  facet_wrap_custom(~naics_title) +
-  labs(x = "Year", title = "Occupational Employment Shares by 2-digit NAICS", y= "Shares of Total") +
+  geom_area(aes(x = date, y = pct_total_norm, fill = occ_code), stat = "identity") +
+  facet_wrap_custom(~naics_title, width = 13) +
+  labs(x = "Year", title = "Occupational Employment Shares by 2-Digit NAICS Codes", y= "Shares of Total") +
+  scale_x_date(
+    date_breaks = "8 years",
+    date_labels = "%Y"
+  ) +
   common_theme +
-  theme(legend.position = "none") -> p2
+  theme(legend.position = "none",
+        strip.text = element_text(size = 8, hjust = 0)) -> p2
 
-print(p2)
+# Commented out and placed in central rmd
+#print(p2)
 
 shares <- temp %>% 
   # Create total annual occupation-level employment
@@ -120,7 +128,8 @@ shares %>%
   filter(round(occ_share) == 1)
 
 shares %>% ggplot(aes(x = year, y = occ_share, color = occ_code)) + 
-  geom_line() + facet_wrap_custom(~naics_title) + common_theme + theme(legend.position = "none")
+  geom_line() + facet_wrap_custom(~naics_title, width = 13) + common_theme + theme(legend.position = "none",
+                                                                                   strip.text = element_text(size = 9, hjust = 0))
 
 shares_ma <- function(s_dat, len){
   plot <- s_dat %>% 
@@ -137,12 +146,13 @@ shares_ma <- function(s_dat, len){
     ungroup() %>% 
     ggplot(aes(x = year, y = occ_share_ma, colour = occ_code)) +
     geom_line() +
-    facet_wrap_custom(~ naics_title) +
+    facet_wrap_custom(~ naics_title, width = 13) +
     labs(y = paste0(as.character(len), "-year moving average of occ_share"),
          title = paste0(as.character(len), "-year moving average of occ_share"),
          x = "Year") +
     common_theme +
-    theme(legend.position = "none")
+    theme(legend.position = "none",
+          strip.text = element_text(size = 9, hjust = 0))
   
   return(plot)
   
@@ -215,7 +225,8 @@ mean_shares %>%
     subtitle = "The colors display the share of total occupational employment in each industry.\nIndustries are ordered by the total number of occupations they employ in ascending order.\nWe display only those occupations whose industrial-level employment share is at least 5%."
   ) -> p6
 
-print(p6)
+# Commented out and placed in central rmd
+#print(p6)
 
 mean_shares %>% 
   group_by(occ_code) %>% 
@@ -230,13 +241,23 @@ mean_shares %>%
 
 odd_ones <- mean_shares %>% 
      group_by(occ_code) %>% 
-  summarise(total_share = sum(mean_share, na.rm = TRUE)) %>% arrange(-total_share) %>% filter(total_share > 1.1) %>% 
+  summarise(total_share = sum(mean_share, na.rm = TRUE)) %>% 
+  arrange(-total_share) %>% 
+  filter(total_share > 1.1) %>% 
   left_join(., abm, by = c("occ_code" = "SOC2010")) %>% 
-  select("SOC2010 Occupational Code" = occ_code, "Occupational Label" = OCC2010_desc, "Sum of Mean Shares" = total_share)
+  mutate(
+    OCC2010_desc = str_wrap(OCC2010_desc, width = 30),   # wrap label
+    total_share = round(total_share, 3)                   # round to 3dp
+  ) %>%
+  select("SOC-2010 Occupational Code" = occ_code, 
+         "Occupational Label" = OCC2010_desc, 
+         "Sum of Mean Shares" = total_share)
 
-print(paste0(nrow(odd_ones), " occupational categories have a sum of mean shares > 1.1:"))
+# Commented out and placed in central rmd
+#print(paste0(nrow(odd_ones), " occupational categories have a sum of mean shares > 1.1:"))
 
-odd_ones %>% kable(format = "latex") %>% print(.)
+# Commented out and placed in central rmd
+#odd_ones %>% kable(format = "latex") %>% print(.)
 
 
 mean_shares_for_bind <- mean_shares %>% 

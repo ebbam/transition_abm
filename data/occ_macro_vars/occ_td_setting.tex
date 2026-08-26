@@ -1,0 +1,273 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+]{article}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{placeins}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\author{}
+\date{\vspace{-2.5em}}
+
+\begin{document}
+
+The impetus for agents to act within our model relies on non-static
+target demand across occupations. In other words, occupational demand
+for workers needs to fluctuate during the simulation. We define such
+movements at the occupational level by drawing on the share of
+occupations employed across various US industries and interact these
+shares with the real value added of each industry. As such, we arrive at
+occupational target demand profiles that fluctuate in line with
+real-world target demand over the simulated time
+period.\footnote{Future work should aim to accommodate shifts in labor productivity of different industries and shifting industry-specific occupational shares to account for additional sources of structural transformation beyond those explored in this work.}
+
+Target demand \(d_{i,t}^{\dagger}\) reflects the desired employment
+level of occupation \(i\) at time \(t\). Target demand for occupation
+\(i\) at time \(t\) is the product of a fixed baseline occupational
+demand \(d^{\dagger}_i\) and the sum of the marginal occupational demand
+shocks across all industries \(j\) in the US economy at time \(t\).
+
+\[d_{i,t}^{\dagger} =  d^{\dagger}_i\sum_{j=1}^{n} \hat d_{ijt},\]
+
+where \(\hat{d}_{ijt}\) is the industry-level demand shift for
+occupation \(i\) in industry \(j\) at time \(t\) defined as:
+
+\[\hat d_{ijt} = \bar d_{ij} \theta_{jt},\]
+
+where \(\theta_{jt}\) is a de-trended value added shock in industry
+\(j\) and \(\bar d_{ij}\) represents the fixed demand for occupation
+\(i\) in industry \(j\) calculated as:
+
+\[\bar d_{ij} = \frac{1}{T}\sum_{T=2012}^{2018} \frac{d_{ijT}}{d_{iT}}.\]
+
+Thus, we obtain occupation-specific fluctuations in demand dependent on
+their ``exposure'\,' or the share of a specific occupation in industry
+\(j\). These occupation-specific demand shocks are represented in
+\autoref{fig:occ_shocks}.
+
+Using reported occupational shares of industry employment from the
+Bureau of Labor Statistics' Occupational Employment and Wages dataset
+and the industry value added (quarterly data available from 2005 and
+annual data available from 1999), we calculate the occupational
+employment composition across 19 US industries at 2-digit NAICS level.
+We detrend the value added using a Hodrick-Prescott filter to obtain
+occupational target demand as a fluctuation around a mean. This allows
+for an interpretation of demand fluctuations as either an upward or
+downward pressure on occupational employment levels.
+
+In the following sections, we describe the data sources, present
+visualizations of the underlying series, and demonstrate the resulting
+occupation-specific target demand profiles.
+
+\subsection{Value Added by Industry}\label{value-added-by-industry}
+
+We use industry value added data from the US Bureau of Economic Analysis
+(using annual data from 2000-2004 and quarterly data available from
+2005) to define \(\theta_{jt}\) to create these occupation-specific
+target demand trajectories. We detrend the value added using a
+Hodrick-Prescott filter. Below, we present the industry real value added
+and demonstrate that these disaggregated series closely follow the
+national real GDP series.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Real value added by US industry (2017-chained USD), drawn from the Bureau of Economic Analysis National Economic Accounts. Annual data prior to 2005 is linearly interpolated to quarterly frequency to match the later portion of each series. Each panel shows one 2-digit NAICS industry; axes are independently scaled.}]{occ_td_setting_files/occ_td_setting_files/figure-latex/real_val_add_fig-1.png}}
+\caption{Real value added by US industry (2017-chained USD), drawn from
+the Bureau of Economic Analysis National Economic Accounts. Annual data
+prior to 2005 is linearly interpolated to quarterly frequency to match
+the later portion of each series. Each panel shows one 2-digit NAICS
+industry; axes are independently scaled.}
+\end{figure}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Comparison of the sum of industry-level real value added (BEA series, blue) against the FRED quarterly real GDP series (orange), covering 2000--2024. The close correspondence between the two series validates the use of the disaggregated BEA industry value added series as the driver of occupational target demand.}]{occ_td_setting_files/occ_td_setting_files/figure-latex/gdp_va_comp-1.png}}
+\caption{Comparison of the sum of industry-level real value added (BEA
+series, blue) against the FRED quarterly real GDP series (orange),
+covering 2000--2024. The close correspondence between the two series
+validates the use of the disaggregated BEA industry value added series
+as the driver of occupational target demand.}
+\end{figure}
+
+\FloatBarrier
+
+\subsection{Occupational Shares of Industry
+Employment}\label{occupational-shares-of-industry-employment}
+
+We use annual occupational shares of employment from the Occupational
+Employment and Wage Statistics database from the US Bureau of Labor
+Statistics to derive our \(\bar d_{ij}\). The first figure shows the
+share of occupations within each industry, drawn from the OEWS data. The
+gaps in the sub-figures are due to a reshuffling of occupational codes
+in 2010 and 2018. To deal with this challenge, we take the mean
+industry-share of occupational employment reported in the years in which
+majority (\textgreater97\%) of our occupational codes are present
+(2012-2018 - before and after the SOC reorganization of 2010 and 2018).
+We display the occupation-industry employment shares in a gridded format
+below.
+
+Note that the procedure we employ to arrive at consistent occupational
+shares of industry-level employment results in 6 occupational categories
+that have a sum of their mean shares greater than 1.1.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Occupational employment shares within each 2-digit NAICS industry over time, drawn from the Occupational Employment and Wage Statistics (OEWS) database. Each line represents one occupation code; gaps reflect SOC code reorganizations in 2010 and 2018. Industries are shown in separate panels with independently scaled y-axes.}]{occ_td_setting_files/occ_td_setting_files/figure-latex/occ_emp_shares-1.png}}
+\caption{Occupational employment shares within each 2-digit NAICS
+industry over time, drawn from the Occupational Employment and Wage
+Statistics (OEWS) database. Each line represents one occupation code;
+gaps reflect SOC code reorganizations in 2010 and 2018. Industries are
+shown in separate panels with independently scaled y-axes.}
+\end{figure}
+
+\begin{table}
+
+\caption{\label{tab:odd_ones}Occupational categories for which the sum of mean industry employment shares exceeds 1.1, indicating potential
+inconsistencies in the OEWS occupational share data across industries. These categories are retained in the analysis but
+flagged here for transparency.}
+\centering
+\begin{tabular}[t]{l>{\raggedright\arraybackslash}p{6cm}r}
+\toprule
+SOC-2010 Occupational Code & Occupational Label & Sum of Mean Shares\\
+\midrule
+53-4041 & Subway, streetcar, and other
+rail transportation workers & 1.374\\
+49-9093 & Other installation,
+maintenance, and repair
+workers & 1.255\\
+43-2099 & Communications equipment
+operators, all other & 1.180\\
+37-2021 & Pest control workers & 1.136\\
+53-6011 & Bridge and lock tenders & 1.132\\
+\addlinespace
+53-6041 & Other transportation workers & 1.122\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\FloatBarrier
+
+\subsection{Combining VA and Employment
+Shares}\label{combining-va-and-employment-shares}
+
+We combine these two data sources by computing the product of
+industry-level real value added and fixed occupational employment
+shares, summing across industries as in the formulation above, repeated
+here for ease:
+\(\hat d_{ijt} = \sum_{j=1}^{n} \bar d_{ij} \theta_{jt}\). This yields
+occupation-specific target demand profiles that respond to disaggregated
+industrial productivity movements.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Industry-level value added shocks expressed as the raw Hodrick-Prescott filtered cycle (blue) and as percentage deviation from the HP trend (orange), for each 2-digit NAICS industry. The percentage deviation is used as \textbackslash theta\_\{jt\} in the occupational target demand formulation.}]{occ_td_setting_files/occ_td_setting_files/figure-latex/fig_cap_va_shocks_norm-1.png}}
+\caption{Industry-level value added shocks expressed as the raw
+Hodrick-Prescott filtered cycle (blue) and as percentage deviation from
+the HP trend (orange), for each 2-digit NAICS industry. The percentage
+deviation is used as \(\theta_{jt}\) in the occupational target demand
+formulation.}
+\end{figure}
+
+Note that we are missing information on occupation code 13-2081 (Tax
+examiners and collectors, and revenue agents) which are present in our
+occupational network but not in our VA data as they are only employed in
+public administration. VA information does not exist for public
+administration. For now, we use the shocks to 13-2082 as the shocks to
+13-2081 though this could potentially be adjusted such that public
+administration fluctuations depend on overall GDP fluctuations.
+
+Furthermore, in the case of the full OMN we are missing both 13-2081 and
+33-3031 (Fish and Game Wardens). We assign the fish and game wardens the
+same occupational shocks as 33-9011 (Animal Control Workers) within the
+same broad category grouping of SOC codes.
+
+Finally, in the case of the O*NET Related Occupations Network both of
+the above are missing in addition to 45-3021 (hunters and trappers). We
+assign hunters and trappers the same occupational shocks as the only
+other occupation in the same Minor SOC Group (45-3011 - Fishers and
+Related Fishing Workers). They are both categorized within the same
+``Fishing and Hunting Workers'' Minor SOC Group (45-3000).
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Occupation-specific value added shocks (\textbackslash hat\{d\}\_\{ijt\}), constructed as the weighted sum of industry-level HP-filtered value added cycles, where weights are the mean occupational employment share in each industry (\textbackslash bar\{d\}\_\{ij\}). Each panel shows one broad occupational category (SOC major group); lines within each panel represent individual detailed occupation codes, shaded by occupation.}]{occ_td_setting_files/occ_td_setting_files/figure-latex/fig_cap_occ_shocks-1.png}}
+\caption{Occupation-specific value added shocks (\(\hat{d}_{ijt}\)),
+constructed as the weighted sum of industry-level HP-filtered value
+added cycles, where weights are the mean occupational employment share
+in each industry (\(\bar{d}_{ij}\)). Each panel shows one broad
+occupational category (SOC major group); lines within each panel
+represent individual detailed occupation codes, shaded by occupation.}
+\end{figure}
+
+\end{document}

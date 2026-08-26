@@ -181,6 +181,68 @@ if(new_data){
 }
 
 
+
+################################################################################
+################################################################################
+####################### DOCUMENT WAGE LIMITS  ##################################
+################################################################################
+################################################################################
+
+years_to_range <- function(years_str) {
+  yrs <- as.integer(strsplit(years_str, ";")[[1]])
+  yrs_sorted <- sort(yrs)
+  
+  # Check all values in the range are present
+  full_range <- seq(min(yrs_sorted), max(yrs_sorted))
+  if (!identical(yrs_sorted, full_range)) {
+    missing <- setdiff(full_range, yrs_sorted)
+    stop(paste("Years are not fully consecutive. Missing:", paste(missing, collapse = ", ")))
+  }
+  
+  # If only one year, return it as-is
+  if (length(yrs_sorted) == 1) {
+    return(as.character(yrs_sorted))
+  }
+  
+  paste0(min(yrs_sorted), "-", max(yrs_sorted))
+}
+
+limits_summary <- limits_df %>% 
+  select(hourly_max, annual_max, year) %>% 
+  group_by(hourly_max, annual_max) %>% 
+  summarise(years = paste0(year, collapse = ";"), .groups = "drop") %>%
+  mutate(years = map_chr(years, years_to_range)) %>% 
+  arrange(years) %>% 
+  mutate(across(c('hourly_max', 'annual_max'), ~as.numeric(.))) %>% 
+  mutate(across(c('hourly_max', 'annual_max'), ~paste0("\\$", ifelse(nchar(.) != 6, ., paste0(substr(.,1,3), ",", substr(.,4,6)))))) %>% 
+  relocate(years)
+
+tbl_body <- limits_summary %>% 
+  kable(format = "latex",
+        booktabs = TRUE,
+        linesep = "",
+        #caption = "OEWS Top-Coded Wage Ceiling Values by Year",
+        #label = "si_tbl:oews_ceilings",
+        col.names = c("Years", "Hourly", "Annual"),
+        escape = FALSE) %>% 
+  add_header_above(c(" " = 1, "Ceiling Salary Value" = 2))
+
+writeLines(c(
+  "\\begin{table}[H]",
+  "\\centering",
+  "\\caption{OEWS Top-Coded Wage Ceiling Values by Year}",
+  "\\label{si_tbl:oews_ceilings}",
+  "\\begin{threeparttable}",
+  tbl_body,
+  "\\begin{tablenotes}[flushleft]",
+  "\\small",
+  "\\item \\textit{Source:} BLS Occupational Employment and Wage Statistics (OEWS) field description files.",
+  "\\end{tablenotes}",
+  "\\end{threeparttable}",
+  "\\end{table}"
+), "/Users/ebbamark/Dropbox/Apps/Overleaf/ABM_Transitions/si_inputs/oews_wage_dist_ceiling_vals.tex")
+
+
 ################################################################################
 ################################################################################
 ####################### FITTING LOG NORMAL  ####################################
