@@ -160,11 +160,11 @@ def run_single_local(d_u,
                     n_jg  = round(jg_frac * n_total)
                     n_reg = n_total - n_jg
                     if n_jg  > 0:
-                        occ.entry(n_jg,  enter_emp=True,  use_wage_dist=True, jg_wage=jg_wage)
+                        occ.entry(n_jg,  enter_emp=True,  use_wage_dist=True, jg_wage=jg_wage, entry_time_step=t+1)
                     if n_reg > 0:
-                        occ.entry(n_reg, enter_emp=False, use_wage_dist=True)
+                        occ.entry(n_reg, enter_emp=False, use_wage_dist=True, entry_time_step=t+1)
                 else:
-                    occ.entry(n_total, enter_emp=False, use_wage_dist=True)
+                    occ.entry(n_total, enter_emp=False, use_wage_dist=True, entry_time_step=t+1)
             # Remove the top 2% of earners in an occupation's employed list
             # occ.entry_and_exit_fixed(0.02)
 
@@ -208,7 +208,7 @@ def run_single_local(d_u,
                         for idx in searching_idx:
                             e_apps += occ.list_of_employed[idx].emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp)
                 else:
-                    for e in random.sample(occ.list_of_employed, int(0.07*len(occ.list_of_employed))):
+                    for e in random.sample(occ.list_of_employed, int(0.03*len(occ.list_of_employed))):
                         emp_seekers += 1
                         e_apps += e.emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp)
 
@@ -330,11 +330,6 @@ def run_single_local(d_u,
                     v_open.filled = True
 
                     trans_type, origin_occ, dest_occ, ue_dur, pre_wage, new_wage, age, female, longterm, new_entrant = ret
-                else:
-                    # Vacancy had applicants this period but none could be hired
-                    # (its sampled/available applicants were already hired by a
-                    # competing vacancy earlier in this period's shuffle).
-                    net[v_open.occupation_id].failed_hires += 1
 
                     if not simple_res:
                         # Keep the legacy UE-only spell record for backward compatibility
@@ -344,6 +339,11 @@ def run_single_local(d_u,
                         # Rich per-event log (UE + EE)
                         transition_records.append((t+1, trans_type, origin_occ, dest_occ,
                                                    ue_dur, pre_wage, new_wage, age, female, longterm, new_entrant))
+                else:
+                    # Vacancy had applicants this period but none could be hired
+                    # (its sampled/available applicants were already hired by a
+                    # competing vacancy earlier in this period's shuffle).
+                    net[v_open.occupation_id].failed_hires += 1
             assert(len(v_open.applicants) == 0)
 
 
@@ -544,7 +544,8 @@ def run_single_local(d_u,
                         if not hasattr(wrkr, 'worker_id'):
                             wrkr.worker_id = _next_wid
                             _next_wid += 1
-                        wage_age_records.append((t+1, yr, occ.occupation_id, wrkr.worker_id, wrkr.wage, wrkr.age))
+                        wage_age_records.append((t+1, yr, occ.occupation_id, wrkr.worker_id, wrkr.wage, wrkr.age,
+                                                 getattr(wrkr, 'entry_time_step', None)))
 
             # if occ.occupation_id == 27 and endog_vac_prob:
             #     print(f"t={t} occ={occ.occupation_id} td_base={occ.target_demand:.0f} "
@@ -595,7 +596,7 @@ def run_single_local(d_u,
                 'Time Step', 'TransitionType', 'OriginOccupation', 'DestinationOccupation',
                 'UEDuration', 'PreSepWage', 'AcceptedWage', 'Age', 'Female', 'LongtermUnemp',
                 'NewEntrant'])
-            wage_age_df = pd.DataFrame(wage_age_records, columns=['Time Step', 'Year', 'Occupation', 'Worker_ID', 'Wage', 'Age'])
+            wage_age_df = pd.DataFrame(wage_age_records, columns=['Time Step', 'Year', 'Occupation', 'Worker_ID', 'Wage', 'Age', 'Entry_Time_Step'])
 
     if simple_res:
         if theta is not None:

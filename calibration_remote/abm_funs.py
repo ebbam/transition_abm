@@ -646,13 +646,18 @@ class occupation:
         return(workers_sep)
 
     
-    def entry(occ, entry_tot, enter_emp=False, use_wage_dist=False, jg_wage=None):
+    def entry(occ, entry_tot, enter_emp=False, use_wage_dist=False, jg_wage=None, entry_time_step=None):
         """Add exactly `entry_tot` new workers to this occupation (if entry-level).
 
         use_wage_dist=False (default): entry wage = mean of bottom 5% employed.
         use_wage_dist=True:            entry wage drawn from occ lognormal distribution.
         jg_wage: when enter_emp=True, override the market wage draw with this value.
                  Pass "entry_anchor" to use the 25th-pct anchor computed here, or a float.
+        entry_time_step: if given, tagged onto each created worker as
+                 `.entry_time_step` -- a permanent marker of when they entered
+                 the labour force, independent of the `new_entrant` flag (which
+                 clears on first hire). Lets later worker-level snapshots
+                 (e.g. wage_age_df) be linked back to an entry cohort.
         """
         if entry_tot <= 0 or not occ.entry_level:
             return
@@ -681,7 +686,7 @@ class occupation:
                     emp_wage = float(jg_wage)
                 else:
                     emp_wage = new_wage
-                occ.list_of_employed.append(worker(
+                new_wrkr = worker(
                     occ.occupation_id,         # occupation_id
                     False,                     # longterm_unemp
                     0,                         # time_unemployed
@@ -696,9 +701,11 @@ class occupation:
                     0,                         # d_wage_offer
                     None,                      # last_ue_duration
                     new_entrant=True
-                ))
+                )
+                new_wrkr.entry_time_step = entry_time_step
+                occ.list_of_employed.append(new_wrkr)
             else:
-                occ.list_of_unemployed.append(worker(
+                new_wrkr = worker(
                     occ.occupation_id,         # occupation_id
                     False,                     # longterm_unemp
                     0,                         # time_unemployed
@@ -713,7 +720,9 @@ class occupation:
                     0,                         # d_wage_offer
                     None,                      # last_ue_duration
                     new_entrant=True
-                ))
+                )
+                new_wrkr.entry_time_step = entry_time_step
+                occ.list_of_unemployed.append(new_wrkr)
 
     def update_competition_metric(
             occ,
@@ -779,17 +788,23 @@ class vac:
         else:
             if ltu_hire_bias > 0.0 or entry_hire_bias > 0.0:
                 # Preferential hiring: weight favoured applicants more heavily.
-                # Biases are multiplicative so both can apply simultaneously.
+                # ltu_hire_bias and entry_hire_bias are mutually exclusive (see
+                # assert above), so whichever policy is active targets its own
+                # attribute only -- a worker who happens to ALSO carry the
+                # other (inactive) attribute must not lose their boost to it.
+                # e.g. a new entrant who's been searching long enough to also
+                # be longterm_unemp must still get the entry_hire_bias boost
+                # when only the entry policy is active.
                 available = [w for w in v.applicants if not w.hired]
                 if not available:
                     v.applicants.clear()
                     return None
-                weights = [
-                    (1.0 + ltu_hire_bias)  if getattr(w, 'longterm_unemp', False) else
-                    (1.0 + entry_hire_bias) if getattr(w, 'new_entrant',    False) else
-                    1.0
-                    for w in available
-                ]
+                if entry_hire_bias > 0.0:
+                    weights = [(1.0 + entry_hire_bias) if getattr(w, 'new_entrant', False) else 1.0
+                               for w in available]
+                else:
+                    weights = [(1.0 + ltu_hire_bias) if getattr(w, 'longterm_unemp', False) else 1.0
+                               for w in available]
                 a = random.choices(available, weights=weights, k=1)[0]
             else:
                 # Sample up to 3 unique applicants without replacement
@@ -1027,8 +1042,9 @@ def test_p_search_logit():
 # Run test
 test_p_search_logit()
 
+if plot_new:
 # import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 # def _sigmoid(x):
 #     if x < -709:
@@ -1045,71 +1061,71 @@ import matplotlib.pyplot as plt
 #     logit_val = (alpha + beta_A * (age - A0) + beta_C * comp)
 #     return _sigmoid(logit_val)
 
-# Parameters from your model
-alpha = -4
-beta_A = 0
-A0 = 40.0
+    # Parameters from your model
+    alpha = -4
+    beta_A = 0
+    A0 = 40.0
 
-# Competition range (VacsPerApp: 0 to 1)
-comp_range = np.linspace(0, 1, 100)
+    # Competition range (VacsPerApp: 0 to 1)
+    comp_range = np.linspace(0, 1, 100)
 
-# Different theta (beta_C) values to test
-theta_values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 20, 25, 30, 35, 40, 45, 50]
-#theta_values = [0.1, 0.25, 0.5, 0.75, 0.9]
+    # Different theta (beta_C) values to test
+    theta_values = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 16, 20, 25, 30, 35, 40, 45, 50]
+    #theta_values = [0.1, 0.25, 0.5, 0.75, 0.9]
 
 
-# Different ages to show age effects
-ages = [30, 40, 50]
+    # Different ages to show age effects
+    ages = [30, 40, 50]
 
-# Create figure with two subplots
-fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    # Create figure with two subplots
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
-# Panel 1: Different theta values (fixed age=40)
-ax1 = axes[0]
-for theta in theta_values:
-    probs = [p_search_logit(comp, alpha=alpha, beta_C=theta) 
-             for comp in comp_range]
-    ax1.plot(comp_range, probs, linewidth=2, label=rf'$\beta_c$={theta}')
+    # Panel 1: Different theta values (fixed age=40)
+    ax1 = axes[0]
+    for theta in theta_values:
+        probs = [p_search_logit(comp, alpha=alpha, beta_C=theta) 
+                for comp in comp_range]
+        ax1.plot(comp_range, probs, linewidth=2, label=rf'$\beta_c$={theta}')
 
-ax1.axhline(y=0.07, color='red', linestyle='--', linewidth=1, alpha=0.5, label='7% target')
-ax1.axvspan(0.033, 0.5, alpha=0.15, color='blue', label='Expected range\n(2-30 Seekers per Vac.)')
-ax1.set_xlabel('Competition Metric', fontsize=12)
-ax1.set_ylabel('Search Probability', fontsize=12)
-ax1.set_title(r'Effect of $\beta_c$ on Search Behavior (Age=40)', fontsize=13, fontweight='bold')
-ax1.legend(fontsize=10)
-ax1.grid(True, alpha=0.3)
-ax1.set_xlim([0, 1])
-ax1.set_ylim([0, 1])
+    ax1.axhline(y=0.03, color='red', linestyle='--', linewidth=1, alpha=0.5, label='7% target')
+    ax1.axvspan(0.033, 0.5, alpha=0.15, color='blue', label='Expected range\n(2-30 Seekers per Vac.)')
+    ax1.set_xlabel('Competition Metric', fontsize=12)
+    ax1.set_ylabel('Search Probability', fontsize=12)
+    ax1.set_title(r'Effect of $\beta_c$ on Search Behavior (Age=40)', fontsize=13, fontweight='bold')
+    ax1.legend(fontsize=10)
+    ax1.grid(True, alpha=0.3)
+    ax1.set_xlim([0, 1])
+    ax1.set_ylim([0, 1])
 
-# Panel 2: Different ages (fixed theta=5.0)
-# ax2 = axes[1]
-# theta_fixed = 5.0
-# for age in ages:
-#     probs = [p_search_logit(age, comp, alpha=alpha, beta_A=beta_A, beta_C=theta_fixed, A0=A0) 
-#              for comp in comp_range]
-#     ax2.plot(comp_range, probs, linewidth=2, label=f'Age {age}')
+    # Panel 2: Different ages (fixed theta=5.0)
+    # ax2 = axes[1]
+    # theta_fixed = 5.0
+    # for age in ages:
+    #     probs = [p_search_logit(age, comp, alpha=alpha, beta_A=beta_A, beta_C=theta_fixed, A0=A0) 
+    #              for comp in comp_range]
+    #     ax2.plot(comp_range, probs, linewidth=2, label=f'Age {age}')
 
-# ax2.axhline(y=0.07, color='red', linestyle='--', linewidth=1, alpha=0.5, label='7% target')
-# ax2.axvspan(0.033, 0.333, alpha=0.15, color='blue', label='Expected range')
-# ax2.set_xlabel('Competition (VacsPerApp)', fontsize=12)
-# ax2.set_ylabel('Search Probability', fontsize=12)
-# ax2.set_title(rf'Age Effects on Search Behavior ($\beta_c$={theta_fixed})', fontsize=13, fontweight='bold')
-# ax2.legend(fontsize=10)
-# ax2.grid(True, alpha=0.3)
-# ax2.set_xlim([0, 1])
-# ax2.set_ylim([0, 1])
+    # ax2.axhline(y=0.03, color='red', linestyle='--', linewidth=1, alpha=0.5, label='7% target')
+    # ax2.axvspan(0.033, 0.333, alpha=0.15, color='blue', label='Expected range')
+    # ax2.set_xlabel('Competition (VacsPerApp)', fontsize=12)
+    # ax2.set_ylabel('Search Probability', fontsize=12)
+    # ax2.set_title(rf'Age Effects on Search Behavior ($\beta_c$={theta_fixed})', fontsize=13, fontweight='bold')
+    # ax2.legend(fontsize=10)
+    # ax2.grid(True, alpha=0.3)
+    # ax2.set_xlim([0, 1])
+    # ax2.set_ylim([0, 1])
 
-plt.tight_layout()
-plt.savefig('search_probability_vs_competition.png', dpi=150, bbox_inches='tight')
-plt.close()
+    plt.tight_layout()
+    plt.savefig('search_probability_vs_competition.png', dpi=150, bbox_inches='tight')
+    plt.close()
 
-print("✓ Plot saved as 'search_probability_vs_competition.png'")
+    print("✓ Plot saved as 'search_probability_vs_competition.png'")
 
-# Print some specific values for verification
-print("\n" + "="*60)
-print("SAMPLE VALUES (Age=40, θ=5.0):")
-print("="*60)
-test_comps = [0.0, 0.033, 0.1, 0.333, 0.5, 1.0]
-for comp in test_comps:
-    prob = p_search_logit(comp, alpha=alpha, beta_C=5.0)
-    print(f"VacsPerApp = {comp:.3f} → Search Probability = {prob:.4f} ({prob*100:.2f}%)")
+    # Print some specific values for verification
+    print("\n" + "="*60)
+    print("SAMPLE VALUES (Age=40, θ=5.0):")
+    print("="*60)
+    test_comps = [0.0, 0.033, 0.1, 0.333, 0.5, 1.0]
+    for comp in test_comps:
+        prob = p_search_logit(comp, alpha=alpha, beta_C=5.0)
+        print(f"VacsPerApp = {comp:.3f} → Search Probability = {prob:.4f} ({prob*100:.2f}%)")

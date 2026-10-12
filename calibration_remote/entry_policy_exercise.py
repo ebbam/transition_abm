@@ -2781,3 +2781,170 @@ _fname_wd = "fig_cross_model_wage_duration.png"
 fig_wd.savefig(os.path.join(OUTPUT_PATH, _fname_wd), dpi=150, bbox_inches='tight')
 plt.show()
 print(f"Saved: {_fname_wd}")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SECTION 6: Policy exercise outcomes — declined jobs, EE transitions, wage levels
+#
+# For each policy scenario in `policy_results`, summarise:
+#   - Declined jobs: vacancies that had ≥1 applicant this period but hired no
+#     one (Failed_Hires, added to model_fun.py's per-occupation record — a
+#     vacancy's applicant pool was exhausted by competing vacancies before its
+#     turn in the hiring shuffle). Requires policy_results.pkl to have been
+#     generated after the Failed_Hires instrumentation was added; older caches
+#     will show NaN here until re-run with FORCE_POLICY_RERUN=True.
+#   - EE transitions: count of employed-to-employed hires (expected to fall
+#     under entry-level preferential hiring, since incumbents compete less
+#     successfully for the same vacancies).
+#   - Wage levels: mean economy-wide wage and annualised wage growth over the
+#     simulation, plus mean re-employment (UE) wage relative to occupation
+#     median.
+# ══════════════════════════════════════════════════════════════════════════════
+print("\n=== Section 6: Declined jobs, EE transitions, wage levels ===")
+
+_entry_ids_s6 = set(STATIC_OCC_DF[STATIC_OCC_DF['entry_level']]['Occupation'])
+
+_S6_SCENARIOS = [
+    ('baseline',       'Baseline',           '#888888'),
+    ('ltu_bias_0.5',   'LTU bias ×1.5',      _greens[0]),
+    ('ltu_bias_1.0',   'LTU bias ×2.0',      _greens[1]),
+    ('entry_bias_0.5', 'Entry bias ×1.5',    _reds[0]),
+    ('entry_bias_1.0', 'Entry bias ×2.0',    _reds[1]),
+    ('jg_frac_0.25',   'JG 25% of entrants', '#fdbf6f'),
+    ('jg_frac_0.50',   'JG 50% of entrants', '#ff7f00'),
+]
+_S6_SCENARIOS = [row for row in _S6_SCENARIOS if row[0] in policy_results]
+
+
+def _s6_declined_jobs(occ_df):
+    """Mean (± SE) vacancies per sim with applicants that hired no one —
+    economy-wide and restricted to entry-level occupations."""
+    if 'Failed_Hires' not in occ_df.columns:
+        return np.nan, np.nan, np.nan, np.nan
+    has_sim = 'sim_id' in occ_df.columns
+    groups = occ_df.groupby('sim_id') if has_sim else [(0, occ_df)]
+    econ_tot, entry_tot = [], []
+    for _, g in groups:
+        econ_tot.append(g['Failed_Hires'].sum())
+        entry_tot.append(g.loc[g['Occupation'].isin(_entry_ids_s6), 'Failed_Hires'].sum())
+    econ_tot  = np.array(econ_tot,  dtype=float)
+    entry_tot = np.array(entry_tot, dtype=float)
+    n = len(econ_tot)
+    econ_se  = econ_tot.std(ddof=1)  / np.sqrt(n) if n > 1 else np.nan
+    entry_se = entry_tot.std(ddof=1) / np.sqrt(n) if n > 1 else np.nan
+    return econ_tot.mean(), econ_se, entry_tot.mean(), entry_se
+
+
+def _s6_ee_transitions(trans_df):
+    """Mean (± SE) count of EE transitions per sim."""
+    has_sim = 'sim_id' in trans_df.columns
+    ee = trans_df[trans_df['TransitionType'] == 'EE']
+    if has_sim:
+        all_sims = trans_df['sim_id'].unique()
+        counts = ee.groupby('sim_id').size().reindex(all_sims, fill_value=0).to_numpy(dtype=float)
+    else:
+        counts = np.array([float(len(ee))])
+    n = len(counts)
+    se = counts.std(ddof=1) / np.sqrt(n) if n > 1 else np.nan
+    return counts.mean(), se
+
+
+def _s6_wage_levels(occ_df, trans_df):
+    """Mean (± SE) economy-wide wage level and annualised wage growth (%) per
+    sim, plus mean re-employment (UE) wage relative to occupation median.
+    Derived from Total_Wages / Employment on occ_df (present for every
+    scenario, including the cached baseline) rather than the pre-aggregated
+    grouped_df, whose baseline copy doesn't carry wage columns.
+    """
+    has_sim = 'sim_id' in occ_df.columns
+    econ = (occ_df.groupby(['Time Step', 'sim_id'] if has_sim else ['Time Step'])
+                  [['Total_Wages', 'Employment']].sum().reset_index())
+    if not has_sim:
+        econ['sim_id'] = 0
+    econ['Mean_Economy_Wage'] = econ['Total_Wages'] / econ['Employment']
+
+    levels, growths = [], []
+    for _, g in econ.groupby('sim_id'):
+        g = g.sort_values('Time Step')
+        w = g['Mean_Economy_Wage'].dropna()
+        if len(w) < 2:
+            continue
+        levels.append(w.mean())
+        n_years = (g['Time Step'].max() - g['Time Step'].min()) / 12.0
+        growths.append(((w.iloc[-1] / w.iloc[0]) ** (1.0 / max(n_years, 1e-6)) - 1) * 100)
+    levels, growths = np.array(levels), np.array(growths)
+    n = len(levels)
+    level_se  = levels.std(ddof=1)  / np.sqrt(n) if n > 1 else np.nan
+    growth_se = growths.std(ddof=1) / np.sqrt(n) if n > 1 else np.nan
+
+    ue = trans_df[trans_df['TransitionType'] == 'UE'].merge(
+        occ_wage_info[['Occupation', 'occ_median_wage']],
+        left_on='DestinationOccupation', right_on='Occupation', how='left')
+    ue['wr'] = ue['AcceptedWage'] / ue['occ_median_wage']
+
+    return levels.mean(), level_se, growths.mean(), growth_se, ue['wr'].mean()
+
+
+_s6_rows = []
+for _key, _label, _color in _S6_SCENARIOS:
+    _trans_df, _grouped_df, _occ_df = policy_results[_key]
+    _econ_fh, _econ_fh_se, _entry_fh, _entry_fh_se = _s6_declined_jobs(_occ_df)
+    _ee_mean, _ee_se = _s6_ee_transitions(_trans_df)
+    _wl_mean, _wl_se, _wg_mean, _wg_se, _ue_wr = _s6_wage_levels(_occ_df, _trans_df)
+    _s6_rows.append({
+        'scenario':                       _label,
+        'declined_jobs_economy_mean':     _econ_fh,   'declined_jobs_economy_se':  _econ_fh_se,
+        'declined_jobs_entry_level_mean': _entry_fh,  'declined_jobs_entry_level_se': _entry_fh_se,
+        'ee_transitions_mean':            _ee_mean,   'ee_transitions_se':         _ee_se,
+        'mean_wage_level':                _wl_mean,   'mean_wage_level_se':        _wl_se,
+        'annualised_wage_growth_pct':     _wg_mean,   'annualised_wage_growth_pct_se': _wg_se,
+        'mean_ue_wage_ratio':             _ue_wr,
+    })
+
+s6_summary = pd.DataFrame(_s6_rows)
+print("\n" + s6_summary.to_string(index=False))
+s6_summary.to_csv(os.path.join(OUTPUT_PATH, "policy_outcomes_summary.csv"), index=False)
+print("Saved: policy_outcomes_summary.csv")
+
+if s6_summary['declined_jobs_economy_mean'].isna().all():
+    print("\n⚠ 'Failed_Hires' not found in any cached occ_df — policy_results.pkl predates "
+          "the Failed_Hires instrumentation added to model_fun.py. Set FORCE_POLICY_RERUN=True "
+          "above and re-run to populate declined-job counts.")
+
+# ── Figure: declined jobs / EE transitions / wage growth by scenario ─────────
+_s6_x      = np.arange(len(_S6_SCENARIOS))
+_s6_labels = [lbl for _, lbl, _ in _S6_SCENARIOS]
+_s6_colors = [c   for _, _, c   in _S6_SCENARIOS]
+
+
+def _s6_bar(ax, vals, se, ylabel, title):
+    _yerr = np.nan_to_num(1.96 * np.asarray(se, dtype=float), nan=0.0)
+    ax.bar(_s6_x, vals, 0.6, color=_s6_colors, alpha=0.85, edgecolor='white', linewidth=0.3,
+           yerr=_yerr, error_kw=dict(ecolor='black', elinewidth=1.2, capsize=4, capthick=1.2))
+    ax.axhline(0, color='black', linewidth=0.8)
+    ax.set_xticks(_s6_x)
+    ax.set_xticklabels(_s6_labels, rotation=35, ha='right', fontsize=8)
+    ax.set_ylabel(ylabel, fontsize=10)
+    ax.set_title(title, fontsize=11, fontweight='bold')
+    ax.grid(axis='y', alpha=0.3)
+
+
+_fig_s6_w, _fig_s6_h = TEXTWIDTH, ROW_HEIGHT
+fig_s6, (ax_s6_A, ax_s6_B, ax_s6_C) = plt.subplots(1, 3, figsize=(_fig_s6_w, _fig_s6_h))
+
+_s6_bar(ax_s6_A, s6_summary['declined_jobs_entry_level_mean'], s6_summary['declined_jobs_entry_level_se'],
+        "Declined jobs per sim\n(entry-level occs)", "A.  Declined jobs\n(unfilled offers)")
+_s6_bar(ax_s6_B, s6_summary['ee_transitions_mean'], s6_summary['ee_transitions_se'],
+        "EE transitions per sim", "B.  EE transitions")
+_s6_bar(ax_s6_C, s6_summary['annualised_wage_growth_pct'], s6_summary['annualised_wage_growth_pct_se'],
+        "Annualised wage growth (%)", "C.  Wage growth")
+
+fig_s6.suptitle(
+    f"Policy exercise outcomes — {REFERENCE_MODEL}  |  error bars = 95% CI across sims",
+    fontsize=12, fontweight='bold'
+)
+plt.tight_layout()
+_fname_s6 = "fig6_policy_outcomes_declined_ee_wages.png"
+save_plot_standard(fig_s6, os.path.join(OUTPUT_PATH, _fname_s6), aspect_ratio=_fig_s6_h / _fig_s6_w)
+save_plot_standard(fig_s6, os.path.join(OUTPUT_PATH, _fname_s6.replace('.png', '.pdf')), aspect_ratio=_fig_s6_h / _fig_s6_w)
+plt.show()
+print(f"Saved: {_fname_s6} (PNG + PDF)")

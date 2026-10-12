@@ -969,26 +969,27 @@ t2 <- flow_rates_sa %>%
 
 print(t2)
 
-t2_no_title <- flow_rates_sa %>% 
-  mutate(Raw = 0.06) %>% 
-  select(date, EE_quart_s, Raw) %>% 
+t2_no_title <- flow_rates_sa %>%
+  filter(date >= '2000 Q1') %>%
+  mutate(Raw = pull(summarise(filter(flow_rates_sa, date >= '2000 Q1'), mean(EE_x_5_quart_s, na.rm = TRUE)))) %>% 
+  select(date, EE_x_5_quart_s, Raw) %>% 
   pivot_longer(!date) %>% 
   ggplot(aes(x = date, y = value, color = name, group = name, linetype = name)) +
   geom_line() + 
   scale_color_manual(
-    values = c("EE_quart_s" = "tomato3",
-               #"EE_x_5_quart_s" = "grey10", 
+    values = c(#"EE_quart_s" = "tomato3",
+               "EE_x_5_quart_s" = "tomato3", 
                "Raw" = "darkblue"),
-    labels = c("EE_quart_s" =  "All Transitions", 
-               #"EE_x_5_quart_s" = str_wrap("Transitions with >5% Wage Gain", 20),
+    labels = c(#"EE_quart_s" =  "All Transitions", 
+               "EE_x_5_quart_s" = str_wrap("Transitions with >5% Wage Gain", 20),
                "Raw" = "Parameter Value")
   ) +
   scale_linetype_manual(
-    values = c("EE_quart_s" = "solid",
-               #"EE_x_5_quart_s" = "dotted",
+    values = c(#"EE_x_5_quart_s" = "solid",
+               "EE_x_5_quart_s" = "solid",
                "Raw" = "dashed"),
-    labels = c("EE_quart_s" = "All Transitions",
-               #"EE_x_5_quart_s" =  str_wrap("Transitions with >5% Wage Gain", 20), 
+    labels = c(#"EE_x_5_quart_s" = "All Transitions",
+               "EE_x_5_quart_s" =  str_wrap("Transitions with >5% Wage Gain", 20), 
                "Raw" = "Parameter Value")
   ) +
   scale_x_continuous(

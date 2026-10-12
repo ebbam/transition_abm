@@ -1,0 +1,3 @@
+scenario,declined_jobs_economy_mean,declined_jobs_economy_se,declined_jobs_entry_level_mean,declined_jobs_entry_level_se,ee_transitions_mean,ee_transitions_se,annualised_wage_growth_pct,annualised_wage_growth_pct_se
+no_policy,16315.6,56.98999912265308,11117.6,45.805676504119006,4210.6,40.1018702805742,-0.40729801177001423,0.05854634443427129
+policy,6671.6,57.440926176377054,5012.4,32.82925524589311,8431.8,81.02061466071459,-0.39673951416104636,0.06290489161225327
