@@ -1,0 +1,146 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.3 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{nyt/global//global/global/global}
+    \entry{brynjolfsson_canaries_2025}{misc}{}{}
+      \name{author}{3}{}{%
+        {{un=0,uniquepart=base,hash=7bd9f54569cb8c0301da00ed49b5a752}{%
+           family={Brynjolfsson},
+           familyi={B\bibinitperiod},
+           given={Erik},
+           giveni={E\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=bc2a8f00bfc18bd49df7999b6c189977}{%
+           family={Chandar},
+           familyi={C\bibinitperiod},
+           given={Bharat},
+           giveni={B\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=ab5d3f04b4a461107e7a700637de559a}{%
+           family={Chen},
+           familyi={C\bibinitperiod},
+           given={Ruyu},
+           giveni={R\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{language}{1}{%
+        {en-US}%
+      }
+      \strng{namehash}{9488c66e220dd58c117e636ff7818818}
+      \strng{fullhash}{9488c66e220dd58c117e636ff7818818}
+      \strng{fullhashraw}{9488c66e220dd58c117e636ff7818818}
+      \strng{bibnamehash}{9488c66e220dd58c117e636ff7818818}
+      \strng{authorbibnamehash}{9488c66e220dd58c117e636ff7818818}
+      \strng{authornamehash}{9488c66e220dd58c117e636ff7818818}
+      \strng{authorfullhash}{9488c66e220dd58c117e636ff7818818}
+      \strng{authorfullhashraw}{9488c66e220dd58c117e636ff7818818}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{shorttitle}
+      \field{journaltitle}{Stanford Digital Economy Lab}
+      \field{month}{11}
+      \field{shorttitle}{Canaries in the {Coal} {Mine}?}
+      \field{title}{Canaries in the {Coal} {Mine}? {Six} {Facts} about the {Recent} {Employment} {Effects} of {Artificial} {Intelligence}}
+      \field{urlday}{24}
+      \field{urlmonth}{6}
+      \field{urlyear}{2026}
+      \field{year}{2025}
+      \field{urldateera}{ce}
+      \verb{urlraw}
+      \verb https://digitaleconomy.stanford.edu/publication/canaries-in-the-coal-mine-six-facts-about-the-recent-employment-effects-of-artificial-intelligence/
+      \endverb
+      \verb{url}
+      \verb https://digitaleconomy.stanford.edu/publication/canaries-in-the-coal-mine-six-facts-about-the-recent-employment-effects-of-artificial-intelligence/
+      \endverb
+    \endentry
+    \entry{eloundou_gpts_2024}{article}{}{}
+      \name{author}{4}{}{%
+        {{un=0,uniquepart=base,hash=7acbec2d39020460335e73a07de706e4}{%
+           family={Eloundou},
+           familyi={E\bibinitperiod},
+           given={Tyna},
+           giveni={T\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=fd98cf8f44d45a7d097eec72424a9a4a}{%
+           family={Manning},
+           familyi={M\bibinitperiod},
+           given={Sam},
+           giveni={S\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=2321e04943bcadb0275819652b980521}{%
+           family={Mishkin},
+           familyi={M\bibinitperiod},
+           given={Pamela},
+           giveni={P\bibinitperiod},
+           givenun=0}}%
+        {{un=0,uniquepart=base,hash=2e01e687f3caab6d764e9e5588261295}{%
+           family={Rock},
+           familyi={R\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod},
+           givenun=0}}%
+      }
+      \list{publisher}{1}{%
+        {American Association for the Advancement of Science}%
+      }
+      \strng{namehash}{44030746c147dbe174c0315c97f8cf61}
+      \strng{fullhash}{4d37b858190d9085ef0e29abc07dfa89}
+      \strng{fullhashraw}{4d37b858190d9085ef0e29abc07dfa89}
+      \strng{bibnamehash}{44030746c147dbe174c0315c97f8cf61}
+      \strng{authorbibnamehash}{44030746c147dbe174c0315c97f8cf61}
+      \strng{authornamehash}{44030746c147dbe174c0315c97f8cf61}
+      \strng{authorfullhash}{4d37b858190d9085ef0e29abc07dfa89}
+      \strng{authorfullhashraw}{4d37b858190d9085ef0e29abc07dfa89}
+      \field{sortinit}{E}
+      \field{sortinithash}{8da8a182d344d5b9047633dfc0cc9131}
+      \field{extradatescope}{labelyear}
+      \field{labeldatesource}{}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{shorttitle}
+      \field{journaltitle}{Science}
+      \field{month}{6}
+      \field{number}{6702}
+      \field{shorttitle}{{GPTs} are {GPTs}}
+      \field{title}{{GPTs} are {GPTs}: {Labor} market impact potential of {LLMs}}
+      \field{urlday}{28}
+      \field{urlmonth}{8}
+      \field{urlyear}{2026}
+      \field{volume}{384}
+      \field{year}{2024}
+      \field{urldateera}{ce}
+      \field{pages}{1306\bibrangedash 1308}
+      \range{pages}{3}
+      \verb{doi}
+      \verb 10.1126/science.adj0998
+      \endverb
+      \verb{urlraw}
+      \verb https://www.science.org/doi/10.1126/science.adj0998
+      \endverb
+      \verb{url}
+      \verb https://www.science.org/doi/10.1126/science.adj0998
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
