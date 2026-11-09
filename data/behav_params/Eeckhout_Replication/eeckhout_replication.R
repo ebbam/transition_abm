@@ -930,7 +930,7 @@ eeckhout_plot <- plot_data %>%
                           #The red line demonstrates the fitted values of the HP filtered EE series using a linear predictor on the HP-filtered GDP series."
 
   #facet_wrap(~hp_text, scales = "free", ncol = 1) +
-  xlim(2000, 2024) +
+  xlim(2000, 2020) +
   theme(legend.position = "bottom") +
   common_theme
 
