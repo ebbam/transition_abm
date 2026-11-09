@@ -2058,15 +2058,14 @@ for _mc in _CM_SPECS_NO_CYC:
     }
     del _bl_te, _po_te, _tr_bl, _grp_bl, _occ_bl, _tr_po, _grp_po, _occ_po
 
-# Figure (4 panels: 2×2 grid)
+# Figure (3 panels, 2 rows: Δ LTUER ts across the top; Δ UE duration bars + occ scatter below)
 from matplotlib.gridspec import GridSpec as _GS_CB
 _fig_cb_w, _fig_cb_h = TEXTWIDTH, ROW_HEIGHT * 2
 fig_cb = plt.figure(figsize=(_fig_cb_w, _fig_cb_h))
 _gs_cb = _GS_CB(2, 2, figure=fig_cb, hspace=0.45, wspace=0.33)
-ax_C  = fig_cb.add_subplot(_gs_cb[0, 0])   # A: Δ LTUER ts
-ax_GF = fig_cb.add_subplot(_gs_cb[0, 1])   # B: Δ UE duration bar
-ax_HR = fig_cb.add_subplot(_gs_cb[1, 0])   # C: Δ hires rate ts
-ax_I  = fig_cb.add_subplot(_gs_cb[1, 1])   # D: occ scatter
+ax_C  = fig_cb.add_subplot(_gs_cb[0, :])   # Δ LTUER ts
+ax_GF = fig_cb.add_subplot(_gs_cb[1, 0])   # Δ UE duration bar
+ax_I  = fig_cb.add_subplot(_gs_cb[1, 1])   # occ scatter
 
 _cb_x      = np.arange(len(_CM_SPECS_NO_CYC))
 _cb_labels = [_CM_DISPLAY[c] for c in _CM_SPECS_NO_CYC]
@@ -2135,30 +2134,6 @@ ax_GF.set_ylabel("Δ Mean UE Duration (months)")
 ax_GF.set_title("Δ Mean UE Duration by Worker Type",
                 fontweight='normal')
 ax_GF.grid(axis='y', alpha=0.3)
-
-# ── Panel C: Δ hires rate time series ─────────────────────────────────────────
-for _mc in _CM_SPECS_NO_CYC:
-    _col = MODEL_COLORS_BY_ID.get(_mc, '#aaaaaa')
-    _lbl = _CM_DISPLAY[_mc].replace('\n', ' ')
-    _dh  = _cm_te[_mc]['delta_hr_ts']
-    ax_HR.plot(_dh['DATE'], _dh['delta_hr'], color=_col, linewidth=1.0, label=_lbl)
-    ax_HR.fill_between(_dh['DATE'],
-                       _dh['delta_hr'] - 1.96*_dh['se_hr'],
-                       _dh['delta_hr'] + 1.96*_dh['se_hr'],
-                       alpha=0.12, color=_col)
-
-for _, rec in recession_spans.iterrows():
-    ax_HR.axvspan(pd.to_datetime(rec['start']), pd.to_datetime(rec['end']),
-                  color='lightgrey', alpha=0.4, zorder=0)
-ax_HR.axhline(0, color='black', linewidth=0.8, linestyle='--', alpha=0.6)
-ax_HR.set_xlim(pd.to_datetime(CALIB_DATE[0]), pd.to_datetime(CALIB_DATE[1]))
-ax_HR.set_xlabel("Date")
-ax_HR.set_ylabel("Δ Hires Rate (pp)")
-ax_HR.set_title("Δ Hires Rate", fontweight='normal')
-ax_HR.xaxis.set_major_locator(plt.matplotlib.dates.YearLocator(4))
-ax_HR.xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%Y'))
-plt.setp(ax_HR.get_xticklabels(), rotation=45, ha='right')
-ax_HR.grid(axis='y', alpha=0.3)
 
 # ── Panel D: occupational heterogeneity scatter (SOC broad) ───────────────────
 for _mc in _CM_SPECS_NO_CYC:
