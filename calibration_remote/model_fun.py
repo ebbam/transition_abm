@@ -44,9 +44,7 @@ def run_single_local(d_u,
                     jg_frac = 0.0,
                     jg_wage = "entry_anchor",
                     ltu_hire_bias = 0.0,
-                    entry_hire_bias = 0.0,
-                    u_search_rule = "empirical",
-                    opt_search_params = None):
+                    entry_hire_bias = 0.0):
 
     """ Runs the model once
     Argsuments:
@@ -55,9 +53,6 @@ def run_single_local(d_u,
        time_steps: Number of time steps for single model run
        d_u: parameter input to separation probability
        d_v: parameter input to vacancy opening probability
-       u_search_rule: unemployed application effort -- "empirical" (CPS schedule draw, default),
-           or an optimizing benchmark: "sticky" / "bayes" / "bayes_month" (see OPT_SEARCH_DEFAULTS in abm_funs.py)
-       opt_search_params: dict overriding OPT_SEARCH_DEFAULTS for the optimizing rules
 
     Returns:
        dataframe of model run results
@@ -72,9 +67,6 @@ def run_single_local(d_u,
     vacs_temp = deepcopy(vacs)
     net = deepcopy(net_temp)
     seekers_rec = []
-    # duration at search -> [unemployed seekers, applications, seekers with zero applications,
-    #                        seekers with no acceptable vacancy, acceptable vacancies (sum)]
-    apps_by_dur = defaultdict(lambda: [0, 0, 0, 0, 0])
     if not simple_res:
         _next_wid = 0
         for _occ in net:
@@ -183,15 +175,7 @@ def run_single_local(d_u,
             
             unemp_seekers += len(occ.list_of_unemployed)
             for u in occ.list_of_unemployed:
-                u.search_and_apply(net, r_vacs, disc, app_effort_dat, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp, strict_reservation_wage = strict_rw,
-                                   u_search_rule = u_search_rule, opt_params = opt_search_params)
-                if not simple_res and t >= delay:
-                    _rec = apps_by_dur[u.time_unemployed]
-                    _rec[0] += 1
-                    _rec[1] += u.apps_sent or 0
-                    _rec[2] += (u.apps_sent or 0) == 0
-                    _rec[3] += getattr(u, 'n_acceptable', 0) == 0
-                    _rec[4] += getattr(u, 'n_acceptable', 0)
+                u.search_and_apply(net, r_vacs, disc, app_effort_dat, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp, strict_reservation_wage = strict_rw)
 
             if otj:
                 # # For both models, a mean of 7% of employed workers are searching for new jobs
@@ -224,7 +208,7 @@ def run_single_local(d_u,
                         for idx in searching_idx:
                             e_apps += occ.list_of_employed[idx].emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp)
                 else:
-                    for e in random.sample(occ.list_of_employed, int(0.03*len(occ.list_of_employed))):
+                    for e in random.sample(occ.list_of_employed, int(0.07*len(occ.list_of_employed))):
                         emp_seekers += 1
                         e_apps += e.emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp)
 
@@ -405,7 +389,8 @@ def run_single_local(d_u,
             occ.update_workers()
             if not simple_res:
                 for wrkr in occ.list_of_unemployed:
-                    ue_stock_records.append((t+1, occ.occupation_id, wrkr.time_unemployed, wrkr.longterm_unemp))
+                    ue_stock_records.append((t+1, occ.occupation_id, wrkr.time_unemployed, wrkr.longterm_unemp,
+                                             getattr(wrkr, 'new_entrant', False)))
             retired = occ.retire_workers()
             retired_all += retired
             # Assert that all unemployed people have spent 1 or more time periods unemployed
@@ -599,11 +584,6 @@ def run_single_local(d_u,
             })
 
             data = {'UER': grouped['UER'], 'VACRATE': grouped['VACRATE'], }#, 'SEPSRATE': grouped['Separations Rate']}
-            # Applications by unemployment duration at the time of search, summed over the recorded window
-            data['apps_by_duration'] = pd.DataFrame(
-                [(d, *rec) for d, rec in sorted(apps_by_dur.items())],
-                columns=['Duration', 'Unemployed Seekers', 'Applications Sent', 'Zero-Application Seekers',
-                         'No-Acceptable-Vacancy Seekers', 'Acceptable Vacancies'])
             avg_wage_offer_diff_df = pd.DataFrame(avg_wage_offer_diff_records)
 
             if app_load_records:
@@ -612,7 +592,7 @@ def run_single_local(d_u,
                 app_load_df = pd.DataFrame(columns=['Time Step','Occupation','OpenVacs','TotalApplicants','MeanAppsPerVac','MedianAppsPerVac'])
 
             ue_spell_origin_df = pd.DataFrame(ue_spell_records, columns=['Time Step', 'OriginOccupation', 'DestinationOccupation', 'UEDuration'])
-            ue_stock_df = pd.DataFrame(ue_stock_records, columns=['Time Step', 'Occupation', 'UEDuration', 'LongtermUnemp'])
+            ue_stock_df = pd.DataFrame(ue_stock_records, columns=['Time Step', 'Occupation', 'UEDuration', 'LongtermUnemp', 'NewEntrant'])
             transition_df = pd.DataFrame(transition_records, columns=[
                 'Time Step', 'TransitionType', 'OriginOccupation', 'DestinationOccupation',
                 'UEDuration', 'PreSepWage', 'AcceptedWage', 'Age', 'Female', 'LongtermUnemp',

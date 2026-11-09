@@ -7,14 +7,22 @@ Runs the reference model (otj_cyclical_e_disc, calibrated params held fixed) wit
 alternative rules for unemployed application effort:
   - "empirical":   the CPS schedule draw (current ABM)
   - "sticky":      marginal-benefit rule, sticky beliefs (eq. 10, h = 0), reservation wage
+  - "sticky_cps":  the same rule with (p_bar, r, omega, kappa) calibrated jointly to the CPS applications profile
+                   (job_search_notebook.ipynb, "Calibration to the CPS applications profile"); its outputs go to
+                   overnight_N<N>/cps_calibration/ unless OPT_OUT_SUBDIR is set, so earlier outputs are untouched
   - "bayes_month": marginal-benefit rule, Bayesian beliefs (one failure per month), reservation wage
   - "fixed":       non-behavioural benchmark: beliefs never erode, no reservation wage
   - "rational":    non-behavioural benchmark: full information on last period's competition,
                    no reservation wage
+  - "planner_*":   central planner assigns every seeker's application one-to-one each month (unemployed and
+                   the employed who search; OTJ search at the fixed 7% share), maximising matches or surplus,
+                   with or without reservation wages (planner_assign in opt_search_funs.py). Run only when named in
+                   OPT_SCENARIOS; outputs go to overnight_N<N>/planner/ unless OPT_OUT_SUBDIR is set:
+                   OPT_SCENARIOS=empirical,sticky,planner_match_rw,planner_match_norw,planner_surplus_rw,planner_surplus_norw
 The two non-behavioural benchmarks run at the behavioural cost (kappa = 0.015) and level-matched
 ("_lm": kappa set so mean applications match the empirical scenario: offline guess, then
 refined with single-run ABM probes; probe log saved to level_match_<scenario>.json).
-See OPT_SEARCH_DEFAULTS / optimal_application_set in abm_funs.py and the
+See OPT_SEARCH_DEFAULTS / optimal_application_set in opt_search_funs.py and the
 "Optimizing benchmark for the ABM" section of job_search_notebook.ipynb.
 
 Outputs (figures A1-A8, B1 duration Wasserstein, B3 applications by duration, fit summary)
@@ -57,10 +65,10 @@ _NO_WRITES = [mock.patch('pandas.DataFrame.to_csv'), mock.patch('matplotlib.pypl
 for _p in _NO_WRITES:
     _p.start()
 from network_input_builder import network_input_builder
-from model_fun import run_single_local
+from model_fun_opt import run_single_opt
 from collate_macro_vars import gdp_dat, macro_observations, tightness
-from abm_funs import (duration_to_prob_dict, applications_sent, OPT_SEARCH_DEFAULTS,
-                      optimal_application_set, rho_tilde_row)
+from abm_funs import duration_to_prob_dict, applications_sent
+from opt_search_funs import OPT_SEARCH_DEFAULTS, optimal_application_set, rho_tilde_row
 from plot_style import TEXTWIDTH, ROW_HEIGHT, save_plot_standard, add_shared_legend
 from plot_funs import (plot_uer_vac, plot_ltuer, plot_bev_curve_color, plot_cd_vs_td, plot_trans_rates,
                        plot_seeker_comp_line, plot_applications_and_composition, plot_market_tightness,
@@ -86,7 +94,11 @@ OUTPUT_PATH = os.path.join(
 RUN_DIR = os.path.join(OUTPUT_PATH, f"overnight_N{N_SIMS}/")
 # Outputs (figures, fit summary) can go to a subfolder of RUN_DIR, e.g. OPT_OUT_SUBDIR=core for a re-plot of a
 # scenario subset from the cached runs; caches and level-match logs are always read from RUN_DIR
-OUT_DIR = os.path.join(RUN_DIR, os.environ["OPT_OUT_SUBDIR"] + "/") if os.environ.get("OPT_OUT_SUBDIR") else RUN_DIR
+_only = [x for x in os.environ.get('OPT_SCENARIOS', '').split(',') if x]   # e.g. OPT_SCENARIOS=empirical,sticky
+_out_subdir = os.environ.get("OPT_OUT_SUBDIR") or (
+    "planner" if any(n.startswith('planner') for n in _only)
+    else "cps_calibration" if (not _only or "sticky_cps" in _only) else "")
+OUT_DIR = os.path.join(RUN_DIR, _out_subdir + "/") if _out_subdir else RUN_DIR
 FIG_DIR = os.path.join(OUT_DIR, "figures/")
 
 
@@ -123,7 +135,20 @@ SCENARIOS = {
     'sticky_r105': {'u_search_rule': 'sticky',
                     'opt_search_params': {'p_bar': 0.30, 'kappa': KAPPA_BEHAV,
                                           'beta0': 1.0, 'omega': 0.10, 'r': 0.105}},
+    'sticky_cps': {'u_search_rule': 'sticky',
+                   'opt_search_params': {'p_bar': 0.20, 'kappa': 0.0169,
+                                         'beta0': 1.0, 'omega': 0.10, 'r': 0.10}},
+    # Central planner (planner_assign in opt_search_funs.py): run only when named in OPT_SCENARIOS
+    'planner_match_rw':     {'u_search_rule': 'planner',
+                             'opt_search_params': {'planner_objective': 'matches', 'use_res_wage': True}},
+    'planner_match_norw':   {'u_search_rule': 'planner',
+                             'opt_search_params': {'planner_objective': 'matches', 'use_res_wage': False}},
+    'planner_surplus_rw':   {'u_search_rule': 'planner',
+                             'opt_search_params': {'planner_objective': 'surplus', 'use_res_wage': True}},
+    'planner_surplus_norw': {'u_search_rule': 'planner',
+                             'opt_search_params': {'planner_objective': 'surplus', 'use_res_wage': False}},
 }
+PLANNER_SCENARIOS = [n for n in SCENARIOS if n.startswith('planner')]
 SCENARIO_LABELS = {
     'empirical':      'CPS Schedule (Current ABM)',
     'sticky':         'Optimizing: Sticky Beliefs',
@@ -133,11 +158,18 @@ SCENARIO_LABELS = {
     'nb_fixed':       'Non-Behavioural Optimizing: Fixed Beliefs (kappa = 0.015)',
     'nb_rational':    'Non-Behavioural Optimizing: Full Information (kappa = 0.015)',
     'sticky_r105':    'Optimizing: Sticky Beliefs (r = 0.105)',
+    'sticky_cps':     'Optimizing: Sticky Beliefs (CPS-Calibrated)',
+    'planner_match_rw':     'Planner: Max Matches (Reservation Wages)',
+    'planner_match_norw':   'Planner: Max Matches (No Reservation Wages)',
+    'planner_surplus_rw':   'Planner: Max Surplus (Reservation Wages)',
+    'planner_surplus_norw': 'Planner: Max Surplus (No Reservation Wages)',
 }
 SCENARIO_COLORS = {
     'empirical': '#4D4D4D', 'sticky': '#1F78B4', 'bayes_month': '#33A02C',
     'nb_fixed_lm': '#FF7F00', 'nb_rational_lm': '#6A3D9A',
-    'nb_fixed': '#FDBF6F', 'nb_rational': '#CAB2D6', 'sticky_r105': '#A6CEE3',
+    'nb_fixed': '#FDBF6F', 'nb_rational': '#CAB2D6', 'sticky_r105': '#A6CEE3', 'sticky_cps': '#E31A1C',
+    'planner_match_rw': '#B15928', 'planner_match_norw': '#E7298A',
+    'planner_surplus_rw': '#66A61E', 'planner_surplus_norw': '#A6761D',
 }
 
 # ── Reference model inputs (mirrors entry_policy_exercise.py) ────────────────
@@ -217,7 +249,7 @@ def run_scenario(name, overrides, n_sims=N_SIMS):
         t0 = time.time()
         params = deepcopy(REF_BASE_PARAMS)
         params.update(overrides)
-        (_, sim_grouped, _, data, seekers_rec, _, _, _, _, _, ue_stock_df, _) = run_single_local(**params)
+        (_, sim_grouped, _, data, seekers_rec, _, _, _, _, _, ue_stock_df, _) = run_single_opt(**params)
         g = sim_grouped.copy()
         g['DATE'] = _monthly_dates(len(g))
         g['LTUER'] = g['LT Unemployed Persons'] / g['Unemployment']
@@ -516,6 +548,49 @@ def make_outputs(results):
         pd.concat(rows_b3).to_csv(_out(OUT_DIR, "applications_by_duration.csv"), index=False)
     _try("B3 Applications by duration", _b3)
 
+    # B4 perceived 3-month job finding vs Mueller, Spinnewijn & Topa (2021) Figure 3 (untargeted; optimizing
+    # rules only). Per run: mean perceived monthly failure by duration F_tau, P3_tau = 1 - F_tau F_tau+1 F_tau+2
+    # (from duration means, so an approximation to following each seeker), averaged within MST's duration bins
+    # with their weights over months of unemployment.
+    def _b4():
+        mst_dir = os.path.join(PROJECT_ROOT, "../data/behav_params/Mueller_Replication/")
+        targets = pd.read_csv(mst_dir + "mueller_fig3_targets.csv")
+        weights = pd.read_csv(mst_dir + "mueller_fig3_duration_weights.csv")
+        opt = [n for n in names if 'Perceived Monthly Failure' in results[n]['apps_by_duration']
+               and results[n]['apps_by_duration']['Perceived Monthly Failure'].notna().any()]
+        if not opt:
+            return
+        x = np.arange(1, len(targets) + 1)
+        fig, ax = plt.subplots(figsize=(TEXTWIDTH, ROW_HEIGHT))
+        ax.errorbar(x, targets['pjob_find'], yerr=1.96 * targets['se_pjob_find'], color='black', marker='x',
+                    capsize=3, linewidth=1)
+        ax.plot(x, targets['rjob_find'], color='grey', marker='x', linestyle='--', linewidth=1)
+        rows_b4 = []
+        for n in opt:
+            abd = results[n]['apps_by_duration']
+            F = (abd.assign(f=abd['Perceived Monthly Failure'] / abd['Unemployed Seekers'])
+                 .pivot_table(index='Duration', columns='sim_id', values='f'))
+            F = F.reindex(range(1, int(weights['tau'].max()) + 3))
+            P3 = 1 - F * F.shift(-1) * F.shift(-2)
+            bins = np.array([[np.nansum(g['share'].values * P3.loc[g['tau'].values, sim].values)
+                              for _, g in weights.groupby('udur_bin')] for sim in P3.columns])
+            mean, half = bins.mean(axis=0), 1.96 * bins.std(axis=0) / np.sqrt(bins.shape[0])
+            ax.errorbar(x, mean, yerr=half, color=SCENARIO_COLORS[n], marker='s', markersize=3, capsize=2,
+                        linewidth=1)
+            rows_b4.append(pd.DataFrame({'scenario': n, 'udur_bin': x, 'perceived_p3': mean, 'ci_half_width': half,
+                                         'mst_elicited': targets['pjob_find'], 'mst_realized': targets['rjob_find']}))
+        ax.set_xticks(x, ["0-3", "4-6", "7-12", "13+"])
+        ax.set_xlabel("Months Unemployed")
+        ax.set_ylabel("3-Month Job Finding")
+        ax.set_title("Perceived 3-Month Job Finding: Model vs MST (2021)", fontweight='bold')
+        plt.tight_layout()
+        add_shared_legend(fig, {SCENARIO_LABELS[n]: SCENARIO_COLORS[n] for n in opt}, ncol=1, extra_handles=[
+            Line2D([0], [0], color='black', marker='x', label='MST Elicited'),
+            Line2D([0], [0], color='grey', marker='x', linestyle='--', label='MST Realized')])
+        save_plot_standard(fig, _out(FIG_DIR, "perceived_job_finding_vs_mst.png"), aspect_ratio=ROW_HEIGHT / TEXTWIDTH)
+        pd.concat(rows_b4).to_csv(_out(OUT_DIR, "perceived_job_finding_vs_mst.csv"), index=False)
+    _try("B4 Perceived job finding vs MST", _b4)
+
     # Overview: UER, vacancy rate, applications per seeker on a common date axis
     def _overview():
         fig, axes = plt.subplots(3, 1, figsize=(TEXTWIDTH, ROW_HEIGHT * 3), sharex=True)
@@ -541,9 +616,8 @@ def make_outputs(results):
 # ── Main loop ─────────────────────────────────────────────────────────────────
 results = {}
 SCENARIOS_RESOLVED = {}
-_only = [x for x in os.environ.get('OPT_SCENARIOS', '').split(',') if x]   # e.g. OPT_SCENARIOS=empirical,sticky
 for name, overrides in SCENARIOS.items():
-    if _only and name not in _only:
+    if (_only and name not in _only) or (not _only and name in PLANNER_SCENARIOS):
         continue
     overrides = deepcopy(overrides)
     prm = overrides.get('opt_search_params', {})
