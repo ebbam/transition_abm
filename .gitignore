@@ -516,6 +516,14 @@ data/wage_adjustment/main.fdb_latexmk
 data/wage_adjustment/main.fls
 data/wage_adjustment/main.pdf
 data/occ_macro_vars/ipums_vars/cps_00023.dat
-data/occ_macro_vars/ipums_vars/cps_00023.xml
 data/occ_macro_vars/ipums_vars/cps_00023.dat.gz
 *.gz
+*.pkl.gz
+# LaTeX build files
+*.aux
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+calibration_remote/output/**/*.out
+.claude/
+
