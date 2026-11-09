@@ -1,0 +1,371 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{natbib}
+\usepackage{hyperref}
+
+\title{Summary of the Internally Optimizing Agents Exercise}
+\date{October 2026}
+
+\begin{document}
+\maketitle
+
+\section{Overview}
+
+In the baseline ABM, unemployed
+workers draw application effort from an empirical schedule drawn from the Current Population Survey (CPS), so search behaviour is imposed rather than chosen. We
+replace that draw with an optimizing rule, leave the rest of the model and its calibrated parameters ($d_u$,
+$\gamma_u$, $\theta$) unchanged, and compare two behavioural (one whose beliefs adjust by a process as similar to the one outlined in Appendix A as possible \& another whose beliefs evolve according to a Bayesian updating rule) and two non-behavioural versions of the rule (fixed beliefs and a ``fully rational'' agent) inside the
+ABM (Table~\ref{tab:overview}).
+
+
+\paragraph{Open questions to discuss:}
+\begin{itemize}
+    \item In this first attempt, we remove the data basis for application effort but keep the data basis for the reservation wage adjustment. We can change this and indeed, depending on how its implemented the reservation wage adjustment can influence the concave shape of search effort.
+    \item I keep employed workers as they are in our baseline model with all behavioral rules enabled (including employed workers responding to market tightness when deciding whether to engage in job search). Therefore, employed workers do not have an internal optimization process in the results below. We might wish to expand this once we settle on the rest. 
+    \item What is the ultimate goal here?
+    \begin{itemize}
+        \item Will this be just another appendix that we can reference in the main text saying something like ``we have implemented the agent constructed in Appendix A as an alternative for modellers who have limited access to micro data similar to that which we calibrate our agents to''? In that case, we would want this to match the results in the main text. 
+        \item Or are we trying to uphold our main claims in the intro that our approach is better than a rational agent optimising their job search? If so, we are somewhat contradicting ourselves by constructing the belief formation process in Appendix A where the agent is indeed optimising but with declining beliefs.
+        \item Rather, we might want this rule to be contrasted with a ``fully optimizing'' agent of some kind (see the fourth agent type below). Even if we want to compare either the data-driven model or our agent in Appendix A to a rational-agent benchmark to show it’s `better', it would help to have a paper on the latest proposed construction of such a rational agent (see next point). 
+    \end{itemize}
+    \item The last agent proposed in this document which considers information about the job market in their search, is currently the closest to a ``rational benchmark'' agent (I think?). What is the best paper on which to base the decision rule of our fully optimizing rational agent on? This would help make sure this rule is defensible if we make a comparison between such an agent and our `behavioural' agents.
+    \item The results rely on keeping the economic parameters calibrated fixed (I take one calibrated version of the ABM as the baseline state of the economy and then test the new agents within this model). Is this the right approach? It seems results could then depend on which set of calibrated economic parameter values we settle on.
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{2.6cm}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+Component & Our specification & Notes \\
+\midrule
+\multicolumn{3}{@{}l}{\textit{Common to All Versions}} \\
+Application choice (all optimizing rules) & Rank found vacancies by surplus; apply while (chance of first success) $\times$
+surplus $\ge \kappa w$ (cost as proportion of agent's previous wage) & \\
+\multicolumn{3}{@{}l}{\textit{Common to Behavioral Versions}} \\
+Reservation wage & Empirical schedule declining with duration (all rules except the benchmarks) & Not derived from the
+model \\
+\addlinespace
+\multicolumn{3}{@{}l}{\textit{Behavioural Rules}} \\
+Sticky beliefs (main) & Perceived success erodes with own failures, decreasing-gain update & This is our own designed
+rule, as in Appendix A \\
+Bayesian beliefs (robustness) & Beta-Bernoulli update, one failure per month & Static application rule; learning does
+not move the reservation wage \\
+\addlinespace
+\multicolumn{3}{@{}l}{\textit{Non-behavioural Benchmarks}} \\
+Fixed beliefs & Constant perceived success probability & No equilibrium matching function \\
+Full information & Perceived success = each occupation's realized hiring probability last month & Adaptive (last
+month's values), closer to the fully optimizing agent we might want to have as our baseline comparison to demonstrate value-add of our approach. Though would like a literature benchmark for designing this. \\
+\bottomrule
+\end{tabularx}
+\caption{The proposed decision rules.}
+\label{tab:overview}
+\end{table}
+
+% Closest literature for each component (removed from Table~\ref{tab:overview}; uncomment to re-include as text,
+% or restore the column from the entries below).
+% Closest literature. The application choice relates to simultaneous search \citep{chade2006simultaneous} and to
+% search intensity \citep{mortensen1977unemployment,pissarides2000equilibrium}; the reservation wage to non-stationary
+% search \citep{vandenberg1990nonstationarity}, with evidence in \citet{krueger2016contribution}. The sticky-belief rule
+% relates to optimistic, slowly revised beliefs \citep{spinnewijn2015unemployed,mueller2021job} and decreasing-gain
+% learning \citep{evans2001learning}; the Bayesian rule to learning from unsuccessful search
+% \citep{burdett1988declining,gonzalez2010equilibrium}. Among the benchmarks, fixed beliefs correspond to stationary
+% search intensity \citep{pissarides2000equilibrium}, and full information to directed search with multiple
+% applications \citep{albrecht2006equilibrium,galenianos2009directed,kircher2009efficiency}, competitive search
+% \citep{moen1997competitive} and urn-ball hiring \citep{burdett2001pricing}.
+
+\section{Decision rules}
+
+All rules apply to unemployed workers only; employed workers keep the baseline on-the-job search rule.
+
+\paragraph{Common structure.}
+Each month, an unemployed worker $b$ with previous wage $w_b$ and unemployment duration $\tau$ samples up to 30
+vacancies from their occupational neighbourhood, as in the baseline. Vacancies paying at least the empirical
+reservation wage $R_{b,\tau} = w_b\,\hat r(\tau)$ form the candidate set $\mathcal{V}_{b,t}$. Occupational
+similarity enters as $\tilde\rho_{ij}\in(0,1]$, the within-row percentile of the transition weight from the worker's
+occupation $i$ to occupation $j$ (own occupation $=1$). The surplus of vacancy $a$ is
+\begin{equation}
+\Delta V_a = (w_a - R_{b,\tau})\,\tilde\rho_{i j(a)}, \qquad a \in \mathcal{V}_{b,t},
+\end{equation}
+and candidates are ranked so that $\Delta V_1 \ge \Delta V_2 \ge \dots$. With a perceived per-application success
+probability $p_{b,t}$ common across applications, the marginal benefit of the $a$-th application and the optimal
+number of applications are
+\begin{equation}
+MB_a = (1-p_{b,t})^{a-1}\,p_{b,t}\,\Delta V_a, \qquad
+A^*_{b,t} = \max\bigl\{a \le \min(\bar A, |\mathcal{V}_{b,t}|) : MB_a \ge \kappa\, w_b\bigr\}, \qquad
+A^*_{b,t} \ge 1 \text{ if } \mathcal{V}_{b,t} \neq \emptyset .
+\end{equation}
+The cost of applying is proportional to the worker's wage, so $A^*$ does not depend on the wage level. The ceiling $\bar A = 30$ is
+the number of vacancies sampled; the floor of one application avoids workers getting stuck in a state of zero search. A worker in month $\tau$ of unemployment uses the belief formed after $\tau-1$
+months of unsuccessful search, and perceives the same success probability for every application:
+\begin{equation}
+p_{a,t} = p_{b,t} = \beta_{b,\tau-1}\,\bar p, \qquad \beta_{b,0} = \beta_0 .
+\end{equation}
+This is equations (8)--(9) of the formalization in Appendix A with the tightness term $m^{\eta}$ replaced by a constant $\bar p$
+and no decline across ranks ($\gamma = 0$) (\textcolor{red}{Note: this constant $\bar p$ might be part of the reason I struggle to recreate the concave search effort profile}). The
+behavioural rules differ only in how $\beta_{b,\tau}$ evolves; beliefs are updated only on the worker's own failures.
+
+\paragraph{Sticky beliefs (main specification).}
+Equation (10) of the formalization in Appendix A, with no positive signals while unemployed ($h_{b,\tau-1} = 0$):
+\begin{equation}
+\beta_{b,\tau} = \Pi_{[0,1]}\!\left(\beta_{b,\tau-1} + \alpha_\tau\,(h_{b,\tau-1} - r)\right)
+= \Pi_{[0,1]}\!\left(\beta_{b,\tau-1} - r\,e^{-\omega\tau}\right), \qquad \alpha_\tau = e^{-\omega\tau},
+\end{equation}
+so beliefs erode at a decaying rate towards the floor $\beta_\infty = \beta_0 - r\,e^{-\omega}/(1-e^{-\omega})$.
+
+\paragraph{Bayesian beliefs (robustness).}
+As a simplification of the rule above, we also implement belief updating following Bayesian updating (\textcolor{red}{citation needed}). The worker holds a Beta prior over per-application success with mean $\bar p$ and strength $N_0$, and counts one
+failure per completed month of search:
+\begin{equation}
+\beta_{b,\tau} = \frac{N_0}{N_0 + \tau} .
+\end{equation}
+
+\subsection{Calibration}\label{sec:cps_cal}
+
+The parameters of the decision rule are set outside the ABM, from micro evidence on search effort, rather than added
+to the macro calibration: the unemployed rule ignores market tightness, so the unemployment and vacancy rates carry
+little information about them, and the CPS effort profile used as an input in the baseline becomes an outcome that can
+be checked. For the sticky rule, $(\bar p, r, \omega, \kappa)$ are chosen jointly on a grid
+($\bar p \in [0.12, 0.32]$, $r \in [0.04, 0.16]$, $\omega \in [0.04, 0.20]$, $\kappa \in [0.008, 0.04]$) to minimise
+the RMSE of mean $A^*$ against the CPS effort-by-duration profile over months 1--36 (dashed line in Figure 1A), for 300 simulated job seekers who
+are never hired and draw from the initial vacancy stock. 
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}lllX@{}}
+\toprule
+Parameter & Sticky & Bayesian & Basis \\
+\midrule
+$\beta_0$ & 1 & 1 (implied) & Normalization: full confidence at the start of a spell \\
+$\bar p$ & 0.20 & 0.30 & Sticky: joint grid fit to the CPS profile. Bayesian: best fit \\
+$\omega$ & 0.10 & -- & Joint grid fit \\
+$r$ & 0.10 & -- & Joint grid fit; implies $\beta_\infty \approx 0.05$ \\
+$N_0$ & -- & 2 & Best fit: a weak prior, worth two months of evidence \\
+$\kappa$ & 0.0169 & 0.015 & Sticky: joint grid fit. Bayesian: level of CPS effort \\
+$\bar A$, $a_{\min}$ & 30, 1 & 30, 1 & Vacancies sampled; work-search requirement \\
+$R_{b,\tau}$ & empirical & empirical & Baseline reservation-wage regression \\
+\bottomrule
+\end{tabularx}
+\caption{Behavioural rules: parameter values.}
+\end{table}
+
+% \paragraph{Why beliefs must start high.}
+% The value of the $a$-th application, $p(1-p)^{a-1}\Delta V_a$, has derivative $(1-p)^{a-2}(1-ap)\,\Delta V_a$ in $p$,
+% so a fall in perceived success raises it only while $p > 1/a$. With about six applications a month, effort can rise
+% during a spell only if $p > 1/6$ at its start, which implies a perceived 3-month job-finding probability of about
+% $1-(5/6)^{18} \approx 0.96$, against 0.62 elicited by \citet{mueller2021job}. Effort falls once beliefs erode below
+% the threshold. The calibrated rule therefore implies more optimism at the start of a spell and more pessimism later
+% than the survey data: perceived 3-month job finding falls from 0.89 to 0.26, against 0.62 and 0.35
+% (Figure~\ref{fig:cps_calibration}, C). Table~\ref{tab:mechanisms} lists the alternatives tested. Separately,
+% $\kappa = 0.0169$ equals about 35 hours of wages per application ($0.0169\times 2{,}080$ hours), far above measured
+% search time \citep{krueger2010job}, so most of the cost must be non-pecuniary.
+
+I tried calibrating this in several ways, both by matching the results of \citet{mueller2021job} on decaying beliefs (perceived 3-month job finding by duration) and by matching the shape of the elicited beliefs
+and on the application data we currently base our application effort rule on in the main simulations.
+Table~\ref{tab:mechanisms} and Figure~\ref{fig:cps_calibration} compare the best fit of each specification. In the
+adopted calibration (blue), the four parameters are chosen only to reproduce the CPS applications profile (concave search effort), and beliefs are
+left free. When perceived 3-month job finding is instead required to match the elicited values by duration in
+\citet{mueller2021job} (within their 95\% confidence intervals; green), the rise in effort disappears: applications are flat
+for the first months and then decline. Requiring only the shape of the elicited beliefs (perceived job finding relative
+to months 0--3), with the level free (red), allows more optimism early in the spell and produces a shallow rise, but too
+little decline after month 24, because the long-term unemployed in the survey remain relatively confident. I then tested two changes to the
+payoff side, with beliefs held at the survey levels. A reservation wage that falls with duration (equation 5 of the
+formalization; orange, dashed) raises the surplus of every application and does produce a rise, but only if the reservation wage falls
+to 50--70\% of the previous wage within a year (about 0.90 in the empirical schedule); effort then peaks exactly when
+the reservation wage reaches its floor (we impose that the reservation wage does not fall below a certain level). Moving occupational similarity from the payoff into the success probability (purple,
+dotted), which plays the role of $\gamma$ in the formalization in Appendix A, changes nothing, because the vacancies job seekers apply to all
+have similarity near the top of the distribution ($\tilde\rho \approx 0.9$). As none of the alternatives reproduces
+the rise and fall of effort while staying consistent with the survey, I adopt the CPS-only calibration (blue) and treat the
+survey beliefs as an untargeted check: the adopted rule is more optimistic early in a spell (perceived 3-month job
+finding 0.89, against 0.62) and more pessimistic later (0.26, against 0.35).
+
+% The reason
+% is a threshold in the marginal benefit: lower perceived success raises the value of an extra application only while
+% $p > 1/a$. With about six applications a month, a rise in effort requires $p > 1/6$ at the start of a spell, i.e. a
+% perceived 3-month job-finding probability of about 0.96, against 0.62 in the survey.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{5.2cm}cX@{}}
+\toprule
+Specification & RMSE & Result \\
+\midrule
+CPS profile only (adopted) & 0.39 & Rise and fall of effort; beliefs above survey data \\
+Beliefs matched to MST levels$^{a}$ & 1.20 & Effort flat, then declining; peak in month 4 \\
+Beliefs matched to MST shape only$^{b}$ & 1.05 & Shallow rise; too little decline after month 24 \\
+Declining reservation wage in the rule$^{a,c}$ & 0.89 & Rise only if $R_\tau$ falls to 50--70\% of the previous wage
+within a year (empirical schedule: 0.90) \\
+Similarity in the success probability$^{a,d}$ & 1.21 & No change: vacancies applied to all have $\tilde\rho \approx 0.9$ \\
+\bottomrule
+\end{tabularx}
+\caption{Specifications tested in the stand-alone simulation. RMSE of mean applications against the CPS profile,
+months 1--36. $^{a}$Perceived 3-month job finding within the 95\% confidence intervals of \citet{mueller2021job},
+Figure 3 ($\chi^2 \le 9.49$); $\kappa$ set to match mean CPS effort. $^{b}$Perceived job finding relative to months
+0--3 consistent with MST ($\chi^2 \le 7.81$). $^{c}$$R_\tau = \max\{\underline r,\, 1-\psi\tau\}\,w_b$ with $\psi$ and
+$\underline r$ calibrated (equation 5 of the formalization); effort peaks when $R_\tau$ reaches the floor.
+$^{d}$$p_a = \bar p\,\beta\,\tilde\rho_a$ and $\Delta V_a = w_a - R_{b,\tau}$.}
+\label{tab:mechanisms}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/opt_benchmark_cps_calibration_alternatives.png}
+\caption{Best fit of each specification in Table~\ref{tab:mechanisms}, for simulated job seekers who are never hired.
+A: mean optimal applications against the CPS profile. B: perceived 3-month job finding against
+\citet{mueller2021job} (95\% confidence intervals). C: perceived success per application, $\bar p\beta$ (before the
+similarity weight in the last specification). Declining reservation wage: $\psi = 0.04$, floor
+0.5.}
+\label{fig:cps_calibration}
+\end{figure}
+
+\section{Non-behavioural benchmarks}
+
+These use the same optimizing rule but switch off both behavioural channels. There is no reservation wage, so every
+sampled vacancy is a candidate and the surplus is measured from zero, $\Delta V_a = w_a\,\tilde\rho_{i j(a)}$. Neither
+rule depends on unemployment duration.
+
+\paragraph{Fixed beliefs.}
+Beliefs never erode ($r=0$ in the sticky rule): $p_{b,t} = \bar p$, with $MB_a$ and $A^*$ as in equation (2).
+
+\paragraph{Full information.}
+Perceived success equals each occupation's realized chance of being hired in the previous month,
+\begin{equation}
+p_a = \pi_{j(a),t-1}, \qquad \pi_{j,t} = \frac{1}{|\mathcal{V}_{j,t}|}\sum_{v\in \mathcal{V}_{j,t}} \frac{1}{n_{v,t}},
+\end{equation}
+where $n_{v,t}$ is the number of applicants to vacancy $v$ (each vacancy picks one applicant). Candidates are ranked by
+$p_a\Delta V_a$, and the worker applies while
+\begin{equation}
+MB_a = \Bigl[\textstyle\prod_{k<a}(1-p_k)\Bigr]\,p_a\,\Delta V_a \;\ge\; \kappa\, w_b .
+\end{equation}
+This is the only rule in which unemployed workers observe market tightness.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\linewidth}{@{}lllX@{}}
+\toprule
+Parameter & Fixed beliefs & Full information & Basis \\
+\midrule
+$\bar p$ & 0.20 & -- (fallback only) & Sticky rule's belief at the start of a spell \\
+$\kappa$ & 0.043 & 0.0093 & Mean applications per seeker equal to the baseline's (5.35); refined with short ABM runs \\
+Reservation wage & none & none & Behavioural channel switched off \\
+\bottomrule
+\end{tabularx}
+\caption{Non-behavioural benchmarks: parameter values. Without a reservation wage the surplus is the whole wage, so
+$\kappa$ is set to match average effort, putting all rules on the same footing.}
+\end{table}
+
+\section{Results}\label{sec:results}
+
+All scenarios run the same baseline economic model (calibrated parameter values for the model with all behavioural parameters live) with its calibrated
+parameters held fixed, 10 simulations each, 2001--2024; only the unemployed search rule changes. The behavioural
+optimizing rules fit unemployment almost as well as the baseline and fit long-term unemployment better. The
+non-behavioural benchmarks, at the same average effort, drift to persistently higher unemployment.
+
+Recall that our claimed ``value-add'' in the paper is that though most behavioral regimes can match the aggregate series well (Figures 2-3 below regarding UER and LTUER), it is the underlying occupational trajectories and distributions that our behavioral models do a better job matching. Therefore, I have included one such diagnostic figure which shows the distribution of unemployment duration in each year of the simulation across agent scenarios (green is best performing, red is worst performing). I stopped producing figures here as we need to decide what we want out of this exercise first so we can minimize effort/redundant work. 
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+ & UER RMSE & LTUER RMSE & Mean UER & Applications \\
+ & 2001--2019 & 2001--2019 & 2001--2024 & per seeker \\
+\midrule
+Baseline (CPS effort schedule) & 0.0058 (0.0006) & 0.101 (0.004) & 0.056 & 5.35 \\
+\midrule
+Sticky beliefs (CPS-calibrated) & 0.0067 (0.0004) & 0.078 (0.004) & 0.055 & 5.56 \\
+Bayesian beliefs & 0.0066 (0.0004) & 0.080 (0.004) & 0.055 & 5.49 \\
+\midrule
+Fixed beliefs & 0.0089 (0.0005) & 0.093 (0.004) & 0.064 & 5.50 \\
+Full information & 0.0133 (0.0008) & 0.098 (0.005) & 0.067 & 5.68 \\
+\bottomrule
+\end{tabular}
+\caption{Fit to observed series. RMSE per simulation, averaged across the 10 simulations (standard deviation across
+simulations in parentheses). The vacancy rate is exogenous and fits equally well in all scenarios (RMSE
+0.0024--0.0026).}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/core_uer_vac_single_panel.jpg}
+\caption{Unemployment and vacancy rates, simulated and observed. The shaded area is outside the calibration window.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/core_ltuer_line_single_panel.jpg}
+\caption{Long-term unemployment rate, simulated and observed.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/core_duration_wasserstein_rank_heatmap.png}
+\caption{Annual ranking of scenarios by the Wasserstein distance between the simulated and CPS unemployment-duration
+distributions (green = closest).}
+\end{figure}
+
+
+
+\bibliographystyle{apalike}
+\begin{thebibliography}{}
+\bibitem[Albrecht et~al., 2006]{albrecht2006equilibrium}
+Albrecht, J., Gautier, P.~A., and Vroman, S. (2006). Equilibrium directed search with multiple applications.
+\textit{Review of Economic Studies}, 73(4):869--891.
+\bibitem[Burdett et~al., 2001]{burdett2001pricing}
+Burdett, K., Shi, S., and Wright, R. (2001). Pricing and matching with frictions. \textit{Journal of Political
+Economy}, 109(5):1060--1085.
+\bibitem[Burdett and Vishwanath, 1988]{burdett1988declining}
+Burdett, K. and Vishwanath, T. (1988). Declining reservation wages and learning. \textit{Review of Economic Studies},
+55(4):655--665.
+\bibitem[Chade and Smith, 2006]{chade2006simultaneous}
+Chade, H. and Smith, L. (2006). Simultaneous search. \textit{Econometrica}, 74(5):1293--1307.
+\bibitem[del Rio-Chanona et~al., 2021]{delriochanona2021occupational}
+del Rio-Chanona, R.~M., Mealy, P., Beguerisse-D{\'i}az, M., Lafond, F., and Farmer, J.~D. (2021). Occupational
+mobility and automation: A data-driven network model. \textit{Journal of the Royal Society Interface},
+18(174):20200898.
+\bibitem[Evans and Honkapohja, 2001]{evans2001learning}
+Evans, G.~W. and Honkapohja, S. (2001). \textit{Learning and Expectations in Macroeconomics}. Princeton University
+Press.
+\bibitem[Galenianos and Kircher, 2009]{galenianos2009directed}
+Galenianos, M. and Kircher, P. (2009). Directed search with multiple job applications. \textit{Journal of Economic
+Theory}, 144(2):445--471.
+\bibitem[Gonzalez and Shi, 2010]{gonzalez2010equilibrium}
+Gonzalez, F.~M. and Shi, S. (2010). An equilibrium theory of learning, search, and wages. \textit{Econometrica},
+78(2):509--537.
+\bibitem[Kircher, 2009]{kircher2009efficiency}
+Kircher, P. (2009). Efficiency of simultaneous search. \textit{Journal of Political Economy}, 117(5):861--913.
+\bibitem[Krueger and Mueller, 2010]{krueger2010job}
+Krueger, A.~B. and Mueller, A. (2010). Job search and unemployment insurance: New evidence from time use data.
+\textit{Journal of Public Economics}, 94(3--4):298--307.
+\bibitem[Krueger and Mueller, 2016]{krueger2016contribution}
+Krueger, A.~B. and Mueller, A.~I. (2016). A contribution to the empirics of reservation wages. \textit{American
+Economic Journal: Economic Policy}, 8(1):142--179.
+\bibitem[Moen, 1997]{moen1997competitive}
+Moen, E.~R. (1997). Competitive search equilibrium. \textit{Journal of Political Economy}, 105(2):385--411.
+\bibitem[Mortensen, 1977]{mortensen1977unemployment}
+Mortensen, D.~T. (1977). Unemployment insurance and job search decisions. \textit{Industrial and Labor Relations
+Review}, 30(4):505--517.
+\bibitem[Mueller et~al., 2021]{mueller2021job}
+Mueller, A.~I., Spinnewijn, J., and Topa, G. (2021). Job seekers' perceptions and employment prospects:
+Heterogeneity, duration dependence, and bias. \textit{American Economic Review}, 111(1):324--363.
+\bibitem[Pissarides, 2000]{pissarides2000equilibrium}
+Pissarides, C.~A. (2000). \textit{Equilibrium Unemployment Theory}. MIT Press, 2nd edition.
+\bibitem[Spinnewijn, 2015]{spinnewijn2015unemployed}
+Spinnewijn, J. (2015). Unemployed but optimistic: Optimal insurance design with biased beliefs. \textit{Journal of
+the European Economic Association}, 13(1):130--167.
+\bibitem[van~den Berg, 1990]{vandenberg1990nonstationarity}
+van~den Berg, G.~J. (1990). Nonstationarity in job search theory. \textit{Review of Economic Studies}, 57(2):255--277.
+\end{thebibliography}
+
+\end{document}

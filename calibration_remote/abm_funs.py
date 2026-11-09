@@ -630,6 +630,10 @@ class occupation:
         for e in occ.list_of_employed:
             e.hired = False
             e.time_unemployed = 0
+            # Employed workers are not long-term unemployed: without this, a worker hired out of LTU keeps the flag,
+            # gets the ltu_hire_bias boost on OTJ applications and, if separated after searching, is recorded as an
+            # LTU hire with duration 0
+            e.longterm_unemp = False
             e.ue_rel_wage = None
             e.ee_rel_wage = None
             e.apps_sent = 0
@@ -795,17 +799,20 @@ class vac:
                 # e.g. a new entrant who's been searching long enough to also
                 # be longterm_unemp must still get the entry_hire_bias boost
                 # when only the entry policy is active.
-                available = [w for w in v.applicants if not w.hired]
-                if not available:
-                    v.applicants.clear()
-                    return None
+                # Same sample-one-and-fail rule as the default branch below, only
+                # reweighted: draw from ALL applicants (hired ones included) and
+                # fail if the draw was already hired, so the bias changes who is
+                # drawn and not how often hiring fails.
                 if entry_hire_bias > 0.0:
                     weights = [(1.0 + entry_hire_bias) if getattr(w, 'new_entrant', False) else 1.0
-                               for w in available]
+                               for w in v.applicants]
                 else:
                     weights = [(1.0 + ltu_hire_bias) if getattr(w, 'longterm_unemp', False) else 1.0
-                               for w in available]
-                a = random.choices(available, weights=weights, k=1)[0]
+                               for w in v.applicants]
+                a = random.choices(v.applicants, weights=weights, k=1)[0]
+                if a.hired:
+                    v.applicants.clear()
+                    return None
             else:
                 # Sample up to 3 unique applicants without replacement
                 sample_size = min(1, len(v.applicants))

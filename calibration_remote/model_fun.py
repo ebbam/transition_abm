@@ -208,7 +208,7 @@ def run_single_local(d_u,
                         for idx in searching_idx:
                             e_apps += occ.list_of_employed[idx].emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp)
                 else:
-                    for e in random.sample(occ.list_of_employed, int(0.03*len(occ.list_of_employed))):
+                    for e in random.sample(occ.list_of_employed, int(0.07*len(occ.list_of_employed))):
                         emp_seekers += 1
                         e_apps += e.emp_search_and_apply(net, r_vacs, disc, emp_apps, wage_prefs, mistake_rate, unique_random = False, global_pool_override = vacs_temp)
 
@@ -389,7 +389,8 @@ def run_single_local(d_u,
             occ.update_workers()
             if not simple_res:
                 for wrkr in occ.list_of_unemployed:
-                    ue_stock_records.append((t+1, occ.occupation_id, wrkr.time_unemployed, wrkr.longterm_unemp))
+                    ue_stock_records.append((t+1, occ.occupation_id, wrkr.time_unemployed, wrkr.longterm_unemp,
+                                             getattr(wrkr, 'new_entrant', False)))
             retired = occ.retire_workers()
             retired_all += retired
             # Assert that all unemployed people have spent 1 or more time periods unemployed
@@ -591,7 +592,7 @@ def run_single_local(d_u,
                 app_load_df = pd.DataFrame(columns=['Time Step','Occupation','OpenVacs','TotalApplicants','MeanAppsPerVac','MedianAppsPerVac'])
 
             ue_spell_origin_df = pd.DataFrame(ue_spell_records, columns=['Time Step', 'OriginOccupation', 'DestinationOccupation', 'UEDuration'])
-            ue_stock_df = pd.DataFrame(ue_stock_records, columns=['Time Step', 'Occupation', 'UEDuration', 'LongtermUnemp'])
+            ue_stock_df = pd.DataFrame(ue_stock_records, columns=['Time Step', 'Occupation', 'UEDuration', 'LongtermUnemp', 'NewEntrant'])
             transition_df = pd.DataFrame(transition_records, columns=[
                 'Time Step', 'TransitionType', 'OriginOccupation', 'DestinationOccupation',
                 'UEDuration', 'PreSepWage', 'AcceptedWage', 'Age', 'Female', 'LongtermUnemp',

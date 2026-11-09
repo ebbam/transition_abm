@@ -70,7 +70,7 @@ from network_input_builder import network_input_builder
 from model_fun import run_single_local
 from collate_macro_vars import macro_observations
 from abm_funs import duration_to_prob_dict
-from plot_style import TEXTWIDTH, ROW_HEIGHT, save_plot_standard, add_shared_legend
+from plot_style import TEXTWIDTH, ROW_HEIGHT, save_plot_standard, add_shared_legend, add_suptitle_spacing
 from matplotlib.lines import Line2D
 
 # ── Settings ──────────────────────────────────────────────────────────────────
@@ -98,13 +98,42 @@ N_WARMSTART_SIMS      = 5
 N_WARMSTART_TOPUP_SIMS = 5     # additional sims on top of N_WARMSTART_SIMS, cached separately
 N_TOTAL_WARMSTART_SIMS = N_WARMSTART_SIMS + N_WARMSTART_TOPUP_SIMS
 
-EXPOSURE_SOURCE = "eloundou"   # "anthropic" or "eloundou" -- which exposure score drives the
+EXPOSURE_SOURCE = "eloundou_v2"   # "anthropic" or "eloundou" -- which exposure score drives the
                                 # shock. These are NOT blended together -- the shock uses exactly
                                 # one source at a time. Every downstream output that depends on
                                 # this choice is written to OUTPUT_PATH/<EXPOSURE_SOURCE>/, so
                                 # switching sources never overwrites or silently reuses the other
                                 # source's cache/figures.
-assert EXPOSURE_SOURCE in ("anthropic", "eloundou")
+                                # "_v2" sources ("eloundou_v2", "anthropic_v2") read the hierarchical SOC
+                                # matching in data/occ_macro_vars/eloundou_exposure/ (all 528 occupations
+                                # matched, vs 361 for Eloundou in the original matching below); the
+                                # original sources are kept so earlier results can be reproduced.
+assert EXPOSURE_SOURCE in ("anthropic", "eloundou", "anthropic_v2", "eloundou_v2")
+
+EXERCISE = os.environ.get("EXPOSURE_EXERCISE", "shock")
+                                # "shock":  scenario analysis -- the exposure shock vs no shock, no hiring bias
+                                #           in either, for every CM_SPECS model.
+                                # "policy": entry-level preferential hiring vs none, both under the shock, for
+                                #           every CM_SPECS model. Its no_policy arm is the "shock" scenario of
+                                #           the shock-mode runs (same warm starts and sim_ids), so run "shock"
+                                #           mode first. Set EXPOSURE_EXERCISE=policy to choose it from the shell.
+assert EXERCISE in ("shock", "policy")
+if EXERCISE == "shock":
+    BASE_SCEN, TREAT_SCEN = 'no_shock', 'shock'
+    BASE_LABEL, TREAT_LABEL = 'No shock', 'Shock'
+else:
+    BASE_SCEN, TREAT_SCEN = 'no_policy', 'policy'
+    BASE_LABEL, TREAT_LABEL = 'No policy', 'Policy'
+DELTA_LABEL = f"{TREAT_LABEL} − {BASE_LABEL.lower()}"
+
+ONLY_MODEL = None
+                                # None: all cross-model variants.
+                                # A CM_SPECS key (e.g. "otj_disc"): run only that model -- the reference
+                                # model (Sections 4-6, 8, 13) and the multi-model figures (Sections 12,
+                                # 14) are skipped; Section 15's single-model summary figures cover it.
+RUN_REFERENCE_MODEL = False     # the reference (cyclical-OTJ) model's cached runs predate the hire() fix and the
+                                # 7% OTJ search share, so Sections 4-6, 8 and 13 are off in both modes
+N_CM_WORKERS = 3                # Section 11's shock-phase runs, one process per model
 
 MAX_DEMAND_REDUCTION = 0.19    # max fractional cut to target-demand multiplier at
                                 # full exposure & full ramp; anchored to the Canaries
@@ -121,6 +150,8 @@ ELOUNDOU_EXPOSURE_COL = 'dv_rating_beta'   # E2: LLM + software exposure
 DATA_DIR               = os.path.join(PROJECT_ROOT, "data", "ai_exposure")
 ANTHROPIC_EXPOSURE_CSV = os.path.join(DATA_DIR, "anthropic_economic_index_job_exposure.csv")
 ELOUNDOU_EXPOSURE_CSV  = os.path.join(DATA_DIR, "eloundou_2024_occ_level.csv")
+EXPOSURE_V2_CSV        = os.path.join(PROJECT_ROOT, "..", "data", "occ_macro_vars", "eloundou_exposure",
+                                      "ai_exposure_by_acs_full_omn.csv")
 OCC_NAMES_CSV  = "/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/data/occ_names_employment_asec_occ.csv"
 OCC_SOC_CW_CSV = "/Users/ebbamark/OneDrive - Nexus365/GenerateOccMobNets/ONET/occ_names_employment_asec_occ_2010_soc_cw.csv"
 
@@ -132,7 +163,17 @@ os.makedirs(OUTPUT_PATH, exist_ok=True)
 
 # Source-specific outputs (shock results, figures, summaries) live here.
 # Warm-start states are exposure-independent and stay directly in OUTPUT_PATH.
-SOURCE_OUTPUT_PATH = os.path.join(OUTPUT_PATH, EXPOSURE_SOURCE)
+# "_hirefix": results after the hire() fix (biased hiring now uses the same
+# sample-one-and-fail rule as unbiased hiring, instead of skipping already-hired
+# applicants). The pre-fix outputs in PRE_FIX_SOURCE_OUTPUT_PATH are left as they
+# were; only their no_policy runs (bias 0, unaffected by the fix) are reused.
+# "_shock_scenarios": EXERCISE = "shock" (all of its runs are new; none are reused).
+# "_policy_7pct": EXERCISE = "policy" after the 7% OTJ search share was restored (the "_hirefix" runs used
+# 3%). Only the policy arm is simulated; no_policy is the "shock" scenario read from the shock-mode caches.
+PRE_FIX_SOURCE_OUTPUT_PATH = os.path.join(OUTPUT_PATH, f"{EXPOSURE_SOURCE}_shock_scenarios")
+NO_POLICY_SOURCE_KEY = 'shock'   # scenario key of the no_policy arm inside PRE_FIX_SOURCE_OUTPUT_PATH's caches
+SOURCE_OUTPUT_PATH = os.path.join(
+    OUTPUT_PATH, f"{EXPOSURE_SOURCE}_shock_scenarios" if EXERCISE == "shock" else f"{EXPOSURE_SOURCE}_policy_7pct")
 os.makedirs(SOURCE_OUTPUT_PATH, exist_ok=True)
 
 WARMSTART_PKL       = os.path.join(OUTPUT_PATH, "warmstart_states.pkl")
@@ -245,6 +286,31 @@ def _assert_shock_batch_format(loaded, pkl_path):
     )
 
 
+def _run_policy_only(base_params, warmstart_states, sim_id_offset, label):
+    """_run_shock_batch for the policy scenario only. no_policy has entry_hire_bias = 0,
+    which never reached the fixed hire() branch, so its pre-fix runs are still valid
+    (and, since the model is unseeded, rerunning them would not reproduce them anyway):
+    they are read from the pre-fix cache by _with_pre_fix_no_policy instead of being
+    re-simulated or stored a second time. Same warm-start states and sim_ids as the
+    pre-fix batch, so the pairing by sim_id is unchanged."""
+    return _run_shock_batch(base_params, {TREAT_SCEN: SHOCK_SCENARIOS[TREAT_SCEN]},
+                            warmstart_states, sim_id_offset, label)
+
+
+def _with_pre_fix_no_policy(policy_raw, pre_fix_pkl):
+    """Combine a policy-only (results, wage_age_results) batch with the no_policy
+    scenario from the matching pre-fix cache."""
+    with open(pre_fix_pkl, 'rb') as _f:
+        _pre_fix = pickle.load(_f)
+    _assert_shock_batch_format(_pre_fix, pre_fix_pkl)
+    _pre_res, _pre_wage_age = _pre_fix
+    _res, _wage_age = policy_raw
+    assert set(_pre_res[NO_POLICY_SOURCE_KEY][1]['sim_id'].unique()) == set(_res[TREAT_SCEN][1]['sim_id'].unique()), \
+        f"{pre_fix_pkl}: cached no_policy sim_ids do not match the re-run policy sim_ids"
+    return ({BASE_SCEN: _pre_res[NO_POLICY_SOURCE_KEY], TREAT_SCEN: _res[TREAT_SCEN]},
+            {BASE_SCEN: _pre_wage_age[NO_POLICY_SOURCE_KEY], TREAT_SCEN: _wage_age[TREAT_SCEN]})
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # SECTION 1: network + calibrated reference parameters
 # ══════════════════════════════════════════════════════════════════════════════
@@ -333,28 +399,39 @@ _occ_names['occupation_id'] = _occ_names.index.values
 assert list(_occ_names['occupation_id']) == list(range(N_OCC)), \
     "occ_names_employment_asec_occ.csv row order must match network occupation_id"
 
-_cw = pd.read_csv(OCC_SOC_CW_CSV)[['acs_2010_code', 'soc_2010_code']]
-
-_anthropic = pd.read_csv(ANTHROPIC_EXPOSURE_CSV)
-_anthropic_by_soc = _anthropic.set_index('occ_code')['observed_exposure'].rename('anthropic_exposure')
-
-_eloundou = pd.read_csv(ELOUNDOU_EXPOSURE_CSV)
-_eloundou['soc6'] = _eloundou['O*NET-SOC Code'].str.split('.').str[0]
-_eloundou_by_soc = _eloundou.groupby('soc6')[ELOUNDOU_EXPOSURE_COL].mean().rename('eloundou_exposure')
-
-_exp = _occ_names.merge(_cw, left_on='Code', right_on='acs_2010_code', how='left')
-_exp = _exp.merge(_anthropic_by_soc, left_on='soc_2010_code', right_index=True, how='left')
-_exp = _exp.merge(_eloundou_by_soc, left_on='soc_2010_code', right_index=True, how='left')
-
-
 def _norm01(s):
     return (s - s.min()) / (s.max() - s.min())
 
 
-_exp['anthropic_norm'] = _norm01(_exp['anthropic_exposure'])
-_exp['eloundou_norm']  = _norm01(_exp['eloundou_exposure'])
-# EXPOSURE_SOURCE selects exactly one source -- no blending across sources.
-_exp['selected_exposure'] = _exp[f'{EXPOSURE_SOURCE}_norm']
+if EXPOSURE_SOURCE.endswith('_v2'):
+    # Hierarchical SOC matching (data/occ_macro_vars/eloundou_exposure/ai_exposure_matching_full_omn.R):
+    # one row per network occupation, in network order, every occupation matched.
+    _base = EXPOSURE_SOURCE[:-len('_v2')]
+    _v2 = pd.read_csv(EXPOSURE_V2_CSV)
+    assert list(_v2['acs_occ_code']) == list(_occ_names['Code']), \
+        "ai_exposure_by_acs_full_omn.csv must be in network occupation order"
+    _exp = _occ_names.copy()
+    _exp[f'{EXPOSURE_SOURCE}_exposure'] = _v2[f'{_base}_exposure'].to_numpy()
+    _exp['match_level'] = _v2[f'{_base}_match_level'].to_numpy()
+    _exp['selected_exposure'] = _norm01(_exp[f'{EXPOSURE_SOURCE}_exposure'])
+else:
+    _cw = pd.read_csv(OCC_SOC_CW_CSV)[['acs_2010_code', 'soc_2010_code']]
+
+    _anthropic = pd.read_csv(ANTHROPIC_EXPOSURE_CSV)
+    _anthropic_by_soc = _anthropic.set_index('occ_code')['observed_exposure'].rename('anthropic_exposure')
+
+    _eloundou = pd.read_csv(ELOUNDOU_EXPOSURE_CSV)
+    _eloundou['soc6'] = _eloundou['O*NET-SOC Code'].str.split('.').str[0]
+    _eloundou_by_soc = _eloundou.groupby('soc6')[ELOUNDOU_EXPOSURE_COL].mean().rename('eloundou_exposure')
+
+    _exp = _occ_names.merge(_cw, left_on='Code', right_on='acs_2010_code', how='left')
+    _exp = _exp.merge(_anthropic_by_soc, left_on='soc_2010_code', right_index=True, how='left')
+    _exp = _exp.merge(_eloundou_by_soc, left_on='soc_2010_code', right_index=True, how='left')
+
+    _exp['anthropic_norm'] = _norm01(_exp['anthropic_exposure'])
+    _exp['eloundou_norm']  = _norm01(_exp['eloundou_exposure'])
+    # EXPOSURE_SOURCE selects exactly one source -- no blending across sources.
+    _exp['selected_exposure'] = _exp[f'{EXPOSURE_SOURCE}_norm']
 
 # A single ACS code can map to >1 SOC code (crosswalk fan-out) -- collapse
 # back to one exposure value per occupation_id before reindexing.
@@ -364,6 +441,9 @@ EXPOSURE_BY_OCCID = (
         .fillna(0.0)
 )
 EXPOSURE_VEC = EXPOSURE_BY_OCCID.to_numpy()
+# Top-quartile exposure vs the rest -- the same split as Section 7's shock-implementation figure.
+HIGH_EXPOSURE_IDS = set(np.flatnonzero(EXPOSURE_VEC >= np.quantile(EXPOSURE_VEC, 0.75)))
+LOW_EXPOSURE_IDS  = set(range(N_OCC)) - HIGH_EXPOSURE_IDS
 
 _n_matched = int(_exp.groupby('occupation_id')[f'{EXPOSURE_SOURCE}_exposure'].first().notna().sum())
 print(f"  Exposure source: {EXPOSURE_SOURCE}")
@@ -385,6 +465,8 @@ pd.DataFrame({
     'label':         _occ_names.set_index('occupation_id')['Label'].reindex(range(N_OCC)).values,
     'entry_level':   [oid in ENTRY_IDS for oid in range(N_OCC)],
     'exposure':      EXPOSURE_VEC,
+    **({'match_level': _exp.groupby('occupation_id')['match_level'].first().reindex(range(N_OCC)).values}
+       if 'match_level' in _exp else {}),
 }).to_csv(os.path.join(SOURCE_OUTPUT_PATH, "exposure_by_occupation.csv"), index=False)
 print("  Saved: exposure_by_occupation.csv")
 
@@ -412,10 +494,18 @@ for _occid in range(N_OCC):
 
 SHOCK_VAC_DATA = np.full(H, LAST_VACRATE)
 
-SHOCK_SCENARIOS = {
-    'no_policy': {'entry_hire_bias': 0.0},
-    'policy':    {'entry_hire_bias': 1.0},
-}
+if EXERCISE == "shock":
+    # no_shock: the same 20 years with the target-demand multiplier held at 1 throughout
+    # (same constant vacancy rate, same warm starts) -- the shock is the only difference.
+    SHOCK_SCENARIOS = {
+        BASE_SCEN:  {'entry_hire_bias': 0.0, 'occ_shocks_data': np.ones_like(SHOCK_OCC_ARRAY)},
+        TREAT_SCEN: {'entry_hire_bias': 0.0},
+    }
+else:
+    SHOCK_SCENARIOS = {
+        BASE_SCEN:  {'entry_hire_bias': 0.0},
+        TREAT_SCEN: {'entry_hire_bias': 1.0},
+    }
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SECTION 4: warm start — run the reference model to the end of the calibration
@@ -425,68 +515,70 @@ SHOCK_SCENARIOS = {
 # ══════════════════════════════════════════════════════════════════════════════
 print("\n=== Section 4: Warm-start runs ===")
 
-WARMSTART_STATES = _load_or_build(
-    WARMSTART_PKL, FORCE_WARMSTART_RERUN,
-    lambda: _run_warmstart_batch(REF_BASE_PARAMS, N_WARMSTART_SIMS, "ref"),
-    label="ref warm-start",
-)
-if N_WARMSTART_TOPUP_SIMS > 0:
-    _ws_topup = _load_or_build(
-        WARMSTART_TOPUP_PKL, FORCE_WARMSTART_TOPUP_RERUN,
-        lambda: _run_warmstart_batch(REF_BASE_PARAMS, N_WARMSTART_TOPUP_SIMS, "ref topup"),
-        label="ref warm-start topup",
+if RUN_REFERENCE_MODEL:
+    WARMSTART_STATES = _load_or_build(
+        WARMSTART_PKL, FORCE_WARMSTART_RERUN,
+        lambda: _run_warmstart_batch(REF_BASE_PARAMS, N_WARMSTART_SIMS, "ref"),
+        label="ref warm-start",
     )
-    WARMSTART_STATES = WARMSTART_STATES + _ws_topup
-print(f"  {len(WARMSTART_STATES)} total warm-start states ready.")
+    if N_WARMSTART_TOPUP_SIMS > 0:
+        _ws_topup = _load_or_build(
+            WARMSTART_TOPUP_PKL, FORCE_WARMSTART_TOPUP_RERUN,
+            lambda: _run_warmstart_batch(REF_BASE_PARAMS, N_WARMSTART_TOPUP_SIMS, "ref topup"),
+            label="ref warm-start topup",
+        )
+        WARMSTART_STATES = WARMSTART_STATES + _ws_topup
+    print(f"  {len(WARMSTART_STATES)} total warm-start states ready.")
 
-# ══════════════════════════════════════════════════════════════════════════════
-# SECTION 5: shock-phase runs — with vs without entry-level preferential hiring
-# ══════════════════════════════════════════════════════════════════════════════
-print("\n=== Section 5: Shock-phase runs ===")
+    # ══════════════════════════════════════════════════════════════════════════════
+    # SECTION 5: shock-phase runs — with vs without entry-level preferential hiring
+    # ══════════════════════════════════════════════════════════════════════════════
+    print("\n=== Section 5: Shock-phase runs ===")
 
-SHOCK_BASE_PARAMS = deepcopy(REF_BASE_PARAMS)
-SHOCK_BASE_PARAMS.update({
-    'time_steps':      int(SHOCK_OCC_ARRAY.shape[1]),
-    'occ_shocks_data': SHOCK_OCC_ARRAY,
-    'vac_data':        SHOCK_VAC_DATA,
-    'delay':           SHOCK_DELAY,
-})
+    SHOCK_BASE_PARAMS = deepcopy(REF_BASE_PARAMS)
+    SHOCK_BASE_PARAMS.update({
+        'time_steps':      int(SHOCK_OCC_ARRAY.shape[1]),
+        'occ_shocks_data': SHOCK_OCC_ARRAY,
+        'vac_data':        SHOCK_VAC_DATA,
+        'delay':           SHOCK_DELAY,
+    })
 
-_shock_base_raw = _load_or_build(
-    SHOCK_PKL, FORCE_SHOCK_RERUN,
-    lambda: _run_shock_batch(SHOCK_BASE_PARAMS, SHOCK_SCENARIOS,
-                              WARMSTART_STATES[:N_WARMSTART_SIMS], sim_id_offset=0, label="ref"),
-    label="ref shock-phase",
-)
-_assert_shock_batch_format(_shock_base_raw, SHOCK_PKL)
-SHOCK_RESULTS, SHOCK_WAGE_AGE = _shock_base_raw
-if N_WARMSTART_TOPUP_SIMS > 0:
-    _shock_topup_raw = _load_or_build(
-        SHOCK_TOPUP_PKL, FORCE_SHOCK_TOPUP_RERUN,
-        lambda: _run_shock_batch(SHOCK_BASE_PARAMS, SHOCK_SCENARIOS,
-                                  WARMSTART_STATES[N_WARMSTART_SIMS:],
-                                  sim_id_offset=N_WARMSTART_SIMS, label="ref topup"),
-        label="ref shock-phase topup",
+    _shock_base_raw = _load_or_build(
+        SHOCK_PKL, FORCE_SHOCK_RERUN,
+        lambda: _run_policy_only(SHOCK_BASE_PARAMS, WARMSTART_STATES[:N_WARMSTART_SIMS],
+                                  sim_id_offset=0, label="ref"),
+        label="ref shock-phase",
     )
-    _assert_shock_batch_format(_shock_topup_raw, SHOCK_TOPUP_PKL)
-    _shock_topup, _wage_age_topup = _shock_topup_raw
-    SHOCK_RESULTS = _concat_shock_results(SHOCK_RESULTS, _shock_topup)
-    SHOCK_WAGE_AGE = _concat_wage_age_results(SHOCK_WAGE_AGE, _wage_age_topup)
-print(f"  {SHOCK_RESULTS['no_policy'][1]['sim_id'].nunique()} total sims per scenario after topup.")
+    _assert_shock_batch_format(_shock_base_raw, SHOCK_PKL)
+    SHOCK_RESULTS, SHOCK_WAGE_AGE = _with_pre_fix_no_policy(
+        _shock_base_raw, os.path.join(PRE_FIX_SOURCE_OUTPUT_PATH, "shock_results.pkl"))
+    if N_WARMSTART_TOPUP_SIMS > 0:
+        _shock_topup_raw = _load_or_build(
+            SHOCK_TOPUP_PKL, FORCE_SHOCK_TOPUP_RERUN,
+            lambda: _run_policy_only(SHOCK_BASE_PARAMS, WARMSTART_STATES[N_WARMSTART_SIMS:],
+                                      sim_id_offset=N_WARMSTART_SIMS, label="ref topup"),
+            label="ref shock-phase topup",
+        )
+        _assert_shock_batch_format(_shock_topup_raw, SHOCK_TOPUP_PKL)
+        _shock_topup, _wage_age_topup = _with_pre_fix_no_policy(
+            _shock_topup_raw, os.path.join(PRE_FIX_SOURCE_OUTPUT_PATH, "shock_results_topup.pkl"))
+        SHOCK_RESULTS = _concat_shock_results(SHOCK_RESULTS, _shock_topup)
+        SHOCK_WAGE_AGE = _concat_wage_age_results(SHOCK_WAGE_AGE, _wage_age_topup)
+    print(f"  {SHOCK_RESULTS[BASE_SCEN][1]['sim_id'].nunique()} total sims per scenario after topup.")
 
 
-def _truncate_near_term(shock_results, months=NEAR_TERM_HORIZON_MONTHS):
-    """Restrict a {scenario: (trans_df, occ_df)} dict to the first `months`
-    months -- Sections 6-8/12 describe the shock's near-term response and
-    stay on the original ~5-year window regardless of how long
-    SHOCK_HORIZON_MONTHS simulates for; only Section 13 (lifetime earnings)
-    uses the full horizon."""
-    _cutoff = months + 1   # Time Step is 1-indexed (t+1), delay=0
-    return {_scen: (_trans[_trans['Time Step'] <= _cutoff], _occ[_occ['Time Step'] <= _cutoff])
-            for _scen, (_trans, _occ) in shock_results.items()}
+    def _truncate_near_term(shock_results, months=NEAR_TERM_HORIZON_MONTHS):
+        """Restrict a {scenario: (trans_df, occ_df)} dict to the first `months`
+        months -- Sections 6-8/12 describe the shock's near-term response and
+        stay on the original ~5-year window regardless of how long
+        SHOCK_HORIZON_MONTHS simulates for; only Section 13 (lifetime earnings)
+        uses the full horizon."""
+        _cutoff = months + 1   # Time Step is 1-indexed (t+1), delay=0
+        return {_scen: (_trans[_trans['Time Step'] <= _cutoff], _occ[_occ['Time Step'] <= _cutoff])
+                for _scen, (_trans, _occ) in shock_results.items()}
 
 
-SHOCK_RESULTS_NEAR_TERM = _truncate_near_term(SHOCK_RESULTS)
+    SHOCK_RESULTS_NEAR_TERM = _truncate_near_term(SHOCK_RESULTS)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SECTION 6: outcome metrics — declined jobs, EE transitions, wage growth
@@ -535,23 +627,24 @@ def _shock_wage_growth(occ_df):
     return growths.mean(), se
 
 
-_summary_rows = []
-for _scen in ('no_policy', 'policy'):
-    _trans_df, _occ_df = SHOCK_RESULTS_NEAR_TERM[_scen]
-    _econ_fh, _econ_fh_se, _entry_fh, _entry_fh_se = _shock_declined_jobs(_occ_df)
-    _ee_mean, _ee_se = _shock_ee_transitions(_trans_df)
-    _wg_mean, _wg_se = _shock_wage_growth(_occ_df)
-    _summary_rows.append({
-        'scenario': _scen,
-        'declined_jobs_economy_mean': _econ_fh, 'declined_jobs_economy_se': _econ_fh_se,
-        'declined_jobs_entry_level_mean': _entry_fh, 'declined_jobs_entry_level_se': _entry_fh_se,
-        'ee_transitions_mean': _ee_mean, 'ee_transitions_se': _ee_se,
-        'annualised_wage_growth_pct': _wg_mean, 'annualised_wage_growth_pct_se': _wg_se,
-    })
-shock_summary = pd.DataFrame(_summary_rows)
-print("\n" + shock_summary.to_string(index=False))
-shock_summary.to_csv(os.path.join(SOURCE_OUTPUT_PATH, "shock_outcomes_summary.csv"), index=False)
-print("Saved: shock_outcomes_summary.csv")
+if RUN_REFERENCE_MODEL:
+    _summary_rows = []
+    for _scen in (BASE_SCEN, TREAT_SCEN):
+        _trans_df, _occ_df = SHOCK_RESULTS_NEAR_TERM[_scen]
+        _econ_fh, _econ_fh_se, _entry_fh, _entry_fh_se = _shock_declined_jobs(_occ_df)
+        _ee_mean, _ee_se = _shock_ee_transitions(_trans_df)
+        _wg_mean, _wg_se = _shock_wage_growth(_occ_df)
+        _summary_rows.append({
+            'scenario': _scen,
+            'declined_jobs_economy_mean': _econ_fh, 'declined_jobs_economy_se': _econ_fh_se,
+            'declined_jobs_entry_level_mean': _entry_fh, 'declined_jobs_entry_level_se': _entry_fh_se,
+            'ee_transitions_mean': _ee_mean, 'ee_transitions_se': _ee_se,
+            'annualised_wage_growth_pct': _wg_mean, 'annualised_wage_growth_pct_se': _wg_se,
+        })
+    shock_summary = pd.DataFrame(_summary_rows)
+    print("\n" + shock_summary.to_string(index=False))
+    shock_summary.to_csv(os.path.join(SOURCE_OUTPUT_PATH, "shock_outcomes_summary.csv"), index=False)
+    print("Saved: shock_outcomes_summary.csv")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SECTION 7: figure — AI-exposure shock implementation (standalone)
@@ -568,7 +661,7 @@ ax_shock.plot(_t, SHOCK_OCC_ARRAY[_lo, 24:].mean(axis=0), color=NO_POLICY_COLOR,
 ax_shock.axhline(1.0, color='black', linewidth=0.8, linestyle='--')
 ax_shock.set_xlabel("Months since shock onset", fontsize=10)
 ax_shock.set_ylabel("Target-demand multiplier", fontsize=10)
-ax_shock.set_title(f"Imposed AI-exposure shock (S-curve) — {EXPOSURE_SOURCE}", fontsize=12, fontweight='bold')
+ax_shock.set_title("Imposed AI-exposure shock (S-curve)", fontsize=12, fontweight='bold')
 # Both curves start flat near 1.0 and only diverge downward as the horizon
 # progresses, so the low-x/low-y corner is the one region neither line ever
 # passes through -- anchor the legend there instead of letting 'best' guess
@@ -674,73 +767,74 @@ def _transition_rate_ts(occ_df, col):
     return agg.groupby('Time Step')['rate'].agg(['mean', 'sem']).reset_index()
 
 
-fig, ((ax_A, ax_B), (ax_C, ax_D)) = plt.subplots(2, 2, figsize=(TEXTWIDTH, ROW_HEIGHT * 2))
+_SCENARIOS = [(BASE_SCEN, NO_POLICY_COLOR, BASE_LABEL),
+              (TREAT_SCEN, POLICY_COLOR, TREAT_LABEL)]
 
-_SCENARIOS = [('no_policy', NO_POLICY_COLOR, 'No policy'),
-              ('policy', POLICY_COLOR, 'Policy')]
-
-
-def _plot_entry_vs_rest(ax, ts_fn, val_fn, err_fn, ylabel, title, marker=None):
-    """Entry-level (solid) vs rest-of-economy (dotted), one pair of lines per
-    scenario, colour = scenario, linestyle = occupation group. No per-panel
-    legend -- A/B/C share one legend below the figure (see add_shared_legend
-    call below), since all three plot the exact same four series."""
-    for _scen, _color, _ in _SCENARIOS:
-        _trans_df, _occ_df = SHOCK_RESULTS_NEAR_TERM[_scen]
-        for _ids, _ls in [(ENTRY_IDS, '-'), (NON_ENTRY_IDS, ':')]:
-            _ts = ts_fn(_trans_df, _occ_df, _ids)
-            _v, _e = val_fn(_ts), err_fn(_ts)
-            ax.plot(_ts['Time Step'], _v, color=_color, linewidth=LW, linestyle=_ls, marker=marker, markersize=3)
-            ax.fill_between(_ts['Time Step'], _v - 1.96 * _e, _v + 1.96 * _e, alpha=0.12, color=_color)
-    ax.set_xlabel("Months since shock onset", fontsize=10)
-    ax.set_ylabel(ylabel, fontsize=10)
-    ax.set_title(title, fontsize=11, fontweight='bold')
-    ax.grid(alpha=0.3)
+if RUN_REFERENCE_MODEL:
+    fig, ((ax_A, ax_B), (ax_C, ax_D)) = plt.subplots(2, 2, figsize=(TEXTWIDTH, ROW_HEIGHT * 2))
 
 
-_plot_entry_vs_rest(ax_A, _uer_ts, lambda ts: ts['mean'] * 100, lambda ts: ts['sem'] * 100,
-                     "UER (%)", "A.  Unemployment rate")
-_plot_entry_vs_rest(ax_B, _wage_ts, lambda ts: ts['mean'], lambda ts: ts['sem'],
-                     "First-job wage / occ. median", "B.  Re-employment wage", marker='o')
-ax_B.axhline(1.0, color='black', linewidth=1, linestyle='--', alpha=0.7)
-_plot_entry_vs_rest(ax_C, _failed_hire_rate_ts, lambda ts: ts['mean'] * 100, lambda ts: ts['sem'] * 100,
-                     "Failed-hire rate (%)", "C.  Failed hires")
+    def _plot_entry_vs_rest(ax, ts_fn, val_fn, err_fn, ylabel, title, marker=None):
+        """Entry-level (solid) vs rest-of-economy (dotted), one pair of lines per
+        scenario, colour = scenario, linestyle = occupation group. No per-panel
+        legend -- A/B/C share one legend below the figure (see add_shared_legend
+        call below), since all three plot the exact same four series."""
+        for _scen, _color, _ in _SCENARIOS:
+            _trans_df, _occ_df = SHOCK_RESULTS_NEAR_TERM[_scen]
+            for _ids, _ls in [(ENTRY_IDS, '-'), (NON_ENTRY_IDS, ':')]:
+                _ts = ts_fn(_trans_df, _occ_df, _ids)
+                _v, _e = val_fn(_ts), err_fn(_ts)
+                ax.plot(_ts['Time Step'], _v, color=_color, linewidth=LW, linestyle=_ls, marker=marker, markersize=3)
+                ax.fill_between(_ts['Time Step'], _v - 1.96 * _e, _v + 1.96 * _e, alpha=0.12, color=_color)
+        ax.set_xlabel("Months since shock onset", fontsize=10)
+        ax.set_ylabel(ylabel, fontsize=10)
+        ax.set_title(title, fontsize=11, fontweight='bold')
+        ax.grid(alpha=0.3)
 
-# Panel D: economy-wide UE & EE transition rates -- own inline legend, since
-# its linestyle dimension (transition type) means something different from
-# A/B/C's (occupation group), and reusing solid/dotted for both meanings in
-# one shared legend would be ambiguous.
-for _scen, _color, _lbl in _SCENARIOS:
-    _, _occ_df = SHOCK_RESULTS_NEAR_TERM[_scen]
-    for _col, _ls, _type_lbl in [('UE_Transitions', '-', 'UE'), ('EE_Transitions', ':', 'EE')]:
-        _ts = _transition_rate_ts(_occ_df, _col)
-        _v, _e = _ts['mean'] * 100, _ts['sem'] * 100
-        ax_D.plot(_ts['Time Step'], _v, color=_color, linewidth=LW, linestyle=_ls,
-                  label=f'{_lbl} — {_type_lbl}')
-        ax_D.fill_between(_ts['Time Step'], _v - 1.96 * _e, _v + 1.96 * _e, alpha=0.12, color=_color)
-ax_D.set_xlabel("Months since shock onset", fontsize=10)
-ax_D.set_ylabel("Transition rate (%)", fontsize=10)
-ax_D.set_title("D.  UE & EE transitions", fontsize=11, fontweight='bold')
-ax_D.legend(fontsize=8); ax_D.grid(alpha=0.3)
 
-plt.tight_layout()
+    _plot_entry_vs_rest(ax_A, _uer_ts, lambda ts: ts['mean'] * 100, lambda ts: ts['sem'] * 100,
+                         "UER (%)", "A.  Unemployment rate")
+    _plot_entry_vs_rest(ax_B, _wage_ts, lambda ts: ts['mean'], lambda ts: ts['sem'],
+                         "First-job wage / occ. median", "B.  Re-employment wage", marker='o')
+    ax_B.axhline(1.0, color='black', linewidth=1, linestyle='--', alpha=0.7)
+    _plot_entry_vs_rest(ax_C, _failed_hire_rate_ts, lambda ts: ts['mean'] * 100, lambda ts: ts['sem'] * 100,
+                         "Failed-hire rate (%)", "C.  Failed hires")
 
-# One shared legend for A/B/C (identical 4 series across all three): colour =
-# scenario (solid entries), linestyle = occupation group (dotted extras),
-# plus the wage panel's median-wage reference line. Panel D keeps its own
-# inline legend (see above) since its linestyle means something different.
-_legend_colors = {f'{_lbl} — entry-level': _color for _, _color, _lbl in _SCENARIOS}
-_legend_extras = [Line2D([0], [0], color=_color, linewidth=LW, linestyle=':', label=f'{_lbl} — rest of economy')
-                   for _, _color, _lbl in _SCENARIOS]
-_legend_extras.append(Line2D([0], [0], color='black', linewidth=1, linestyle='--', label='Occupation median wage'))
-add_shared_legend(fig, _legend_colors, extra_handles=_legend_extras, ncol=2)
-# No caption text on the figure itself -- captions live in exposure_shock_writeup.tex.
+    # Panel D: economy-wide UE & EE transition rates -- own inline legend, since
+    # its linestyle dimension (transition type) means something different from
+    # A/B/C's (occupation group), and reusing solid/dotted for both meanings in
+    # one shared legend would be ambiguous.
+    for _scen, _color, _lbl in _SCENARIOS:
+        _, _occ_df = SHOCK_RESULTS_NEAR_TERM[_scen]
+        for _col, _ls, _type_lbl in [('UE_Transitions', '-', 'UE'), ('EE_Transitions', ':', 'EE')]:
+            _ts = _transition_rate_ts(_occ_df, _col)
+            _v, _e = _ts['mean'] * 100, _ts['sem'] * 100
+            ax_D.plot(_ts['Time Step'], _v, color=_color, linewidth=LW, linestyle=_ls,
+                      label=f'{_lbl} — {_type_lbl}')
+            ax_D.fill_between(_ts['Time Step'], _v - 1.96 * _e, _v + 1.96 * _e, alpha=0.12, color=_color)
+    ax_D.set_xlabel("Months since shock onset", fontsize=10)
+    ax_D.set_ylabel("Transition rate (%)", fontsize=10)
+    ax_D.set_title("D.  UE & EE transitions", fontsize=11, fontweight='bold')
+    ax_D.legend(fontsize=8); ax_D.grid(alpha=0.3)
 
-_fname = "fig_exposure_shock_entry_policy.png"
-save_plot_standard(fig, os.path.join(SOURCE_OUTPUT_PATH, _fname), aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
-save_plot_standard(fig, os.path.join(SOURCE_OUTPUT_PATH, _fname.replace('.png', '.pdf')), aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
-plt.show()
-print(f"Saved: {_fname} (PNG + PDF)")
+    plt.tight_layout()
+
+    # One shared legend for A/B/C (identical 4 series across all three): colour =
+    # scenario (solid entries), linestyle = occupation group (dotted extras),
+    # plus the wage panel's median-wage reference line. Panel D keeps its own
+    # inline legend (see above) since its linestyle means something different.
+    _legend_colors = {f'{_lbl} — entry-level': _color for _, _color, _lbl in _SCENARIOS}
+    _legend_extras = [Line2D([0], [0], color=_color, linewidth=LW, linestyle=':', label=f'{_lbl} — rest of economy')
+                       for _, _color, _lbl in _SCENARIOS]
+    _legend_extras.append(Line2D([0], [0], color='black', linewidth=1, linestyle='--', label='Occupation median wage'))
+    add_shared_legend(fig, _legend_colors, extra_handles=_legend_extras, ncol=2)
+    # No caption text on the figure itself -- captions live in exposure_shock_writeup.tex.
+
+    _fname = "fig_exposure_shock_entry_policy.png"
+    save_plot_standard(fig, os.path.join(SOURCE_OUTPUT_PATH, _fname), aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
+    save_plot_standard(fig, os.path.join(SOURCE_OUTPUT_PATH, _fname.replace('.png', '.pdf')), aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
+    plt.show()
+    print(f"Saved: {_fname} (PNG + PDF)")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SECTION 9: cross-model comparison — setup
@@ -769,6 +863,11 @@ CM_DISPLAY = {
     'otj_disc':       'Behav. w.o.\nCyc. OTJ\nw. RW',
     'otj_disc_no_rw': 'Behav. w.o.\nCyc. OTJ\nw.o RW',
 }
+
+if ONLY_MODEL is not None:
+    assert ONLY_MODEL in CM_SPECS, f"ONLY_MODEL must be one of {list(CM_SPECS)}"
+    CM_SPECS = {ONLY_MODEL: CM_SPECS[ONLY_MODEL]}
+    print(f"  ONLY_MODEL = {ONLY_MODEL}: reference model and other variants skipped.")
 
 _calib_base_csv = os.path.join(
     PROJECT_ROOT,
@@ -831,42 +930,80 @@ for _mc in CM_SPECS:
 # ══════════════════════════════════════════════════════════════════════════════
 print("\n=== Section 11: Cross-model shock-phase runs ===")
 
-CM_SHOCK_RESULTS = {}
-CM_SHOCK_WAGE_AGE = {}
-for _mc in CM_SPECS:
-    _cm_shock_bp = _build_cm_params(_mc)
-    _cm_shock_bp.update({
+
+def _cm_shock_params(mc):
+    _bp = _build_cm_params(mc)
+    _bp.update({
         'time_steps':      int(SHOCK_OCC_ARRAY.shape[1]),
         'occ_shocks_data': SHOCK_OCC_ARRAY,
         'vac_data':        SHOCK_VAC_DATA,
         'delay':           SHOCK_DELAY,
     })
+    return _bp
+
+
+def _cm_shock_pkls(mc):
+    return (os.path.join(SOURCE_OUTPUT_PATH, f"shock_results_{mc}.pkl"),
+            os.path.join(SOURCE_OUTPUT_PATH, f"shock_results_{mc}_topup.pkl"))
+
+
+def _build_cm_shock_caches(mc):
+    """The base and top-up warm-start batches for one model (shock mode: both scenarios; policy mode:
+    the policy arm only), each pickled to its own cache. Run in a forked worker (one per model) by
+    the block below."""
+    _bp = _cm_shock_params(mc)
+    _batches = [(0, CM_WARMSTART_STATES[mc][:N_WARMSTART_SIMS], mc),
+                (N_WARMSTART_SIMS, CM_WARMSTART_STATES[mc][N_WARMSTART_SIMS:], f"{mc} topup")]
+    for _pkl, (_offset, _states, _label) in zip(_cm_shock_pkls(mc), _batches):
+        if _states:
+            _load_or_build(_pkl, FORCE_CM_SHOCK_RERUN,
+                           lambda: (_run_shock_batch(_bp, SHOCK_SCENARIOS, _states, sim_id_offset=_offset, label=_label)
+                                    if EXERCISE == "shock" else
+                                    _run_policy_only(_bp, _states, sim_id_offset=_offset, label=_label)),
+                           label=f"{_label} shock-phase")
+    return mc
+
+
+_todo = [mc for mc in CM_SPECS if FORCE_CM_SHOCK_RERUN
+         or not all(os.path.exists(p) for p in _cm_shock_pkls(mc)[:1 + (N_WARMSTART_TOPUP_SIMS > 0)])]
+if _todo:
+    import multiprocessing as _mp
+    with _mp.get_context('fork').Pool(min(N_CM_WORKERS, len(_todo))) as _pool:
+        for _done in _pool.imap_unordered(_build_cm_shock_caches, _todo):
+            print(f"  ✓ [{_done}] shock-phase caches built", flush=True)
+
+CM_SHOCK_RESULTS = {}
+CM_SHOCK_WAGE_AGE = {}
+for _mc in CM_SPECS:
+    _cm_shock_bp = _cm_shock_params(_mc)
     _cm_shock_pkl = os.path.join(SOURCE_OUTPUT_PATH, f"shock_results_{_mc}.pkl")
     _cm_base_states = CM_WARMSTART_STATES[_mc][:N_WARMSTART_SIMS]
     _cm_res_raw = _load_or_build(
         _cm_shock_pkl, FORCE_CM_SHOCK_RERUN,
         lambda bp=_cm_shock_bp, st=_cm_base_states, mc=_mc:
-            _run_shock_batch(bp, SHOCK_SCENARIOS, st, sim_id_offset=0, label=mc),
+            _run_policy_only(bp, st, sim_id_offset=0, label=mc),   # not reached: the workers above built every cache
         label=f"{_mc} shock-phase",
     )
     _assert_shock_batch_format(_cm_res_raw, _cm_shock_pkl)
-    _cm_res, _cm_wage_age = _cm_res_raw
+    _cm_res, _cm_wage_age = (_cm_res_raw if EXERCISE == "shock" else _with_pre_fix_no_policy(
+        _cm_res_raw, os.path.join(PRE_FIX_SOURCE_OUTPUT_PATH, f"shock_results_{_mc}.pkl")))
     if N_WARMSTART_TOPUP_SIMS > 0:
         _cm_topup_states = CM_WARMSTART_STATES[_mc][N_WARMSTART_SIMS:]
         _cm_shock_topup_pkl = os.path.join(SOURCE_OUTPUT_PATH, f"shock_results_{_mc}_topup.pkl")
         _cm_res_topup_raw = _load_or_build(
             _cm_shock_topup_pkl, FORCE_CM_SHOCK_TOPUP_RERUN,
             lambda bp=_cm_shock_bp, st=_cm_topup_states, mc=_mc:
-                _run_shock_batch(bp, SHOCK_SCENARIOS, st, sim_id_offset=N_WARMSTART_SIMS, label=f"{mc} topup"),
+                _run_policy_only(bp, st, sim_id_offset=N_WARMSTART_SIMS, label=f"{mc} topup"),
             label=f"{_mc} shock-phase topup",
         )
         _assert_shock_batch_format(_cm_res_topup_raw, _cm_shock_topup_pkl)
-        _cm_res_topup, _cm_wage_age_topup = _cm_res_topup_raw
+        _cm_res_topup, _cm_wage_age_topup = (_cm_res_topup_raw if EXERCISE == "shock" else _with_pre_fix_no_policy(
+            _cm_res_topup_raw, os.path.join(PRE_FIX_SOURCE_OUTPUT_PATH, f"shock_results_{_mc}_topup.pkl")))
         _cm_res = _concat_shock_results(_cm_res, _cm_res_topup)
         _cm_wage_age = _concat_wage_age_results(_cm_wage_age, _cm_wage_age_topup)
     CM_SHOCK_RESULTS[_mc] = _cm_res
     CM_SHOCK_WAGE_AGE[_mc] = _cm_wage_age   # used by Section 14's cross-model lifetime-earnings figure
-    print(f"  [{_mc}] {_cm_res['no_policy'][1]['sim_id'].nunique()} total sims per scenario after topup.")
+    print(f"  [{_mc}] {_cm_res[BASE_SCEN][1]['sim_id'].nunique()} total sims per scenario after topup.")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SECTION 12: cross-model comparison figure (full SHOCK_HORIZON_MONTHS window
@@ -895,15 +1032,15 @@ def _cm_delta_ts(mc, ts_fn, occ_ids=ENTRY_IDS):
     each Time Step, rather than collapsed to one number over the horizon."""
     _res = CM_SHOCK_RESULTS[mc]
     _per_sim = []
-    _sim_ids = sorted(_res['no_policy'][1]['sim_id'].unique())
+    _sim_ids = sorted(_res[BASE_SCEN][1]['sim_id'].unique())
     for _sim in _sim_ids:
         _vals = {}
-        for _scen in ('no_policy', 'policy'):
+        for _scen in (BASE_SCEN, TREAT_SCEN):
             _trans_df, _occ_df = _res[_scen]
             _trans_s = _trans_df[_trans_df['sim_id'] == _sim]
             _occ_s = _occ_df[_occ_df['sim_id'] == _sim]
             _vals[_scen] = ts_fn(_trans_s, _occ_s, occ_ids).set_index('Time Step')['mean']
-        _per_sim.append(_vals['policy'] - _vals['no_policy'])
+        _per_sim.append(_vals[TREAT_SCEN] - _vals[BASE_SCEN])
     _wide = pd.concat(_per_sim, axis=1)
     _n = _wide.shape[1]
     _sem = (_wide.std(axis=1, ddof=1) / np.sqrt(_n)) if _n > 1 else pd.Series(np.nan, index=_wide.index)
@@ -936,28 +1073,29 @@ def _cm_line(ax, ts_fn, val_fn, err_fn, ylabel, title, occ_ids=ENTRY_IDS):
     ax.grid(alpha=0.3)
 
 
-fig_cm, ((ax_cm_A, ax_cm_B), (ax_cm_C, ax_cm_D)) = plt.subplots(2, 2, figsize=(TEXTWIDTH, ROW_HEIGHT * 2))
+if ONLY_MODEL is None:
+    fig_cm, ((ax_cm_A, ax_cm_B), (ax_cm_C, ax_cm_D)) = plt.subplots(2, 2, figsize=(TEXTWIDTH, ROW_HEIGHT * 2))
 
-_cm_line(ax_cm_A, _uer_ts, lambda ts: ts['mean'] * 100, lambda ts: ts['sem'] * 100,
-         "Δ UER (pp)", "A.  Unemployment rate")
-_cm_line(ax_cm_B, _failed_hire_rate_ts, lambda ts: ts['mean'] * 100, lambda ts: ts['sem'] * 100,
-         "Δ Failed-hire rate (pp)", "B.  Failed hires")
-_cm_line(ax_cm_C, _economy_wage_ratio_ts, lambda ts: ts['mean'], lambda ts: ts['sem'],
-         "Δ Economy-wide wage ratio", "C.  Economy-wide wage (ratio)", occ_ids=ALL_OCC_IDS)
-_cm_line(ax_cm_D, _economy_wage_level_ts, lambda ts: ts['mean'], lambda ts: ts['sem'],
-         "Δ Economy-wide wage ($)", "D.  Economy-wide wage (level)", occ_ids=ALL_OCC_IDS)
+    _cm_line(ax_cm_A, _uer_ts, lambda ts: ts['mean'] * 100, lambda ts: ts['sem'] * 100,
+             "Δ UER (pp)", "A.  Unemployment rate")
+    _cm_line(ax_cm_B, _failed_hire_rate_ts, lambda ts: ts['mean'] * 100, lambda ts: ts['sem'] * 100,
+             "Δ Failed-hire rate (pp)", "B.  Failed hires")
+    _cm_line(ax_cm_C, _economy_wage_ratio_ts, lambda ts: ts['mean'], lambda ts: ts['sem'],
+             "Δ Economy-wide wage ratio", "C.  Economy-wide wage (ratio)", occ_ids=ALL_OCC_IDS)
+    _cm_line(ax_cm_D, _economy_wage_level_ts, lambda ts: ts['mean'], lambda ts: ts['sem'],
+             "Δ Economy-wide wage ($)", "D.  Economy-wide wage (level)", occ_ids=ALL_OCC_IDS)
 
-plt.tight_layout()
+    plt.tight_layout()
 
-_cm_legend_colors = {CM_DISPLAY[_mc].replace('\n', ' '): MODEL_COLORS_BY_ID.get(_mc, '#aaaaaa') for _mc in CM_SPECS}
-add_shared_legend(fig_cm, _cm_legend_colors, ncol=3)
-# No caption text on the figure itself -- captions live in exposure_shock_writeup.tex.
+    _cm_legend_colors = {CM_DISPLAY[_mc].replace('\n', ' '): MODEL_COLORS_BY_ID.get(_mc, '#aaaaaa') for _mc in CM_SPECS}
+    add_shared_legend(fig_cm, _cm_legend_colors, ncol=3)
+    # No caption text on the figure itself -- captions live in exposure_shock_writeup.tex.
 
-_cm_fname = "fig_exposure_shock_cross_model.png"
-save_plot_standard(fig_cm, os.path.join(SOURCE_OUTPUT_PATH, _cm_fname), aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
-save_plot_standard(fig_cm, os.path.join(SOURCE_OUTPUT_PATH, _cm_fname.replace('.png', '.pdf')), aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
-plt.show()
-print(f"Saved: {_cm_fname} (PNG + PDF)")
+    _cm_fname = "fig_exposure_shock_cross_model.png"
+    save_plot_standard(fig_cm, os.path.join(SOURCE_OUTPUT_PATH, _cm_fname), aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
+    save_plot_standard(fig_cm, os.path.join(SOURCE_OUTPUT_PATH, _cm_fname.replace('.png', '.pdf')), aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
+    plt.show()
+    print(f"Saved: {_cm_fname} (PNG + PDF)")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SECTION 13: lifetime earnings of new entrants — policy vs no-policy
@@ -1018,10 +1156,15 @@ COHORT_WINDOW_MONTHS = 60   # entrants arriving in months [1, COHORT_WINDOW_MONT
                              # of years -- an earlier entrant (month 1) has ~5 more years of data
                              # available but it's truncated to match, otherwise later years of the
                              # figure would silently be drawn from a shrinking, earlier-biased sample.
-MAX_FOLLOWUP_YEARS = (SHOCK_HORIZON_MONTHS - COHORT_WINDOW_MONTHS) // 12   # 15
+# Annual snapshots are taken at Time Steps 1, 13, 25, ... while model_fun's loop runs t = 0..H-2, so the
+# last snapshot is at Time Step 12*floor((H-2)/12) + 1 (= 229 for a 240-month horizon), not at month 240.
+# The last entrant (month COHORT_WINDOW_MONTHS) therefore has floor((229 - 60)/12) = 14 full years of
+# follow-up; assuming 15 left entrants after month 49 without a year-15 snapshot (filled as $0).
+LAST_SNAPSHOT_TIME_STEP = 12 * ((SHOCK_HORIZON_MONTHS + 1 - 2) // 12) + 1
+MAX_FOLLOWUP_YEARS = (LAST_SNAPSHOT_TIME_STEP - COHORT_WINDOW_MONTHS) // 12   # 14
 
 
-def _entrant_cumulative_earnings_by_sim(wage_age_df, occ_wage_info):
+def _entrant_cumulative_earnings_by_sim(wage_age_df, occ_wage_info, entry_occ_ids=None):
     """Per-sim cumulative earnings across the cohort, by years since entry,
     for the COHORT_WINDOW_MONTHS entry cohort, under both the 'ratio' (entry-
     occupation-anchored) and 'dollars' (raw) metrics described in the
@@ -1031,11 +1174,19 @@ def _entrant_cumulative_earnings_by_sim(wage_age_df, occ_wage_info):
     Section 14's 2x2 figure) -- median is the primary/default statistic (see
     the comment below the cumsum for why), mean is kept as an explicit
     robustness comparison. See the Section 13 header for the sim-level (not
-    individual-level) pairing caveat.
+    individual-level) pairing caveat. entry_occ_ids: if given, only entrants
+    whose entry occupation (first observed employed occupation, as below) is
+    in this set -- note the shock itself shifts where entrants first find work,
+    so groups defined this way are selected differently across scenarios.
     """
     df = wage_age_df.dropna(subset=['Entry_Time_Step']).copy()
     df = df[df['Entry_Time_Step'] <= COHORT_WINDOW_MONTHS]
-    df['years_since_entry'] = ((df['Time Step'] - df['Entry_Time_Step']) / 12).round().astype(int)
+    # floor, not round: annual snapshots fall at Time Steps 1, 13, 25, ..., so for an entrant arriving in
+    # month E the snapshot offsets are k - (E-1)/12. Rounding sent offsets of exactly .5 (E = 7, 19, 31, ...)
+    # to the nearest EVEN integer (two snapshots in even years, none in odd years -- filled as $0 below) and
+    # dropped year 0 for anyone whose first snapshot came more than half a year after entry. With floor, the
+    # snapshot taken during the k-th year after entry is year k: exactly one per worker per year.
+    df['years_since_entry'] = np.floor((df['Time Step'] - df['Entry_Time_Step']) / 12).astype(int)
     df = df[(df['years_since_entry'] >= 0) & (df['years_since_entry'] <= MAX_FOLLOWUP_YEARS)]
     df = df.merge(occ_wage_info, on='Occupation', how='left')
     df = df.sort_values(['sim_id', 'Worker_ID', 'years_since_entry'])
@@ -1045,6 +1196,9 @@ def _entrant_cumulative_earnings_by_sim(wage_age_df, occ_wage_info):
     _entry_occ_wage = (df.groupby(['sim_id', 'Worker_ID'])['occ_median_wage']
                           .first().rename('entry_occ_median_wage'))
     df = df.merge(_entry_occ_wage, on=['sim_id', 'Worker_ID'], how='left')
+    if entry_occ_ids is not None:
+        _entry_occ = df.groupby(['sim_id', 'Worker_ID'])['Occupation'].transform('first')
+        df = df[_entry_occ.isin(entry_occ_ids)]
     df['ratio']   = df['Wage'] / df['entry_occ_median_wage']
     df['dollars'] = df['Wage']
 
@@ -1104,8 +1258,8 @@ def _lifetime_earnings_delta_ts(metric, stat='median'):
     _col = f'{metric}_{stat}'
     _per_sim = {_scen: _entrant_cumulative_earnings_by_sim(SHOCK_WAGE_AGE[_scen], OCC_WAGE_INFO)
                        .set_index(['sim_id', 'years_since_entry'])[_col]
-                for _scen in ('no_policy', 'policy')}
-    _delta = (_per_sim['policy'] - _per_sim['no_policy']).reset_index(name=_col)
+                for _scen in (BASE_SCEN, TREAT_SCEN)}
+    _delta = (_per_sim[TREAT_SCEN] - _per_sim[BASE_SCEN]).reset_index(name=_col)
     _wide = _delta.pivot(index='years_since_entry', columns='sim_id', values=_col)
     _n = _wide.shape[1]
     _sem = (_wide.std(axis=1, ddof=1) / np.sqrt(_n)) if _n > 1 else pd.Series(np.nan, index=_wide.index)
@@ -1123,44 +1277,46 @@ LE_DISPLAY_MIN_YEAR = 1   # year 0 is dropped from all lifetime-earnings figures
                           # underlying cumsum still starts at year 0 internally -- only the DISPLAYED
                           # range is truncated, so year-1-onward values are unaffected.
 
-fig_le, (ax_le_ratio, ax_le_dollars) = plt.subplots(1, 2, figsize=(TEXTWIDTH, ROW_HEIGHT))
 _le_tick_step = max(1, round(MAX_FOLLOWUP_YEARS / 10))   # ~10 ticks regardless of how long the horizon is
-for _ax, _metric, _ylabel, _title in [
-    (ax_le_ratio,   'cum_ratio',
-     "Δ Cumulative earnings ratio", "A.  Relative to entry occupation"),
-    (ax_le_dollars, 'cum_dollars',
-     "Δ Cumulative earnings ($)", "B.  Raw dollar earnings"),
-]:
-    _ts = _lifetime_earnings_delta_ts(_metric)
-    _ts = _ts[_ts['years_since_entry'] >= LE_DISPLAY_MIN_YEAR]
-    _v, _e = _ts['mean'], _ts['sem']
-    _ax.plot(_ts['years_since_entry'], _v, color=POLICY_COLOR, linewidth=LW, marker='o', markersize=4)
-    _ax.fill_between(_ts['years_since_entry'], _v - 1.96 * _e, _v + 1.96 * _e, alpha=0.15, color=POLICY_COLOR)
-    _ax.axhline(0, color='black', linewidth=0.8, linestyle='--')
-    _ax.set_xlabel("Years since labour-market entry", fontsize=10)
-    _ax.set_ylabel(_ylabel, fontsize=10)
-    _ax.set_title(_title, fontsize=11, fontweight='bold')
-    _ax.set_xticks(range(LE_DISPLAY_MIN_YEAR, MAX_FOLLOWUP_YEARS + 1, _le_tick_step))
-    _ax.grid(alpha=0.3)
-plt.tight_layout()
-# No caption text on the figure itself -- captions live in exposure_shock_writeup.tex.
 
-_le_fname = "fig_exposure_shock_lifetime_earnings.png"
-save_plot_standard(fig_le, os.path.join(SOURCE_OUTPUT_PATH, _le_fname), aspect_ratio=ROW_HEIGHT / TEXTWIDTH)
-save_plot_standard(fig_le, os.path.join(SOURCE_OUTPUT_PATH, _le_fname.replace('.png', '.pdf')), aspect_ratio=ROW_HEIGHT / TEXTWIDTH)
-plt.show()
-print(f"Saved: {_le_fname} (PNG + PDF)")
+if RUN_REFERENCE_MODEL:
+    fig_le, (ax_le_ratio, ax_le_dollars) = plt.subplots(1, 2, figsize=(TEXTWIDTH, ROW_HEIGHT))
+    for _ax, _metric, _ylabel, _title in [
+        (ax_le_ratio,   'cum_ratio',
+         "Δ Cumulative earnings ratio", "A.  Relative to entry occupation"),
+        (ax_le_dollars, 'cum_dollars',
+         "Δ Cumulative earnings ($)", "B.  Raw dollar earnings"),
+    ]:
+        _ts = _lifetime_earnings_delta_ts(_metric)
+        _ts = _ts[_ts['years_since_entry'] >= LE_DISPLAY_MIN_YEAR]
+        _v, _e = _ts['mean'], _ts['sem']
+        _ax.plot(_ts['years_since_entry'], _v, color=POLICY_COLOR, linewidth=LW, marker='o', markersize=4)
+        _ax.fill_between(_ts['years_since_entry'], _v - 1.96 * _e, _v + 1.96 * _e, alpha=0.15, color=POLICY_COLOR)
+        _ax.axhline(0, color='black', linewidth=0.8, linestyle='--')
+        _ax.set_xlabel("Years since labour-market entry", fontsize=10)
+        _ax.set_ylabel(_ylabel, fontsize=10)
+        _ax.set_title(_title, fontsize=11, fontweight='bold')
+        _ax.set_xticks(range(LE_DISPLAY_MIN_YEAR, MAX_FOLLOWUP_YEARS + 1, _le_tick_step))
+        _ax.grid(alpha=0.3)
+    plt.tight_layout()
+    # No caption text on the figure itself -- captions live in exposure_shock_writeup.tex.
 
-# Console readout at the final tracked year: scenario levels plus the paired Δ.
-print(f"\n  Lifetime-earnings summary at year {MAX_FOLLOWUP_YEARS} (mean ± SEM across {N_TOTAL_WARMSTART_SIMS} sims):")
-for _metric, _mlabel in [('cum_ratio', 'Cumulative earnings / entry occ. median wage'),
-                          ('cum_dollars', 'Cumulative earnings ($)')]:
-    print(f"    {_mlabel}:")
-    for _scen, _, _lbl in _SCENARIOS:
-        _row = _lifetime_earnings_ts(_scen, _metric).iloc[-1]
-        print(f"      {_lbl:10s}: {_row['mean_of_medians']:.4f} ± {_row['sem']:.4f}")
-    _drow = _lifetime_earnings_delta_ts(_metric).iloc[-1]
-    print(f"      {'Δ (policy - no policy)':10s}: {_drow['mean']:.4f} ± {_drow['sem']:.4f}")
+    _le_fname = "fig_exposure_shock_lifetime_earnings.png"
+    save_plot_standard(fig_le, os.path.join(SOURCE_OUTPUT_PATH, _le_fname), aspect_ratio=ROW_HEIGHT / TEXTWIDTH)
+    save_plot_standard(fig_le, os.path.join(SOURCE_OUTPUT_PATH, _le_fname.replace('.png', '.pdf')), aspect_ratio=ROW_HEIGHT / TEXTWIDTH)
+    plt.show()
+    print(f"Saved: {_le_fname} (PNG + PDF)")
+
+    # Console readout at the final tracked year: scenario levels plus the paired Δ.
+    print(f"\n  Lifetime-earnings summary at year {MAX_FOLLOWUP_YEARS} (mean ± SEM across {N_TOTAL_WARMSTART_SIMS} sims):")
+    for _metric, _mlabel in [('cum_ratio', 'Cumulative earnings / entry occ. median wage'),
+                              ('cum_dollars', 'Cumulative earnings ($)')]:
+        print(f"    {_mlabel}:")
+        for _scen, _, _lbl in _SCENARIOS:
+            _row = _lifetime_earnings_ts(_scen, _metric).iloc[-1]
+            print(f"      {_lbl:10s}: {_row['mean_of_medians']:.4f} ± {_row['sem']:.4f}")
+        _drow = _lifetime_earnings_delta_ts(_metric).iloc[-1]
+        print(f"      {'Δ (policy - no policy)':10s}: {_drow['mean']:.4f} ± {_drow['sem']:.4f}")
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SECTION 14: cross-model lifetime-earnings comparison figure
@@ -1175,14 +1331,16 @@ for _metric, _mlabel in [('cum_ratio', 'Cumulative earnings / entry occ. median 
 print("\n=== Section 14: Cross-model lifetime-earnings figure ===")
 
 
-def _cm_lifetime_earnings_delta_ts(mc, metric, stat='median'):
+def _cm_lifetime_earnings_delta_ts(mc, metric, stat='median', entry_occ_ids=None):
     """Same pattern as _lifetime_earnings_delta_ts (Section 13), for
-    cross-model variant `mc`. `stat` selects 'median' (default) or 'mean'."""
+    cross-model variant `mc`. `stat` selects 'median' (default) or 'mean';
+    entry_occ_ids restricts the cohort by entry occupation."""
     _col = f'{metric}_{stat}'
-    _per_sim = {_scen: _entrant_cumulative_earnings_by_sim(CM_SHOCK_WAGE_AGE[mc][_scen], OCC_WAGE_INFO)
+    _per_sim = {_scen: _entrant_cumulative_earnings_by_sim(CM_SHOCK_WAGE_AGE[mc][_scen], OCC_WAGE_INFO,
+                                                            entry_occ_ids=entry_occ_ids)
                        .set_index(['sim_id', 'years_since_entry'])[_col]
-                for _scen in ('no_policy', 'policy')}
-    _delta = (_per_sim['policy'] - _per_sim['no_policy']).reset_index(name=_col)
+                for _scen in (BASE_SCEN, TREAT_SCEN)}
+    _delta = (_per_sim[TREAT_SCEN] - _per_sim[BASE_SCEN]).reset_index(name=_col)
     _wide = _delta.pivot(index='years_since_entry', columns='sim_id', values=_col)
     _n = _wide.shape[1]
     _sem = (_wide.std(axis=1, ddof=1) / np.sqrt(_n)) if _n > 1 else pd.Series(np.nan, index=_wide.index)
@@ -1190,55 +1348,447 @@ def _cm_lifetime_earnings_delta_ts(mc, metric, stat='median'):
                           'sem': _sem.values})
 
 
-# 2x2 layout: top row uses the per-sim cohort MEDIAN (the primary statistic
-# used everywhere else, e.g. Figure~fig:lifetime), bottom row uses the per-sim
-# cohort MEAN -- shown side by side purely as a robustness comparison, per
-# Ebba's request, so a reader can see how sensitive the cross-model result is
-# to that choice.
-fig_cm_le, ((ax_cm_le_A, ax_cm_le_B), (ax_cm_le_C, ax_cm_le_D)) = plt.subplots(
-    2, 2, figsize=(TEXTWIDTH, ROW_HEIGHT * 2))
-for _ax, _metric, _stat, _ylabel, _title in [
-    (ax_cm_le_A, 'cum_ratio',   'median', "Δ Cumulative earnings ratio",
-     "A.  Relative to entry occupation (median)"),
-    (ax_cm_le_B, 'cum_dollars', 'median', "Δ Cumulative earnings ($)",
-     "B.  Raw dollar earnings (median)"),
-    (ax_cm_le_C, 'cum_ratio',   'mean',   "Δ Cumulative earnings ratio",
-     "C.  Relative to entry occupation (mean)"),
-    (ax_cm_le_D, 'cum_dollars', 'mean',   "Δ Cumulative earnings ($)",
-     "D.  Raw dollar earnings (mean)"),
-]:
-    for _mc in CM_SPECS:
-        _color = MODEL_COLORS_BY_ID.get(_mc, '#aaaaaa')
-        _ts = _cm_lifetime_earnings_delta_ts(_mc, _metric, stat=_stat)
-        _ts = _ts[_ts['years_since_entry'] >= LE_DISPLAY_MIN_YEAR]   # see Section 13's note on year 0
-        _v, _e = _ts['mean'], _ts['sem']
-        _ax.plot(_ts['years_since_entry'], _v, color=_color, linewidth=LW_CM)
-        _ax.fill_between(_ts['years_since_entry'], _v - 1.96 * _e, _v + 1.96 * _e, alpha=0.15, color=_color)
-    _ax.axhline(0, color='black', linewidth=0.8, linestyle='--')
-    _ax.set_xlabel("Years since labour-market entry", fontsize=10)
-    _ax.set_ylabel(_ylabel, fontsize=10)
-    _ax.set_title(_title, fontsize=11, fontweight='bold')
-    _ax.set_xticks(range(LE_DISPLAY_MIN_YEAR, MAX_FOLLOWUP_YEARS + 1, _le_tick_step))
-    _ax.grid(alpha=0.3)
-plt.tight_layout()
-
-_cm_le_legend_colors = {CM_DISPLAY[_mc].replace('\n', ' '): MODEL_COLORS_BY_ID.get(_mc, '#aaaaaa') for _mc in CM_SPECS}
-add_shared_legend(fig_cm_le, _cm_le_legend_colors, ncol=3)
-# No caption text on the figure itself -- captions live in exposure_shock_writeup.tex.
-
-_cm_le_fname = "fig_exposure_shock_cross_model_lifetime_earnings.png"
-save_plot_standard(fig_cm_le, os.path.join(SOURCE_OUTPUT_PATH, _cm_le_fname), aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
-save_plot_standard(fig_cm_le, os.path.join(SOURCE_OUTPUT_PATH, _cm_le_fname.replace('.png', '.pdf')), aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
-plt.show()
-print(f"Saved: {_cm_le_fname} (PNG + PDF)")
-
-print(f"\n  Cross-model lifetime-earnings Δ at year {MAX_FOLLOWUP_YEARS} (mean ± SEM across {N_TOTAL_WARMSTART_SIMS} sims):")
-for _metric, _mlabel in [('cum_ratio', 'Cumulative earnings / entry occ. median wage'),
-                          ('cum_dollars', 'Cumulative earnings ($)')]:
-    for _stat in ('median', 'mean'):
-        print(f"    {_mlabel} ({_stat}):")
+if ONLY_MODEL is None:
+    # 2x2 layout: top row uses the per-sim cohort MEDIAN (the primary statistic
+    # used everywhere else, e.g. Figure~fig:lifetime), bottom row uses the per-sim
+    # cohort MEAN -- shown side by side purely as a robustness comparison, per
+    # Ebba's request, so a reader can see how sensitive the cross-model result is
+    # to that choice.
+    fig_cm_le, ((ax_cm_le_A, ax_cm_le_B), (ax_cm_le_C, ax_cm_le_D)) = plt.subplots(
+        2, 2, figsize=(TEXTWIDTH, ROW_HEIGHT * 2))
+    for _ax, _metric, _stat, _ylabel, _title in [
+        (ax_cm_le_A, 'cum_ratio',   'median', "Δ Cumulative earnings ratio",
+         "A.  Relative to entry occupation (median)"),
+        (ax_cm_le_B, 'cum_dollars', 'median', "Δ Cumulative earnings ($)",
+         "B.  Raw dollar earnings (median)"),
+        (ax_cm_le_C, 'cum_ratio',   'mean',   "Δ Cumulative earnings ratio",
+         "C.  Relative to entry occupation (mean)"),
+        (ax_cm_le_D, 'cum_dollars', 'mean',   "Δ Cumulative earnings ($)",
+         "D.  Raw dollar earnings (mean)"),
+    ]:
         for _mc in CM_SPECS:
-            _row = _cm_lifetime_earnings_delta_ts(_mc, _metric, stat=_stat).iloc[-1]
-            print(f"      {_mc:16s}: {_row['mean']:.4f} ± {_row['sem']:.4f}")
+            _color = MODEL_COLORS_BY_ID.get(_mc, '#aaaaaa')
+            _ts = _cm_lifetime_earnings_delta_ts(_mc, _metric, stat=_stat)
+            _ts = _ts[_ts['years_since_entry'] >= LE_DISPLAY_MIN_YEAR]   # see Section 13's note on year 0
+            _v, _e = _ts['mean'], _ts['sem']
+            _ax.plot(_ts['years_since_entry'], _v, color=_color, linewidth=LW_CM)
+            _ax.fill_between(_ts['years_since_entry'], _v - 1.96 * _e, _v + 1.96 * _e, alpha=0.15, color=_color)
+        _ax.axhline(0, color='black', linewidth=0.8, linestyle='--')
+        _ax.set_xlabel("Years since labour-market entry", fontsize=10)
+        _ax.set_ylabel(_ylabel, fontsize=10)
+        _ax.set_title(_title, fontsize=11, fontweight='bold')
+        _ax.set_xticks(range(LE_DISPLAY_MIN_YEAR, MAX_FOLLOWUP_YEARS + 1, _le_tick_step))
+        _ax.grid(alpha=0.3)
+    plt.tight_layout()
+
+    _cm_le_legend_colors = {CM_DISPLAY[_mc].replace('\n', ' '): MODEL_COLORS_BY_ID.get(_mc, '#aaaaaa') for _mc in CM_SPECS}
+    add_shared_legend(fig_cm_le, _cm_le_legend_colors, ncol=3)
+    # No caption text on the figure itself -- captions live in exposure_shock_writeup.tex.
+
+    _cm_le_fname = "fig_exposure_shock_cross_model_lifetime_earnings.png"
+    save_plot_standard(fig_cm_le, os.path.join(SOURCE_OUTPUT_PATH, _cm_le_fname), aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
+    save_plot_standard(fig_cm_le, os.path.join(SOURCE_OUTPUT_PATH, _cm_le_fname.replace('.png', '.pdf')), aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
+    plt.show()
+    print(f"Saved: {_cm_le_fname} (PNG + PDF)")
+
+    print(f"\n  Cross-model lifetime-earnings Δ at year {MAX_FOLLOWUP_YEARS} (mean ± SEM across {N_TOTAL_WARMSTART_SIMS} sims):")
+    for _metric, _mlabel in [('cum_ratio', 'Cumulative earnings / entry occ. median wage'),
+                              ('cum_dollars', 'Cumulative earnings ($)')]:
+        for _stat in ('median', 'mean'):
+            print(f"    {_mlabel} ({_stat}):")
+            for _mc in CM_SPECS:
+                _row = _cm_lifetime_earnings_delta_ts(_mc, _metric, stat=_stat).iloc[-1]
+                print(f"      {_mc:16s}: {_row['mean']:.4f} ± {_row['sem']:.4f}")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SECTION 15: six-panel summary figures
+#
+# An alternative to the 3-model figures (Sections 12 and 14), which are kept
+# unchanged: six outcomes for one model, otj_disc ("Behav. w.o. Cyc. OTJ w. RW",
+# the orange line in those figures), in two versions, plus the same six panels
+# for all cross-model variants (_cross_model_summary_delta, when ONLY_MODEL is None):
+#   - _delta:  paired policy - no_policy difference, mean and 95% band across sims
+#   - _levels: policy and no_policy each as its own line, mean and 95% band
+# Panel A is entry-level occupations (the policy's target, solid) with all
+# occupations (dashed) for comparison, B-D are economy-wide, E-F are the entry
+# cohort's cumulative earnings (per-sim cohort
+# median, as in Sections 13-14). Panel B is the economy-wide failed-hire rate.
+# Uses the cached CM_SHOCK_RESULTS /
+# CM_SHOCK_WAGE_AGE only -- no new simulations.
+# ══════════════════════════════════════════════════════════════════════════════
+print("\n=== Section 15: summary figures ===")
+
+SUMMARY_MODEL = ONLY_MODEL or 'otj_disc'
+SUMMARY_POLICY_COLOR = '#33A02C' if EXERCISE == "policy" else '#006D2C'   # green (policy) / dark green (shock)
+_SUMMARY_SCENARIOS = [(BASE_SCEN, NO_POLICY_COLOR, BASE_LABEL), (TREAT_SCEN, SUMMARY_POLICY_COLOR, TREAT_LABEL)]
+
+
+def _cm_level_ts(mc, ts_fn, scen, occ_ids=ENTRY_IDS):
+    """Per-scenario level time series for model mc: mean/SEM across sims of each
+    sim's own series (same per-sim construction as _cm_delta_ts, without differencing)."""
+    _trans_df, _occ_df = CM_SHOCK_RESULTS[mc][scen]
+    _per_sim = []
+    for _sim in sorted(_occ_df['sim_id'].unique()):
+        _per_sim.append(ts_fn(_trans_df[_trans_df['sim_id'] == _sim], _occ_df[_occ_df['sim_id'] == _sim],
+                              occ_ids).set_index('Time Step')['mean'])
+    _wide = pd.concat(_per_sim, axis=1)
+    _n = _wide.shape[1]
+    _sem = (_wide.std(axis=1, ddof=1) / np.sqrt(_n)) if _n > 1 else pd.Series(np.nan, index=_wide.index)
+    return pd.DataFrame({'Time Step': _wide.index, 'mean': _wide.mean(axis=1), 'sem': _sem}).reset_index(drop=True)
+
+
+def _cm_lifetime_earnings_level_ts(mc, metric, scen, stat='median'):
+    """Per-scenario cumulative earnings for model mc: mean/SEM across sims of each
+    sim's cohort `stat` (same per-sim summary as _cm_lifetime_earnings_delta_ts)."""
+    _col = f'{metric}_{stat}'
+    per_sim = _entrant_cumulative_earnings_by_sim(CM_SHOCK_WAGE_AGE[mc][scen], OCC_WAGE_INFO)
+    return (per_sim.groupby('years_since_entry')[_col].agg(['mean', 'sem']).reset_index())
+
+
+# (ts_fn, scale, [(occ_ids, linestyle), ...], ylabel stem, title); scale converts rates to pp.
+# Panel A: entry-level occupations (solid) with all occupations (dashed) for comparison.
+# Panel B is economy-wide: with 427 of 528 occupations entry-level, the entry-level rate is nearly identical.
+_SUMMARY_TS_PANELS = [
+    (_uer_ts,                100, [(ENTRY_IDS, '-'), (ALL_OCC_IDS, '--')], "UER (pp)",              "A.  UER"),
+    (_failed_hire_rate_ts,   100, [(ALL_OCC_IDS, '-')],                    "Failed-hire rate (pp)", "B.  Failed hires (all)"),
+    (_economy_wage_ratio_ts, 1,   [(ALL_OCC_IDS, '-')],                    "Wage ratio",            "C.  Wage ratio (all)"),
+    (_economy_wage_level_ts, 1,   [(ALL_OCC_IDS, '-')],                    "Wage ($)",              "D.  Wage level (all)"),
+]
+_SUMMARY_LE_PANELS = [
+    ('cum_ratio',   "Cumulative earnings ratio", "E.  Cum. earnings (ratio)"),
+    ('cum_dollars', "Cumulative earnings ($)",   "F.  Cum. earnings ($)"),
+]
+_PANEL_A_HANDLES = [Line2D([0], [0], color='black', linewidth=LW, linestyle='-',
+                           label='Panel A: entry-level occupations'),
+                    Line2D([0], [0], color='black', linewidth=LW, linestyle='--',
+                           label='Panel A: all occupations')]
+if EXERCISE == "shock":
+    # The shock is occupation-specific, so Panel A splits UER by exposure instead of by entry level.
+    _SUMMARY_TS_PANELS[0] = (_uer_ts, 100, [(HIGH_EXPOSURE_IDS, '-'), (LOW_EXPOSURE_IDS, '--')],
+                             "UER (pp)", "A.  UER by exposure")
+    _PANEL_A_HANDLES = [Line2D([0], [0], color='black', linewidth=LW, linestyle='-',
+                               label='Panel A: top-quartile exposure'),
+                        Line2D([0], [0], color='black', linewidth=LW, linestyle='--',
+                               label='Panel A: rest')]
+
+
+SUMMARY_LW, SUMMARY_LW_MULTI, SUMMARY_MS = 0.9, 0.6, 2   # thinner lines/markers than the rest of the script
+
+
+def _band(ax, x, v, e, color, lw=SUMMARY_LW, **kw):
+    ax.plot(x, v, color=color, linewidth=lw, **kw)
+    ax.fill_between(x, v - 1.96 * e, v + 1.96 * e, alpha=0.15, color=color)
+
+
+def _summary_figure(version, models):
+    """version: 'delta' (policy - no_policy) or 'levels' (both scenarios as lines; one model only).
+    models: one model (green, as in the single-model figures) or several (one colour per model,
+    MODEL_COLORS_BY_ID, as in the cross-model figures)."""
+    multi = len(models) > 1
+    assert not (multi and version == 'levels'), "levels version is single-model only"
+    colors = {mc: (MODEL_COLORS_BY_ID.get(mc, '#aaaaaa') if multi else SUMMARY_POLICY_COLOR) for mc in models}
+    lw = SUMMARY_LW_MULTI if multi else SUMMARY_LW
+    ts_panels = list(_SUMMARY_TS_PANELS)
+    if multi and EXERCISE == "policy":   # cross-model version: panel A shows economy-wide unemployment only
+        ts_panels[0] = (_uer_ts, 100, [(ALL_OCC_IDS, '-')], "UER (pp)", "A.  UER (all)")
+    fig, axes = plt.subplots(2, 3, figsize=(TEXTWIDTH, ROW_HEIGHT * 2))
+    for ax, (ts_fn, scale, scopes, ylab, title) in zip(axes.flat[:4], ts_panels):
+        for occ_ids, ls in scopes:
+            if version == 'delta':
+                for mc in models:
+                    ts = _cm_delta_ts(mc, ts_fn, occ_ids=occ_ids)
+                    _band(ax, ts['Time Step'] / 12, ts['mean'] * scale, ts['sem'] * scale, colors[mc],
+                          lw=lw, linestyle=ls)
+            else:
+                for scen, color, _ in _SUMMARY_SCENARIOS:
+                    ts = _cm_level_ts(models[0], ts_fn, scen, occ_ids=occ_ids)
+                    _band(ax, ts['Time Step'] / 12, ts['mean'] * scale, ts['sem'] * scale, color, lw=lw, linestyle=ls)
+        if version == 'delta':
+            ax.axhline(0, color='black', linewidth=0.8, linestyle=':')
+            ax.set_ylabel(f"Δ {ylab}", fontsize=9)
+        else:
+            ax.set_ylabel(ylab, fontsize=9)
+        ax.set_xlabel("Years since shock onset", fontsize=9)
+        ax.set_title(title, fontsize=10, fontweight='bold')
+        ax.grid(alpha=0.3)
+    for ax, (metric, ylab, title) in zip(axes.flat[4:], _SUMMARY_LE_PANELS):
+        if version == 'delta':
+            for mc in models:
+                ts = _cm_lifetime_earnings_delta_ts(mc, metric)
+                ts = ts[ts['years_since_entry'] >= LE_DISPLAY_MIN_YEAR]   # see Section 13's note on year 0
+                _band(ax, ts['years_since_entry'], ts['mean'], ts['sem'], colors[mc], lw=lw,
+                      marker='o', markersize=SUMMARY_MS)
+            ax.axhline(0, color='black', linewidth=0.8, linestyle=':')
+            ax.set_ylabel(f"Δ {ylab}", fontsize=9)
+        else:
+            for scen, color, _ in _SUMMARY_SCENARIOS:
+                ts = _cm_lifetime_earnings_level_ts(models[0], metric, scen)
+                ts = ts[ts['years_since_entry'] >= LE_DISPLAY_MIN_YEAR]
+                _band(ax, ts['years_since_entry'], ts['mean'], ts['sem'], color, lw=lw, marker='o', markersize=SUMMARY_MS)
+            ax.set_ylabel(ylab, fontsize=9)
+        ax.set_xlabel("Years since entry", fontsize=9)
+        ax.set_title(title, fontsize=10, fontweight='bold')
+        ax.set_xticks(range(LE_DISPLAY_MIN_YEAR, MAX_FOLLOWUP_YEARS + 1, _le_tick_step))
+        ax.grid(alpha=0.3)
+    plt.tight_layout()
+    if multi:
+        _legend = {f"{CM_DISPLAY[mc].replace(chr(10), ' ')} ({DELTA_LABEL.lower()})": colors[mc] for mc in models}
+        add_shared_legend(fig, _legend, ncol=2,
+                          **({'extra_handles': _PANEL_A_HANDLES} if EXERCISE == "shock" else {}))
+    elif version == 'delta':
+        add_shared_legend(fig, {DELTA_LABEL: SUMMARY_POLICY_COLOR}, extra_handles=_PANEL_A_HANDLES, ncol=3)
+    else:
+        add_shared_legend(fig, {lbl: color for _, color, lbl in _SUMMARY_SCENARIOS},
+                          extra_handles=_PANEL_A_HANDLES, ncol=2)
+    # No caption text on the figure itself -- captions live in exposure_shock_writeup.tex.
+    stem = "cross_model" if multi else models[0]
+    fname = f"fig_exposure_shock_{stem}_summary_{version}.png"
+    save_plot_standard(fig, os.path.join(SOURCE_OUTPUT_PATH, fname), aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
+    save_plot_standard(fig, os.path.join(SOURCE_OUTPUT_PATH, fname.replace('.png', '.pdf')),
+                       aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
+    plt.show()
+    print(f"Saved: {fname} (PNG + PDF)")
+
+
+EXPOSURE_REST_COLOR = '#888888'   # shock-mode delta figure: "rest" of the occupations, next to the top quartile
+ENTRY_COHORT_COLOR  = '#B15928'   # shock-mode delta figure: all entrants (ColorBrewer Paired brown -- not a model colour)
+
+
+def _shock_exposure_delta_figure(mc):
+    """Shock mode, one model: shock - no_shock for UER, wage ratio and wage level, each split into
+    top-quartile-exposure occupations (SUMMARY_POLICY_COLOR, solid) and the rest (grey, dashed),
+    plus the whole entry cohort's cumulative dollar earnings. Four panels in a 2x2 grid."""
+    fig, axes = plt.subplots(2, 2, figsize=(TEXTWIDTH, ROW_HEIGHT * 2))
+    ts_axes, ax_le = list(axes.flat[:3]), axes.flat[3]
+    scopes = [(HIGH_EXPOSURE_IDS, '-', SUMMARY_POLICY_COLOR), (LOW_EXPOSURE_IDS, '--', EXPOSURE_REST_COLOR)]
+    ts_panels = [
+        (_uer_ts,                100, "UER (pp)",   "A.  UER"),
+        (_economy_wage_ratio_ts, 1,   "Wage ratio", "B.  Wage ratio"),
+        (_economy_wage_level_ts, 1,   "Wage ($)",   "C.  Wage level"),
+    ]
+    for ax, (ts_fn, scale, ylab, title) in zip(ts_axes, ts_panels):
+        for occ_ids, ls, color in scopes:
+            ts = _cm_delta_ts(mc, ts_fn, occ_ids=occ_ids)
+            _band(ax, ts['Time Step'] / 12, ts['mean'] * scale, ts['sem'] * scale, color, linestyle=ls)
+        ax.axhline(0, color='black', linewidth=0.8, linestyle=':')
+        ax.set_ylabel(f"Δ {ylab}", fontsize=9)
+        ax.set_xlabel("Years since shock onset", fontsize=9)
+        ax.set_title(title, fontsize=10, fontweight='bold')
+        ax.grid(alpha=0.3)
+    # D: the whole entry cohort, not split by exposure -- the only occupation recorded for an
+    # entrant is their first job's, which the shock itself shifts (see entry_occ_ids). Dollars
+    # only: the entry-occupation-anchored ratio follows the same path here.
+    ts = _cm_lifetime_earnings_delta_ts(mc, 'cum_dollars')
+    ts = ts[ts['years_since_entry'] >= LE_DISPLAY_MIN_YEAR]   # see Section 13's note on year 0
+    _band(ax_le, ts['years_since_entry'], ts['mean'], ts['sem'], ENTRY_COHORT_COLOR,
+          marker='o', markersize=SUMMARY_MS)
+    ax_le.axhline(0, color='black', linewidth=0.8, linestyle=':')
+    ax_le.set_ylabel("Δ Cumulative earnings ($)", fontsize=9)
+    ax_le.set_xlabel("Years since entry", fontsize=9)
+    ax_le.set_title("D.  Cumulative Earnings ($)", fontsize=10, fontweight='bold')
+    ax_le.set_xticks(range(LE_DISPLAY_MIN_YEAR, MAX_FOLLOWUP_YEARS + 1, _le_tick_step))
+    ax_le.grid(alpha=0.3)
+    fig.suptitle("AI-Exposure Demand Shock: Shock − No Shock", fontweight='bold')
+    plt.tight_layout()
+    add_suptitle_spacing(fig)
+    _handles = [Line2D([0], [0], color=SUMMARY_POLICY_COLOR, linewidth=LW, linestyle='-',
+                       label='Top-quartile exposure (A-C)'),
+                Line2D([0], [0], color=EXPOSURE_REST_COLOR, linewidth=LW, linestyle='--',
+                       label='Rest of occupations (A-C)'),
+                Line2D([0], [0], color=ENTRY_COHORT_COLOR, linewidth=LW, linestyle='-', marker='o',
+                       markersize=SUMMARY_MS, label='All entrants (D)')]
+    add_shared_legend(fig, {}, extra_handles=_handles, ncol=3)
+    # No caption text on the figure itself -- captions live in exposure_shock_writeup.tex.
+    fname = f"fig_exposure_shock_{mc}_summary_delta.png"
+    save_plot_standard(fig, os.path.join(SOURCE_OUTPUT_PATH, fname), aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
+    save_plot_standard(fig, os.path.join(SOURCE_OUTPUT_PATH, fname.replace('.png', '.pdf')),
+                       aspect_ratio=(ROW_HEIGHT * 2) / TEXTWIDTH)
+    plt.show()
+    print(f"Saved: {fname} (PNG + PDF)")
+
+
+for _mc in (CM_SPECS if EXERCISE == "shock" else [SUMMARY_MODEL]):
+    if _mc in CM_SPECS:
+        if EXERCISE == "shock":
+            _shock_exposure_delta_figure(_mc)
+            _summary_figure('levels', [_mc])
+        else:
+            for _version in ('delta', 'levels'):
+                _summary_figure(_version, [_mc])
+if len(CM_SPECS) > 1:
+    # Same six panels for all cross-model variants (policy - no_policy only: levels would need
+    # two lines per model per scope)
+    _summary_figure('delta', list(CM_SPECS))
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SECTION 16: lifetime earnings validation against the CPS ASEC
+#
+# Mean annual and mean cumulative earnings of the entry cohort by years since
+# entry (levels; full and from-year-5 versions) and their growth (index and
+# year-on-year; base years 1 and 5), no-policy scenario, one line per model in
+# CM_SPECS, against a CPS ASEC
+# synthetic-cohort profile built in R (data/occ_macro_vars/lifetime_earnings_cps/,
+# see its README): civilian labour force, zeros included, nominal dollars averaged
+# over income years 2000-2023 -- the same dollar basis as the model's OEWS-based
+# occupation wages. Means rather than medians, because a synthetic cohort's
+# cumulative mean equals the sum of its annual means (comparable with the model's
+# mean cumulative earnings); cumulative medians are not comparable.
+# ══════════════════════════════════════════════════════════════════════════════
+print("\n=== Section 16: Lifetime earnings validation (CPS ASEC) ===")
+
+CPS_EARNINGS_CSV = os.path.join(PROJECT_ROOT, "..", "data", "occ_macro_vars", "lifetime_earnings_cps",
+                                "cps_earnings_by_experience.csv")
+VALIDATION_SCENARIO = BASE_SCEN
+VALIDATION_LATE_START = 5   # second version: years 5+ only, cumulating from year 5 (leaves out the early-career
+                            # gap, where entrants in the model start near full occupational pay)
+
+
+def _model_annual_per_sim(wage_age_df):
+    """Per-sim cohort mean annual dollar earnings by years since entry (zeros included), and cumulative."""
+    per_sim = (_entrant_cumulative_earnings_by_sim(wage_age_df, OCC_WAGE_INFO)
+               [['sim_id', 'years_since_entry', 'cum_dollars_mean']]
+               .sort_values(['sim_id', 'years_since_entry']))
+    per_sim['annual'] = per_sim.groupby('sim_id')['cum_dollars_mean'].diff()
+    per_sim['annual'] = per_sim['annual'].fillna(per_sim['cum_dollars_mean'])   # year 0: annual = cumulative
+    return per_sim
+
+
+def _model_earnings_profile(wage_age_df, start=VALIDATION_LATE_START):
+    """Mean (and SEM across sims) of the cohort's mean annual and mean cumulative dollar earnings by years
+    since entry, plus cumulative earnings counted from year `start` ('cum_late'; NaN before `start`).
+    Per-sim cohort means come from _entrant_cumulative_earnings_by_sim (zeros included)."""
+    per_sim = _model_annual_per_sim(wage_age_df)
+    per_sim['cum_late'] = (per_sim['annual'].where(per_sim['years_since_entry'] >= start)
+                           .groupby(per_sim['sim_id']).cumsum()
+                           .where(per_sim['years_since_entry'] >= start))
+    agg = per_sim.groupby('years_since_entry')[['annual', 'cum_dollars_mean', 'cum_late']].agg(['mean', 'sem'])
+    agg.columns = [f'{c}_{st}' for c, st in agg.columns]
+    return agg.reset_index()
+
+
+if os.path.exists(CPS_EARNINGS_CSV):
+    _cps = pd.read_csv(CPS_EARNINGS_CSV)
+    _cps = _cps[_cps['years_since_entry'] <= MAX_FOLLOWUP_YEARS]
+    _profiles = {mc: _model_earnings_profile(CM_SHOCK_WAGE_AGE[mc][VALIDATION_SCENARIO]) for mc in CM_SPECS}
+
+    _cps['cum_late'] = (_cps['mean_annual_earnings'].where(_cps['years_since_entry'] >= VALIDATION_LATE_START)
+                        .cumsum().where(_cps['years_since_entry'] >= VALIDATION_LATE_START))
+
+    def _validation_figure(late):
+        """late=False: years 0+, cumulating from entry. late=True: years VALIDATION_LATE_START+, cumulating
+        from that year on both sides."""
+        s0 = VALIDATION_LATE_START if late else 0
+        cum_m, cum_c = ('cum_late', 'cum_late') if late else ('cum_dollars_mean', 'cum_mean_earnings')
+        fig_val, (ax_val_A, ax_val_B) = plt.subplots(1, 2, figsize=(TEXTWIDTH, ROW_HEIGHT * 1.1))
+        for mc, prof in _profiles.items():
+            prof = prof[prof['years_since_entry'] >= s0]
+            _c = MODEL_COLORS_BY_ID.get(mc, '#aaaaaa')
+            _band(ax_val_A, prof['years_since_entry'], prof['annual_mean'] / 1000, prof['annual_sem'] / 1000, _c,
+                  lw=SUMMARY_LW, marker='o', markersize=SUMMARY_MS)
+            _band(ax_val_B, prof['years_since_entry'], prof[f'{cum_m}_mean'] / 1000, prof[f'{cum_m}_sem'] / 1000,
+                  _c, lw=SUMMARY_LW, marker='o', markersize=SUMMARY_MS)
+        _cp = _cps[_cps['years_since_entry'] >= s0]
+        ax_val_A.plot(_cp['years_since_entry'], _cp['mean_annual_earnings'] / 1000, color='black', linestyle='--',
+                      linewidth=SUMMARY_LW, marker='s', markersize=SUMMARY_MS)
+        ax_val_B.plot(_cp['years_since_entry'], _cp[cum_c] / 1000, color='black', linestyle='--',
+                      linewidth=SUMMARY_LW, marker='s', markersize=SUMMARY_MS)
+        cum_title = f"B.  Cumulative earnings from year {s0}" if late else "B.  Cumulative earnings"
+        for ax, ylab, title in [(ax_val_A, "Mean annual earnings ($000)", "A.  Annual earnings"),
+                                (ax_val_B, "Mean cumulative earnings ($000)", cum_title)]:
+            ax.set_xlabel("Years since entry", fontsize=9)
+            ax.set_ylabel(ylab, fontsize=9)
+            ax.set_title(title, fontsize=10, fontweight='bold')
+            ax.set_xticks(range(s0, MAX_FOLLOWUP_YEARS + 1, _le_tick_step))
+            ax.grid(alpha=0.3)
+        plt.tight_layout()
+        _val_legend = {f"{CM_DISPLAY[mc].replace(chr(10), ' ')} ({BASE_LABEL.lower()})": MODEL_COLORS_BY_ID.get(mc, '#aaaaaa')
+                       for mc in CM_SPECS}
+        add_shared_legend(fig_val, _val_legend, ncol=2,
+                          extra_handles=[Line2D([0], [0], color='black', linestyle='--', marker='s',
+                                                markersize=SUMMARY_MS, label='CPS ASEC, income years 2000-2023')])
+        fname = f"fig_lifetime_earnings_validation{'_from_year' + str(s0) if late else ''}.png"
+        save_plot_standard(fig_val, os.path.join(SOURCE_OUTPUT_PATH, fname), aspect_ratio=(ROW_HEIGHT * 1.1) / TEXTWIDTH)
+        save_plot_standard(fig_val, os.path.join(SOURCE_OUTPUT_PATH, fname.replace('.png', '.pdf')),
+                           aspect_ratio=(ROW_HEIGHT * 1.1) / TEXTWIDTH)
+        plt.show()
+        print(f"Saved: {fname} (PNG + PDF)")
+
+    _validation_figure(late=False)
+    _validation_figure(late=True)
+
+    # Earnings growth: the model's level is too high early in careers (entrants start near full occupational
+    # pay), so compare the SHAPE of the trajectory instead -- (A) earnings indexed to a base year and
+    # (B) year-on-year growth. Model index/growth computed per sim, then mean and 95% band across sims.
+    _per_sim_annual = {mc: _model_annual_per_sim(CM_SHOCK_WAGE_AGE[mc][VALIDATION_SCENARIO]) for mc in CM_SPECS}
+    _cps_annual = _cps.set_index('years_since_entry')['mean_annual_earnings']
+    _growth_rows = []
+
+    def _growth_figure(base_year):
+        fig_g, (ax_g_A, ax_g_B) = plt.subplots(1, 2, figsize=(TEXTWIDTH, ROW_HEIGHT * 1.1))
+        years = range(base_year, MAX_FOLLOWUP_YEARS + 1)
+        for mc, ps in _per_sim_annual.items():
+            w = ps.pivot(index='years_since_entry', columns='sim_id', values='annual').loc[list(years)]
+            idx = w / w.loc[base_year] * 100
+            gr = w.pct_change() * 100
+            _c = MODEL_COLORS_BY_ID.get(mc, '#aaaaaa')
+            for ax, frame, skip in [(ax_g_A, idx, 0), (ax_g_B, gr, 1)]:
+                f = frame.iloc[skip:]
+                n = f.shape[1]
+                _band(ax, f.index, f.mean(axis=1), f.std(axis=1, ddof=1) / np.sqrt(n), _c,
+                      lw=SUMMARY_LW, marker='o', markersize=SUMMARY_MS)
+            _growth_rows.append(pd.DataFrame({'model': mc, 'base_year': base_year, 'years_since_entry': list(years),
+                                              'index_mean': idx.mean(axis=1).values,
+                                              'growth_pct_mean': gr.mean(axis=1).values}))
+        c = _cps_annual.loc[list(years)]
+        c_idx, c_gr = c / c.loc[base_year] * 100, c.pct_change() * 100
+        _growth_rows.append(pd.DataFrame({'model': 'CPS', 'base_year': base_year, 'years_since_entry': list(years),
+                                          'index_mean': c_idx.values, 'growth_pct_mean': c_gr.values}))
+        ax_g_A.plot(c_idx.index, c_idx.values, color='black', linestyle='--', linewidth=SUMMARY_LW,
+                    marker='s', markersize=SUMMARY_MS)
+        ax_g_B.plot(c_gr.index[1:], c_gr.values[1:], color='black', linestyle='--', linewidth=SUMMARY_LW,
+                    marker='s', markersize=SUMMARY_MS)
+        ax_g_A.axhline(100, color='black', linewidth=0.8, linestyle=':')
+        ax_g_B.axhline(0, color='black', linewidth=0.8, linestyle=':')
+        for ax, ylab, title in [(ax_g_A, f"Mean annual earnings (year {base_year} = 100)", "A.  Earnings index"),
+                                (ax_g_B, "Year-on-year growth (%)", "B.  Earnings growth")]:
+            ax.set_xlabel("Years since entry", fontsize=9)
+            ax.set_ylabel(ylab, fontsize=9)
+            ax.set_title(title, fontsize=10, fontweight='bold')
+            ax.set_xticks(list(years)[::max(1, round(len(years) / 8))])
+            ax.grid(alpha=0.3)
+        plt.tight_layout()
+        _leg = {f"{CM_DISPLAY[mc].replace(chr(10), ' ')} ({BASE_LABEL.lower()})": MODEL_COLORS_BY_ID.get(mc, '#aaaaaa')
+                for mc in CM_SPECS}
+        add_shared_legend(fig_g, _leg, ncol=2,
+                          extra_handles=[Line2D([0], [0], color='black', linestyle='--', marker='s',
+                                                markersize=SUMMARY_MS, label='CPS ASEC, income years 2000-2023')])
+        fname = f"fig_lifetime_earnings_growth_base_year{base_year}.png"
+        save_plot_standard(fig_g, os.path.join(SOURCE_OUTPUT_PATH, fname), aspect_ratio=(ROW_HEIGHT * 1.1) / TEXTWIDTH)
+        save_plot_standard(fig_g, os.path.join(SOURCE_OUTPUT_PATH, fname.replace('.png', '.pdf')),
+                           aspect_ratio=(ROW_HEIGHT * 1.1) / TEXTWIDTH)
+        plt.show()
+        print(f"Saved: {fname} (PNG + PDF)")
+
+    for _base in (1, VALIDATION_LATE_START):
+        _growth_figure(_base)
+    pd.concat(_growth_rows).to_csv(os.path.join(SOURCE_OUTPUT_PATH, "lifetime_earnings_growth.csv"), index=False)
+    print("Saved: lifetime_earnings_growth.csv")
+
+    _val_rows = [prof.assign(model=mc) for mc, prof in _profiles.items()]
+    _val_table = (pd.concat(_val_rows)
+                  .merge(_cps[['years_since_entry', 'mean_annual_earnings', 'cum_mean_earnings', 'cum_late']]
+                         .rename(columns={'mean_annual_earnings': 'cps_annual', 'cum_mean_earnings': 'cps_cumulative',
+                                          'cum_late': f'cps_cumulative_from_year{VALIDATION_LATE_START}'}),
+                         on='years_since_entry', how='left'))
+    _val_table = _val_table.rename(columns={'cum_late_mean': f'cum_from_year{VALIDATION_LATE_START}_mean',
+                                            'cum_late_sem': f'cum_from_year{VALIDATION_LATE_START}_sem'})
+    _val_table.to_csv(os.path.join(SOURCE_OUTPUT_PATH, "lifetime_earnings_validation.csv"), index=False)
+    print("Saved: lifetime_earnings_validation.csv")
+    print(_val_table[_val_table['years_since_entry'].isin([0, 1, 5, 10, MAX_FOLLOWUP_YEARS])]
+          [['model', 'years_since_entry', 'annual_mean', 'cps_annual', 'cum_dollars_mean_mean', 'cps_cumulative']]
+          .round(0).to_string(index=False))
+else:
+    print(f"  CPS benchmark not found ({CPS_EARNINGS_CSV}); run "
+          "data/occ_macro_vars/lifetime_earnings_cps/lifetime_earnings_cps.R first.")
 
 print(f"\n✓ Done. Output written to {SOURCE_OUTPUT_PATH}")

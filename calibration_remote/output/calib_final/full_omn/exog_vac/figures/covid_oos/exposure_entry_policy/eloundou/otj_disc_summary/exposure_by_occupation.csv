@@ -1,0 +1,529 @@
+occupation_id,label,entry_level,exposure
+0,Chief executives,False,0.5077777777777778
+1,General and operations managers,False,0.4807692307692308
+2,Advertising and promotions managers,False,0.4767441860465116
+3,Marketing and sales managers,False,0.0
+4,Public relations managers,False,0.0
+5,Administrative services managers,False,0.0
+6,Computer and information systems managers,False,0.5303030303030303
+7,Financial managers,False,0.4850552306692657
+8,Compensation and Benefits Managers,False,0.513157894736842
+9,Human Resources Managers,False,0.48
+10,Training and Development Managers,False,0.5
+11,Industrial production managers,False,0.40571870150289957
+12,Purchasing managers,False,0.5857142857142857
+13,Transportation storage and distribution managers,False,0.486525974025974
+14,Farmers Ranchers and Other Agricultural Managers,False,0.3673469387755101
+15,Construction managers,True,0.4444444444444445
+16,Education administrators,False,0.0
+17,Engineering managers,False,0.4426108374384236
+18,Food service managers,False,0.4166666666666666
+19,Funeral service managers,False,0.0
+20,Gaming managers,False,0.5735294117647058
+21,Lodging managers,False,0.4565217391304347
+22,Medical and health services managers,False,0.4285714285714285
+23,Natural sciences managers,False,0.5306967984934087
+24,Property real estate and community association managers,False,0.4431818181818182
+25,Social and community service managers,False,0.3928571428571428
+26,Emergency Management Directors,False,0.4222222222222222
+27,Managers all other,False,0.4912673640410586
+28,Agents and business managers of artists performers and athletes,False,0.5434782608695652
+29,Purchasing agents and buyers farm products,True,0.5277777777777778
+30,Wholesale and retail buyers except farm products,True,0.4666666666666667
+31,Purchasing agents except wholesale retail and farm products,True,0.4736842105263157
+32,Claims adjusters appraisers examiners and investigators,True,0.0
+33,Compliance officers,True,0.5263042749310427
+34,Cost estimators,True,0.5
+35,Human resource workers,False,0.0
+36,Compensation benefits and job analysis specialists,False,0.4736842105263157
+37,Training and development specialists,False,0.5526315789473684
+38,Logisticians,True,0.5278605318327264
+39,Management analysts,False,0.4047619047619047
+40,Meeting convention and event planners,True,0.4864864864864865
+41,Fundraisers,True,0.5192307692307693
+42,Market research analysts and marketing specialists,True,0.5245901639344263
+43,Business operations specialists all other,True,0.5828407660281357
+44,Accountants and auditors,True,0.56
+45,Appraisers and assessors of real estate,True,0.0
+46,Budget analysts,True,0.52
+47,Credit analysts,True,0.5555555555555556
+48,Financial analysts,True,0.4615384615384615
+49,Personal financial advisors,True,0.5
+50,Insurance underwriters,True,0.5714285714285714
+51,Financial examiners,True,0.5
+52,Loan counselors and officers,False,0.0
+53,Tax examiners collectors and revenue agents,True,0.5806451612903225
+54,Tax preparers,True,0.625
+55,Financial specialists all other,True,0.5832309582309583
+56,Computer and information research scientists,True,0.0
+57,Computer systems analysts,True,0.0
+58,Information security analysts,False,0.0
+59,Computer programmers,True,0.0
+60,Software developers applications and systems software,False,0.0
+61,Web developers,False,0.0
+62,Computer support specialists,True,0.0
+63,Database administrators,False,0.0
+64,Network and computer systems administrators,True,0.0
+65,Computer network architects,False,0.0
+66,Computer occupations all other,False,0.0
+67,Actuaries,True,0.5
+68,Mathematicians,True,1.0
+69,Operations research analysts,True,0.6290322580645161
+70,Statisticians,True,0.7247368421052631
+71,Miscellaneous mathematical science occupations,True,0.0
+72,Architects except naval,True,0.0
+73,Surveyors cartographers and photogrammetrists,True,0.0
+74,Aerospace engineers,True,0.5714285714285714
+75,Agricultural engineers,True,0.4259259259259259
+76,Biomedical engineers,True,0.5897435897435898
+77,Chemical engineers,True,0.4615384615384615
+78,Civil engineers,True,0.48214285714285715
+79,Computer hardware engineers,True,0.7272727272727273
+80,Electrical and electronics engineers,True,0.0
+81,Environmental engineers,True,0.5555555555555556
+82,Industrial engineers including health and safety,True,0.0
+83,Marine engineers and naval architects,True,0.4210526315789473
+84,Materials engineers,True,0.4878048780487805
+85,Mechanical engineers,True,0.5312935096519228
+86,Mining and geological engineers including mining safety engineers,True,0.4814814814814814
+87,Nuclear engineers,True,0.55
+88,Petroleum engineers,True,0.5277777777777778
+89,Engineers all other,True,0.5226496200276688
+90,Drafters,True,0.0
+91,Engineering technicians except drafters,True,0.0
+92,Surveying and mapping technicians,True,0.5
+93,Agricultural and food scientists,True,0.0
+94,Biological scientists,True,0.0
+95,Conservation scientists and foresters,True,0.0
+96,Medical scientists,True,0.0
+97,Life scientists all other,True,0.0
+98,Astronomers and physicists,True,0.0
+99,Atmospheric and space scientists,True,0.5652173913043478
+100,Chemists and materials scientists,True,0.0
+101,Environmental scientists and geoscientists,True,0.0
+102,Physical scientists all other,True,0.4565217391304347
+103,Economists,True,0.5526315789473684
+104,Survey researchers,True,0.625
+105,Psychologists,True,0.0
+106,Sociologists,True,0.5384615384615385
+107,Urban and regional planners,True,0.4772727272727273
+108,Miscellaneous social scientists and related workers,True,0.0
+109,Agricultural and food science technicians,True,0.0
+110,Biological technicians,True,0.4166666666666666
+111,Chemical technicians,True,0.3928571428571428
+112,Geological and petroleum technicians,True,0.0
+113,Nuclear technicians,True,0.18506493506493504
+114,Social science research assistants,True,0.6666666666666667
+115,Miscellaneous life physical and social science technicians,True,0.0
+116,Counselors,True,0.0
+117,Social workers,True,0.0
+118,Probation officers and correctional treatment specialists,True,0.3947368421052631
+119,Social and human service assistants,True,0.3928571428571428
+120,Miscellaneous community and social service specialists including health educators and community health workers,True,0.4258512544802867
+121,Clergy,True,0.3333333333333333
+122,Directors religious activities and education,False,0.4393939393939394
+123,Religious workers all other,True,0.0
+124,Lawyers Judges magistrates and other judicial workers,False,0.425
+125,Judicial law clerks,True,0.5172413793103449
+126,Paralegals and legal assistants,True,0.525
+127,Miscellaneous legal support workers,True,0.0
+128,Postsecondary teachers,False,0.0
+129,Preschool and kindergarten teachers,True,0.0
+130,Elementary and middle school teachers,False,0.0
+131,Secondary school teachers,False,0.0
+132,Special education teachers,True,0.0
+133,Other teachers and instructors,False,0.0
+134,Archivists curators and museum technicians,True,0.0
+135,Librarians,True,0.0
+136,Library technicians,True,0.5673076923076923
+137,Teacher assistants,True,0.0
+138,Other education training and library workers,False,0.42893518518518514
+139,Artists and related workers,False,0.0
+140,Designers,True,0.0
+141,Actors,True,0.1875
+142,Producers and directors,False,0.4695853791598472
+143,Athletes coaches umpires and related workers,True,0.0
+144,Dancers and choreographers,False,0.0
+145,Musicians singers and related workers,False,0.0
+146,Entertainers and performers sports and related workers all other,True,0.0
+147,Announcers,True,0.0
+148,News analysts reporters and correspondents,True,0.0
+149,Public relations specialists,True,0.5909090909090909
+150,Editors,False,0.6470588235294118
+151,Technical writers,False,0.7
+152,Writers and authors,True,0.8771367521367521
+153,Miscellaneous media and communications workers,True,0.0
+154,Broadcast and sound engineering technicians and radio operators,True,0.0
+155,Photographers,True,0.3854166666666666
+156,Television video and motion picture camera operators and editors,True,0.0
+157,Chiropractors,True,0.4545454545454546
+158,Dentists,True,0.0
+159,Dietitians and nutritionists,True,0.5487804878048781
+160,Optometrists,True,0.3
+161,Pharmacists,True,0.4285714285714285
+162,Physicians and surgeons,True,0.0
+163,Physician assistants,True,0.2708333333333333
+164,Podiatrists,True,0.2857142857142857
+165,Audiologists,True,0.4545454545454546
+166,Occupational therapists,True,0.2890151515151515
+167,Physical therapists,True,0.1914893617021276
+168,Radiation therapists,True,0.2804878048780488
+169,Recreational therapists,True,0.3181818181818182
+170,Respiratory therapists,True,0.2023809523809523
+171,Speech-language pathologists,True,0.4512195121951219
+172,Exercise Physiologists,True,0.26
+173,Therapists all other,True,0.3656028368794326
+174,Veterinarians,True,0.2702702702702703
+175,Registered nurses,True,0.38019000703729766
+176,Nurse anesthetists,True,0.1666666666666666
+177,Nurse midwives,True,0.3902439024390244
+178,Nurse practitioners,True,0.4814814814814814
+179,Health diagnosing and treating practitioners all other,True,0.0
+180,Clinical laboratory technologists and technicians,True,0.0
+181,Dental hygienists,True,0.0
+182,Diagnostic related technologists and technicians,False,0.0
+183,Emergency medical technicians and paramedics,False,0.0
+184,Health practitioner support technologists and technicians ,False,0.0
+185,Licensed practical and licensed vocational nurses,True,0.25
+186,Medical records and health information technicians,True,0.0
+187,Opticians dispensing,True,0.2857142857142857
+188,Miscellaneous health technologists and technicians,True,0.0
+189,Other healthcare practitioners and technical occupations,True,0.0
+190,Nursing psychiatric and home health aides,True,0.0
+191,Occupational therapist assistants and aides,True,0.0
+192,Physical therapist assistants and aides,True,0.0
+193,Massage therapists,True,0.074074074074074
+194,Dental assistants,True,0.2666666666666666
+195,Medical assistants,True,0.358974358974359
+196,Medical transcriptionists,True,0.875
+197,Pharmacy aides,True,0.38
+198,Veterinary assistants and labratory animal caretakers,True,0.2222222222222222
+199,Phlebotmists,True,0.1829268292682926
+200,Miscellaneous healthcare support occupations including medical equipment preparers,True,0.23812134502923976
+201,First-line supervisors/managers of correctional officers,False,0.2826086956521739
+202,First-line supervisors/managers of police and detectives,False,0.3289473684210526
+203,First-line supervisors/managers of fire fighting and preventions workers,False,0.4150943396226415
+204,Supervisors protective service workers all other,False,0.0
+205,Fire fighters,True,0.1403508771929824
+206,Fire inspectors,False,0.0
+207,Bailiffs correctional officers and jailers,True,0.0
+208,Detectives and criminal investigators,False,0.397410759175465
+209,Fish and game wardens,False,0.2840909090909091
+210,Parking enforcement workers,True,0.3205128205128205
+211,Police and sheriff's patrol officers,False,0.35119047619047616
+212,Transit and railroad police,False,0.2499999999999999
+213,Animal control workers,True,0.35
+214,Private detectives and investigators,False,0.3888888888888888
+215,Security guards and gaming surveillance officers,False,0.0
+216,Crossing guards,True,0.1052631578947368
+217,Transportation security screeners,True,0.26
+218,Lifeguards and other recreational and all other protective service workers,True,0.22902439024390245
+219,Chefs and head cooks,False,0.2619047619047618
+220,First-line supervisors/managers of food preparation and serving workers,False,0.5111111111111112
+221,Cooks,False,0.0
+222,Food preparation workers,True,0.037037037037037
+223,Bartenders,True,0.1944444444444444
+224,Combined food preparation and serving workers including fast food,True,0.0
+225,Counter attendants cafeteria food concession and coffee shop,True,0.0
+226,Waiters and waitresses,True,0.183673469387755
+227,Food servers nonrestaurant,True,0.1296296296296296
+228,Dining room and cafeteria attendants bartender helpers and miscellaneous food preparation and serving related workers,True,0.0
+229,Dishwashers,True,0.0
+230,Hosts and hostesses restaurant lounge and coffee shop,True,0.2285714285714285
+231,Food preparation and serving related workers all other,True,0.0
+232,First-line supervisors/managers of housekeeping and janitorial workers,False,0.2653061224489795
+233,First-line supervisors/managers of landscaping lawn service and groundskeeping workers,False,0.3545454545454545
+234,Janitors and building cleaners,True,0.0
+235,Maids and housekeeping cleaners,True,0.0
+236,Pest control workers,True,0.25
+237,Grounds maintenance workers,True,0.0
+238,First-line supervisors/managers of gaming workers,False,0.0
+239,First-line supervisors/managers of personal service workers,False,0.0
+240,Animal trainers,True,0.1034482758620689
+241,Nonfarm animal caretakers,True,0.2727272727272727
+242,Gaming services workers,True,0.0
+243,Motion picture projectionists,True,0.1818181818181818
+244,Ushers lobby attendants and ticket takers,True,0.1428571428571428
+245,Miscellaneous entertainment attendants and related workers,True,0.0
+246,Funeral service workers ,True,0.10888888888888885
+247,Morticians undertakers and funeral directors (2011 forward),True,0.1627906976744186
+248,Barbers,True,0.1617647058823529
+249,Hairdressers hairstylists and cosmetologists,True,0.0789473684210526
+250,Miscellaneous personal appearance workers,True,0.0
+251,Baggage porters bellhops and concierges,True,0.0
+252,Tour and travel guides,True,0.0
+253,Child care workers,True,0.1414312039312039
+254,Personal and home care aides,True,0.0
+255,Recreation and fitness workers,True,0.0
+256,Residential advisors,True,0.24
+257,Personal care and service workers all other,True,0.0
+258,First-line supervisors/managers of retail sales workers,False,0.4864864864864865
+259,First-line supervisors/managers of non-retail sales workers,False,0.537037037037037
+260,Cashiers,True,0.0
+261,Counter and rental clerks,True,0.532258064516129
+262,Parts salespersons,True,0.3428571428571428
+263,Retail salespersons,True,0.3421052631578947
+264,Advertising sales agents,True,0.5384615384615384
+265,Insurance sales agents,True,0.5757575757575758
+266,Securities commodities and financial services sales agents,True,0.6057692307692308
+267,Travel agents,True,0.5625
+268,Sales representatives services all other,True,0.0
+269,Sales representatives wholesale and manufacturing,True,0.0
+270,Models demonstrators and product promoters,True,0.0
+271,Real estate brokers and sales agents,False,0.0
+272,Sales engineers,True,0.5113636363636364
+273,Telemarketers,True,0.8055555555555555
+274,Door-to-door sales workers news and street vendors and related workers,True,0.2608695652173913
+275,Sales and related workers all other,True,0.0
+276,First-line supervisors/managers of office and administrative support workers,False,0.4895833333333333
+277,Switchboard operators including answering service,True,0.6290322580645161
+278,Telephone operators,True,0.894736842105263
+279,Communications equipment operators all other,True,0.0
+280,Bill and account collectors,True,0.6964285714285714
+281,Billing and posting clerks and machine operators,True,0.7738095238095237
+282,Bookkeeping accounting and auditing clerks,True,0.8023255813953488
+283,Gaming cage workers,True,0.4193548387096774
+284,Payroll and timekeeping clerks,True,0.8378378378378379
+285,Procurement clerks,True,0.6142857142857142
+286,Tellers,True,0.5416666666666666
+287,Financial clerks all other,True,0.0
+288,Brokerage clerks,True,0.7666666666666666
+289,Correspondence clerks,True,0.9642857142857142
+290,Court municipal and license clerks,True,0.7
+291,Credit authorizers checkers and clerks,True,0.65
+292,Customer service representatives,True,0.5681818181818182
+293,Eligibility interviewers government programs,True,0.68
+294,File clerks,True,0.7941176470588235
+295,Hotel motel and resort desk clerks,True,0.5
+296,Interviewers except eligibility and loan,True,0.6724137931034483
+297,Library assistants clerical,True,0.5344827586206896
+298,Loan interviewers and clerks,True,0.59375
+299,New accounts clerks,True,0.56
+300,Order clerks,True,0.7142857142857143
+301,Human resources assistants except payroll and timekeeping,True,0.6206896551724138
+302,Receptionists and information clerks,True,0.5333333333333333
+303,Reservation and transportation ticket agents and travel clerks,True,0.4571428571428571
+304,Information and record clerks all other,True,0.0
+305,Cargo and freight agents,True,0.5273013150371642
+306,Couriers and messengers,True,0.3103448275862069
+307,Dispatchers,True,0.0
+308,Meter readers utilities,True,0.4374999999999999
+309,Postal service clerks,True,0.3148148148148147
+310,Postal service mail carriers,True,0.2307692307692307
+311,Postal service mail sorters processors and processing machine operators,True,0.1
+312,Production planning and expediting clerks,True,0.5961538461538461
+313,Shipping receiving and traffic clerks,True,0.5
+314,Stock clerks and order fillers,True,0.0
+315,Weighers measurers checkers and samplers record keeping,True,0.293103448275862
+316,Secretaries and administrative assistants,False,0.0
+317,Computer operators,True,0.0
+318,Data entry keyers,True,0.8928571428571428
+319,Word processors and typists,True,0.7432432432432433
+320,Desktop publishers,True,0.6451612903225806
+321,Insurance claims and policy processing clerks,True,0.8333333333333333
+322,Mail clerks and mail machine operators except postal service,True,0.2162162162162162
+323,Office clerks general,True,0.5757575757575758
+324,Office machine operators except computer,True,0.3970588235294117
+325,Proofreaders and copy markers,True,0.975
+326,Statistical assistants,True,0.8913043478260869
+327,Office and administrative support workers all other,True,0.0
+328,First-line supervisors of farming fishing and forestry workers,False,0.2807017543859649
+329,Agricultural inspectors,True,0.2916666666666666
+330,Animal breeders,True,0.1666666666666666
+331,Graders and sorters agricultural products,True,0.1
+332,Miscellaneous agricultural workers,True,0.0
+333,Forest and conservation workers,True,0.0434782608695652
+334,Logging workers,True,0.0
+335,First-line supervisors/managers of construction trades and extraction workers,False,0.41666666666666663
+336,Boilermakers,True,0.0303030303030303
+337,Brickmasons blockmasons and stonemasons,True,0.0
+338,Carpenters,True,0.1444444444444444
+339,Carpet floor and tile installers and finishers,True,0.0
+340,Cement masons concrete finishers and terrazzo workers,True,0.0
+341,Construction laborers,True,0.05
+342,Paving surfacing and tamping equipment operators,True,0.0
+343,Pile-driver operators,True,0.0
+344,Operating engineers and other construction equipment operators,True,0.0543478260869565
+345,Drywall installers ceiling tile installers and tapers,True,0.0
+346,Electricians,True,0.1463414634146341
+347,Glaziers,True,0.0833333333333333
+348,Insulation workers,True,0.0
+349,Painters construction and maintenance,True,0.0571428571428571
+350,Paperhangers,True,0.027027027027027
+351,Pipelayers plumbers pipefitters and steamfitters,True,0.0
+352,Plasterers and stucco masons,True,0.0769230769230769
+353,Reinforcing iron and rebar workers,True,0.0714285714285714
+354,Roofers,True,0.04
+355,Sheet metal workers,True,0.0657894736842105
+356,Structural iron and steel workers ,True,0.0285714285714285
+357,Solar Photovoltaic Installers,True,0.11
+358,Helpers construction trades,True,0.0
+359,Construction and building inspectors,False,0.33410428931875524
+360,Elevator installers and repairers,True,0.1842105263157894
+361,Fence erectors,True,0.0512820512820512
+362,Hazardous materials removal workers,True,0.0806451612903225
+363,Highway maintenance workers,True,0.0161290322580645
+364,Rail-track laying and maintenance equipment operators,True,0.0
+365,Septic tank servicers and sewer pipe cleaners,True,0.078125
+366,Miscellaneous construction and related workers,True,0.0
+367,Derrick rotary drill and service unit operators oil gas and mining,True,0.0
+368,Earth drillers except oil and gas,False,0.0
+369,Explosives workers ordnance handling experts and blasters,False,0.0
+370,Mining machine operators,True,0.0
+371,Roof bolters mining,False,0.0
+372,Roustabouts oil and gas,True,0.0
+373,Helpers -- extraction workers,True,0.0
+374,Other extraction workers,False,0.0769230769230769
+375,First-line supervisors/managers of mechanics installers and repairers,False,0.4102564102564102
+376,Computer automated teller and office machine repairers,True,0.3673469387755101
+377,Radio and telecommunications equipment installers and repairers,True,0.0
+378,Avionics technicians,True,0.24
+379,Electric motor power tool and related repairers,False,0.1057692307692307
+380,Electrical and electronics installers and repairers transportation equipment,False,0.24
+381,Electrical and electronics repairers industrial and utility,False,0.3238461538461539
+382,Electronic equipment installers and repairers motor vehicles,True,0.1666666666666666
+383,Electronic home entertainment equipment installers and repairers,True,0.238095238095238
+384,Security and fire alarm systems installers,True,0.1666666666666666
+385,Aircraft mechanics and service technicians,True,0.1343283582089552
+386,Automotive body and related repairers,True,0.0425531914893617
+387,Automotive glass installers and repairers,True,0.0
+388,Automotive service technicians and mechanics,True,0.0818181818181818
+389,Bus and truck mechanics and diesel engine specialists,True,0.0
+390,Heavy vehicle and mobile equipment service technicians and mechanics,True,0.0
+391,Small engine mechanics,True,0.0
+392,Miscellaneous vehicle and mobile equipment mechanics installers and repairers,True,0.0
+393,Control and valve installers and repairers,True,0.0
+394,Heating air conditioning and refrigeration mechanics and installers,True,0.1052631578947368
+395,Home appliance repairers,True,0.1454545454545454
+396,Industrial and refractory machinery mechanics,True,0.13709677419354835
+397,Maintenance and repair workers general,True,0.1372549019607843
+398,Maintenance workers machinery,True,0.1428571428571428
+399,Millwrights,True,0.0217391304347826
+400,Electrical power-line installers and repairers,True,0.0
+401,Telecommunications line installers and repairers,True,0.03125
+402,Precision instrument and equipment repairers,True,0.0
+403,Wind turbine service technicians,True,0.0434782608695652
+404,Coin vending and amusement machine servicers and repairers,True,0.3214285714285714
+405,Commercial divers,True,0.0666666666666666
+406,Locksmiths and safe repairers,True,0.08
+407,Manufactured building and mobile home installers,True,0.0769230769230769
+408,Riggers,True,0.0
+409,Signal and track switch repairers,True,0.0769230769230769
+410,Helpers--installation maintenance and repair workers,True,0.0333333333333333
+411,Other installation maintenance and repair workers,True,0.2096774193548387
+412,First-line supervisors/managers of production and operating workers,False,0.4
+413,Aircraft structure surfaces rigging and systems assemblers,True,0.025
+414,Electrical electronics and electromechanical assemblers,True,0.0
+415,Engine and other machine assemblers,True,0.0952380952380952
+416,Structural metal fabricators and fitters,True,0.0227272727272727
+417,Miscellaneous assemblers and fabricators,True,0.0
+418,Bakers,True,0.2647058823529412
+419,Butchers and other meat poultry and fish processing workers,True,0.0
+420,Food and tobacco roasting baking and drying machine operators and tenders,True,0.0666666666666666
+421,Food batchmakers,True,0.1153846153846153
+422,Food cooking machine operators and tenders,True,0.1290322580645161
+423,Food processing workers all other,True,0.0
+424,Computer control programmers and operators,True,0.0
+425,Extruding and drawing machine setters operators and tenders metal and plastic,True,0.0208333333333333
+426,Forging machine setters operators and tenders metal and plastic,True,0.0416666666666666
+427,Rolling machine setters operators and tenders metal and plastic,True,0.1764705882352941
+428,Cutting punching and press machine setters operators and tenders metal and plastic,True,0.01
+429,Drilling and boring machine tool setters operators and tenders metal and plastic,True,0.0303030303030303
+430,Grinding lapping polishing and buffing machine tool setters operators and tenders metal and plastic,True,0.064516129032258
+431,Lathe and turning machine tool setters operators and tenders metal and plastic,True,0.1612903225806451
+432,Milling and planing machine setters operators and tenders metal and plastic,True,0.2413793103448275
+433,Machinists,True,0.2346938775510204
+434,Metal furnace and kiln operators and tenders,True,0.0
+435,Model makers and patternmakers metal and plastic,True,0.0
+436,Molders and molding machine setters operators and tenders metal and plastic,True,0.0
+437,Multiple machine tool setters operators and tenders metal and plastic,True,0.1025641025641025
+438,Tool and die makers,True,0.1875
+439,Welding soldering and brazing workers,True,0.0
+440,Heat treating equipment setters operators and tenders metal and plastic,True,0.1764705882352941
+441,Lay-out workers metal and plastic,True,0.1304347826086956
+442,Plating and coating machine setters operators and tenders metal and plastic,True,0.1041666666666666
+443,Tool grinders filers and sharpeners,True,0.0333333333333333
+444,Metalworkers and plastic workers all others,True,0.0
+445,Prepress technicians and workers,True,0.4375
+446,Printing machine operators,True,0.2875
+447,Print binding and finishing workers,True,0.0897435897435897
+448,Laundry and dry-cleaning workers,True,0.05
+449,Pressers textile garment and related materials,True,0.0104166666666666
+450,Sewing machine operators,True,0.0813953488372093
+451,Shoe and leather workers and repairers,True,0.0588235294117647
+452,Shoe machine operators and tenders,True,0.0869565217391304
+453,Tailors dressmakers and sewers,True,0.0
+454,Textile bleaching and dyeing machine operators and tenders,True,0.1578947368421052
+455,Textile cutting machine setters operators and tenders,True,0.1607142857142857
+456,Textile knitting and weaving machine setters operators and tenders,True,0.15625
+457,Textile winding twisting and drawing out machine setters operators and tenders,True,0.0857142857142857
+458,Extruding and forming machine setters operators and tenders synthetic and glass fibers,True,0.0689655172413793
+459,Fabric and apparel patternmakers,True,0.46875
+460,Upholsterers,True,0.1911764705882352
+461,Textile apparel and furnishings workers all others,True,0.0
+462,Cabinetmakers and bench carpenters,True,0.1176470588235294
+463,Furniture finishers,True,0.0285714285714285
+464,Sawing machine setters operators and tenders wood,True,0.0588235294117647
+465,Woodworking machine setters operators and tenders except sawing,True,0.0652173913043478
+466,Woodworkers all others,True,0.0
+467,Power plant operators distributors and dispatchers,True,0.0
+468,Stationary engineers and boiler operators,True,0.1627906976744186
+469,Water and liquid waste treatment plant and system operators,True,0.125
+470,Miscellaneous plant and system operators,True,0.0
+471,Chemical processing machine setters operators and tenders,True,0.0
+472,Crushing grinding polishing mixing and blending workers,True,0.0
+473,Cutting workers,True,0.0
+474,Extruding forming pressing and compacting machine setters operators and tenders,True,0.075
+475,Furnace kiln oven drier and kettle operators and tenders,True,0.16
+476,Inspectors testers sorters samplers and weighers,True,0.4166666666666666
+477,Jewelers and precious stone and metal workers,True,0.2053571428571428
+478,Medical dental and ophthalmic laboratory technicians,True,0.0
+479,Packaging and filling machine operators and tenders,True,0.0
+480,Painting workers,True,0.0
+481,Photographic process workers and processing machine operators,True,0.38
+482,Semiconductor processors,True,0.234375
+483,Cementing and gluing machine operators and tenders,True,0.064516129032258
+484,Cleaning washing and metal pickling equipment operators and tenders,True,0.1052631578947368
+485,Cooling and freezing equipment operators and tenders,True,0.08
+486,Etchers and engravers,True,0.1363636363636363
+487,Molders shapers and casters except metal and plastic,True,0.07098155467720682
+488,Paper goods machine setters operators and tenders,True,0.0
+489,Tire builders,True,0.0192307692307692
+490,Helpers--production workers,True,0.0888888888888888
+491,Production workers all other,True,0.0
+492,Supervisors transportation and material moving workers,False,0.0
+493,Aircraft pilots and flight engineers,False,0.0
+494,Air traffic controllers and airfield operations specialists,True,0.0
+495,Flight attendants,False,0.1666666666666666
+496,Ambulance drivers and attendants except emergency medical technicians,True,0.0909090909090909
+497,Bus drivers,True,0.0
+498,Driver/sales workers and truck drivers,True,0.0
+499,Taxi drivers and chauffeurs,True,0.0
+500,Motor vehicle operators all other,True,0.0
+501,Locomotive engineers and operators,False,0.0
+502,Railroad brake signal and switch operators,True,0.0
+503,Railroad conductors and yardmasters,True,0.2777777777777778
+504,Subway streetcar and other rail transportation workers,False,0.4090909090909091
+505,Sailors and marine oilers,False,0.0425531914893617
+506,Ship and boat captains and operators,False,0.0
+507,Ship engineers,False,0.171875
+508,Bridge and lock tenders,False,0.2857142857142857
+509,Parking lot attendants,True,0.1071428571428571
+510,Service station attendants,True,0.1304347826086956
+511,Transportation inspectors,True,0.4125757575757576
+512,Transportation attendants except flight attendants,True,0.2222222222222222
+513,Other transportation workers,True,0.4629629629629629
+514,Conveyor operators and tenders,True,0.1034482758620689
+515,Crane and tower operators,False,0.1842105263157894
+516,Dredge excavating and loading machine operators,True,0.0
+517,Hoist and winch operators,True,0.0
+518,Industrial truck and tractor operators,True,0.03125
+519,Cleaners of vehicles and equipment,True,0.0833333333333333
+520,Laborers and freight stock and material movers hand,True,0.0417391304347826
+521,Machine feeders and offbearers,True,0.0909090909090909
+522,Packers and packagers hand,True,0.1
+523,Pumping station operators,False,0.0
+524,Refuse and recyclable material collectors,True,0.1964285714285714
+525,Shuttle car operators,True,0.0
+526,Tank car truck and ship loaders,True,0.0714285714285714
+527,Material moving workers all other,True,0.0
