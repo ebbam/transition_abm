@@ -515,3 +515,7 @@ data/wage_adjustment/main.aux
 data/wage_adjustment/main.fdb_latexmk
 data/wage_adjustment/main.fls
 data/wage_adjustment/main.pdf
+data/occ_macro_vars/ipums_vars/cps_00023.dat
+data/occ_macro_vars/ipums_vars/cps_00023.xml
+data/occ_macro_vars/ipums_vars/cps_00023.dat.gz
+*.gz
