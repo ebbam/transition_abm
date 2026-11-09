@@ -1,0 +1,23 @@
+\begin{table}[H]
+\centering
+\caption{Occupational Code Matching Summary: AI Exposure Scores}
+\label{si_tbl:ai_exposure_match_summary}
+\begin{threeparttable}
+
+\begin{tabular}{lrrrr}
+\toprule
+\makecell{Matching\\Level} & \makecell{Eloundou\\Matched} & \makecell{Eloundou\\Cumulative \%} & \makecell{Anthropic\\Matched} & \makecell{Anthropic\\Cumulative \%}\\
+\midrule
+SOC 2010 (exact) & 388 & 73.5 & 379 & 71.8\\
+SOC broad (6-digit) & 121 & 96.4 & 119 & 94.3\\
+SOC minor (4-digit) & 19 & 100.0 & 29 & 99.8\\
+SOC major (2-digit) & 0 & 100.0 & 1 & 100.0\\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}[flushleft]
+\small
+\item \textit{Note: }Occupational Mobility Network (N = 528). Both sources are translated from SOC 2018 (O*NET-SOC 2019) to SOC 2010 with the O*NET 2010--2019 crosswalk, then matched hierarchically; each step includes only occupations unmatched at all prior steps. Broad and minor matches take the unweighted mean of the source scores in that group; the SOC major step is needed only for Tour and Travel Guides in the Anthropic data.
+\item \textit{Sources:} Eloundou et al. (2024), E2 exposure; Anthropic Economic Index, observed exposure.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
