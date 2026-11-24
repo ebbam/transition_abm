@@ -1,0 +1,422 @@
+\documentclass[10pt]{article}
+\usepackage[a4paper,margin=1.5cm]{geometry}
+\usepackage[table]{xcolor}
+\usepackage{booktabs,tabularx,amsmath,amssymb,enumitem,graphicx,float}
+\graphicspath{{../../overnight_N5_otj_disc/ladder_nofi/figures/}{../../overnight_N5_otj_disc/combined_nofi/figures/}}
+\usepackage[T1]{fontenc}
+\setlist{itemsep=2pt,topsep=3pt}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{4pt}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+
+\title{\vspace{-1.5cm}Optimizing-Search Benchmark: Summary}
+\author{Ebba Mark}
+\date{24 November 2026}
+
+\begin{document}
+\maketitle
+\vspace{-0.8cm}
+
+\section{Overview}
+\textbf{Since our last meeting.} I have explored planner and McCall benchmarks for the search behaviour of
+unemployed workers, alongside the data-driven rule of the paper. This document compares them with the paper model
+on unemployment, long-term unemployment and unemployment durations, and reports various diagnostics on the McCall rule. In
+short, optimizing rules fit as well as the paper model only when they carry the behaviour we build into it, McCall overshoots unemployment, and lowering its reservation wage closes little of the gap; the full planners miss long-term unemployment. The versions implemented are:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Planner, max matches:} a central planner assigns workers to vacancies one-to-one over the
+  occupational network to maximize the number of matches.
+  \item \textbf{Planner, max surplus:} the same one-to-one assignment, maximizing matches and then wage gains
+  over each worker's previous wage.
+  \item \textbf{Limited planner:} the planner directs how many applications each worker sends and to which
+  occupations, but hiring stays random (closer to the paper's model).
+  \item \textbf{McCall:} a rational-expectations searcher that applies only to vacancies paying at least a
+  McCall reservation wage, with a set of diagnostics on how that reservation wage is computed. The baseline has
+  no value of unemployment ($b = 0$, as in the paper model) and values vacancies based on wage and occupational similarity using the raw network weights,
+  as the paper model does.
+  \item \textbf{Full information, all vacancies:} a non-behavioural optimizing rule that uses the actual chance
+  of being hired (from last month's competition), sees every reachable vacancy and values vacancies with the
+  raw network weights.
+\end{itemize}
+These are in addition to the earlier versions, which are meant to mirror the behaviour we are instilling in the
+model:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Sticky beliefs (Agent defined in our Appendix):} workers choose how many applications to send by weighing the expected gain
+  against a cost, with a believed chance of success that erodes gradually with each month unemployed.
+  \item \textbf{Bayesian beliefs (Bayesian version of agent defined in our Appendix):} the same rule, with the believed chance of success updated by Bayesian
+  learning after each month without a job.
+  \item \textbf{Fixed beliefs:} the same rule with beliefs that never erode (a non-behavioural counterpart).
+\end{itemize}
+\subsection*{Model versions}
+All versions run on the paper's otj\_disc model (Behavioural w.o.\ Cyc.\ OTJ w.\ RW): they share the network,
+separations, vacancies pinned to the observed rate, fixed 7\% on-the-job search and its calibrated parameters; only
+unemployed search changes (and who is matched under the planners). They are compared across some of the main fit
+measures used in the paper. \textbf{These are preliminary results with 5 runs per version (the McCall diagnostics are
+single runs); a 10-run update will follow.}
+
+\smallskip
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}p{3.3cm}LLp{2.6cm}p{1.9cm}@{}}
+\toprule
+Version & Applications per month & Which vacancies & Reservation wage & Who is hired \\
+\midrule
+\multicolumn{5}{@{}l}{\textbf{Data-driven} (grey in figures): behaviour taken directly from survey data} \\
+\addlinespace[1pt]
+\quad CPS schedule (paper) & CPS draw by spell length & Best of 30 sampled, +15\% below $R$ & DWS, falling & Random \\
+\addlinespace[4pt]
+\multicolumn{5}{@{}l}{\textbf{Behavioural optimizing} (blue): workers optimize, but their beliefs erode as they fail} \\
+\addlinespace[1pt]
+\quad Sticky / Bayesian beliefs & Marginal benefit; beliefs erode & Best of 30 sampled, +15\% below $R$ & DWS, falling & Random \\
+\addlinespace[4pt]
+\multicolumn{5}{@{}l}{\textbf{Non-behavioural optimizing} (green): workers optimize with beliefs that never erode; no reservation wage} \\
+\addlinespace[1pt]
+\quad Fixed beliefs & Marginal benefit; no erosion; level-matched & Best of 30 sampled & None & Random \\
+\quad Full info, all vacancies & Marginal benefit, actual hiring chance (last month's competition); level-matched & All reachable, ranked with raw network weights & None & Random \\
+\addlinespace[4pt]
+\multicolumn{5}{@{}l}{\textbf{Rational expectations} (purple): as the full-information rule (actual hiring chance, every vacancy), plus a McCall $R$} \\
+\addlinespace[1pt]
+\quad McCall & Marginal benefit, actual hiring chance (last month's competition); level-matched & All reachable, only $\geq R$, ranked with raw network weights & McCall $R$, $b = 0$ & Random \\
+\addlinespace[4pt]
+\multicolumn{5}{@{}l}{\textbf{Planners} (orange): a central planner allocates search over the network} \\
+\addlinespace[1pt]
+\quad Limited planner & Planner splits an application budget & Planner picks occupations & None & Random \\
+\quad Max matches & One per seeker & One-to-one assignment & None & Planner \\
+\quad Max surplus & One per seeker & One-to-one, favouring wage gains & None & Planner \\
+\bottomrule
+\end{tabularx}
+
+\normalsize
+\normalsize
+\subsection*{Caveats}
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{All comparisons are within one calibrated model.} Every version runs inside the paper's
+  reference model: the behavioural model with on-the-job search and reservation wages. In that model
+  unemployed workers' application effort follows the CPS schedule, which varies with unemployment duration,
+  and they target vacancies against a reservation wage that declines with duration (DWS). Employed workers search with a
+  fixed intensity: a constant 7\% of them search each month. Its economic parameters (the separation rate, its response to demand
+  shocks) were calibrated for that model and are held
+  fixed. Only the search rule changes; no version is recalibrated to its own rule.
+  \item \textbf{Full information means knowing last month's competition.} The full-information rule and McCall respond
+  to last month's applicants per vacancy, not to what other workers do this month.
+  \item \textbf{Raw network weights are used only where workers see every vacancy.} McCall and the
+  full-information rule with all vacancies rank vacancies with the raw network weights; the rules that sample 30
+  vacancies (sticky, Bayesian, fixed beliefs) still weight within the sample by percentile
+  rank, after sampling in proportion to the raw weights.
+  \item \textbf{Preliminary.} 5 runs per version; the McCall diagnostics are single runs.
+\end{enumerate}
+
+\section{The McCall benchmark}
+\textbf{Context.} Building the McCall benchmark has been harder than anticipated given the structure of the
+ABM:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Offers versus applications.} McCall is a model of accepting offers, but in the ABM workers
+  apply to vacancies on an occupational network and compete with each other and with employed searchers.
+  \item \textbf{Summarizing the network.} To compute a reservation wage, the information a worker would weigh in
+  an optimizing way has to be summarized as a single offer distribution, and I could not figure out an obvious
+  way to do that in the network.
+  \item \textbf{Baseline conditions.} All versions use the same calibrated parameters (Section 1), although
+  arguably each should be calibrated to its own rule.
+\end{itemize}
+We therefore ran diagnostics on the McCall rule, changing one element at a time (see McCall diagnostics). The
+main lessons so far:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{The McCall reservation wage responds to its inputs in the direction theory predicts, but this
+  explains little of the unemployment gap.} It falls with impatience, with shorter expected jobs and with less
+  dispersed offers, and rises with a higher value of unemployment. Lowering it in these ways takes unemployment
+  from 9.1\% to 8.1--8.4\%, still far above the paper model's 5.7\%.
+  \item \textbf{How workers value the network matters.} Our optimizing rules originally weighted occupational
+  similarity by its percentile rank, which flattens the network: a middling neighbouring occupation counted half
+  as much as the worker's own. Using the raw network weights, as the paper model does, takes the
+  full-information rule with every vacancy visible from 11.3\% to 6.6\% unemployment (single run against 5 runs),
+  and McCall from 9.7\% to 9.1\%.
+  \item \textbf{What remains for McCall comes from never applying below the reservation wage.} Allowing some
+  applications below it, as the paper model does, brings unemployment to the paper model's level (5.5\%), but
+  then the McCall reservation wage no longer determines who is hired.
+\end{itemize}
+
+\subsection*{The McCall rule in the model}
+What the strict McCall version does each month (opt\_search\_funs.py, model\_fun\_opt.py):
+
+\begin{footnotesize}
+\begin{verbatim}
+for each unemployed worker i (previous wage w_i, occupation o_i):
+  1. V_i     = all open vacancies in occupations connected to o_i on the network,
+               each weighted by the raw network weight between o_i and its occupation
+  2. b_i     = 0                                                 # no value of unemployment
+     lam_i   = last month's job-finding rate of the unemployed in o_i
+     delta   = last month's economy-wide separation rate
+     k_i     = 0.996 * lam_i / (1 - 0.996 * (1 - delta))
+     R_i     = solves  R - b_i = k_i * E[max(w - R, 0)],  w ~ wages in V_i (network-weighted)
+  3. C_i     = vacancies in V_i with wage >= R_i                 # never applies below R_i
+  4. for each v in C_i:
+        gain_v = (wage_v - R_i) * raw network weight(o_i, occupation of v), scaled so the largest = 1
+        p_v    = last month's average of 1/(applicants per vacancy) in v's occupation
+     rank C_i by p_v * gain_v; apply down the list while
+        P(all earlier applications fail) * p_v * gain_v >= kappa * w_i
+     (at most 30; at least 1 if C_i is not empty; kappa set so the mean is about 5.25, as in the paper model)
+  5. each application goes to a random vacancy instead with probability 0.1 (as in every version)
+
+hiring (unchanged): each vacancy picks one applicant at random; if that applicant was already hired
+  this month, the vacancy stays open; otherwise the applicant is hired at the vacancy's wage
+after hiring: update lam for every occupation and delta, for next month's R
+\end{verbatim}
+\end{footnotesize}
+
+\textbf{How this differs from a McCall model.} In McCall, offers arrive at an exogenous rate $\lambda$ from a
+known, stationary wage distribution; the worker accepts or rejects each offer, and $R$ is the optimal
+stopping rule, constant over the spell. Here there are no offers to accept or reject: $R$ only filters where
+the worker applies, and being picked means being hired. $\lambda$ is not an exogenous offer rate but last
+month's realized job-finding rate, which itself depends on everyone's reservation wages. The offer
+distribution is this month's reachable vacancies on the network, and the worker re-solves for $R$ every month
+as if current conditions were permanent. The worker also chooses how many applications to send, competes
+with other unemployed and employed searchers for the same vacancies, and can search on the job once hired;
+the formula for $R$ ignores all three.
+
+\subsection*{McCall-specific caveats}
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{McCall is partial-equilibrium and myopic.} Each month the worker treats the current offers,
+  job-finding rate and separation rate as permanent. It does not anticipate the cycle, and firms do not
+  respond to its choices. It is the textbook McCall rule placed inside the ABM, not a rational-expectations
+  equilibrium.
+  \item \textbf{Our McCall formula is a simplification.} It combines last month's realized job-finding rate
+  with the expected gain over all reachable offers, which counts the chance of a job being acceptable twice and
+  so understates the value of waiting relative to the textbook equation. A consistent version would, if
+  anything, raise the reservation wage. It also ignores that workers keep searching once employed.
+\end{enumerate}
+
+\subsection*{McCall diagnostics}
+Because the McCall result depends on choices about what the worker knows and how the reservation wage is set,
+we varied each in turn. Unless noted, variants use $b = 0$, all reachable vacancies, raw network weights, no
+applications below $R$ and an application cost near the baseline's level-matched value, so application counts
+can differ. All variants are single runs on otj\_disc; the baseline is the 5-run McCall in the results table.
+
+\smallskip
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}Lrrrr@{}}
+\toprule
+Variant & Avg.\ $R$ / previous wage & Mean unemp.\ (\%) & LTU share & Applications per unemployed \\
+\midrule
+Baseline McCall (5 runs) & 1.32 & 9.1 & 0.26 & 5.2 \\
+\addlinespace[4pt]
+\multicolumn{5}{@{}l}{\textbf{Value of unemployment}} \\
+\quad $b = 0.4\times$ previous wage & 1.37 & 9.5 & 0.29 & 5.0 \\
+\addlinespace[4pt]
+\multicolumn{5}{@{}l}{\textbf{Patience and job length} (in the reservation-wage formula)} \\
+\quad Monthly discount factor 0.98 (instead of 0.996) & 1.15 & 8.4 & 0.23 & 6.0 \\
+\quad Separation rate 0.05 (shorter expected jobs) & 1.06 & 8.1 & 0.22 & 6.2 \\
+\addlinespace[4pt]
+\multicolumn{5}{@{}l}{\textbf{Offer distribution}} \\
+\quad Offers compressed halfway to their mean & 1.12 & 8.3 & 0.23 & 5.9 \\
+\quad No 1\%-a-month wage drift on unfilled vacancies & 1.33 & 8.9 & 0.25 & 5.5 \\
+\addlinespace[4pt]
+\multicolumn{5}{@{}l}{\textbf{Beliefs about competition}} \\
+\quad Fixed believed success chance & 1.24 & 9.7 & 0.32 & 4.4 \\
+\addlinespace[4pt]
+\multicolumn{5}{@{}l}{\textbf{Information}: what the worker sees} \\
+\quad 30-vacancy sample & 1.31 & 9.3 & 0.26 & 3.3 \\
+\quad 30-vacancy sample, discount factor 0.98 & 1.15 & 8.5 & 0.23 & 3.8 \\
+\addlinespace[4pt]
+\multicolumn{5}{@{}l}{\textbf{Ranking of vacancies}} \\
+\quad Percentile weights instead of raw network weights & 1.26 & 9.7 & 0.30 & 5.9 \\
+\addlinespace[4pt]
+\multicolumn{5}{@{}l}{\textbf{Level of $R$}: McCall formula replaced by a fixed multiple of the previous wage} \\
+\quad $R = 1.0\times$ previous wage & 1.00 & 10.8 & 0.48 & 3.2 \\
+\quad $R = 1.2\times$ previous wage & 1.20 & 13.5 & 0.57 & 2.4 \\
+\addlinespace[4pt]
+\multicolumn{5}{@{}l}{\textbf{Applications below $R$}: 15\% of below-$R$ vacancies applied to, as in the paper model} \\
+\quad With 30-vacancy sample & 1.63 & 5.5 & 0.17 & 5.1 \\
+\quad With all vacancies & 1.56 & 6.0 & 0.33 & 18.7 \\
+\bottomrule
+\end{tabularx}
+
+\normalsize
+\smallskip
+\begin{itemize}[leftmargin=*]
+  \item The reservation wage responds as theory predicts (lower with impatience, shorter jobs and less dispersed
+  offers), but this lowers unemployment by at most about 1 point (to 8.1--8.4\%), and those runs also send
+  about one more application per worker.
+  \item Valuing vacancies with percentile rather than raw network weights raises unemployment (9.7\%). Seeing
+  only a 30-vacancy sample does not help McCall here (9.3\%), because few sampled vacancies clear its
+  reservation wage (3.3 applications per worker).
+  \item Only when workers may also apply to some jobs below their reservation wage (15\% of such vacancies, as in
+  the paper model) does unemployment fall to the paper model's level (5.5\%). (With all vacancies visible,
+  the same rule means about 19 applications per worker, so that row is not comparable.)
+  \item A reservation wage fixed at the previous wage, applied strictly, gives 10.8\%: a strict filter that never
+  relaxes shuts some workers out of the market regardless of its level.
+\end{itemize}
+
+\section{Findings}
+This has been very challenging to summarise -- there is a lot of conflicting information and it is tough to
+distill clear findings. I am still extremely unsure about what is driving everything... I am satisfied that we have a set of
+``sound'' models to compare the results across -- but I am not quite sure what to draw from all of this.  
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Optimizing rules work when they carry the behaviour.} Sticky and Bayesian beliefs match the
+  paper model on unemployment (RMSE 0.006--0.007) and fit long-term unemployment best (RMSE 0.067--0.069 against
+  0.087 for the paper model), because they reproduce declining effort and reservation wages.
+  \item \textbf{McCall overshoots unemployment, and mostly not because of the level of its reservation wage.}
+  McCall gives 9.1\% unemployment (paper model 5.7\%), although its long-term unemployment fit is reasonable
+  (RMSE 0.077). Its reservation wage averages $1.32\times$ the previous wage (1.42 at 1 month, 0.98 at 24
+  months) but sits close to the wages it accepts, which is what a McCall searcher should do when job finding is
+  fairly quick (Hornstein, Krusell and Violante 2011); in the model, accepted wages are themselves well above
+  previous wages. Lowering the reservation wage by impatience, shorter expected jobs or less dispersed offers
+  lowers unemployment only to 8.1--8.4\%, and fixing it at the previous wage raises it to 10.8\%. Only allowing
+  applications below it, as the paper model does, brings unemployment to 5.5\%.
+  \item \textbf{How the network enters the ranking of vacancies matters.} Weighting occupational similarity by
+  its percentile rank made optimizing workers rank vacancies mainly by wage across many occupations they would
+  rarely move to. With every vacancy visible, the full-information rule then gives 11.3\% unemployment; with
+  the raw network weights used by the paper model it gives 6.6\%.
+  \item \textbf{The full planner fails because it chooses who is hired.} The two full planners keep unemployment
+  far too low (3.3--3.5\%) and miss long-term unemployment and durations (LTU RMSE 0.17--0.20). A limited
+  planner that directs applications but leaves hiring random matches unemployment (5.1\%, RMSE 0.009) but fits
+  long-term unemployment less well (0.123). Once effort and random hiring are fixed, many rules match aggregate
+  unemployment.
+  \item \textbf{Tentative synthesis.} Aggregate unemployment in the model appears to be set mainly by the amount
+  of search, random hiring and how workers use the network, while behaviour mainly shapes who stays unemployed
+  and the wages they return to. Unemployment here is largely frictional rather than chosen, which is why changing
+  the McCall reservation wage moves it so little. This is an interpretation, not yet tested.
+\end{enumerate}
+
+\subsection*{Results (5 runs each, otj\_disc, in-sample 2001--2019)}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}Lrrrrr@{}}
+\toprule
+Version & Mean unemp.\ (\%) & Unemp.\ RMSE & LTU RMSE & Duration error (months) & Job-to-job hires (\%) \\
+\midrule
+CPS schedule (paper) & 5.7 & \cellcolor[RGB]{198,239,206}0.006 & \cellcolor[RGB]{216,238,190}0.087 & \cellcolor[RGB]{205,239,200}1.43 & 24 \\
+Sticky beliefs & 5.5 & \cellcolor[RGB]{198,239,206}0.006 & \cellcolor[RGB]{198,239,206}0.067 & \cellcolor[RGB]{200,239,204}1.36 & 23 \\
+Bayesian beliefs & 5.5 & \cellcolor[RGB]{202,239,202}0.007 & \cellcolor[RGB]{200,239,204}0.069 & \cellcolor[RGB]{200,239,204}1.36 & 23 \\
+Fixed beliefs & 6.5 & \cellcolor[RGB]{211,238,195}0.009 & \cellcolor[RGB]{211,238,194}0.082 & \cellcolor[RGB]{202,239,203}1.38 & 23 \\
+Full info, all vacancies & 6.6 & \cellcolor[RGB]{219,238,187}0.011 & \cellcolor[RGB]{202,239,202}0.072 & \cellcolor[RGB]{198,239,206}1.32 & 24 \\
+McCall & 9.1 & \cellcolor[RGB]{255,199,206}0.033 & \cellcolor[RGB]{207,238,198}0.077 & \cellcolor[RGB]{207,238,198}1.47 & 30 \\
+Limited planner & 5.1 & \cellcolor[RGB]{211,238,195}0.009 & \cellcolor[RGB]{247,236,163}0.123 & \cellcolor[RGB]{230,237,178}1.85 & 25 \\
+Planner, max matches & 3.3 & \cellcolor[RGB]{255,207,195}0.030 & \cellcolor[RGB]{255,199,206}0.196 & \cellcolor[RGB]{255,199,206}3.20 & 29 \\
+Planner, max surplus & 3.5 & \cellcolor[RGB]{255,210,191}0.029 & \cellcolor[RGB]{255,212,187}0.172 & \cellcolor[RGB]{255,206,196}3.02 & 27 \\
+\bottomrule
+\end{tabularx}
+
+\smallskip
+Shading in the three error columns runs from green (lowest error) to red (highest), scaled to each column's range.
+Duration error is the Wasserstein distance between simulated and CPS unemployment-duration distributions.
+
+\normalsize
+\subsection*{Open questions}
+\begin{itemize}[leftmargin=*]
+  \item Should all optimizing benchmarks value vacancies with the raw network weights, as the paper model does?
+  I have adopted this for McCall and the full-information rule with all vacancies; the sampling rules still
+  weight within their sample by percentile rank.
+\end{itemize}
+
+\clearpage
+\section{Figures}
+The figures come in two groups. \textbf{Benchmark comparison} shows five figures, each first with all versions
+and then with four only (CPS schedule, sticky beliefs, McCall and the max-matches planner): fit by version;
+unemployment, vacancies and applications over time; the long-term unemployment share; the reservation wage by
+months unemployed; and the wages of re-employed workers by months unemployed. \textbf{Main-text figures with
+McCall added} shows three of the paper's figures with McCall added to its six model variants: the long-term
+unemployment share, the annual fit to the CPS unemployment-duration distribution, and the annual ranking of that
+fit.
+
+\subsection*{Benchmark comparison}
+All figures: otj\_disc, 5 runs per version, mean with 95\% intervals where shown.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth,height=0.4\textheight,keepaspectratio]{ladder_fit.png}
+\caption{Fit by version, in-sample 2001--2019. Behavioural optimizing rules fit long-term unemployment and
+durations best; McCall misses the unemployment level and the full planners miss long-term unemployment and the
+duration distribution.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth,height=0.3\textheight,keepaspectratio]{../../overnight_N5_otj_disc/ladder_core4/figures/ladder_fit.png}
+\caption{As above, CPS schedule, sticky beliefs, McCall and the max-matches planner only.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[height=0.42\textheight,keepaspectratio]{opt_search_benchmark_fit.png}
+\caption{Unemployment rate, vacancy rate and applications per unemployed seeker against observed (dotted).
+McCall follows the cycle but sits about 3--4 points too high; the full planners sit too low.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[height=0.42\textheight,keepaspectratio]{../../overnight_N5_otj_disc/combined_core4/figures/opt_search_benchmark_fit.png}
+\caption{As above, CPS schedule, sticky beliefs, McCall and the max-matches planner only.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{ltuer_line_single_panel.jpg}
+\caption{Long-term unemployment share against observed (dotted); shaded area is out of sample. The data-driven
+and behavioural rules track the data until about 2015 and fall below it afterwards. McCall is too high before
+2008 but closest to the data in 2013--2019; the max-matches planner sits far too low, and the max-surplus
+planner overshoots to about 0.65 in 2010.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../../overnight_N5_otj_disc/combined_core4/figures/ltuer_line_single_panel.jpg}
+\caption{As above, CPS schedule, sticky beliefs, McCall and the max-matches planner only.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{reservation_wage_by_duration.png}
+\caption{Reservation wage relative to the previous wage, by months unemployed. The McCall reservation wage
+falls from 1.42 to 0.98; the DWS schedule used by the data-driven rules falls from 1.03 to 0.88.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../../overnight_N5_otj_disc/combined_core4/figures/reservation_wage_by_duration.png}
+\caption{As above, CPS schedule, sticky beliefs, McCall and the max-matches planner only (the planner has no
+reservation wage, so it does not appear).}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[height=0.36\textheight,keepaspectratio]{wage_scarring_by_duration.png}
+\caption{Wage outcomes of UE hires by months unemployed at hire (model only; no observed curve). For most rules
+the re-employment wage ratio falls with duration, to about 0.9--1.0 at 24+ months; the max-surplus planner's
+falls to about 0.5 after 3 months, while the limited planner and max-matches planner stay above 1.1 until 24+
+months.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[height=0.36\textheight,keepaspectratio]{../../overnight_N5_otj_disc/combined_core4/figures/wage_scarring_by_duration.png}
+\caption{As above, CPS schedule, sticky beliefs, McCall and the max-matches planner only.}
+\end{figure}
+
+
+\clearpage
+\subsection*{Main-text figures with McCall added}
+The six model variants from the paper's main-text runs (N25), with the McCall benchmark (otj\_disc, 5 runs, red)
+added. The paper variants each use their own calibration; McCall uses the calibration of Behavioural w.o.\ Cyc.\
+OTJ w.\ RW (dark orange), so that is the like-for-like comparison.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../../main_text_with_mccall_otj_disc/figures/ltuer_line_single_panel.jpg}
+\caption{Long-term unemployment share against observed (dotted); shaded area is out of sample. McCall is far
+too high before 2008, but from 2012 it is closer to the observed series than any paper variant, all of which
+fall back too fast.}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[height=0.42\textheight,keepaspectratio]{../../main_text_with_mccall_otj_disc/figures/duration_wasserstein_over_time.png}
+\caption{Annual Wasserstein distance between simulated and CPS unemployment-duration distributions (top) and
+share of the unemployed above the CPS top-coding threshold (bottom).}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{../../main_text_with_mccall_otj_disc/figures/duration_wasserstein_rank_heatmap.png}
+\caption{Annual ranking of duration fit (dark green = best). McCall ranks at or near the bottom in 2004--2006
+and 2009 and at or near the top from 2011 onwards in most years.}
+\end{figure}
+
+\end{document}
